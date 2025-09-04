@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Disclosure } from '@headlessui/react';
-import {Bars3Icon,XMarkIcon,ShoppingCartIcon,UserIcon} from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
@@ -24,11 +24,34 @@ const Header = () => {
     i18n.changeLanguage(lng);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const handleDashboardNavigation = () => {
+    if (!user) return;
+    
+    if (user.roles?.includes('admin')) {
+      navigate('/admin');
+    } else if (user.roles?.includes('seller')) {
+      navigate('/seller');
+    } else {
+      navigate('/buyer');
+    }
+  };
+
   const navigation = [
     { name: t('header.home'), href: '/' },
     { name: t('header.products'), href: '/products' },
     { name: t('header.sellers'), href: '/sellers' },
     { name: t('header.categories'), href: '/categories' },
+  ];
+
+  // Add role-specific navigation items
+  const userNavigation = [
+    { name: t('header.profile'), onClick: handleDashboardNavigation },
+    { name: t('header.logout'), onClick: handleLogout }
   ];
 
   return (
@@ -37,6 +60,7 @@ const Header = () => {
         <>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
+              {/* Left side - Logo and main navigation */}
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
                   <Link to="/">
@@ -56,6 +80,8 @@ const Header = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Center - Search bar */}
               <div className="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-end">
                 <form onSubmit={handleSearch} className="w-full max-w-lg">
                   <div className="relative">
@@ -76,8 +102,11 @@ const Header = () => {
                   </div>
                 </form>
               </div>
+
+              {/* Right side - User controls */}
               <div className="flex items-center">
                 <div className="flex items-center space-x-4">
+                  {/* Language switcher */}
                   <button
                     onClick={() => changeLanguage('en')}
                     className={`px-2 py-1 text-sm rounded ${i18n.language === 'en' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
@@ -91,6 +120,7 @@ const Header = () => {
                     မြန်မာ
                   </button>
                   
+                  {/* Cart */}
                   <Link to="/cart" className="relative p-1 text-gray-700 hover:text-green-600">
                     <ShoppingCartIcon className="h-6 w-6" />
                     {cartItems.length > 0 && (
@@ -100,15 +130,36 @@ const Header = () => {
                     )}
                   </Link>
                   
+                  {/* User profile */}
                   {user ? (
-                    <div className="ml-3 relative">
-                      <div className="flex items-center space-x-2">
+                    <div className="ml-3 relative group">
+                      <button 
+                        onClick={handleDashboardNavigation}
+                        className="flex items-center space-x-2 focus:outline-none"
+                      >
                         <div className="flex-shrink-0">
                           <div className="bg-gray-200 border-2 border-dashed rounded-full w-8 h-8" />
                         </div>
                         <div className="hidden md:block">
                           <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-xs text-gray-500">{user.role}</div>
+                          <div className="text-xs text-gray-500 capitalize">
+                            {user.type}
+                          </div>
+                        </div>
+                      </button>
+                      
+                      {/* Dropdown menu */}
+                      <div className="hidden group-hover:block absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                        <div className="py-1">
+                          {userNavigation.map((item) => (
+                            <button
+                              key={item.name}
+                              onClick={item.onClick}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              {item.name}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -120,6 +171,8 @@ const Header = () => {
                   )}
                 </div>
               </div>
+
+              {/* Mobile menu button */}
               <div className="-mr-2 flex items-center sm:hidden">
                 <Disclosure.Button className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
                   <span className="sr-only">{t('header.open_menu')}</span>
@@ -133,6 +186,7 @@ const Header = () => {
             </div>
           </div>
 
+          {/* Mobile menu */}
           <Disclosure.Panel className="sm:hidden">
             <div className="pt-2 pb-3 space-y-1">
               {navigation.map((item) => (
@@ -147,15 +201,30 @@ const Header = () => {
             </div>
             <div className="pt-4 pb-3 border-t border-gray-200">
               {user ? (
-                <div className="flex items-center px-4">
-                  <div className="flex-shrink-0">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10" />
+                <>
+                  <div className="flex items-center px-4">
+                    <div className="flex-shrink-0">
+                      <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10" />
+                    </div>
+                    <div className="ml-3">
+                      <div className="text-base font-medium text-gray-900">{user.name}</div>
+                      <div className="text-sm font-medium text-gray-500 capitalize">
+                        {user.roles?.join(', ')}
+                      </div>
+                    </div>
                   </div>
-                  <div className="ml-3">
-                    <div className="text-base font-medium text-gray-900">{user.name}</div>
-                    <div className="text-sm font-medium text-gray-500">{user.email}</div>
+                  <div className="mt-3 space-y-1">
+                    {userNavigation.map((item) => (
+                      <button
+                        key={item.name}
+                        onClick={item.onClick}
+                        className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                      >
+                        {item.name}
+                      </button>
+                    ))}
                   </div>
-                </div>
+                </>
               ) : (
                 <div className="px-4">
                   <Link

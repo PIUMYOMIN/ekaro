@@ -2,36 +2,55 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import {EyeIcon, EyeSlashIcon
-} from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm();
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await login({
+        phone: `0${data.phone}`,
+        password: data.password
+      });
       
-      // In a real app, this would be an API call to your backend
-      console.log('Login data:', data);
-      
-      // Redirect to dashboard after successful login
-      navigate('/');
+      if (result.success) {
+        // Redirect based on user role
+        const user = result.user;
+        if (user.roles?.includes('admin')) {
+          navigate('/admin');
+        } else if (user.roles?.includes('seller')) {
+          navigate('/seller');
+        } else if (user.roles?.includes('buyer')) {
+          navigate('/products');
+        } else {
+          navigate('/admin');
+        }
+      } else {
+        setError(result.message);
+      }
     } catch (err) {
-      setError('ဖုန်းနံပါတ် သို့မဟုတ် စကားဝှက် မမှန်ကန်ပါ');
+      setError('An error occurred during login');
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <AuthLayout
@@ -39,7 +58,7 @@ const Login = () => {
       subtitle="သင့်အကောင့်သို့ ဝင်ရောက်ရန်"
     >
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -47,9 +66,7 @@ const Login = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">
-                {error}
-              </p>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
         </div>
@@ -112,8 +129,7 @@ const Login = () => {
                   className="text-gray-400 hover:text-gray-500 focus:outline-none"
                 >
                   {showPassword ? (
-                    <EyeSlashIcon
- className="h-5 w-5" aria-hidden="true" />
+                    <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
                   ) : (
                     <EyeIcon className="h-5 w-5" aria-hidden="true" />
                   )}

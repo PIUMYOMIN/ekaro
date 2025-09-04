@@ -6,36 +6,56 @@ import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 
+// Layout
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 
+// Public Pages
 import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
 import ProductDetail from "./pages/ProductDetail";
-import Wishlist from "./pages/Wishlist";
 import CategoryBrowser from "./pages/CategoryBrowser";
-// import CategoryDetail from "./pages/CategoryDetail";
-import ProductComparison from "./pages/ProductComparison";
 import StorefrontView from "./pages/StoreFrontView";
-import ProductCard from "./components/ui/ProductCard";
-import SellerDashboard from "./pages/SellerDashboard";
 import Sellers from "./pages/Sellers";
 import SellerProfile from "./pages/SellerProfile";
-import BuyerDashboard from "./pages/BuyerDashboard";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
+import ProductComparison from "./pages/ProductComparison";
+import BulkOrderTool from "./pages/BulkOrderTool";
+import OrderTracking from "./pages/OrderTracking";
+import Pricing from "./pages/Pricing";
+import AboutUs from "./pages/AboutUs";
+import Legal from "./pages/Legal";
+import HelpCenter from "./pages/HelpCenter";
+
+// Auth Pages
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+
+// Protected Pages
+import BuyerDashboard from "./pages/BuyerDashboard";
+import Wishlist from "./pages/Wishlist";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import SellerDashboard from "./pages/SellerDashboard";
 import AdminDashboard from "./pages/Admin/Dashboard";
-import PaymentMethod from './components/ui/PaymentMethod';
-import OrderConfirmation from './components/ui/OrderConfirmation';
-import RFQManager from './pages/RFQManager';
-import Pricing from './pages/Pricing';
-import AboutUs from './pages/AboutUs';
-import Legal from './pages/Legal';
-import HelpCenter from './pages/HelpCenter';
-import BulkOrderTool from './pages/BulkOrderTool';
-import OrderTracking from "./pages/OrderTracking";
+
+// Admin Management
+import CategoryCreate from "./pages/Admin/categories/CategoryCreate";
+import CategoryEdit from "./pages/Admin/categories/CategoryEdit";
+
+// Seller Product Management
+import ProductCreate from "./components/seller/products/ProductCreate";
+import ProductEdit from "./components/seller/products/ProductEdit";
+import ProductView from "./components/seller/products/ProductView";
+
+// Common Components
+import PaymentMethod from "./components/ui/PaymentMethod";
+import OrderConfirmation from "./components/ui/OrderConfirmation";
+import RFQManager from "./pages/RFQManager";
+
+// Route Guards
+import ProtectedRoute from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
 
 function App() {
   return (
@@ -47,33 +67,170 @@ function App() {
               <Header />
               <main className="flex-grow">
                 <Routes>
+                  {/* Public Routes */}
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<ProductList />} />
-                  <Route path="/products/:category" element={<ProductList />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/categories" element={<CategoryBrowser />} />
-                  {/* <Route path="/category/:id" element={<CategoryDetail />} /> */}
                   <Route path="/storefront/:id" element={<StorefrontView />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/seller" element={<SellerDashboard />} />
                   <Route path="/sellers" element={<Sellers />} />
                   <Route path="/seller/:id" element={<SellerProfile />} />
-                  <Route path="/buyer" element={<BuyerDashboard />} />
-                  <Route path="/rfqmanager" element={<RFQManager />} />
-                  <Route path="/product-comparison" element={<ProductComparison />} />
-                  <Route path="/order-tool" element={<BulkOrderTool />} />
+                  <Route
+                    path="/product-comparison"
+                    element={<ProductComparison />}
+                  />
+                  <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
                   <Route path="/order-tracking" element={<OrderTracking />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/payment" element={<PaymentMethod />} />
-                  <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/about-us" element={<AboutUs />} />
                   <Route path="/terms" element={<Legal />} />
                   <Route path="/help" element={<HelpCenter />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
+
+                  {/* Guest-only Routes */}
+                  <Route
+                    path="/login"
+                    element={
+                      <GuestRoute>
+                        <Login />
+                      </GuestRoute>
+                    }
+                  />
+                  <Route
+                    path="/register"
+                    element={
+                      <GuestRoute>
+                        <Register />
+                      </GuestRoute>
+                    }
+                  />
+                  <Route
+                    path="/forgot-password"
+                    element={
+                      <GuestRoute>
+                        <ForgotPassword />
+                      </GuestRoute>
+                    }
+                  />
+
+                  {/* Buyer Routes */}
+                  <Route
+                    path="/cart"
+                    element={
+                      <ProtectedRoute roles={["buyer"]}>
+                        <Cart />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/checkout"
+                    element={
+                      <ProtectedRoute roles={["buyer"]}>
+                        <Checkout />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/buyer"
+                    element={
+                      <ProtectedRoute roles={["buyer"]}>
+                        <BuyerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/wishlist"
+                    element={
+                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                        <Wishlist />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Seller Routes */}
+                  <Route
+                    path="/seller"
+                    element={
+                      <ProtectedRoute roles={["seller"]}>
+                        <SellerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/products/new"
+                    element={
+                      <ProtectedRoute roles={["seller"]}>
+                        <ProductCreate />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/products/view/:id"
+                    element={
+                      <ProtectedRoute roles={["seller"]}>
+                        <ProductView />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/products/edit/:id"
+                    element={
+                      <ProtectedRoute roles={["seller"]}>
+                        <ProductEdit />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Admin Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute roles={["admin"]}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories/new"
+                    element={
+                      <ProtectedRoute roles={["admin"]}>
+                        <CategoryCreate />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories/:id"
+                    element={
+                      <ProtectedRoute roles={["admin"]}>
+                        <CategoryEdit />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Shared Routes */}
+                  <Route
+                    path="/rfqmanager"
+                    element={
+                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                        <RFQManager />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/payment-method"
+                    element={
+                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                        <PaymentMethod />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/order-confirmation"
+                    element={
+                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                        <OrderConfirmation />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Routes>
               </main>
               <Footer />
