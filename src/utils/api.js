@@ -2,11 +2,11 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://api.piueducation.org/api/v1/", // Make sure this matches your Laravel server
+  baseURL: "https://api.piueducation.org/api/v1", // Make sure this matches your Laravel server
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json"
-  }
+  },
+  withCredentials: true, // Include cookies for CSRF protection if needed
 });
 
 // Request interceptor for auth token
