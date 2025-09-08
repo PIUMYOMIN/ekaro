@@ -674,7 +674,7 @@ const AdminDashboard = () => {
       setIsDashboardLoading(true);
       setDashboardError(null);
       try {
-        const response = await api.get('/admin/dashboard/stats');
+        const response = await api.get('/dashboard');
         setDashboardData(response.data);
       } catch (error) {
         setDashboardError(error);
@@ -695,7 +695,7 @@ const AdminDashboard = () => {
       setIsUsersLoading(true);
       setUsersError(null);
       try {
-        const response = await api.get('/admin/users');
+        const response = await api.get('/users');
         // Handle different API response structures
         const usersData = response.data.data || response.data;
         setUsers(Array.isArray(usersData) ? usersData : []);
@@ -718,7 +718,7 @@ const AdminDashboard = () => {
       setIsProductsLoading(true);
       setProductsError(null);
       try {
-        const response = await api.get('/admin/products');
+        const response = await api.get('/products');
         // Handle different API response structures
         const productsData = response.data.data || response.data;
         setProducts(Array.isArray(productsData) ? productsData : []);
@@ -741,7 +741,7 @@ const AdminDashboard = () => {
       setIsOrdersLoading(true);
       setOrdersError(null);
       try {
-        const response = await api.get('/admin/orders');
+        const response = await api.get('/orders');
         // Handle different API response structures
         const ordersData = response.data.data || response.data;
         setOrders(Array.isArray(ordersData) ? ordersData : []);
@@ -763,7 +763,7 @@ const AdminDashboard = () => {
       setIsCategoriesLoading(true);
       setCategoriesError(null);
       try {
-        const response = await api.get('/admin/categories');
+        const response = await api.get('/categories');
         const categoriesData = response.data.data || response.data;
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (error) {
