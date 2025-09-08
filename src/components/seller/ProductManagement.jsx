@@ -275,7 +275,7 @@ const ProductManagement = () => {
                     <td className="px-6 py-4 text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => navigate(`/seller/products/view/${product.id}`)}
+                          onClick={() => navigate(`/products/${product.id}`)}
                           className="text-gray-500 hover:text-gray-700"
                           title="View Product"
                         >

@@ -7,7 +7,6 @@ import api from "../utils/api";
 import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
-import {formatMMK} from "../components/ui/ProductCard"
 
 const ProductList = () => {
   const { t } = useTranslation();

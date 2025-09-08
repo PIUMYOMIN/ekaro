@@ -15,7 +15,7 @@ const CategoryEdit = () => {
     () => {
       const fetchCategory = async () => {
         try {
-          const response = await api.get(`/admin/categories/${id}`);
+          const response = await api.get(`/categories/${id}`);
           setCategory(response.data.data);
         } catch (err) {
           setError("Failed to load category");

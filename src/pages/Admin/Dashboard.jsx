@@ -12,7 +12,8 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   ChevronUpIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -345,7 +346,7 @@ const ProductManagement = ({ products, loading, error, navigate, handleProductSt
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await api.delete(`/seller/products/${productId}`);
+        await api.delete(`/products/${productId}`);
         // You might want to add a callback to refresh the product list
         alert('Product deleted successfully');
       } catch (error) {
@@ -367,7 +368,7 @@ const ProductManagement = ({ products, loading, error, navigate, handleProductSt
       <div className="flex space-x-2">
         <button 
           className="text-indigo-600 hover:text-indigo-900"
-          onClick={() => navigate(`/admin/products/${product.id}`)}
+          onClick={() => navigate(`/products/${product.id}/edit`)}
         >
           Edit
         </button>
@@ -399,7 +400,7 @@ const ProductManagement = ({ products, loading, error, navigate, handleProductSt
         <div className="flex space-x-3">
           <button 
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            onClick={() => navigate('/admin/products/new')}
+            onClick={() => navigate('/products/new')}
           >
             Add New Product
           </button>
@@ -552,27 +553,93 @@ const Settings = () => {
 
 // CategoryManagement Component
 const CategoryManagement = ({ categories, loading, error, navigate }) => {
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  const handleDelete = async (categoryId) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await api.delete(`/categories/${categoryId}`);
+        // You might want to add a callback to refresh the category list
+        alert('Category deleted successfully');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to delete category');
+      }
+    }
+  };
+
+  // Flatten the category tree for display with proper indentation
+  const flattenCategories = (categories, level = 0) => {
+    let result = [];
+    
+    categories.forEach(category => {
+      result.push({
+        ...category,
+        level,
+        hasChildren: category.children && category.children.length > 0,
+        isExpanded: expandedCategories[category.id] || false
+      });
+      
+      // If category is expanded, add its children
+      if (expandedCategories[category.id] && category.children) {
+        result = result.concat(flattenCategories(category.children, level + 1));
+      }
+    });
+    
+    return result;
+  };
+
+  // Filter categories based on search term
+  const filteredCategories = categories.filter(category => 
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.name_mm?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const flattenedCategories = flattenCategories(filteredCategories);
+
   const columns = [
-    { header: 'ID', accessor: 'id' },
     { header: 'Name', accessor: 'name' },
     { header: 'Myanmar Name', accessor: 'name_mm' },
     { header: 'Description', accessor: 'description' },
-    { header: 'Commission Rate', accessor: 'commission_rate' },
-    { header: 'Parent', accessor: 'parent_name' },
-    { header: 'Created At', accessor: 'created_at' },
+    { header: 'Commission', accessor: 'commission_rate' },
+    { header: 'Level', accessor: 'level' },
     { header: 'Actions', accessor: 'actions' }
   ];
 
-  const categoryData = categories.map(category => ({
+  const categoryData = flattenedCategories.map(category => ({
     ...category,
-    parent_name: category.parent?.name || 'Main Category',
     commission_rate: `${category.commission_rate}%`,
-    created_at: new Date(category.created_at).toLocaleDateString(),
+    name: (
+      <div className="flex items-center" style={{ paddingLeft: `${category.level * 24}px` }}>
+        {category.hasChildren && (
+          <button 
+            onClick={() => toggleCategory(category.id)}
+            className="mr-1 text-gray-500 hover:text-gray-700"
+          >
+            {category.isExpanded ? (
+              <ChevronDownIcon className="h-4 w-4" />
+            ) : (
+              <ChevronRightIcon className="h-4 w-4" />
+            )}
+          </button>
+        )}
+        {!category.hasChildren && <span className="ml-5"></span>}
+        <span className="ml-1">{category.name}</span>
+      </div>
+    ),
     actions: (
       <div className="flex space-x-2">
         <button
           className="text-indigo-600 hover:text-indigo-900"
-          onClick={() => navigate(`/admin/categories/${category.id}`)}
+          onClick={() => navigate(`/categories/${category.id}/edit`)}
         >
           Edit
         </button>
@@ -584,48 +651,90 @@ const CategoryManagement = ({ categories, loading, error, navigate }) => {
         </button>
       </div>
     )
-  }
-  ));
-
-  const handleDelete = async (categoryId) => {
-  if (window.confirm('Are you sure you want to delete this category?')) {
-    try {
-      const response = await api.delete(`/admin/categories/${categoryId}`);
-      if (response.data.success) {
-        onDelete(categoryId);
-      } else {
-        alert(response.data.message || 'Failed to delete category');
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to delete category';
-      alert(message);
-    }
-  }
-};
+  }));
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <div>
           <h3 className="text-lg font-medium text-gray-900">Category Management</h3>
-          <p className="mt-1 text-sm text-gray-500">Manage all categories</p>
+          <p className="mt-1 text-sm text-gray-500">Manage product categories and hierarchy</p>
         </div>
         <div className="flex space-x-3">
           <button
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            onClick={() => navigate('/admin/categories/new')}
+            onClick={() => navigate('/categories/create')}
           >
             Add New Category
           </button>
         </div>
       </div>
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading categories</div>}
+      
+      <div className="p-4 border-b border-gray-200">
+        <div className="relative max-w-xs">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search categories..."
+            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+      
+      {loading && (
+        <div className="p-8 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="p-4 text-red-500 bg-red-50">
+          Error loading categories: {error.message}
+        </div>
+      )}
+      
       {!loading && !error && (
-        <DataTable
-          columns={columns}
-          data={categoryData}
-        />
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {columns.map((column) => (
+                  <th
+                    key={column.accessor}
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {categoryData.length > 0 ? (
+                categoryData.map((category, index) => (
+                  <tr key={index} className={category.level > 0 ? "bg-gray-50" : ""}>
+                    {columns.map((column) => (
+                      <td
+                        key={column.accessor}
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      >
+                        {category[column.accessor]}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-4 text-center text-sm text-gray-500">
+                    {searchTerm ? 'No categories found matching your search' : 'No categories available'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
@@ -781,7 +890,7 @@ const AdminDashboard = () => {
       case 0:
         setIsDashboardLoading(true);
         try {
-          const response = await api.get('/admin/dashboard/stats');
+          const response = await api.get('/dashboard');
           setDashboardData(response.data);
         } catch (error) {
           setDashboardError(error);
@@ -792,7 +901,7 @@ const AdminDashboard = () => {
       case 1:
         setIsUsersLoading(true);
         try {
-          const response = await api.get('/admin/users');
+          const response = await api.get('/users');
           const usersData = response.data.data || response.data;
           setUsers(Array.isArray(usersData) ? usersData : []);
         } catch (error) {
@@ -804,7 +913,7 @@ const AdminDashboard = () => {
       case 2:
         setIsProductsLoading(true);
         try {
-          const response = await api.get('/admin/products');
+          const response = await api.get('/products');
           const productsData = response.data.data || response.data;
           setProducts(Array.isArray(productsData) ? productsData : []);
         } catch (error) {
@@ -816,7 +925,7 @@ const AdminDashboard = () => {
       case 3:
         setIsOrdersLoading(true);
         try {
-          const response = await api.get('/admin/orders');
+          const response = await api.get('/orders');
           const ordersData = response.data.data || response.data;
           setOrders(Array.isArray(ordersData) ? ordersData : []);
         } catch (error) {
@@ -828,7 +937,7 @@ const AdminDashboard = () => {
       case 4:
         setIsCategoriesLoading(true);
         try {
-          const response = await api.get('/admin/categories');
+          const response = await api.get('/categories');
           const categoriesData = response.data.data || response.data;
           setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         } catch (error) {
@@ -845,7 +954,7 @@ const AdminDashboard = () => {
   // Handle user role change
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await api.post(`/admin/users/${userId}/assign-roles`, { roles: [newRole] });
+      await api.post(`/users/${userId}/assign-roles`, { roles: [newRole] });
       setUsers(users.map(user => 
         user.id === userId ? { ...user, roles: [{ name: newRole }] } : user
       ));
@@ -856,31 +965,15 @@ const AdminDashboard = () => {
 
   // Handle product status change
   const handleProductStatus = async (productId, isActive) => {
-  try {
-    await api.put(`/seller/products/${productId}`, { is_active: isActive });
-    setProducts(products.map(product => 
-      product.id === productId ? { ...product, is_active: isActive } : product
-    ));
-  } catch (error) {
-    console.error('Failed to update product status:', error);
-  }
-};
-
-// Update the fetchProducts function
-const fetchProducts = async () => {
-  setIsProductsLoading(true);
-  setProductsError(null);
-  try {
-    const response = await api.get('/admin/products');
-    const productsData = response.data.data || response.data;
-    setProducts(Array.isArray(productsData) ? productsData : []);
-  } catch (error) {
-    setProductsError(error);
-    console.error('Error fetching products:', error);
-  } finally {
-    setIsProductsLoading(false);
-  }
-};
+    try {
+      await api.put(`/products/${productId}`, { is_active: isActive });
+      setProducts(products.map(product => 
+        product.id === productId ? { ...product, is_active: isActive } : product
+      ));
+    } catch (error) {
+      console.error('Failed to update product status:', error);
+    }
+  };
 
   // Handle order status update
   const updateOrderStatus = async (orderId, status) => {
@@ -892,10 +985,10 @@ const fetchProducts = async () => {
       else if (status === 'cancelled') endpoint = 'cancel';
       
       if (endpoint) {
-        await api.post(`/admin/orders/${orderId}/${endpoint}`);
+        await api.post(`/orders/${orderId}/${endpoint}`);
       } else {
         // For other status updates, use a generic update
-        await api.put(`/admin/orders/${orderId}`, { status });
+        await api.put(`/orders/${orderId}`, { status });
       }
       
       setOrders(orders.map(order => 
@@ -903,28 +996,6 @@ const fetchProducts = async () => {
       ));
     } catch (error) {
       console.error('Failed to update order status:', error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await api.delete(`/admin/products/${id}`);
-        setProducts(prev => prev.filter(product => product.id !== id));
-      } catch (error) {
-        console.error("Failed to delete product:", error);
-      }
-    }
-  };
-
-  const handleCategoryDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      try {
-        await api.delete(`/admin/categories/${id}`);
-        setCategories(prev => prev.filter(cat => cat.id !== id));
-      } catch (error) {
-        console.error("Failed to delete category:", error);
-      }
     }
   };
 
@@ -964,7 +1035,6 @@ const fetchProducts = async () => {
           error={productsError}
           navigate={navigate}
           handleProductStatus={handleProductStatus}
-          onDelete={handleDelete}
         />
       )
     },
@@ -989,7 +1059,6 @@ const fetchProducts = async () => {
           loading={isCategoriesLoading}
           error={categoriesError}
           navigate={navigate}
-          onDelete={handleCategoryDelete}
         />
       )
     },

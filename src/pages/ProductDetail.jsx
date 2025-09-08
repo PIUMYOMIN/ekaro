@@ -83,8 +83,8 @@ const ProductDetail = () => {
         // Set reviews from the API response
         setReviews(productResponse.data.data.reviews || []);
 
-        // Check if product is in wishlist (if user is logged in)
-        if (user) {
+        // Check if product is in wishlist (only if user is a buyer)
+        if (user && user.role === 'buyer') {
           try {
             const wishlistResponse = await api.get("/wishlist");
             const wishlist = wishlistResponse.data.data || [];
@@ -92,7 +92,10 @@ const ProductDetail = () => {
               wishlist.some((item) => item.id === productData.id)
             );
           } catch (wishlistError) {
-            console.warn("Could not fetch wishlist:", wishlistError);
+            // Only log error if it's not a 403 (Forbidden) for non-buyers
+            if (wishlistError.response?.status !== 403) {
+              console.warn("Could not fetch wishlist:", wishlistError);
+            }
           }
         }
       } catch (err) {
@@ -146,6 +149,12 @@ const ProductDetail = () => {
       navigate("/login");
       return;
     }
+    
+    // Check if user is admin or seller
+    if (user.role === 'admin' || user.role === 'seller') {
+      alert("Admins and sellers cannot add products to wishlist");
+      return;
+    }
 
     setWishlistLoading(true);
     try {
@@ -164,6 +173,21 @@ const ProductDetail = () => {
     } finally {
       setWishlistLoading(false);
     }
+  };
+
+  const handleReviewAction = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    
+    // Check if user is admin or seller
+    if (user.role === 'admin' || user.role === 'seller') {
+      alert("Admins and sellers cannot write reviews");
+      return;
+    }
+    
+    setShowReviewForm(!showReviewForm);
   };
 
   const handleSubmitReview = async (e) => {
@@ -258,42 +282,42 @@ const ProductDetail = () => {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
-  <img
-    src={
-      typeof product.images[activeImage] === 'string' 
-        ? product.images[activeImage] 
-        : product.images[activeImage]?.url || '/placeholder-product.jpg'
-    }
-    alt={product.name}
-    className="max-h-full max-w-full object-contain"
-    onError={(e) => {
-      e.target.src = '/placeholder-product.jpg';
-    }}
-  />
-</div>
+            <img
+              src={
+                typeof product.images[activeImage] === 'string' 
+                  ? product.images[activeImage] 
+                  : product.images[activeImage]?.url || '/placeholder-product.jpg'
+              }
+              alt={product.name}
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => {
+                e.target.src = '/placeholder-product.jpg';
+              }}
+            />
+          </div>
 
-{product.images.length > 1 && (
-  <div className="grid grid-cols-4 gap-2">
-    {product.images.map((img, index) => (
-      <button
-        key={index}
-        onClick={() => setActiveImage(index)}
-        className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${
-          activeImage === index ? "border-green-500" : "border-transparent"
-        }`}
-      >
-        <img
-          src={typeof img === 'string' ? img : img.url || '/placeholder-product.jpg'}
-          alt={`View ${index + 1}`}
-          className="max-h-full max-w-full object-contain"
-          onError={(e) => {
-            e.target.src = '/placeholder-product.jpg';
-          }}
-        />
-      </button>
-    ))}
-  </div>
-)}
+          {product.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {product.images.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImage(index)}
+                  className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${
+                    activeImage === index ? "border-green-500" : "border-transparent"
+                  }`}
+                >
+                  <img
+                    src={typeof img === 'string' ? img : img.url || '/placeholder-product.jpg'}
+                    alt={`View ${index + 1}`}
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      e.target.src = '/placeholder-product.jpg';
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
@@ -420,11 +444,13 @@ const ProductDetail = () => {
 
             <button
               onClick={handleAddToWishlist}
-              disabled={!user || wishlistLoading}
+              disabled={wishlistLoading || (user && (user.role === 'admin' || user.role === 'seller'))}
               className="p-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
               title={
                 !user
                   ? "Please login to add to wishlist"
+                  : (user.role === 'admin' || user.role === 'seller')
+                  ? "Admins and sellers cannot add to wishlist"
                   : isInWishlist
                   ? "Remove from wishlist"
                   : "Add to wishlist"
@@ -475,10 +501,8 @@ const ProductDetail = () => {
             Customer Reviews ({product.review_count || 0})
           </h2>
           <button
-            onClick={() => setShowReviewForm(!showReviewForm)}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!user}
-            title={!user ? "Please login to write a review" : ""}
+            onClick={handleReviewAction}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
           >
             Write a Review
           </button>

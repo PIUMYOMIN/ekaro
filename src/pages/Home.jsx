@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import api from "../utils/api";
 
 import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
@@ -10,6 +11,8 @@ import CategoryCard from "../components/ui/CategoryCard";
 
 const Home = () => {
   const { t } = useTranslation();
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
 
   // Mock data
   const featuredProducts = [
@@ -50,14 +53,29 @@ const Home = () => {
     { id: 4, name: "Shan Coffee Co.", category: "Food & Beverage", rating: 4.6 }
   ];
 
-  const categories = [
-    { id: 1, name: "Agriculture", count: 245 },
-    { id: 2, name: "Handicrafts", count: 187 },
-    { id: 3, name: "Textiles", count: 156 },
-    { id: 4, name: "Furniture", count: 98 },
-    { id: 5, name: "Food & Beverage", count: 210 },
-    { id: 6, name: "Construction", count: 76 }
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/categories");
+        setCategories(res.data.data || res.data);
+        structure;
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get("/products?featured=true"); // 👈 adjust endpoint if needed
+        setProducts(res.data.data || res.data);
+      } catch (err) {
+        console.error("Failed to fetch featured products:", err);
+      }
+    };
+
+    fetchCategories();
+    fetchProducts();
+  }, []);
 
   return (
     <div className="bg-gray-50">
@@ -140,9 +158,17 @@ const Home = () => {
             </Link>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-            {featuredProducts.map(product =>
-              <ProductCard key={product.id} product={product} />
-            )}
+            {products.length > 0
+              ? products.map(product =>
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onClick={() => console.log("Add to cart:", product.id)}
+                  />
+                )
+              : <p className="col-span-full text-center text-gray-500">
+                  {t("home.no_featured_products")}
+                </p>}
           </div>
         </div>
       </section>
