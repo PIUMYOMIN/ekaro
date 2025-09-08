@@ -2,11 +2,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
@@ -54,8 +56,8 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title="အကောင့်ဝင်ရန်"
-      subtitle="သင့်အကောင့်သို့ ဝင်ရောက်ရန်"
+      title={t('login.title')}
+      subtitle={t('login.subtitle')}
     >
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
@@ -76,7 +78,7 @@ const Login = () => {
         <div className="space-y-4">
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              ဖုန်းနံပါတ်
+              {t('login.phone.label')}
             </label>
             <div className="mt-1 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -93,7 +95,7 @@ const Login = () => {
                   required: 'ဖုန်းနံပါတ်ဖြည့်ရန် လိုအပ်ပါသည်',
                   pattern: {
                     value: /^[0-9]{7,10}$/,
-                    message: 'မြန်မာနိုင်ငံဖုန်းနံပါတ်မှန်ကန်စွာထည့်ပါ'
+                    message: t('login.phone.error')
                   }
                 })}
               />
@@ -105,7 +107,7 @@ const Login = () => {
           
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              စကားဝှက်
+              {t('login.password.label')}
             </label>
             <div className="mt-1 relative">
               <input
@@ -152,13 +154,13 @@ const Login = () => {
               {...register('remember')}
             />
             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-              ကျွန်ုပ်ကိုမှတ်ထားပါ
+              {t('login.remember')}
             </label>
           </div>
 
           <div className="text-sm">
             <Link to="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
-              စကားဝှက်မေ့နေပါသလား?
+              {t('login.forgotPassword')}
             </Link>
           </div>
         </div>
@@ -184,9 +186,9 @@ const Login = () => {
         </div>
         
         <div className="mt-4 text-center text-sm">
-          <span className="text-gray-600">အကောင့်မရှိသေးပါက </span>
+          <span className="text-gray-600">{t('login.noAccount')} </span>
           <Link to="/register" className="font-medium text-green-600 hover:text-green-500">
-            အကောင့်အသစ်ဖွင့်ရန်
+            {t('login.register')}
           </Link>
         </div>
       </form>
@@ -198,7 +200,7 @@ const Login = () => {
           </div>
           <div className="relative flex justify-center text-sm">
             <span className="px-2 bg-white text-gray-500">
-              သို့မဟုတ် ဆက်လက်အသုံးပြုရန်
+              {t('login.orContinue')}
             </span>
           </div>
         </div>

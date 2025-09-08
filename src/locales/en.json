@@ -347,5 +347,32 @@
     "spec_weight": "Weight",
     "spec_origin": "Origin",
     "spec_certification": "Certification"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Sign in to your account",
+    "phone": {
+      "label": "Phone Number",
+      "placeholder": "9xxxxxxxx",
+      "required": "Phone number is required",
+      "invalid": "Please enter a valid Myanmar phone number"
+    },
+    "password": {
+      "label": "Password",
+      "required": "Password is required",
+      "minLength": "Password must be at least 6 characters"
+    },
+    "remember": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "submit": "Sign In",
+    "loading": "Signing in...",
+    "noAccount": "Don't have an account yet?",
+    "register": "Create a new account",
+    "orContinue": "Or continue with",
+    "facebook": "Facebook",
+    "google": "Google",
+    "errors": {
+      "generic": "An error occurred during login"
+    }
   }
 }
