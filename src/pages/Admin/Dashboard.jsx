@@ -400,7 +400,7 @@ const ProductManagement = ({ products, loading, error, navigate, handleProductSt
         <div className="flex space-x-3">
           <button 
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            onClick={() => navigate('/products/new')}
+            onClick={() => navigate('/products/create')}
           >
             Add New Product
           </button>

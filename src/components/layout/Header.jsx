@@ -52,8 +52,8 @@ const Header = () => {
 
   // Add role-specific navigation items
   const userNavigation = [
-    { name: t('header.profile'), onClick: handleDashboardNavigation },
-    { name: t('header.logout'), onClick: handleLogout }
+    { name: t('profile'), onClick: handleDashboardNavigation },
+    { name: t('logout'), onClick: handleLogout }
   ];
 
   return (
@@ -69,7 +69,7 @@ const Header = () => {
                     <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-white font-bold text-sm sm:text-base">
                       B2B
                     </div>
-                    <span className="ml-2 text-lg sm:text-xl font-bold text-green-700 hidden xs:block">မြန်မာ B2B</span>
+                    <span className="ml-2 text-lg sm:text-xl font-bold text-green-700 ">မြန်မာ B2B</span>
                   </Link>
                 </div>
                 
@@ -88,7 +88,7 @@ const Header = () => {
               </div>
 
               {/* Center - Search bar (desktop) */}
-              <div className="flex-1 flex items-center justify-center px-2 lg:px-4 lg:ml-6 max-w-lg">
+              <div className="flex-1 flex items-center justify-end px-2 lg:px-4 lg:ml-6 max-w-lg">
                 <form onSubmit={handleSearch} className="w-full hidden sm:block">
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -284,7 +284,6 @@ const Header = () => {
               {/* Mobile language switcher */}
               <div className="px-3 py-2 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">{t('header.language')}</span>
                   <div className="flex space-x-1">
                     <button
                       onClick={() => changeLanguage('en')}

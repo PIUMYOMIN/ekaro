@@ -125,7 +125,7 @@ function App() {
 
                   {/* Shared Routes */}
                   <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}>
-                        <ProductEdit />
+                        <ProductCreate />
                       </ProtectedRoute>} />
                   <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}>
                         <ProductEdit />
