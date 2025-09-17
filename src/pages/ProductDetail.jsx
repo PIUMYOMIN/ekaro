@@ -7,7 +7,8 @@ import {
   StarIcon,
   ShoppingCartIcon,
   HeartIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  XMarkIcon
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 
@@ -29,6 +30,8 @@ const ProductDetail = () => {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -203,8 +206,9 @@ const ProductDetail = () => {
       return;
     }
 
+    setSubmittingReview(true);
     try {
-      const response = await api.post("/reviews", {
+      const response = await api.post(`/products/${product.id}/reviews`, {
         product_id: product.id,
         rating,
         comment: reviewText
@@ -227,11 +231,18 @@ const ProductDetail = () => {
         review_count: prev.review_count + 1
       }));
 
-      alert("Review submitted successfully!");
+      // Show success message from backend or default message
+      setSuccessMessage(response.data.message || "Review submitted successfully!");
     } catch (error) {
       console.error("Failed to submit review:", error);
       alert(error.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
     }
+  };
+
+  const closeSuccessMessage = () => {
+    setSuccessMessage(null);
   };
 
   if (loading) {
@@ -269,6 +280,19 @@ const ProductDetail = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Success Message Popup */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md">
+          <span>{successMessage}</span>
+          <button
+            onClick={closeSuccessMessage}
+            className="ml-4 text-green-700 hover:text-green-900"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -556,9 +580,17 @@ const ProductDetail = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  disabled={submittingReview}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
                 >
-                  Submit Review
+                  {submittingReview ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Review"
+                  )}
                 </button>
               </div>
             </form>

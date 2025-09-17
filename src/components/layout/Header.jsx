@@ -184,7 +184,6 @@ const Header = () => {
                   ) : (
                     <Link to="/login" className="ml-1 flex items-center text-gray-700 hover:text-green-600 p-1 sm:p-1.5">
                       <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                      <span className="ml-1 hidden sm:block">{t('header.login')}</span>
                     </Link>
                   )}
                 </div>

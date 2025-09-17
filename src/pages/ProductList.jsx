@@ -58,7 +58,7 @@ const ProductList = () => {
         });
 
         // Use the public endpoint for products without version prefix
-        const response = await api.get(`/products?${params.toString()}`);
+        const response = await api.get("/products", { params });
         
         // Handle response structure
         const productsData = response.data.data || [];

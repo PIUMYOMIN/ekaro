@@ -35,7 +35,7 @@ const ProductManagement = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/products");
+      const response = await api.get("/seller/products/my-products");
       setProducts(response.data.data || []);
     } catch (err) {
       setError("Failed to fetch products");

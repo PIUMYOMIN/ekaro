@@ -12,15 +12,15 @@ import {
   CogIcon,
   DocumentTextIcon
 } from "@heroicons/react/24/outline";
-import Sidebar from "../components/layout/Sidebar";
-import DashboardSummary from "../components/seller/DashboardSummary";
-import OrderManagement from "../components/seller/OrderManagement";
-import ProductManagement from "../components/seller/ProductManagement";
-import SalesReports from "../components/seller/SalesReports";
-import Reviews from "../components/seller/Reviews";
-import Customers from "../components/seller/Customers";
-import ShippingSettings from "../components/seller/ShippingSettings";
-import StoreSettings from "../components/seller/StoreSettings";
+import Sidebar from "../../components/layout/Sidebar";
+import DashboardSummary from "./DashboardSummary";
+import OrderManagement from "./OrderManagement";
+import ProductManagement from "./ProductManagement";
+import SalesReports from "./SalesReports";
+import Reviews from "./Reviews";
+import Customers from "./Customers";
+import ShippingSettings from "./ShippingSettings";
+import StoreSettings from "./StoreSettings";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");

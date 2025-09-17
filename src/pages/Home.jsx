@@ -13,54 +13,34 @@ const Home = () => {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
 
   // Mock data
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Organic Rice",
-      price: 45000,
-      category: "Agriculture",
-      rating: 4.5
-    },
-    {
-      id: 2,
-      name: "Handwoven Textiles",
-      price: 25000,
-      category: "Handicrafts",
-      rating: 4.2
-    },
-    {
-      id: 3,
-      name: "Teak Furniture",
-      price: 350000,
-      category: "Furniture",
-      rating: 4.8
-    },
-    {
-      id: 4,
-      name: "Myanmar Coffee Beans",
-      price: 18000,
-      category: "Food & Beverage",
-      rating: 4.3
-    }
-  ];
+  const featuredProducts = [{ id: 1, name: "Organic Rice", price: 45000, category: "Agriculture", rating: 4.5 }, { id: 2, name: "Handwoven Textiles", price: 25000, category: "Handicrafts", rating: 4.2 }, { id: 3, name: "Teak Furniture", price: 350000, category: "Furniture", rating: 4.8 }, { id: 4, name: "Myanmar Coffee Beans", price: 18000, category: "Food & Beverage", rating: 4.3 }];
 
-  const topSellers = [
-    { id: 1, name: "Golden Harvest", category: "Agriculture", rating: 4.7 },
-    { id: 2, name: "Yangon Crafts", category: "Handicrafts", rating: 4.5 },
-    { id: 3, name: "Mandalay Woodworks", category: "Furniture", rating: 4.9 },
-    { id: 4, name: "Shan Coffee Co.", category: "Food & Beverage", rating: 4.6 }
-  ];
+  // const topSellers = [
+  //   { id: 1, name: "Golden Harvest", category: "Agriculture", rating: 4.7 },
+  //   { id: 2, name: "Yangon Crafts", category: "Handicrafts", rating: 4.5 },
+  //   { id: 3, name: "Mandalay Woodworks", category: "Furniture", rating: 4.9 },
+  //   { id: 4, name: "Shan Coffee Co.", category: "Food & Beverage", rating: 4.6 }
+  // ];
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await api.get("/categories");
         setCategories(res.data.data || res.data);
-        structure;
       } catch (err) {
         console.error("Failed to fetch categories:", err);
+      }
+    };
+
+    const fetchTopSellers = async () => {
+      try {
+        const res = await api.get("/sellers?top=true");
+        setTopSellers(res.data.data || res.data);
+      } catch (err) {
+        console.error("Failed to fetch top sellers:", err);
       }
     };
 
@@ -77,20 +57,14 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  return (
-    <div className="bg-gray-50">
+  return <div className="bg-gray-50">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gray-900 opacity-40" />
         </div>
         <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               {t("home.hero_title")}
             </h1>
@@ -99,18 +73,12 @@ const Home = () => {
             </p>
             <div className="mt-10 flex justify-center">
               <div className="rounded-md shadow">
-                <Link
-                  to="/register"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
-                >
+                <Link to="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
                   {t("home.become_seller")}
                 </Link>
               </div>
               <div className="ml-4 rounded-md shadow">
-                <Link
-                  to="/products"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-900 bg-opacity-60 hover:bg-opacity-70 md:py-4 md:text-lg md:px-10"
-                >
+                <Link to="/products" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-900 bg-opacity-60 hover:bg-opacity-70 md:py-4 md:text-lg md:px-10">
                   {t("home.browse_products")}
                 </Link>
               </div>
@@ -150,23 +118,18 @@ const Home = () => {
                 {t("home.featured_products_subtitle")}
               </p>
             </div>
-            <Link
-              to="/products"
-              className="text-green-600 hover:text-green-800 font-medium"
-            >
+            <Link to="/products" className="text-green-600 hover:text-green-800 font-medium">
               {t("home.view_all")} →
             </Link>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-            {products.length > 0
-              ? products.map(product =>
+            {products.length > 0 ? products.map(product =>
                   <ProductCard
                     key={product.id}
                     product={product}
                     onClick={() => console.log("Add to cart:", product.id)}
                   />
-                )
-              : <p className="col-span-full text-center text-gray-500">
+                ) : <p className="col-span-full text-center text-gray-500">
                   {t("home.no_featured_products")}
                 </p>}
           </div>
@@ -185,17 +148,16 @@ const Home = () => {
                 {t("home.top_sellers_subtitle")}
               </p>
             </div>
-            <Link
-              to="/sellers"
-              className="text-green-600 hover:text-green-800 font-medium"
-            >
+            <Link to="/sellers" className="text-green-600 hover:text-green-800 font-medium">
               {t("home.view_all")} →
             </Link>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {topSellers.map(seller =>
-              <SellerCard key={seller.id} seller={seller} />
-            )}
+            {topSellers.length > 0 ? topSellers.map(seller =>
+                  <SellerCard key={seller.id} seller={seller} />
+                ) : <p className="col-span-full text-center text-gray-500">
+                  {t("home.no_top_sellers")}
+                </p>}
           </div>
         </div>
       </section>
@@ -219,18 +181,8 @@ const Home = () => {
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                      />
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
                 </div>
@@ -247,18 +199,8 @@ const Home = () => {
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-                      />
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
                     </svg>
                   </div>
                 </div>
@@ -275,18 +217,8 @@ const Home = () => {
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
                 </div>
@@ -303,18 +235,8 @@ const Home = () => {
               <div className="flex">
                 <div className="flex-shrink-0">
                   <div className="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white">
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                      />
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     </svg>
                   </div>
                 </div>
@@ -347,10 +269,7 @@ const Home = () => {
               </div>
               <div className="mt-8 lg:mt-0 lg:ml-8">
                 <div className="inline-flex rounded-md shadow">
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50"
-                  >
+                  <Link to="/register" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50">
                     {t("home.get_started")}
                   </Link>
                 </div>
@@ -359,8 +278,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
 
 export default Home;

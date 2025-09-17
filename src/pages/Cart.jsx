@@ -29,15 +29,13 @@ const Cart = () => {
     }).format(amount);
   };
 
-  return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+  return <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto lg:max-w-none">
         <h1 className="text-3xl font-extrabold text-gray-900">
           {t("cart.title")}
         </h1>
 
-        {cartItems.length === 0
-          ? <div className="mt-12 text-center">
+        {cartItems.length === 0 ? <div className="mt-12 text-center">
               <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32 mx-auto" />
               <h2 className="mt-6 text-2xl font-bold text-gray-900">
                 {t("cart.empty_title")}
@@ -46,27 +44,20 @@ const Cart = () => {
                 {t("cart.empty_message")}
               </p>
               <div className="mt-10">
-                <Link
-                  to="/products"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-                >
+                <Link to="/products" className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                   {t("cart.shop_now")}
                 </Link>
               </div>
-            </div>
-          : <div className="mt-8 lg:grid lg:grid-cols-12 lg:gap-x-12">
+            </div> : <div className="mt-8 lg:grid lg:grid-cols-12 lg:gap-x-12">
               <section className="lg:col-span-7">
                 <ul className="divide-y divide-gray-200">
                   {cartItems.map(item =>
                     <li key={item.id} className="py-6 flex">
                       <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden">
                         <img
-                          src={
-                            item.thumbnail ||
-                            `https://source.unsplash.com/random/300x300?product,${item.id}`
-                          }
+                          src={"" + item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-center object-cover"
                         />
                       </div>
 
@@ -128,10 +119,7 @@ const Cart = () => {
                 </ul>
 
                 <div className="mt-8">
-                  <button
-                    onClick={clearCart}
-                    className="text-sm font-medium text-red-600 hover:text-red-500"
-                  >
+                  <button onClick={clearCart} className="text-sm font-medium text-red-600 hover:text-red-500">
                     {t("cart.clear_cart")}
                   </button>
                 </div>
@@ -178,18 +166,14 @@ const Cart = () => {
                 </dl>
 
                 <div className="mt-6">
-                  <button
-                    onClick={() => navigate("/checkout")}
-                    className="w-full bg-green-600 border border-transparent rounded-md py-3 px-4 flex items-center justify-center text-base font-medium text-white hover:bg-green-700"
-                  >
+                  <button onClick={() => navigate("/checkout")} className="w-full bg-green-600 border border-transparent rounded-md py-3 px-4 flex items-center justify-center text-base font-medium text-white hover:bg-green-700">
                     {t("cart.checkout")}
                   </button>
                 </div>
               </section>
             </div>}
       </div>
-    </div>
-  );
+    </div>;
 };
 
 export default Cart;

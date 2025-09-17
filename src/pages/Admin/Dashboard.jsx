@@ -13,7 +13,10 @@ import {
   ArrowTrendingDownIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  StarIcon,
+  CheckIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -173,6 +176,29 @@ const DataTable = ({
                           style: 'currency',
                           currency: 'USD'
                         }).format(cellValue || 0)
+                      ) : column.isStars ? (
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <StarIcon
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= cellValue
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      ) : column.isStatus ? (
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          cellValue === 'approved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : cellValue === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {cellValue}
+                        </span>
                       ) : (
                         cellValue
                       )}
@@ -414,6 +440,97 @@ const ProductManagement = ({ products, loading, error, navigate, handleProductSt
         <DataTable 
           columns={columns} 
           data={productData} 
+        />
+      )}
+    </div>
+  );
+};
+
+// ReviewManagement Component
+const ReviewManagement = ({ reviews, loading, error, handleReviewStatus }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const columns = [
+    { header: 'ID', accessor: 'id' },
+    { header: 'User', accessor: 'user_name' },
+    { header: 'Product', accessor: 'product_name' },
+    { header: 'Rating', accessor: 'rating', isStars: true },
+    { header: 'Comment', accessor: 'comment' },
+    { header: 'Status', accessor: 'status', isStatus: true },
+    { header: 'Date', accessor: 'date' },
+    { header: 'Actions', accessor: 'actions' }
+  ];
+
+  const reviewData = reviews.map(review => ({
+    ...review,
+    user_name: review.user?.name || 'Unknown User',
+    product_name: review.product?.name || 'Unknown Product',
+    status: review.status || 'pending',
+    date: new Date(review.created_at).toLocaleDateString(),
+    actions: (
+      <div className="flex space-x-2">
+        {review.status === 'pending' && (
+          <>
+            <button
+              className="text-green-600 hover:text-green-900 flex items-center"
+              onClick={() => handleReviewStatus(review.id, 'approved')}
+              title="Approve Review"
+            >
+              <CheckIcon className="h-4 w-4 mr-1" />
+              Approve
+            </button>
+            <button
+              className="text-red-600 hover:text-red-900 flex items-center"
+              onClick={() => handleReviewStatus(review.id, 'rejected')}
+              title="Reject Review"
+            >
+              <XMarkIcon className="h-4 w-4 mr-1" />
+              Reject
+            </button>
+          </>
+        )}
+        {review.status === 'approved' && (
+          <button
+            className="text-red-600 hover:text-red-900 flex items-center"
+            onClick={() => handleReviewStatus(review.id, 'rejected')}
+            title="Reject Review"
+          >
+            <XMarkIcon className="h-4 w-4 mr-1" />
+            Reject
+          </button>
+        )}
+        {review.status === 'rejected' && (
+          <button
+            className="text-green-600 hover:text-green-900 flex items-center"
+            onClick={() => handleReviewStatus(review.id, 'approved')}
+            title="Approve Review"
+          >
+            <CheckIcon className="h-4 w-4 mr-1" />
+            Approve
+          </button>
+        )}
+      </div>
+    )
+  }));
+
+  return (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">Review Management</h3>
+          <p className="mt-1 text-sm text-gray-500">Manage product reviews and ratings</p>
+        </div>
+      </div>
+      
+      {loading && <div className="p-8 flex justify-center">Loading...</div>}
+      {error && <div className="p-4 text-red-500">Error loading reviews</div>}
+      
+      {!loading && !error && (
+        <DataTable 
+          columns={columns} 
+          data={reviewData} 
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
         />
       )}
     </div>
@@ -751,6 +868,7 @@ const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [orders, setOrders] = useState([]);
   const [categories, setCategories] = useState([]);
   
@@ -758,6 +876,7 @@ const AdminDashboard = () => {
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [isProductsLoading, setIsProductsLoading] = useState(false);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
   const [isOrdersLoading, setIsOrdersLoading] = useState(false);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
   
@@ -765,6 +884,7 @@ const AdminDashboard = () => {
   const [dashboardError, setDashboardError] = useState(null);
   const [usersError, setUsersError] = useState(null);
   const [productsError, setProductsError] = useState(null);
+  const [reviewsError, setReviewsError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
   const [categoriesError, setCategoriesError] = useState(null);
 
@@ -842,9 +962,32 @@ const AdminDashboard = () => {
     fetchProducts();
   }, [activeTab]);
 
-  // Fetch orders when orders tab is active
+  // Fetch reviews when reviews tab is active
   useEffect(() => {
     if (activeTab !== 3) return;
+    
+    const fetchReviews = async () => {
+      setIsReviewsLoading(true);
+      setReviewsError(null);
+      try {
+        const response = await api.get('/dashboard/reviews');
+        // Handle different API response structures
+        const reviewsData = response.data.data || response.data;
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+      } catch (error) {
+        setReviewsError(error);
+        console.error('Error fetching reviews:', error);
+      } finally {
+        setIsReviewsLoading(false);
+      }
+    };
+    
+    fetchReviews();
+  }, [activeTab]);
+
+  // Fetch orders when orders tab is active
+  useEffect(() => {
+    if (activeTab !== 4) return;
     
     const fetchOrders = async () => {
       setIsOrdersLoading(true);
@@ -867,7 +1010,8 @@ const AdminDashboard = () => {
 
   // Fetch categories when category tab is active
   useEffect(() => {
-    if (activeTab !== 4) return;
+    if (activeTab !== 5) return;
+    
     const fetchCategories = async () => {
       setIsCategoriesLoading(true);
       setCategoriesError(null);
@@ -882,6 +1026,7 @@ const AdminDashboard = () => {
         setIsCategoriesLoading(false);
       }
     };
+    
     fetchCategories();
   }, [activeTab]);
 
@@ -923,6 +1068,18 @@ const AdminDashboard = () => {
         }
         break;
       case 3:
+        setIsReviewsLoading(true);
+        try {
+          const response = await api.get('/dashboard/reviews');
+          const reviewsData = response.data.data || response.data;
+          setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        } catch (error) {
+          setReviewsError(error);
+        } finally {
+          setIsReviewsLoading(false);
+        }
+        break;
+      case 4:
         setIsOrdersLoading(true);
         try {
           const response = await api.get('/orders');
@@ -934,7 +1091,7 @@ const AdminDashboard = () => {
           setIsOrdersLoading(false);
         }
         break;
-      case 4:
+      case 5:
         setIsCategoriesLoading(true);
         try {
           const response = await api.get('/categories');
@@ -975,6 +1132,19 @@ const AdminDashboard = () => {
     }
   };
 
+  // Handle review status update
+  const handleReviewStatus = async (reviewId, status) => {
+    try {
+      await api.put(`/reviews/${reviewId}`, { status });
+      setReviews(reviews.map(review => 
+        review.id === reviewId ? { ...review, status } : review
+      ));
+    } catch (error) {
+      console.error('Failed to update review status:', error);
+      alert('Failed to update review status');
+    }
+  };
+
   // Handle order status update
   const updateOrderStatus = async (orderId, status) => {
     try {
@@ -1001,7 +1171,7 @@ const AdminDashboard = () => {
 
   const navigation = [
     {
-      name: t('dashboard.title'),
+      name: t('dashboard'),
       icon: ChartBarIcon,
       component: (
         <DashboardOverview 
@@ -1012,7 +1182,7 @@ const AdminDashboard = () => {
       )
     },
     {
-      name: t('users.title'),
+      name: t('users'),
       icon: UserGroupIcon,
       component: (
         <UserManagement 
@@ -1026,7 +1196,7 @@ const AdminDashboard = () => {
       )
     },
     {
-      name: t('products.title'),
+      name: t('products'),
       icon: CubeIcon,
       component: (
         <ProductManagement 
@@ -1039,7 +1209,19 @@ const AdminDashboard = () => {
       )
     },
     {
-      name: t('orders.title'),
+      name: t('reviews'),
+      icon: StarIcon,
+      component: (
+        <ReviewManagement
+          reviews={reviews}
+          loading={isReviewsLoading}
+          error={reviewsError}
+          handleReviewStatus={handleReviewStatus}
+        />
+      )
+    },
+    {
+      name: t('orders'),
       icon: ShoppingBagIcon,
       component: (
         <OrderManagement 
@@ -1063,12 +1245,12 @@ const AdminDashboard = () => {
       )
     },
     {
-      name: t('analytics.title'),
+      name: t('analytics'),
       icon: CurrencyDollarIcon,
       component: <Analytics products={products} />
     },
     {
-      name: t('settings.title'),
+      name: t('settings'),
       icon: CogIcon,
       component: <Settings />
     }
