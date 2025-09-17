@@ -163,11 +163,14 @@ const DataTable = ({
                   // In your DataTable component, make sure it handles the isStars and isStatus column types
                   const cellValue = row[column.accessor];
                   return (
+                    // In your DataTable component, update the cell rendering logic:
                     <td
                       key={`${rowIndex}-${column.accessor}`}
                       className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                     >
-                      {column.isImage ? (
+                      {column.cell ? (
+                        column.cell(row) // Use custom cell renderer if provided
+                      ) : column.isImage ? (
                         <img
                           src={cellValue || "/placeholder-image.jpg"}
                           alt=""
@@ -321,44 +324,107 @@ const DashboardOverview = ({ data, loading, error }) => {
 };
 
 // UserManagement Component
+// UserManagement Component - Enhanced
+// UserManagement Component - Enhanced
 const UserManagement = ({
   users,
   loading,
   error,
   searchTerm,
   onSearchChange,
-  handleRoleChange
+  handleRoleChange,
+  handleUserStatus,
+  handleDeleteUser
 }) => {
   const columns = [
     { header: "ID", accessor: "id" },
     { header: "Name", accessor: "name" },
     { header: "Email", accessor: "email" },
-    { header: "Role", accessor: "role" },
-    { header: "Status", accessor: "status" },
-    { header: "Created At", accessor: "created_at" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const userData = users.map((user) => ({
-    ...user,
-    role: user.roles?.[0]?.name || "buyer",
-    status: user.is_active ? "Active" : "Inactive",
-    created_at: new Date(user.created_at).toLocaleDateString(),
-    actions: (
-      <div className="flex space-x-2">
+    { header: "Phone", accessor: "phone" },
+    {
+      header: "Role",
+      accessor: "role",
+      cell: (row) => (
         <select
-          value={user.roles?.[0]?.name || "buyer"}
-          onChange={(e) => handleRoleChange(user.id, e.target.value)}
-          className="text-sm border rounded p-1"
+          value={row.role}
+          onChange={(e) => handleRoleChange(row.id, e.target.value)}
+          className="text-sm border rounded p-1 focus:ring-2 focus:ring-green-500"
         >
           <option value="admin">Admin</option>
           <option value="seller">Seller</option>
           <option value="buyer">Buyer</option>
         </select>
-        <button className="text-red-600 hover:text-red-900">Delete</button>
-      </div>
-    )
-  }));
+      )
+    },
+    {
+      header: "Status",
+      accessor: "status",
+      isStatus: true,
+      cell: (row) => (
+        <select
+          value={row.is_active ? "active" : "inactive"}
+          onChange={(e) =>
+            handleUserStatus(row.id, e.target.value === "active")
+          }
+          className={`px-2 py-1 text-xs font-medium rounded-full ${
+            row.is_active
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          } border-0 focus:ring-2 focus:ring-green-500`}
+        >
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      )
+    },
+    { header: "Created At", accessor: "created_at" },
+    {
+      header: "Actions",
+      accessor: "actions",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            className="text-red-600 hover:text-red-900"
+            onClick={() => handleDeleteUser(row.id)}
+            title="Delete User"
+          >
+            Delete
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  // In UserManagement component, fix the role extraction:
+const userData = users.map((user) => {
+  // Debug the user object to see the actual structure
+  console.log("User object:", user);
+  
+  // Extract role properly - try different possible structures
+  let userRole = "buyer";
+  
+  if (user.roles && Array.isArray(user.roles)) {
+    // If roles is an array of objects with 'name' property
+    userRole = user.roles[0]?.name || "buyer";
+  } else if (user.roles && typeof user.roles === 'string') {
+    // If roles is a string
+    userRole = user.roles;
+  } else if (user.role) {
+    // If there's a direct 'role' property
+    userRole = user.role;
+  } else if (user.type) {
+    // Fallback to user type
+    userRole = user.type;
+  }
+  
+  return {
+    ...user,
+    role: userRole,
+    status: user.is_active ? "Active" : "Inactive",
+    created_at: new Date(user.created_at).toLocaleDateString(),
+    is_active: user.is_active !== undefined ? user.is_active : true
+  };
+});
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -369,16 +435,34 @@ const UserManagement = ({
             Manage all registered users
           </p>
         </div>
+        <div className="relative max-w-xs">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search users by name, email, or phone..."
+            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
       </div>
 
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading users</div>}
+      {loading && (
+        <div className="p-8 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      )}
+      {error && (
+        <div className="p-4 text-red-500">
+          Error loading users: {error.message}
+        </div>
+      )}
 
       {!loading && !error && (
         <DataTable
           columns={columns}
           data={userData}
-          searchTerm={searchTerm} // This should be a string
+          searchTerm={searchTerm}
           onSearchChange={onSearchChange}
         />
       )}
@@ -387,9 +471,6 @@ const UserManagement = ({
 };
 
 //Seller Management Component
-// SellerManagement Component
-// SellerManagement Component - Updated
-// SellerManagement Component with Status Management
 const SellerManagement = ({
   sellers,
   loading,
@@ -409,9 +490,9 @@ const SellerManagement = ({
     { header: "City", accessor: "city" },
     { header: "Rating", accessor: "rating", isStars: true },
     { header: "Reviews", accessor: "reviews_count" },
-    { 
-      header: "Status", 
-      accessor: "status", 
+    {
+      header: "Status",
+      accessor: "status",
       isStatus: true,
       // Custom status display with dropdown for management
       cell: (row) => (
@@ -419,13 +500,13 @@ const SellerManagement = ({
           value={row.status}
           onChange={(e) => handleSellerStatus(row.id, e.target.value)}
           className={`px-2 py-1 text-xs font-medium rounded-full ${
-            row.status === 'approved' || row.status === 'active'
-              ? 'bg-green-100 text-green-800'
-              : row.status === 'pending'
-              ? 'bg-yellow-100 text-yellow-800'
-              : row.status === 'suspended' || row.status === 'closed'
-              ? 'bg-red-100 text-red-800'
-              : 'bg-gray-100 text-gray-800'
+            row.status === "approved" || row.status === "active"
+              ? "bg-green-100 text-green-800"
+              : row.status === "pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : row.status === "suspended" || row.status === "closed"
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-100 text-gray-800"
           } border-0 focus:ring-2 focus:ring-green-500`}
         >
           <option value="pending">Pending</option>
@@ -1184,65 +1265,67 @@ const AdminDashboard = () => {
     if (activeTab !== 1) return;
 
     const fetchUsers = async () => {
-      setIsUsersLoading(true);
-      setUsersError(null);
-      try {
-        const response = await api.get("/users");
-        // Handle different API response structures
-        const usersData = response.data.data || response.data;
-        setUsers(Array.isArray(usersData) ? usersData : []);
-      } catch (error) {
-        setUsersError(error);
-        console.error("Error fetching users:", error);
-      } finally {
-        setIsUsersLoading(false);
-      }
-    };
+  setIsUsersLoading(true);
+  setUsersError(null);
+  try {
+    const response = await api.get("/users");
+    
+    // Handle different API response structures
+    const usersData = response.data.data || response.data;
+    console.log("Processed users data:", usersData); // Debug log
+    
+    setUsers(Array.isArray(usersData) ? usersData : []);
+  } catch (error) {
+    setUsersError(error);
+    console.error("Error fetching users:", error);
+  } finally {
+    setIsUsersLoading(false);
+  }
+};
 
     fetchUsers();
   }, [activeTab, searchTerm]);
 
   //Fetch sellers for analytics
   useEffect(() => {
-  if (activeTab !== 2) return;
+    if (activeTab !== 2) return;
 
-  const fetchSellers = async () => {
-    setIsSellersLoading(true);
-    setSellersError(null);
-    try {
-      const params = {
-        search: sellerSearchTerm || undefined, // Only send if not empty
-        page: sellerSearchPage || 1 // Add page state if you want pagination
-      };
+    const fetchSellers = async () => {
+      setIsSellersLoading(true);
+      setSellersError(null);
+      try {
+        const params = {
+          search: sellerSearchTerm || undefined, // Only send if not empty
+          page: sellerSearchPage || 1 // Add page state if you want pagination
+        };
 
-      const response = await api.get("/dashboard/sellers", { params });
+        const response = await api.get("/dashboard/sellers", { params });
 
-      // Handle response
-      if (response.data.data && response.data.data.data) {
-        setSellers(response.data.data.data);
-        setSellersPagination({
-          current_page: response.data.data.current_page,
-          per_page: response.data.data.per_page,
-          total: response.data.data.total,
-          last_page: response.data.data.last_page,
-          from: response.data.data.from,
-          to: response.data.data.to
-        });
-      } else {
-        setSellers(response.data.data || []);
-        setSellersPagination(null);
+        // Handle response
+        if (response.data.data && response.data.data.data) {
+          setSellers(response.data.data.data);
+          setSellersPagination({
+            current_page: response.data.data.current_page,
+            per_page: response.data.data.per_page,
+            total: response.data.data.total,
+            last_page: response.data.data.last_page,
+            from: response.data.data.from,
+            to: response.data.data.to
+          });
+        } else {
+          setSellers(response.data.data || []);
+          setSellersPagination(null);
+        }
+      } catch (error) {
+        setSellersError(error);
+        console.error("Error fetching sellers:", error);
+      } finally {
+        setIsSellersLoading(false);
       }
-    } catch (error) {
-      setSellersError(error);
-      console.error("Error fetching sellers:", error);
-    } finally {
-      setIsSellersLoading(false);
-    }
-  };
+    };
 
-  fetchSellers();
-}, [activeTab, sellerSearchTerm, sellerSearchPage]); // Add sellerSearchPage to dependencies if using pagination
-
+    fetchSellers();
+  }, [activeTab, sellerSearchTerm, sellerSearchPage]); // Add sellerSearchPage to dependencies if using pagination
 
   // Fetch products when products tab is active
   useEffect(() => {
@@ -1439,6 +1522,70 @@ const AdminDashboard = () => {
     }
   };
 
+  //Handle user status
+  // In your handleUserStatus function, add a fallback:
+  const handleUserStatus = async (userId, isActive) => {
+    try {
+      // Try the new endpoint first
+      await api.put(`/users/${userId}`, { is_active: isActive });
+
+      // Update local state
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, is_active: isActive } : user
+        )
+      );
+
+      alert(
+        `User status updated to ${
+          isActive ? "active" : "inactive"
+        } successfully`
+      );
+    } catch (error) {
+      console.error("Failed to update user status:", error);
+
+      // Fallback: try using the role assignment endpoint
+      try {
+        const role = isActive ? "buyer" : "suspended"; // Adjust based on your role system
+        await api.post(`/users/${userId}/assign-roles`, { roles: [role] });
+
+        // Update local state
+        setUsers(
+          users.map((user) =>
+            user.id === userId ? { ...user, is_active: isActive } : user
+          )
+        );
+
+        alert(
+          `User status updated to ${
+            isActive ? "active" : "inactive"
+          } successfully`
+        );
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        alert("Failed to update user status");
+      }
+    }
+  };
+
+  // Handle user deletion
+  const handleDeleteUser = async (userId) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this user? This action cannot be undone."
+      )
+    ) {
+      try {
+        await api.delete(`/users/${userId}`);
+        setUsers(users.filter((user) => user.id !== userId));
+        alert("User deleted successfully");
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        alert(error.response?.data?.message || "Failed to delete user");
+      }
+    }
+  };
+
   // Handle user role change
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -1470,46 +1617,45 @@ const AdminDashboard = () => {
   };
 
   // Handle seller status change
-  // Handle seller status change
-const handleSellerStatus = async (sellerId, status, reason = "") => {
-  try {
-    let response;
-    let data = { status };
+  const handleSellerStatus = async (sellerId, status, reason = "") => {
+    try {
+      let response;
+      let data = { status };
 
-    // Add reason if provided
-    if (reason) {
-      data.reason = reason;
+      // Add reason if provided
+      if (reason) {
+        data.reason = reason;
+      }
+
+      // Use PUT request to update seller status
+      response = await api.put(`/sellers/${sellerId}`, data);
+
+      if (response.data.success) {
+        // Update the local state
+        setSellers(
+          sellers.map((seller) =>
+            seller.id === sellerId ? { ...seller, status } : seller
+          )
+        );
+
+        // Show success message
+        alert(`Seller status updated to ${status} successfully`);
+      }
+    } catch (error) {
+      console.error("Failed to update seller status:", error);
+      alert(error.response?.data?.message || "Failed to update seller status");
     }
-
-    // Use PUT request to update seller status
-    response = await api.put(`/sellers/${sellerId}`, data);
-
-    if (response.data.success) {
-      // Update the local state
-      setSellers(
-        sellers.map((seller) =>
-          seller.id === sellerId ? { ...seller, status } : seller
-        )
-      );
-
-      // Show success message
-      alert(`Seller status updated to ${status} successfully`);
-    }
-  } catch (error) {
-    console.error("Failed to update seller status:", error);
-    alert(error.response?.data?.message || "Failed to update seller status");
-  }
-};
+  };
 
   // Handle search for sellers
   const handleSellerSearch = (value, type = "search") => {
-  if (type === "status" && value === "") {
-    // When "All Status" is selected, set status to empty
-    setSellerSearchTerm((prev) => ({ ...prev, status: "", page: 1 }));
-  } else {
-    setSellerSearchTerm((prev) => ({ ...prev, [type]: value, page: 1 }));
-  }
-};
+    if (type === "status" && value === "") {
+      // When "All Status" is selected, set status to empty
+      setSellerSearchTerm((prev) => ({ ...prev, status: "", page: 1 }));
+    } else {
+      setSellerSearchTerm((prev) => ({ ...prev, [type]: value, page: 1 }));
+    }
+  };
 
   // Handle page change
   const handleSellerPageChange = (page) => {
@@ -1601,28 +1747,30 @@ const handleSellerStatus = async (sellerId, status, reason = "") => {
           users={users}
           loading={isUsersLoading}
           error={usersError}
-          searchTerm={mainSearchTerm} // This should be a string
+          searchTerm={mainSearchTerm}
           onSearchChange={setMainSearchTerm}
           handleRoleChange={handleRoleChange}
+          handleUserStatus={handleUserStatus}
+          handleDeleteUser={handleDeleteUser}
         />
       )
     },
     {
-  name: "Sellers",
-  icon: UserGroupIcon,
-  component: (
-    <SellerManagement
-      sellers={sellers}
-      loading={isSellersLoading}
-      error={sellersError}
-      handleSellerStatus={handleSellerStatus}
-      searchTerm={sellerSearchTerm} // Now just a string
-      onSearchChange={setSellerSearchTerm} // Simple setter function
-      pagination={sellersPagination}
-      onPageChange={setSellerSearchPage} // If you want pagination
-    />
-  )
-},
+      name: "Sellers",
+      icon: UserGroupIcon,
+      component: (
+        <SellerManagement
+          sellers={sellers}
+          loading={isSellersLoading}
+          error={sellersError}
+          handleSellerStatus={handleSellerStatus}
+          searchTerm={sellerSearchTerm} // Now just a string
+          onSearchChange={setSellerSearchTerm} // Simple setter function
+          pagination={sellersPagination}
+          onPageChange={setSellerSearchPage} // If you want pagination
+        />
+      )
+    },
     {
       name: t("products"),
       icon: CubeIcon,
