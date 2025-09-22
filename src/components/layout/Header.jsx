@@ -50,10 +50,9 @@ const Header = () => {
     { name: t('header.categories'), href: '/categories' },
   ];
 
-  // Add role-specific navigation items
   const userNavigation = [
-    { name: t('profile'), onClick: handleDashboardNavigation },
-    { name: t('logout'), onClick: handleLogout }
+    { name: t('header.profile'), onClick: handleDashboardNavigation },
+    { name: t('header.logout'), onClick: handleLogout }
   ];
 
   return (
@@ -69,7 +68,9 @@ const Header = () => {
                     <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-white font-bold text-sm sm:text-base">
                       B2B
                     </div>
-                    <span className="ml-2 text-lg sm:text-xl font-bold text-green-700 ">မြန်မာ B2B</span>
+                    <span className="ml-2 text-lg sm:text-xl font-bold text-green-700">
+                      {t('header.logo_text')}
+                    </span>
                   </Link>
                 </div>
                 
@@ -98,7 +99,7 @@ const Header = () => {
                       id="search"
                       name="search"
                       className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
-                      placeholder={t('header.search')}
+                      placeholder={t('header.search_placeholder')}
                       type="search"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -120,7 +121,7 @@ const Header = () => {
               {/* Right side - User controls */}
               <div className="flex items-center">
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                  {/* Language switcher - Always visible on desktop */}
+                  {/* Language switcher */}
                   <div className="hidden sm:flex items-center bg-gray-100 rounded-md p-1">
                     <button
                       onClick={() => changeLanguage('en')}
@@ -132,7 +133,7 @@ const Header = () => {
                       onClick={() => changeLanguage('my')}
                       className={`px-2 py-1 text-xs rounded-md ${i18n.language === 'my' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-700 hover:text-green-600'}`}
                     >
-                      မြန်မာ
+                      {t('header.burmese')}
                     </button>
                   </div>
                   
@@ -219,7 +220,7 @@ const Header = () => {
                       id="mobile-search"
                       name="mobile-search"
                       className="block w-full pl-9 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
-                      placeholder={t('header.search')}
+                      placeholder={t('header.search_placeholder')}
                       type="search"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -253,7 +254,7 @@ const Header = () => {
                       id="mobile-menu-search"
                       name="mobile-menu-search"
                       className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
-                      placeholder={t('header.search')}
+                      placeholder={t('header.search_placeholder')}
                       type="search"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -294,7 +295,7 @@ const Header = () => {
                       onClick={() => changeLanguage('my')}
                       className={`px-3 py-1 text-xs rounded-md ${i18n.language === 'my' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}
                     >
-                      မြန်မာ
+                      {t('header.burmese')}
                     </button>
                   </div>
                 </div>

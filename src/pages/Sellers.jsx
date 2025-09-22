@@ -7,6 +7,7 @@ import { StarIcon, ChevronDownIcon, FunnelIcon, MagnifyingGlassIcon } from "@her
 
 import SellerCard from "../components/ui/SellerCard";
 import Pagination from "../components/ui/Pagination";
+import api from "../utils/api";
 
 const Sellers = () => {
   const { t } = useTranslation();
@@ -18,47 +19,71 @@ const Sellers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sellersPerPage] = useState(12);
   const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data for sellers
+  // Fetch sellers from API
   useEffect(() => {
-    // In a real app, this would be an API call
-    const mockSellers = [
-      { id: 1, name: "Golden Harvest", category: "Agriculture", rating: 4.7, reviewCount: 245, joined: "2020-05-12", products: 42, verified: true },
-      { id: 2, name: "Yangon Crafts", category: "Handicrafts", rating: 4.5, reviewCount: 187, joined: "2021-02-28", products: 38, verified: true },
-      { id: 3, name: "Mandalay Woodworks", category: "Furniture", rating: 4.9, reviewCount: 312, joined: "2019-11-15", products: 57, verified: true },
-      { id: 4, name: "Shan Coffee Co.", category: "Food & Beverage", rating: 4.6, reviewCount: 198, joined: "2020-08-05", products: 24, verified: true },
-      { id: 5, name: "Irrawaddy Fisheries", category: "Seafood", rating: 4.3, reviewCount: 124, joined: "2021-06-18", products: 19, verified: false },
-      { id: 6, name: "Bagan Textiles", category: "Textiles", rating: 4.8, reviewCount: 267, joined: "2020-03-22", products: 48, verified: true },
-      { id: 7, name: "Inle Silverworks", category: "Jewelry", rating: 4.9, reviewCount: 189, joined: "2021-01-10", products: 31, verified: true },
-      { id: 8, name: "Kachin Tea Traders", category: "Food & Beverage", rating: 4.4, reviewCount: 156, joined: "2020-09-30", products: 22, verified: true },
-      { id: 9, name: "Rakhine Pottery", category: "Handicrafts", rating: 4.2, reviewCount: 98, joined: "2021-07-12", products: 16, verified: false },
-      { id: 10, name: "Mon Fruits", category: "Agriculture", rating: 4.5, reviewCount: 143, joined: "2020-04-25", products: 29, verified: true },
-      { id: 11, name: "Chin Handwoven", category: "Textiles", rating: 4.7, reviewCount: 176, joined: "2021-03-17", products: 34, verified: true },
-      { id: 12, name: "Ayeyarwady Rice Mill", category: "Agriculture", rating: 4.6, reviewCount: 201, joined: "2019-12-08", products: 41, verified: true },
-      { id: 13, name: "Tanintharyi Spices", category: "Food & Beverage", rating: 4.3, reviewCount: 112, joined: "2021-05-19", products: 18, verified: false },
-      { id: 14, name: "Sagaing Woodcraft", category: "Furniture", rating: 4.8, reviewCount: 234, joined: "2020-07-14", products: 52, verified: true },
-      { id: 15, name: "Magway Stone Carvings", category: "Handicrafts", rating: 4.1, reviewCount: 87, joined: "2021-08-23", products: 14, verified: false },
-      { id: 16, name: "Kayin Honey Farms", category: "Agriculture", rating: 4.9, reviewCount: 278, joined: "2020-01-30", products: 27, verified: true },
-      { id: 17, name: "Kayah Bamboo Crafts", category: "Handicrafts", rating: 4.4, reviewCount: 132, joined: "2021-04-11", products: 21, verified: true },
-      { id: 18, name: "Yangon Metalworks", category: "Handicrafts", rating: 4.0, reviewCount: 101, joined: "2021-09-05", products: 17, verified: false },
-      { id: 19, name: "Mandalay Silk", category: "Textiles", rating: 4.7, reviewCount: 243, joined: "2019-10-12", products: 45, verified: true },
-      { id: 20, name: "Bago Organic Farms", category: "Agriculture", rating: 4.6, reviewCount: 192, joined: "2020-06-27", products: 33, verified: true },
-    ];
+    const fetchSellers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.get('/sellers?per_page=50');
+        console.log('API Response:', res);
+        
+        let sellersData = [];
+        
+        if (res.data && res.data.success) {
+          sellersData = res.data.data?.data || res.data.data || [];
+        } else {
+          sellersData = res.data?.data || res.data || [];
+        }
+        
+        console.log('Extracted sellers data:', sellersData);
+        
+        if (sellersData && Array.isArray(sellersData) && sellersData.length > 0) {
+          const transformedSellers = sellersData.map(seller => ({
+            id: seller.id,
+            name: seller.store_name || seller.user?.name || t('sellers.unknown_seller'),
+            category: seller.business_type || t('sellers.uncategorized'),
+            rating: parseFloat(seller.reviews_avg_rating) || 0,
+            reviewCount: seller.reviews_count || 0,
+            joined: seller.created_at,
+            products: seller.products_count || 0,
+            verified: seller.status === 'active' || seller.status === 'approved',
+            originalData: seller
+          }));
+          
+          console.log('Transformed sellers:', transformedSellers);
+          setSellers(transformedSellers);
+          setFilteredSellers(transformedSellers);
+        } else {
+          console.log('No sellers data found');
+          setSellers([]);
+          setFilteredSellers([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch sellers:", err);
+        setError(t('sellers.fetch_error'));
+        setSellers([]);
+        setFilteredSellers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setSellers(mockSellers);
-    setFilteredSellers(mockSellers);
-  }, []);
+    fetchSellers();
+  }, [t]);
 
   // Categories for filtering
   const categories = [
     { id: "all", name: t("sellers.all_categories") },
-    { id: "Agriculture", name: t("sellers.agriculture") },
-    { id: "Handicrafts", name: t("sellers.handicrafts") },
-    { id: "Textiles", name: t("sellers.textiles") },
-    { id: "Furniture", name: t("sellers.furniture") },
-    { id: "Food & Beverage", name: t("sellers.food_beverage") },
-    { id: "Jewelry", name: t("sellers.jewelry") },
-    { id: "Seafood", name: t("sellers.seafood") },
+    { id: "individual", name: t("sellers.individual") },
+    { id: "company", name: t("sellers.company") },
+    { id: "retail", name: t("sellers.retail") },
+    { id: "wholesale", name: t("sellers.wholesale") },
+    { id: "manufacturer", name: t("sellers.manufacturer") },
+    { id: "Uncategorized", name: t("sellers.uncategorized") },
   ];
 
   // Sort options
@@ -77,7 +102,7 @@ const Sellers = () => {
     if (searchTerm) {
       result = result.filter(seller =>
         seller.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        seller.category.toLowerCase().includes(searchTerm.toLowerCase())
+        (seller.category && seller.category.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -101,7 +126,7 @@ const Sellers = () => {
     });
 
     setFilteredSellers(result);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   }, [searchTerm, selectedCategory, sortOption, sellers]);
 
   // Get current sellers
@@ -111,6 +136,41 @@ const Sellers = () => {
 
   // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
+          <p className="mt-4 text-gray-700">{t('sellers.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('sellers.error_title')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{error}</p>
+          <div className="mt-6">
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+            >
+              {t('sellers.try_again')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -258,9 +318,15 @@ const Sellers = () => {
           <h2 className="text-2xl font-bold text-gray-900">
             {t("sellers.all_sellers")} <span className="text-green-600">({filteredSellers.length})</span>
           </h2>
-          <p className="text-sm text-gray-500 hidden md:block">
-            {t("sellers.showing")} {Math.min(indexOfFirstSeller + 1, filteredSellers.length)} - {Math.min(indexOfLastSeller, filteredSellers.length)} {t("sellers.of")} {filteredSellers.length}
-          </p>
+          {filteredSellers.length > 0 && (
+            <p className="text-sm text-gray-500 hidden md:block">
+              {t('sellers.showing_results', {
+                start: Math.min(indexOfFirstSeller + 1, filteredSellers.length),
+                end: Math.min(indexOfLastSeller, filteredSellers.length),
+                total: filteredSellers.length
+              })}
+            </p>
+          )}
         </div>
 
         {currentSellers.length === 0 ? (
@@ -268,21 +334,26 @@ const Sellers = () => {
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
               <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
             </div>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">{t("sellers.no_results_title")}</h3>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">{t('sellers.no_sellers_found')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {t("sellers.no_results_description")}
+              {sellers.length === 0 
+                ? t('sellers.no_sellers_available')
+                : t('sellers.no_matching_sellers')
+              }
             </p>
-            <div className="mt-6">
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedCategory("all");
-                }}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-              >
-                {t("sellers.reset_filters")}
-              </button>
-            </div>
+            {sellers.length > 0 && (
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedCategory("all");
+                  }}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                >
+                  {t('sellers.reset_filters')}
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -292,12 +363,14 @@ const Sellers = () => {
               ))}
             </div>
 
-            <Pagination
-              itemsPerPage={sellersPerPage}
-              totalItems={filteredSellers.length}
-              currentPage={currentPage}
-              paginate={paginate}
-            />
+            {filteredSellers.length > sellersPerPage && (
+              <Pagination
+                itemsPerPage={sellersPerPage}
+                totalItems={filteredSellers.length}
+                currentPage={currentPage}
+                paginate={paginate}
+              />
+            )}
           </>
         )}
       </div>

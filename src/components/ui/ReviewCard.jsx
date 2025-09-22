@@ -44,7 +44,7 @@ const ReviewCard = ({ review }) => {
         <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10" />
         <div className="ml-4">
           <h4 className="text-sm font-medium text-gray-900">
-            {review.user}
+             {review.user?.name || "Unknown User"}
           </h4>
           <div className="mt-1 flex items-center">
             {renderStars(review.rating)}
@@ -55,15 +55,14 @@ const ReviewCard = ({ review }) => {
         </div>
       </div>
 
-      <div className="mt-4">
-        <p className="text-gray-600">
-          {review.comment}
-        </p>
-        {review.product &&
-          <p className="mt-2 text-sm text-gray-500">
-            <span className="font-medium">Product:</span> {review.product}
-          </p>}
-      </div>
+<div className="mt-4">
+  <p className="text-gray-600">{review.comment}</p>
+  {review.product && (
+    <p className="mt-2 text-sm text-gray-500">
+      <span className="font-medium">Product:</span> {review.product?.name || "Unknown Product"}
+    </p>
+  )}
+</div>
     </div>
   );
 };

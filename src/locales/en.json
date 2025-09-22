@@ -4,38 +4,55 @@
     "products": "Products",
     "sellers": "Sellers",
     "categories": "Categories",
-    "search": "Search products...",
-    "login": "Login",
+    "search": "Search",
+    "search_placeholder": "Search products...",
     "open_menu": "Open main menu",
-    "new_user": "New to Myanmar B2B?",
-    "sign_up": "Sign up"
+    "close_search": "Close search",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "sign_up": "Sign up",
+    "new_user": "New user?",
+    "logo_text": "Myanmar B2B",
+    "burmese": "MM"
   },
   "home": {
-    "hero_title": "Myanmar's Premier B2B Marketplace",
-    "hero_subtitle": "Connecting businesses across Myanmar with secure payments and reliable logistics",
+    "hero_title": "Myanmar B2B Marketplace",
+    "hero_subtitle": "Connecting businesses across Myanmar with trusted suppliers and buyers",
     "become_seller": "Become a Seller",
     "browse_products": "Browse Products",
-    "categories_title": "Popular Categories",
-    "categories_subtitle": "Find products from Myanmar's top business categories",
+    "popular_categories": "Popular Categories",
+    "browse_all_categories": "Browse all categories",
     "featured_products": "Featured Products",
-    "featured_products_subtitle": "Quality products from trusted sellers",
+    "view_all": "View all",
+    "no_featured_products": "No featured products found.",
     "top_sellers": "Top Sellers",
-    "top_sellers_subtitle": "Verified businesses with excellent ratings",
-    "view_all": "View All",
-    "why_us": "Why choose us",
-    "why_choose_us": "The Myanmar B2B Advantage",
-    "why_choose_us_subtitle": "We provide everything you need for successful B2B transactions in Myanmar",
+    "no_top_sellers": "No top sellers found",
+    "general_merchant": "General Merchant",
+    "why_us": "Why Choose Us",
+    "why_choose_us": "Why Choose Our Platform",
+    "why_choose_us_subtitle": "We provide the best platform for B2B transactions in Myanmar",
     "secure_payments": "Secure Payments",
-    "secure_payments_desc": "Escrow protection and Myanmar-specific payment options ensure transaction safety",
-    "my_specific": "Myanmar-Specific Solutions",
-    "my_specific_desc": "Customized for Myanmar's business environment, regulations, and logistics",
+    "secure_payments_desc": "Safe and secure payment processing for all transactions",
+    "business_specific": "Business Specific",
+    "business_specific_desc": "Tailored solutions for Myanmar businesses and industries",
     "fast_transactions": "Fast Transactions",
-    "fast_transactions_desc": "Quick order processing and payment verification for efficient business operations",
-    "support": "Dedicated Support",
-    "support_desc": "Local language support and business hours assistance",
-    "cta_title": "Ready to grow your business?",
-    "cta_subtitle": "Join Myanmar's fastest-growing B2B marketplace today",
+    "fast_transactions_desc": "Quick and efficient buying and selling process",
+    "support": "24/7 Support",
+    "support_desc": "Dedicated customer support team always ready to help",
+    "cta_title": "Ready to Grow Your Business?",
+    "cta_subtitle": "Join thousands of businesses already using our platform",
     "get_started": "Get Started"
+  },
+  "sidebar": {
+    "platform_name": "Myanmar B2B",
+    "seller_portal": "Seller Portal",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "customers": "Customers",
+    "payments": "Payments",
+    "settings": "Settings"
   },
   "checkout": {
     "shipping_info": "Shipping Information",
@@ -64,7 +81,7 @@
     "place_another_order": "Place Another Order",
     "continue_shopping": "Continue Shopping"
   },
-  "payment": {
+  "payment_page": {
     "mmqr": "MMQR",
     "mmqr_desc": "Scan with mobile banking",
     "mobile_wallet": "Mobile Wallet",
@@ -76,7 +93,7 @@
     "expires_in": "Expires in",
     "mmqr_note": "After payment, it may take 2-3 minutes for payment confirmation. Do not refresh this page."
   },
-  "login": {
+  "login_page": {
     "title": "Sign in to your account",
     "subtitle": "Or",
     "create_account": "create an account",
@@ -94,7 +111,7 @@
     "invalid_credentials": "Invalid phone number or password",
     "or_continue_with": "Or continue with"
   },
-  "register": {
+  "register_page": {
     "title": "Create a new account",
     "subtitle": "Or",
     "sign_in": "sign in",
@@ -163,17 +180,39 @@
     "success_message": "Password reset successfully! Redirecting to login..."
   },
   "footer": {
-    "description": "Myanmar's premier B2B marketplace connecting buyers and sellers nationwide",
-    "links": "Quick Links",
+    "company": "Company",
     "about": "About Us",
-    "support": "Support",
     "contact": "Contact Us",
+    "careers": "Careers",
+    "blog": "Blog",
+    "sellers": "For Sellers",
+    "become_seller": "Become a Seller",
+    "seller_guidelines": "Seller Guidelines",
+    "pricing": "Pricing",
+    "resources": "Resources",
+    "support": "Support",
     "help_center": "Help Center",
+    "faq": "FAQ",
+    "shipping": "Shipping Info",
+    "returns": "Returns & Refunds",
+    "legal": "Legal",
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
-    "copyright": "Myanmar B2B Marketplace. All rights reserved."
+    "security": "Security",
+    "compliance": "Compliance",
+    "contact_info": "Contact Information",
+    "address": "123 Business Street, Yangon, Myanmar",
+    "phone": "+95 9 123 456 789",
+    "email": "info@myanmarb2b.com",
+    "follow_us": "Follow Us",
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram",
+    "copyright": "Myanmar B2B Marketplace. All rights reserved.",
+    "rights_reserved": "All rights reserved."
   },
-  "product": {
+  "product_page": {
     "reviews": "reviews",
     "quantity": "Quantity",
     "min_order": "Minimum Order",
@@ -197,31 +236,33 @@
     "total": "Total",
     "checkout": "Proceed to Checkout"
   },
-  "product": {
-    "all_products": "All Products",
-    "search_results": "Search results for",
+  "products": {
+    "search_placeholder": "Search products...",
+    "search": "Search",
     "filters": "Filters",
-    "categories": "Categories",
-    "price": "Price",
-    "no_products": "No products found",
-    "no_products_desc": "Try adjusting your search or filter to find what you're looking for",
-    "showing": "Showing",
-    "to": "to",
-    "of": "of",
-    "results": "results",
+    "clear_all": "Clear All",
+    "clear_filters": "Clear filters",
+    "active_filters": "Active Filters",
+    "search_filter": "Search: \"{{query}}\"",
+    "category_filter": "Category: {{category}}",
+    "all_products": "All Products",
+    "category_products": "{{category}} Products",
+    "search_results": "Search results for \"{{query}}\"",
+    "search_results_category": "Search results for \"{{query}}\" in {{category}}",
+    "showing_count": "Showing {{count}} products",
+    "no_products_found": "No products found",
+    "try_adjusting_search": "Try adjusting your search or filters",
+    "fetch_error": "Failed to load products. Please try again.",
+    "category_id": "Category {{id}}",
     "sort_by": "Sort by",
-    "most_popular": "Most Popular",
-    "price_low_high": "Price: Low to High",
-    "price_high_low": "Price: High to Low",
-    "highest_rated": "Highest Rated",
-    "newest": "Newest",
-    "previous": "Previous",
-    "next": "Next",
-    "price_range": "Price Range",
-    "seller_type": "Seller Type",
-    "verified_sellers": "Verified Sellers",
-    "premium_sellers": "Premium Sellers",
-    "local_sellers": "Local Sellers"
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "price_low_high": "Price: Low to High",
+      "price_high_low": "Price: High to Low",
+      "name_a_z": "Name: A-Z",
+      "name_z_a": "Name: Z-A"
+    }
   },
   "payment": {
     "cod_title": "Cash on Delivery",
@@ -297,33 +338,37 @@
     "archived": "Archived"
   },
   "sellers": {
-    "title": "Discover Trusted Sellers",
-    "subtitle": "Connect with verified suppliers and manufacturers across Myanmar",
+    "title": "Our Sellers",
+    "subtitle": "Discover trusted sellers and their products",
     "all_sellers": "All Sellers",
-    "search_placeholder": "Search sellers...",
-    "filters": "Filters",
-    "category": "Category",
-    "sort_by": "Sort by",
-    "showing": "Showing",
-    "of": "of",
-    "no_results_title": "No sellers found",
-    "no_results_description": "Try adjusting your search or filter to find what you're looking for.",
-    "reset_filters": "Reset Filters",
-    "become_seller_title": "Join Our Marketplace",
-    "become_seller_description": "Reach thousands of buyers and grow your business with our platform.",
-    "join_now": "Join Now",
     "all_categories": "All Categories",
-    "agriculture": "Agriculture",
-    "handicrafts": "Handicrafts",
-    "textiles": "Textiles",
-    "furniture": "Furniture",
-    "food_beverage": "Food & Beverage",
-    "jewelry": "Jewelry",
-    "seafood": "Seafood",
+    "individual": "Individual",
+    "company": "Company",
+    "retail": "Retail",
+    "wholesale": "Wholesale",
+    "manufacturer": "Manufacturer",
+    "uncategorized": "Uncategorized",
+    "unknown_seller": "Unknown Seller",
     "highest_rating": "Highest Rating",
     "most_reviews": "Most Reviews",
     "newest": "Newest",
-    "alphabetical": "Alphabetical"
+    "alphabetical": "Alphabetical",
+    "search_placeholder": "Search sellers...",
+    "filters": "Filters",
+    "category": "Category",
+    "sort_by": "Sort By",
+    "fetch_error": "Failed to load sellers. Please try again later.",
+    "loading": "Loading sellers...",
+    "error_title": "Error loading sellers",
+    "try_again": "Try Again",
+    "showing_results": "Showing {{start}} - {{end}} of {{total}}",
+    "no_sellers_found": "No sellers found",
+    "no_sellers_available": "There are currently no sellers available. Please check back later.",
+    "no_matching_sellers": "No sellers match your current filters.",
+    "reset_filters": "Reset Filters",
+    "become_seller_title": "Become a Seller",
+    "become_seller_description": "Join our platform and start selling your products to customers worldwide.",
+    "join_now": "Join Now"
   },
   "productDetail": {
     "not_found": "Product not found",
@@ -349,30 +394,74 @@
     "spec_certification": "Certification"
   },
   "login": {
-    "title": "Login",
-    "subtitle": "Sign in to your account",
+    "title": "Sign in to your account",
+    "subtitle": "Enter your details to access your account",
     "phone": {
       "label": "Phone Number",
-      "placeholder": "9xxxxxxxx",
-      "required": "Phone number is required",
-      "invalid": "Please enter a valid Myanmar phone number"
+      "placeholder": "09xxxxxxxx or 9xxxxxxxx",
+      "error": "Please enter a valid Myanmar phone number"
     },
     "password": {
       "label": "Password",
-      "required": "Password is required",
-      "minLength": "Password must be at least 6 characters"
+      "placeholder": "Enter your password"
     },
     "remember": "Remember me",
     "forgotPassword": "Forgot your password?",
-    "submit": "Sign In",
-    "loading": "Signing in...",
-    "noAccount": "Don't have an account yet?",
-    "register": "Create a new account",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "register": "Sign up",
     "orContinue": "Or continue with",
-    "facebook": "Facebook",
-    "google": "Google",
-    "errors": {
-      "generic": "An error occurred during login"
-    }
+    "invalidCredentials": "Invalid phone number or password",
+    "error": "An error occurred during login"
+  },
+  "register": {
+    "title": "Create your account",
+    "subtitle": "Set up your new account",
+    "name": {
+      "label": "Full Name",
+      "placeholder": "Enter your full name",
+      "error": "Name must be at least 2 characters"
+    },
+    "phone": {
+      "label": "Phone Number",
+      "placeholder": "09xxxxxxxx or 9xxxxxxxx",
+      "error": "Please enter a valid Myanmar phone number",
+      "examples": "Examples: 0912345678, 912345678, +95912345678"
+    },
+    "email": {
+      "label": "Email (optional)",
+      "placeholder": "example@email.com",
+      "error": "Please enter a valid email address"
+    },
+    "accountType": {
+      "label": "Account Type",
+      "buyer": "Buyer",
+      "seller": "Seller",
+      "buyerDescription": "For purchasing products",
+      "sellerDescription": "For selling products"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "Enter your password",
+      "error": "Password must be at least 6 characters"
+    },
+    "confirmPassword": {
+      "label": "Confirm Password",
+      "placeholder": "Re-enter your password",
+      "error": "Passwords must match"
+    },
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account...",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "error": "An error occurred during registration"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidPhone": "Please enter a valid Myanmar phone number (7-10 digits)",
+    "invalidEmail": "Please enter a valid email address",
+    "minLength": "Must be at least {{count}} characters",
+    "passwordMismatch": "Passwords do not match"
   }
 }

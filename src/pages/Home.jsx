@@ -14,48 +14,57 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
+  const [transformedSellers, setTransformedSellers] = useState([]);
 
-  // Mock data
-  const featuredProducts = [{ id: 1, name: "Organic Rice", price: 45000, category: "Agriculture", rating: 4.5 }, { id: 2, name: "Handwoven Textiles", price: 25000, category: "Handicrafts", rating: 4.2 }, { id: 3, name: "Teak Furniture", price: 350000, category: "Furniture", rating: 4.8 }, { id: 4, name: "Myanmar Coffee Beans", price: 18000, category: "Food & Beverage", rating: 4.3 }];
+  useEffect(
+    () => {
+      const fetchCategories = async () => {
+        try {
+          const res = await api.get("/categories");
+          setCategories(res.data.data || res.data);
+        } catch (err) {
+          console.error("Failed to fetch categories:", err);
+        }
+      };
 
-  // const topSellers = [
-  //   { id: 1, name: "Golden Harvest", category: "Agriculture", rating: 4.7 },
-  //   { id: 2, name: "Yangon Crafts", category: "Handicrafts", rating: 4.5 },
-  //   { id: 3, name: "Mandalay Woodworks", category: "Furniture", rating: 4.9 },
-  //   { id: 4, name: "Shan Coffee Co.", category: "Food & Beverage", rating: 4.6 }
-  // ];
+      const fetchTopSellers = async () => {
+        try {
+          const res = await api.get("/sellers?top=true");
+          const sellersData = res.data.data || res.data;
+          setTopSellers(sellersData);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await api.get("/categories");
-        setCategories(res.data.data || res.data);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    };
+          // Transform the sellers data for the SellerCard component
+          const transformed = sellersData.map(seller => ({
+            id: seller.id,
+            name: seller.store_name,
+            category: seller.business_type || t("home.general_merchant"),
+            rating: seller.reviews_avg_rating,
+            reviewCount: seller.reviews_count,
+            products: seller.products_count,
+            verified: seller.status === "active",
+            originalData: seller
+          }));
+          setTransformedSellers(transformed);
+        } catch (err) {
+          console.error("Failed to fetch top sellers:", err);
+        }
+      };
 
-    const fetchTopSellers = async () => {
-      try {
-        const res = await api.get("/sellers?top=true");
-        setTopSellers(res.data.data || res.data);
-      } catch (err) {
-        console.error("Failed to fetch top sellers:", err);
-      }
-    };
+      const fetchProducts = async () => {
+        try {
+          const res = await api.get("/products?featured=true");
+          setProducts(res.data.data || res.data);
+        } catch (err) {
+          console.error("Failed to fetch featured products:", err);
+        }
+      };
 
-    const fetchProducts = async () => {
-      try {
-        const res = await api.get("/products?featured=true"); // 👈 adjust endpoint if needed
-        setProducts(res.data.data || res.data);
-      } catch (err) {
-        console.error("Failed to fetch featured products:", err);
-      }
-    };
-
-    fetchCategories();
-    fetchProducts();
-  }, []);
+      fetchCategories();
+      fetchTopSellers();
+      fetchProducts();
+    },
+    [t]
+  );
 
   return <div className="bg-gray-50">
       {/* Hero Section */}
@@ -92,16 +101,18 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-gray-900">
-              {t("home.categories_title")}
+              {t("home.popular_categories")}
             </h2>
-            <p className="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
-              {t("home.categories_subtitle")}
-            </p>
+            <Link to="/categories" className="inline-block mt-2 text-green-600 hover:text-green-800 font-medium">
+              {t("home.browse_all_categories")} →
+            </Link>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map(category =>
-              <CategoryCard key={category.id} category={category} />
-            )}
+            {categories
+              .slice(0, 6)
+              .map(category =>
+                <CategoryCard key={category.id} category={category} />
+              )}
           </div>
         </div>
       </section>
@@ -114,9 +125,6 @@ const Home = () => {
               <h2 className="text-3xl font-extrabold text-gray-900">
                 {t("home.featured_products")}
               </h2>
-              <p className="mt-2 text-lg text-gray-500">
-                {t("home.featured_products_subtitle")}
-              </p>
             </div>
             <Link to="/products" className="text-green-600 hover:text-green-800 font-medium">
               {t("home.view_all")} →
@@ -144,16 +152,13 @@ const Home = () => {
               <h2 className="text-3xl font-extrabold text-gray-900">
                 {t("home.top_sellers")}
               </h2>
-              <p className="mt-2 text-lg text-gray-500">
-                {t("home.top_sellers_subtitle")}
-              </p>
             </div>
             <Link to="/sellers" className="text-green-600 hover:text-green-800 font-medium">
               {t("home.view_all")} →
             </Link>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {topSellers.length > 0 ? topSellers.map(seller =>
+            {transformedSellers.length > 0 ? transformedSellers.map(seller =>
                   <SellerCard key={seller.id} seller={seller} />
                 ) : <p className="col-span-full text-center text-gray-500">
                   {t("home.no_top_sellers")}
@@ -206,10 +211,10 @@ const Home = () => {
                 </div>
                 <div className="ml-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    {t("home.my_specific")}
+                    {t("home.business_specific")}
                   </h3>
                   <p className="mt-2 text-base text-gray-500">
-                    {t("home.my_specific_desc")}
+                    {t("home.business_specific_desc")}
                   </p>
                 </div>
               </div>

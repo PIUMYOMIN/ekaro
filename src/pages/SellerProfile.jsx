@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Tab } from "@headlessui/react";
 import {
   StarIcon,
@@ -13,7 +13,11 @@ import {
   EnvelopeIcon,
   GlobeAltIcon,
   ChatBubbleLeftIcon,
-  ChevronLeftIcon
+  ChevronLeftIcon,
+  UserIcon,
+  XMarkIcon,
+  CheckBadgeIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 
 import ProductCard from "../components/ui/ProductCard";
@@ -31,6 +35,7 @@ const SellerProfile = () => {
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewsPerPage] = useState(5);
   const [activeTab, setActiveTab] = useState("products");
@@ -39,95 +44,59 @@ const SellerProfile = () => {
     products: true,
     reviews: true
   });
-
-  // Fallback data in case API returns empty results
-  const fallbackSeller = {
-    id: 1,
-    store_name: "Golden Harvest",
-    business_type: "Agriculture",
-    description: "Golden Harvest is a leading agricultural producer in Myanmar, specializing in organic rice and seasonal fruits. We've been serving customers since 2010 with high-quality, sustainably grown products.",
-    reviews_avg_rating: 4.7,
-    reviews_count: 245,
-    created_at: "2020-05-12",
-    address: "123 Farm Road, Bago, Myanmar",
-    contact_phone: "+959123456789",
-    contact_email: "contact@goldenharvest.com",
-    website: "www.goldenharvest.com",
-    status: "approved",
-    verified: true
-  };
-
-  const fallbackProducts = [
-    { id: 1, name: "Organic Jasmine Rice", price: 45000, category: "Rice", rating: 4.8, stock: 120 },
-    { id: 2, name: "Organic Brown Rice", price: 42000, category: "Rice", rating: 4.6, stock: 85 },
-    { id: 3, name: "Mangoes (Seasonal)", price: 8000, category: "Fruits", rating: 4.9, stock: 45 },
-    { id: 4, name: "Bananas (Bunch)", price: 5000, category: "Fruits", rating: 4.5, stock: 62 },
-    { id: 5, name: "Organic Peanuts", price: 12000, category: "Nuts", rating: 4.7, stock: 38 },
-    { id: 6, name: "Sesame Seeds", price: 15000, category: "Seeds", rating: 4.4, stock: 27 }
-  ];
-
-  const fallbackReviews = [
-    { id: 1, user: { name: "Ko Aung" }, rating: 5, created_at: "2023-06-15", comment: "Excellent quality rice, will definitely order again!", product: "Organic Jasmine Rice" },
-    { id: 2, user: { name: "Ma Hla" }, rating: 4, created_at: "2023-06-10", comment: "Fast delivery and good packaging. The rice was fresh and aromatic.", product: "Organic Brown Rice" },
-    { id: 3, user: { name: "U Myint" }, rating: 5, created_at: "2023-05-28", comment: "Best mangoes I've had this season! Sweet and juicy.", product: "Mangoes (Seasonal)" },
-    { id: 4, user: { name: "Daw Khin" }, rating: 4, created_at: "2023-05-20", comment: "Good quality products overall. The delivery took a bit longer than expected.", product: "Organic Peanuts" },
-    { id: 5, user: { name: "Ko Zaw" }, rating: 5, created_at: "2023-05-15", comment: "Consistently great products from this seller. Highly recommended!", product: "Sesame Seeds" }
-  ];
+  const [error, setError] = useState(null);
+  
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  
+  // Popup notification state
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("success"); // "success" or "error"
 
   useEffect(() => {
     const fetchSellerData = async () => {
       try {
         setLoading({ seller: true, products: true, reviews: true });
+        setError(null);
         
         // Fetch seller details
         try {
           const sellerRes = await api.get(`/sellers/${id}`);
+          
           if (sellerRes.data.success && sellerRes.data.data) {
-            setSeller(sellerRes.data.data);
+            const sellerData = sellerRes.data.data.seller;
+            setSeller(sellerData);
+            
+            // Set products from the response
+            if (sellerRes.data.data.products && sellerRes.data.data.products.data) {
+              setProducts(sellerRes.data.data.products.data);
+            }
+            
+            // Set reviews from the seller data
+            if (sellerData.reviews) {
+              setReviews(sellerData.reviews);
+            }
+            
+            // Set stats if included
+            if (sellerRes.data.data.stats) {
+              setStats(sellerRes.data.data.stats);
+            }
           } else {
-            setSeller(fallbackSeller);
+            throw new Error('Invalid seller data structure');
           }
         } catch (err) {
           console.error("Failed to fetch seller:", err);
-          setSeller(fallbackSeller);
+          setError("Failed to load seller information.");
         } finally {
-          setLoading(prev => ({ ...prev, seller: false }));
-        }
-
-        // Fetch seller products
-        try {
-          const productsRes = await api.get(`/sellers/${id}/products`);
-          if (productsRes.data.success && productsRes.data.data && productsRes.data.data.products) {
-            setProducts(productsRes.data.data.products.data || productsRes.data.data.products);
-          } else {
-            setProducts(fallbackProducts);
-          }
-        } catch (err) {
-          console.error("Failed to fetch seller products:", err);
-          setProducts(fallbackProducts);
-        } finally {
-          setLoading(prev => ({ ...prev, products: false }));
-        }
-
-        // Fetch seller reviews
-        try {
-          const reviewsRes = await api.get(`/sellers/${id}/reviews`);
-          if (reviewsRes.data.success && reviewsRes.data.data && reviewsRes.data.data.reviews) {
-            setReviews(reviewsRes.data.data.reviews.data || reviewsRes.data.data.reviews);
-          } else {
-            setReviews(fallbackReviews);
-          }
-        } catch (err) {
-          console.error("Failed to fetch seller reviews:", err);
-          setReviews(fallbackReviews);
-        } finally {
-          setLoading(prev => ({ ...prev, reviews: false }));
+          setLoading(prev => ({ ...prev, seller: false, reviews: false, products: false }));
         }
       } catch (error) {
         console.error("Error fetching seller data:", error);
-        setSeller(fallbackSeller);
-        setProducts(fallbackProducts);
-        setReviews(fallbackReviews);
+        setError("Failed to load seller data. Please try again later.");
         setLoading({ seller: false, products: false, reviews: false });
       }
     };
@@ -135,34 +104,171 @@ const SellerProfile = () => {
     fetchSellerData();
   }, [id]);
 
-  // Get current reviews for pagination
+  // Show popup notification
+  const showNotification = (message, type = "success") => {
+    setPopupMessage(message);
+    setPopupType(type);
+    setShowPopup(true);
+    
+    // Auto hide after 5 seconds
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 5000);
+  };
+
+  // Handle review submission
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!reviewRating) {
+      showNotification("Please select a rating", "error");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const response = await api.post(`/sellers/${id}/reviews`, {
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+
+      if (response.data.success) {
+        // Refresh reviews
+        const sellerRes = await api.get(`/sellers/${id}`);
+        if (sellerRes.data.success && sellerRes.data.data) {
+          setSeller(sellerRes.data.data.seller);
+          setReviews(sellerRes.data.data.seller.reviews || []);
+        }
+        
+        // Reset form
+        setReviewRating(0);
+        setReviewComment("");
+        setShowReviewForm(false);
+        showNotification("Review submitted successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+      const errorMessage = err.response?.data?.message || "Failed to submit review. Please try again.";
+      showNotification(errorMessage, "error");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Safely get current reviews for pagination
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
-  const currentReviews = reviews.slice(indexOfFirstReview, indexOfLastReview);
+  const currentReviews = Array.isArray(reviews) ? reviews.slice(indexOfFirstReview, indexOfLastReview) : [];
 
   // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
 
   // Render star ratings
-  const renderStars = (rating) => {
+  const renderStars = (rating, size = "h-5 w-5") => {
+    if (!rating) {
+      return (
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <StarIcon key={i} className={`${size} text-gray-300`} />
+          ))}
+          <span className="ml-2 text-sm text-gray-500">No ratings</span>
+        </div>
+      );
+    }
+    
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
+    const numericRating = parseFloat(rating);
+    const fullStars = Math.floor(numericRating);
+    const hasHalfStar = numericRating % 1 >= 0.5;
     
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
-        stars.push(<StarIcon key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className={`${size} text-yellow-400`} fill="currentColor" />);
       } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(<StarIcon key={i} className="h-5 w-5 text-yellow-400" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className={`${size} text-yellow-400`} fill="currentColor" />);
       } else {
-        stars.push(<StarIcon key={i} className="h-5 w-5 text-gray-300" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className={`${size} text-gray-300`} />);
       }
     }
     
     return stars;
   };
 
-  if (loading.seller) {
+  // Render interactive stars for review form
+  const renderInteractiveStars = () => {
+    return (
+      <div className="flex space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => setReviewRating(star)}
+            className="focus:outline-none transition-transform hover:scale-110"
+          >
+            <StarIcon
+              className={`h-8 w-8 ${
+                star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+              }`}
+              fill={star <= reviewRating ? "currentColor" : "none"}
+            />
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // Popup notification component
+  const PopupNotification = () => (
+    <AnimatePresence>
+      {showPopup && (
+        <motion.div
+          initial={{ opacity: 0, y: -50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -50, scale: 0.9 }}
+          className="fixed top-4 mx-auto z-50 max-w-sm w-full"
+        >
+          <div className={`rounded-lg shadow-lg border-l-4 ${
+            popupType === "success" 
+              ? "bg-green-50 border-green-500" 
+              : "bg-red-50 border-red-500"
+          }`}>
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {popupType === "success" ? (
+                    <CheckBadgeIcon className="h-6 w-6 text-green-500" />
+                  ) : (
+                    <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+                  )}
+                </div>
+                <div className="ml-3 w-0 flex-1">
+                  <p className={`text-sm font-medium ${
+                    popupType === "success" ? "text-green-800" : "text-red-800"
+                  }`}>
+                    {popupMessage}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      popupType === "success" 
+                        ? "focus:ring-green-500 text-green-400 hover:text-green-500" 
+                        : "focus:ring-red-500 text-red-400 hover:text-red-500"
+                    }`}
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  if (loading.seller && !seller) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -173,18 +279,66 @@ const SellerProfile = () => {
     );
   }
 
-  // Calculate average rating from API data or use fallback
-  const rating = seller.reviews_avg_rating || (seller.rating || 4.5);
-  const reviewCount = seller.reviews_count || (seller.reviewCount || 0);
-  const productCount = products.length;
+  if (error && !seller) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+          </div>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading seller</h3>
+          <p className="mt-1 text-sm text-gray-500">{error}</p>
+          <div className="mt-6">
+            <Link
+              to="/sellers"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+            >
+              Back to Sellers
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!seller) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+            <UserIcon className="h-6 w-6 text-gray-400" />
+          </div>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">Seller not found</h3>
+          <p className="mt-1 text-sm text-gray-500">The seller you're looking for doesn't exist.</p>
+          <div className="mt-6">
+            <Link
+              to="/sellers"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+            >
+              Back to Sellers
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate values from API data with safe fallbacks
+  const rating = parseFloat(seller.reviews_avg_rating) || 0;
+  const reviewCount = seller.reviews_count || 0;
+  const productCount = products.length || stats.active_products || 0;
+  const memberSince = seller.created_at ? new Date(seller.created_at).getFullYear() : 'N/A';
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Popup Notification */}
+      <PopupNotification />
+
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Link to="/sellers" className="flex items-center text-green-600 hover:text-green-800">
+        <Link to="/sellers" className="flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
           <ChevronLeftIcon className="h-5 w-5 mr-1" />
-          {t("seller.back_to_sellers")}
+          {t("seller.back_to_sellers") || "Back to Sellers"}
         </Link>
       </div>
 
@@ -197,39 +351,42 @@ const SellerProfile = () => {
                 {seller.store_logo ? (
                   <img 
                     src={seller.store_logo} 
-                    alt={seller.store_name || seller.name}
-                    className="rounded-xl w-32 h-32 object-cover"
+                    alt={seller.store_name}
+                    className="rounded-xl w-32 h-32 object-cover border-2 border-gray-200"
                   />
                 ) : (
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32 flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">No Logo</span>
+                  <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl w-32 h-32 flex items-center justify-center">
+                    <UserIcon className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
               </div>
               <div className="flex-1">
-                <div className="flex items-center">
-                  <h1 className="text-2xl font-bold text-gray-900">{seller.store_name || seller.name}</h1>
-                  {seller.status === "approved" && (
-                    <CheckCircleIcon className="ml-2 h-6 w-6 text-green-500" />
+                <div className="flex items-center flex-wrap">
+                  <h1 className="text-2xl font-bold text-gray-900 mr-2">{seller.store_name}</h1>
+                  {(seller.status === "approved" || seller.status === "active") && (
+                    <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
                   )}
                 </div>
-                <p className="text-sm text-gray-500">{seller.business_type || seller.category}</p>
+                <p className="text-sm text-gray-600 mt-1">{seller.business_type || "Business"}</p>
                 
-                <div className="mt-2 flex items-center">
+                <div className="mt-2 flex items-center flex-wrap">
                   {renderStars(rating)}
-                  <span className="ml-2 text-sm font-medium text-gray-900">{rating.toFixed(1)}</span>
-                  <span className="mx-1 text-gray-300">•</span>
-                  <span className="text-sm text-gray-500">{reviewCount} {t("seller.reviews")}</span>
+                  <span className="mx-2 text-gray-300">•</span>
+                  <span className="text-sm text-gray-500">{reviewCount} reviews</span>
                 </div>
                 
-                <p className="mt-4 text-gray-600">{seller.description}</p>
+                <p className="mt-4 text-gray-600 leading-relaxed">
+                  {seller.description || "No description available."}
+                </p>
                 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {t("seller.member_since")} {new Date(seller.created_at).getFullYear()}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <CalendarIcon className="h-3 w-3 mr-1" />
+                    Member since {memberSince}
                   </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {productCount} {t("seller.products")}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                    <ShoppingBagIcon className="h-3 w-3 mr-1" />
+                    {productCount} products
                   </span>
                 </div>
               </div>
@@ -249,12 +406,11 @@ const SellerProfile = () => {
                     selected
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
                   )
                 }
-                onClick={() => setActiveTab("products")}
               >
-                {t("seller.products")} ({productCount})
+                {t("seller.products") || "Products"} ({productCount})
               </Tab>
               <Tab
                 className={({ selected }) =>
@@ -262,12 +418,11 @@ const SellerProfile = () => {
                     selected
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
                   )
                 }
-                onClick={() => setActiveTab("reviews")}
               >
-                {t("seller.reviews")} ({reviewCount})
+                {t("seller.reviews") || "Reviews"} ({reviewCount})
               </Tab>
               <Tab
                 className={({ selected }) =>
@@ -275,12 +430,11 @@ const SellerProfile = () => {
                     selected
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
                   )
                 }
-                onClick={() => setActiveTab("about")}
               >
-                {t("seller.about")}
+                {t("seller.about") || "About"}
               </Tab>
             </Tab.List>
           </div>
@@ -290,16 +444,16 @@ const SellerProfile = () => {
             <Tab.Panel>
               {loading.products ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {Array.from({ length: 4 }).map((_, index) => (
+                  {Array.from({ length: 8 }).map((_, index) => (
                     <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-80"></div>
                   ))}
                 </div>
               ) : products.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-12 text-center">
                   <ShoppingBagIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_products_title")}</h3>
+                  <h3 className="mt-2 text-lg font-medium text-gray-900">No products yet</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    {t("seller.no_products_description")}
+                    This seller hasn't added any products yet.
                   </p>
                 </div>
               ) : (
@@ -315,47 +469,125 @@ const SellerProfile = () => {
             <Tab.Panel>
               <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.customer_reviews")}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">Customer Reviews</h3>
                       <div className="mt-1 flex items-center">
                         {renderStars(rating)}
-                        <span className="ml-2 text-sm font-medium text-gray-900">{rating.toFixed(1)} {t("seller.out_of_5")}</span>
+                        <span className="ml-2 text-sm font-medium text-gray-900">
+                          {rating.toFixed(1)} out of 5
+                        </span>
                       </div>
                     </div>
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                      {t("seller.write_review")}
+                    <button 
+                      onClick={() => setShowReviewForm(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
+                    >
+                      Write Review
                     </button>
                   </div>
 
+                  {/* Review Form */}
+                  {showReviewForm && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200"
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-lg font-medium text-gray-900">Write a Review</h4>
+                        <button
+                          onClick={() => setShowReviewForm(false)}
+                          className="text-gray-400 hover:text-gray-500 transition-colors"
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <form onSubmit={handleSubmitReview}>
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Rating
+                          </label>
+                          {renderInteractiveStars()}
+                          <p className="text-sm text-gray-500 mt-1">
+                            {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
+                          </p>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
+                            Review Comment
+                          </label>
+                          <textarea
+                            id="reviewComment"
+                            rows={4}
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                            placeholder="Share your experience with this seller..."
+                          />
+                        </div>
+                        
+                        <div className="flex space-x-3">
+                          <button
+                            type="submit"
+                            disabled={submittingReview}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+                          >
+                            {submittingReview ? (
+                              <>
+                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                                Submitting...
+                              </>
+                            ) : (
+                              'Submit Review'
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowReviewForm(false)}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
+
                   {loading.reviews ? (
-                    <div className="mt-6 space-y-8">
+                    <div className="mt-6 space-y-6">
                       {Array.from({ length: 3 }).map((_, index) => (
-                        <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-32"></div>
+                        <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
                       ))}
                     </div>
                   ) : currentReviews.length === 0 ? (
                     <div className="mt-8 text-center py-12">
                       <ChatBubbleLeftIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_reviews_title")}</h3>
+                      <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        {t("seller.no_reviews_description")}
+                        This seller doesn't have any reviews yet.
                       </p>
                     </div>
                   ) : (
                     <>
-                      <div className="mt-6 space-y-8">
+                      <div className="mt-6 space-y-6">
                         {currentReviews.map(review => (
                           <ReviewCard key={review.id} review={review} />
                         ))}
                       </div>
 
-                      <Pagination
-                        itemsPerPage={reviewsPerPage}
-                        totalItems={reviews.length}
-                        currentPage={currentPage}
-                        paginate={paginate}
-                      />
+                      {reviews.length > reviewsPerPage && (
+                        <div className="mt-8">
+                          <Pagination
+                            itemsPerPage={reviewsPerPage}
+                            totalItems={reviews.length}
+                            currentPage={currentPage}
+                            paginate={paginate}
+                          />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -368,33 +600,33 @@ const SellerProfile = () => {
                 <div className="lg:col-span-2">
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.about_seller")}</h3>
-                      <p className="mt-4 text-gray-600">{seller.description}</p>
+                      <h3 className="text-lg font-medium text-gray-900">About the Seller</h3>
+                      <p className="mt-4 text-gray-600 leading-relaxed">
+                        {seller.description || "No description available."}
+                      </p>
                       
-                      <h4 className="mt-6 text-md font-medium text-gray-900">{t("seller.business_info")}</h4>
+                      <h4 className="mt-6 text-md font-medium text-gray-900">Business Information</h4>
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-500">{t("seller.business_type")}</p>
+                          <p className="text-sm font-medium text-gray-500">Business Type</p>
                           <p className="mt-1 text-gray-900">{seller.business_type || "Not specified"}</p>
                         </div>
                         {seller.business_registration_number && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">{t("seller.registration_number")}</p>
+                            <p className="text-sm font-medium text-gray-500">Registration Number</p>
                             <p className="mt-1 text-gray-900">{seller.business_registration_number}</p>
                           </div>
                         )}
                         {seller.tax_id && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">{t("seller.tax_id")}</p>
+                            <p className="text-sm font-medium text-gray-500">Tax ID</p>
                             <p className="mt-1 text-gray-900">{seller.tax_id}</p>
                           </div>
                         )}
-                        {seller.year_established && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">{t("seller.year_established")}</p>
-                            <p className="mt-1 text-gray-900">{seller.year_established}</p>
-                          </div>
-                        )}
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">Member Since</p>
+                          <p className="mt-1 text-gray-900">{memberSince}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -403,34 +635,39 @@ const SellerProfile = () => {
                 <div>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_info")}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
                       
                       <div className="mt-4 space-y-4">
                         {seller.address && (
                           <div className="flex">
-                            <MapPinIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                            <MapPinIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                             <p className="ml-3 text-gray-600">{seller.address}</p>
                           </div>
                         )}
                         
                         {seller.contact_phone && (
                           <div className="flex">
-                            <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                            <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                             <p className="ml-3 text-gray-600">{seller.contact_phone}</p>
                           </div>
                         )}
                         
                         {seller.contact_email && (
                           <div className="flex">
-                            <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                            <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                             <p className="ml-3 text-gray-600">{seller.contact_email}</p>
                           </div>
                         )}
                         
                         {seller.website && (
                           <div className="flex">
-                            <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                            <a href={`https://${seller.website}`} target="_blank" rel="noopener noreferrer" className="ml-3 text-green-600 hover:text-green-800">
+                            <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <a 
+                              href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200"
+                            >
                               {seller.website}
                             </a>
                           </div>
@@ -438,9 +675,9 @@ const SellerProfile = () => {
                       </div>
                       
                       <div className="mt-6">
-                        <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                        <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
                           <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />
-                          {t("seller.contact_seller")}
+                          Contact Seller
                         </button>
                       </div>
                     </div>

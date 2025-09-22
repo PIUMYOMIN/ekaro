@@ -21,18 +21,58 @@ const Login = () => {
     formState: { errors }
   } = useForm();
 
+  const normalizeMyanmarPhone = (phone) => {
+    let cleanPhone = phone.replace(/\D/g, '');
+    
+    if (cleanPhone.startsWith('0')) {
+      return '+95' + cleanPhone.substring(1);
+    } else if (cleanPhone.startsWith('9')) {
+      return '+95' + cleanPhone;
+    } else if (cleanPhone.startsWith('95')) {
+      return '+' + cleanPhone;
+    } else if (cleanPhone.startsWith('959')) {
+      return '+' + cleanPhone;
+    } else {
+      return phone.startsWith('+') ? phone : '+' + phone;
+    }
+  };
+
+  const validateMyanmarPhone = (phone) => {
+    if (!phone) return t('validation.required');
+    
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    if (cleanPhone.length < 7 || cleanPhone.length > 10) {
+      return t('validation.invalidPhone');
+    }
+    
+    const validPrefixes = ['0', '9', '95', '959'];
+    const hasValidPrefix = validPrefixes.some(prefix => 
+      cleanPhone.startsWith(prefix) || 
+      phone.startsWith('+95') || 
+      phone.startsWith('+959')
+    );
+    
+    if (!hasValidPrefix) {
+      return t('validation.invalidPhone');
+    }
+    
+    return true;
+  };
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
     
     try {
+      const normalizedPhone = normalizeMyanmarPhone(data.phone);
+      
       const result = await login({
-        phone: `0${data.phone}`,
+        phone: normalizedPhone,
         password: data.password
       });
       
       if (result.success) {
-        // Redirect based on user role
         const user = result.user;
         if (user.roles?.includes('admin')) {
           navigate('/admin');
@@ -44,15 +84,14 @@ const Login = () => {
           navigate('/admin');
         }
       } else {
-        setError(result.message);
+        setError(result.message || t('login.invalidCredentials'));
       }
     } catch (err) {
-      setError('An error occurred during login');
+      setError(t('login.error'));
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <AuthLayout
@@ -80,25 +119,22 @@ const Login = () => {
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
               {t('login.phone.label')}
             </label>
-            <div className="mt-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">+95</span>
-              </div>
+            <div className="mt-1">
               <input
                 id="phone"
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                className={`appearance-none block w-full px-3 pl-12 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                placeholder="9xxxxxxxx"
+                className={`appearance-none block w-full px-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                placeholder={t('login.phone.placeholder')}
                 {...register('phone', { 
-                  required: 'ဖုန်းနံပါတ်ဖြည့်ရန် လိုအပ်ပါသည်',
-                  pattern: {
-                    value: /^[0-9]{7,10}$/,
-                    message: t('login.phone.error')
-                  }
+                  required: t('validation.required'),
+                  validate: validateMyanmarPhone
                 })}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                {t('register.phone.examples')}
+              </p>
               {errors.phone && (
                 <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
               )}
@@ -115,12 +151,13 @@ const Login = () => {
                 name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
-                className={`appearance-none block w-full px-3 py-3 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                placeholder={t('login.password.placeholder')}
                 {...register('password', { 
-                  required: 'စကားဝှက်ဖြည့်ရန် လိုအပ်ပါသည်',
+                  required: t('validation.required'),
                   minLength: {
                     value: 6,
-                    message: 'စကားဝှက်သည် အနည်းဆုံး ၆ လုံးရှိရပါမည်'
+                    message: t('validation.minLength', { count: 6 })
                   }
                 })}
               />
@@ -128,7 +165,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
                 >
                   {showPassword ? (
                     <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
@@ -169,7 +206,11 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${
+              isLoading 
+                ? 'bg-green-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+            }`}
           >
             {isLoading ? (
               <>
@@ -177,10 +218,10 @@ const Login = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                အကောင့်ဝင်နေပါသည်...
+                {t('login.signingIn')}
               </>
             ) : (
-              'အကောင့်ဝင်ရန်'
+              t('login.signIn')
             )}
           </button>
         </div>
