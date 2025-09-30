@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Disclosure } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
@@ -9,7 +9,7 @@ import { useCart } from '../../context/CartContext.jsx';
 const Header = () => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
-  const { cartItems } = useCart();
+  const { cartItems, totalItems } = useCart(); // Use totalItems from CartContext
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -137,12 +137,12 @@ const Header = () => {
                     </button>
                   </div>
                   
-                  {/* Cart */}
+                  {/* Cart - Show count from CartContext */}
                   <Link to="/cart" className="relative p-1 text-gray-700 hover:text-green-600">
                     <ShoppingCartIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                    {cartItems.length > 0 && (
+                    {totalItems > 0 && (
                       <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform bg-red-600 rounded-full">
-                        {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                        {totalItems}
                       </span>
                     )}
                   </Link>

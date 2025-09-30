@@ -29,10 +29,32 @@ const Cart = () => {
     }).format(amount);
   };
 
+  const handleUpdateQuantity = async (cartItemId, newQuantity) => {
+    if (newQuantity < 1) return;
+
+    try {
+      await updateQuantity(cartItemId, newQuantity);
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      alert(error.message);
+    }
+  };
+
+  const handleRemoveItem = async cartItemId => {
+    if (window.confirm("Are you sure you want to remove this item from cart?")) {
+      try {
+        await removeFromCart(cartItemId);
+      } catch (error) {
+        console.error("Failed to remove item:", error);
+        alert(error.message);
+      }
+    }
+  };
+
   return <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto lg:max-w-none">
         <h1 className="text-3xl font-extrabold text-gray-900">
-          {t("cart.title")}
+          {t("cart.title")} ({totalItems} {totalItems === 1 ? "item" : "items"})
         </h1>
 
         {cartItems.length === 0 ? <div className="mt-12 text-center">
@@ -55,7 +77,7 @@ const Cart = () => {
                     <li key={item.id} className="py-6 flex">
                       <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden">
                         <img
-                          src={"" + item.image}
+                          src={item.image}
                           alt={item.name}
                           className="w-full h-full object-center object-cover"
                         />
@@ -74,42 +96,63 @@ const Cart = () => {
                           <p className="mt-1 text-sm text-gray-500">
                             {item.category}
                           </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            Stock: {item.stock}
+                          </p>
+
+                          {!item.is_available &&
+                            <p className="mt-1 text-sm text-red-500">
+                              Product no longer available
+                            </p>}
+
+                          {!item.is_quantity_valid &&
+                            <p className="mt-1 text-sm text-red-500">
+                              Quantity exceeds available stock
+                            </p>}
+
                           <div className="mt-4 flex-1 flex items-end">
                             <div className="flex items-center border border-gray-300 rounded">
                               <button
                                 onClick={() =>
-                                  updateQuantity(item.id, item.quantity - 1)}
-                                className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                                  handleUpdateQuantity(
+                                    item.id,
+                                    item.quantity - 1
+                                  )}
+                                disabled={item.quantity <= 1}
+                                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 -
                               </button>
                               <input
                                 type="number"
                                 min="1"
+                                max={item.stock}
                                 value={item.quantity}
-                                onChange={e =>
-                                  updateQuantity(
-                                    item.id,
-                                    parseInt(e.target.value) || 1
-                                  )}
+                                onChange={e => {
+                                  const newQuantity =
+                                    parseInt(e.target.value) || 1;
+                                  handleUpdateQuantity(item.id, newQuantity);
+                                }}
                                 className="w-12 text-center border-0 focus:ring-0"
                               />
                               <button
                                 onClick={() =>
-                                  updateQuantity(item.id, item.quantity + 1)}
-                                className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                                  handleUpdateQuantity(
+                                    item.id,
+                                    item.quantity + 1
+                                  )}
+                                disabled={item.quantity >= item.stock}
+                                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 +
                               </button>
                             </div>
                             <button
-                              onClick={() => removeFromCart(item.id)}
+                              onClick={() => handleRemoveItem(item.id)}
                               type="button"
-                              className="ml-4 text-sm font-medium text-green-600 hover:text-green-500"
+                              className="ml-4 text-sm font-medium text-red-600 hover:text-red-500"
                             >
-                              <span>
-                                {t("cart.remove")}
-                              </span>
+                              Remove
                             </button>
                           </div>
                         </div>
@@ -133,7 +176,7 @@ const Cart = () => {
                 <dl className="mt-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <dt className="text-sm text-gray-600">
-                      {t("cart.subtotal")}
+                      {t("cart.subtotal")} ({totalItems} {totalItems === 1 ? "item" : "items"})
                     </dt>
                     <dd className="text-sm font-medium text-gray-900">
                       {formatMMK(subtotal)}
@@ -166,7 +209,7 @@ const Cart = () => {
                 </dl>
 
                 <div className="mt-6">
-                  <button onClick={() => navigate("/checkout")} className="w-full bg-green-600 border border-transparent rounded-md py-3 px-4 flex items-center justify-center text-base font-medium text-white hover:bg-green-700">
+                  <button onClick={() => navigate("/checkout")} className="w-full bg-green-600 border border-transparent rounded-md py-3 px-4 flex items-center justify-center text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     {t("cart.checkout")}
                   </button>
                 </div>

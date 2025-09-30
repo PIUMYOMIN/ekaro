@@ -87,7 +87,7 @@ const ProductDetail = () => {
         setReviews(productResponse.data.data.reviews || []);
 
         // Check if product is in wishlist (only if user is a buyer)
-        if (user && user.role === 'buyer') {
+        if (user && user.role === "buyer") {
           try {
             const wishlistResponse = await api.get("/wishlist");
             const wishlist = wishlistResponse.data.data || [];
@@ -118,25 +118,40 @@ const ProductDetail = () => {
       return;
     }
 
+    // Check if user is admin or seller
+    if (user.role === "admin" || user.role === "seller") {
+      alert("Admins and sellers cannot add items to cart");
+      return;
+    }
+
     if (quantity < (product?.min_order || 1)) {
       alert(`Minimum order quantity is ${product.min_order}`);
       return;
     }
 
+    if (quantity > (product?.quantity || 0)) {
+      alert(`Only ${product.quantity} items available in stock`);
+      return;
+    }
+
     setAddingToCart(true);
     try {
-      await addToCart({
+      const result = await addToCart({
         id: product.id,
-        name: product.name,
-        price: parseFloat(product.price),
-        image: product.images?.[0]?.url || "/placeholder-product.jpg",
-        quantity
+        quantity: quantity
       });
 
-      alert("Product added to cart!");
+      // Show success popup
+      setSuccessMessage(
+        result.message || "Product added to cart successfully!"
+      );
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      alert("Failed to add product to cart");
+      // Show error popup
+      setSuccessMessage({
+        type: "error",
+        message: error.message || "Failed to add product to cart"
+      });
     } finally {
       setAddingToCart(false);
     }
@@ -152,9 +167,9 @@ const ProductDetail = () => {
       navigate("/login");
       return;
     }
-    
+
     // Check if user is admin or seller
-    if (user.role === 'admin' || user.role === 'seller') {
+    if (user.role === "admin" || user.role === "seller") {
       alert("Admins and sellers cannot add products to wishlist");
       return;
     }
@@ -183,13 +198,13 @@ const ProductDetail = () => {
       navigate("/login");
       return;
     }
-    
+
     // Check if user is admin or seller
-    if (user.role === 'admin' || user.role === 'seller') {
+    if (user.role === "admin" || user.role === "seller") {
       alert("Admins and sellers cannot write reviews");
       return;
     }
-    
+
     setShowReviewForm(!showReviewForm);
   };
 
@@ -232,7 +247,9 @@ const ProductDetail = () => {
       }));
 
       // Show success message from backend or default message
-      setSuccessMessage(response.data.message || "Review submitted successfully!");
+      setSuccessMessage(
+        response.data.message || "Review submitted successfully!"
+      );
     } catch (error) {
       console.error("Failed to submit review:", error);
       alert(error.response?.data?.message || "Failed to submit review");
@@ -308,14 +325,15 @@ const ProductDetail = () => {
           <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
             <img
               src={
-                typeof product.images[activeImage] === 'string' 
-                  ? product.images[activeImage] 
-                  : product.images[activeImage]?.url || '/placeholder-product.jpg'
+                typeof product.images[activeImage] === "string"
+                  ? product.images[activeImage]
+                  : product.images[activeImage]?.url ||
+                    "/placeholder-product.jpg"
               }
               alt={product.name}
               className="max-h-full max-w-full object-contain"
               onError={(e) => {
-                e.target.src = '/placeholder-product.jpg';
+                e.target.src = "/placeholder-product.jpg";
               }}
             />
           </div>
@@ -327,15 +345,21 @@ const ProductDetail = () => {
                   key={index}
                   onClick={() => setActiveImage(index)}
                   className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${
-                    activeImage === index ? "border-green-500" : "border-transparent"
+                    activeImage === index
+                      ? "border-green-500"
+                      : "border-transparent"
                   }`}
                 >
                   <img
-                    src={typeof img === 'string' ? img : img.url || '/placeholder-product.jpg'}
+                    src={
+                      typeof img === "string"
+                        ? img
+                        : img.url || "/placeholder-product.jpg"
+                    }
                     alt={`View ${index + 1}`}
                     className="max-h-full max-w-full object-contain"
                     onError={(e) => {
-                      e.target.src = '/placeholder-product.jpg';
+                      e.target.src = "/placeholder-product.jpg";
                     }}
                   />
                 </button>
@@ -468,12 +492,15 @@ const ProductDetail = () => {
 
             <button
               onClick={handleAddToWishlist}
-              disabled={wishlistLoading || (user && (user.role === 'admin' || user.role === 'seller'))}
+              disabled={
+                wishlistLoading ||
+                (user && (user.role === "admin" || user.role === "seller"))
+              }
               className="p-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
               title={
                 !user
                   ? "Please login to add to wishlist"
-                  : (user.role === 'admin' || user.role === 'seller')
+                  : user.role === "admin" || user.role === "seller"
                   ? "Admins and sellers cannot add to wishlist"
                   : isInWishlist
                   ? "Remove from wishlist"

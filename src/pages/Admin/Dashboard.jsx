@@ -397,8 +397,6 @@ const UserManagement = ({
 
   // In UserManagement component, fix the role extraction:
 const userData = users.map((user) => {
-  // Debug the user object to see the actual structure
-  console.log("User object:", user);
   
   // Extract role properly - try different possible structures
   let userRole = "buyer";
@@ -1272,7 +1270,6 @@ const AdminDashboard = () => {
     
     // Handle different API response structures
     const usersData = response.data.data || response.data;
-    console.log("Processed users data:", usersData); // Debug log
     
     setUsers(Array.isArray(usersData) ? usersData : []);
   } catch (error) {

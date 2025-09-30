@@ -1,79 +1,193 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../utils/api';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
-export function useCart() {
-  return useContext(CartContext);
-}
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
-export function CartProvider({ children }) {
+export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const savedCart = localStorage.getItem("b2b_cart");
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+  // Fetch cart items from backend
+  const fetchCartItems = async () => {
+    // Don't fetch cart if user is admin or seller
+    if (user && (user.role === 'admin' || user.role === 'seller')) {
+      setCartItems([]);
+      return;
     }
-  }, []);
 
-  useEffect(
-    () => {
-      localStorage.setItem("b2b_cart", JSON.stringify(cartItems));
-    },
-    [cartItems]
-  );
+    // Don't fetch cart if user is not logged in
+    if (!user) {
+      setCartItems([]);
+      return;
+    }
 
-  const addToCart = (product, quantity = 1) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-
-      if (existingItem) {
-        return prevItems.map(
-          item =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-        );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/cart');
+      setCartItems(response.data.data.cart_items || []);
+    } catch (error) {
+      // Handle 403 (Forbidden for non-buyers) gracefully
+      if (error.response?.status === 403) {
+        console.log('User is not a buyer, cart not available');
+        setCartItems([]);
+      } else if (error.response?.status === 500) {
+        console.error('Server error fetching cart:', error);
+        setError('Server error while loading cart');
       } else {
-        return [...prevItems, { ...product, quantity }];
+        console.error('Failed to fetch cart items:', error);
+        setError(error.response?.data?.message || 'Failed to fetch cart items');
       }
-    });
+      setCartItems([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeFromCart = productId => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+  // Add item to cart
+  const addToCart = async (product) => {
+    if (!user) {
+      throw new Error('Please login to add items to cart');
+    }
+
+    if (user.role === 'admin' || user.role === 'seller') {
+      throw new Error('Admins and sellers cannot add items to cart');
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.post('/cart', {
+        product_id: product.id,
+        quantity: product.quantity || 1
+      });
+
+      // Refresh cart items
+      await fetchCartItems();
+
+      return {
+        success: true,
+        message: response.data.message || 'Product added to cart successfully'
+      };
+    } catch (error) {
+      let errorMessage = 'Failed to add product to cart';
+      
+      if (error.response?.status === 403) {
+        errorMessage = 'Only buyers can add items to cart';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error while adding to cart';
+      }
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateQuantity = (productId, quantity) => {
-    if (quantity < 1) return;
+  // Update quantity - FIXED: Use cart item ID instead of product ID
+  const updateQuantity = async (cartItemId, quantity) => {
+    if (!user || user.role === 'admin' || user.role === 'seller') {
+      return;
+    }
 
-    setCartItems(prevItems =>
-      prevItems.map(
-        item => (item.id === productId ? { ...item, quantity } : item)
-      )
-    );
+    setLoading(true);
+    setError(null);
+    try {
+      await api.put(`/cart/${cartItemId}`, { quantity });
+      
+      // Refresh cart items
+      await fetchCartItems();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to update quantity';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem("b2b_cart");
+  // Remove from cart - FIXED: Use cart item ID instead of product ID
+  const removeFromCart = async (cartItemId) => {
+    if (!user || user.role === 'admin' || user.role === 'seller') {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/cart/${cartItemId}`);
+      
+      // Refresh cart items
+      await fetchCartItems();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to remove item from cart';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  // Clear cart
+  const clearCart = async () => {
+    if (!user || user.role === 'admin' || user.role === 'seller') {
+      return;
+    }
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/cart/clear');
+      
+      // Refresh cart items
+      await fetchCartItems();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || 'Failed to clear cart';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate totals
+  const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // Initialize cart when user changes
+  useEffect(() => {
+    if (user) {
+      fetchCartItems();
+    } else {
+      setCartItems([]);
+    }
+  }, [user]);
 
   const value = {
     cartItems,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
+    loading,
+    error,
+    subtotal,
     totalItems,
-    subtotal
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    fetchCartItems
   };
 
   return (
@@ -81,4 +195,4 @@ export function CartProvider({ children }) {
       {children}
     </CartContext.Provider>
   );
-}
+};
