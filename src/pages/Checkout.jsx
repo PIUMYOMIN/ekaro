@@ -10,7 +10,10 @@ import {
   MapPinIcon,
   UserIcon,
   PhoneIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  XCircleIcon,
+  XMarkIcon,
+  CheckCircleIcon
 } from "@heroicons/react/24/outline";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -135,7 +138,7 @@ export default function Checkout() {
       
       // Navigate to orders page after a delay
       setTimeout(() => {
-        navigate("/buyers");
+        navigate("/buyer");
       }, 2000);
     }
   } catch (error) {

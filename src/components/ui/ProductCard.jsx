@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { StarIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
@@ -12,6 +12,7 @@ const ProductCard = ({ product }) => {
   const { user } = useAuth();
   const [addingToCart, setAddingToCart] = useState(false);
   const [message, setMessage] = useState(null);
+  const navigate = useNavigate();
 
   // Helper function to get image URL
   const getImageUrl = (image) => {
@@ -35,11 +36,14 @@ const ProductCard = ({ product }) => {
 
   const handleAddToCart = async () => {
     if (!user) {
-      setMessage({
-        type: 'error',
-        message: 'Please login to add items to cart'
+      // Redirect to login instead of showing message
+      navigate('/login', { 
+        state: { 
+          from: 'cart-add',
+          productId: product.id,
+          returnTo: window.location.pathname 
+        } 
       });
-      setTimeout(() => setMessage(null), 3000);
       return;
     }
 

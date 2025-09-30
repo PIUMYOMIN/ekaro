@@ -98,7 +98,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Update quantity - FIXED: Use cart item ID instead of product ID
+  // Update quantity
   const updateQuantity = async (cartItemId, quantity) => {
     if (!user || user.role === 'admin' || user.role === 'seller') {
       return;
@@ -120,7 +120,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Remove from cart - FIXED: Use cart item ID instead of product ID
+  // Remove from cart
   const removeFromCart = async (cartItemId) => {
     if (!user || user.role === 'admin' || user.role === 'seller') {
       return;
@@ -164,9 +164,14 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  // Calculate totals - FIXED: Ensure proper calculation
+  const subtotal = cartItems.reduce((total, item) => {
+    return total + (Number(item.price) * Number(item.quantity));
+  }, 0);
+  
+  const totalItems = cartItems.reduce((total, item) => {
+    return total + Number(item.quantity);
+  }, 0);
 
   // Initialize cart when user changes
   useEffect(() => {
@@ -187,7 +192,8 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
-    fetchCartItems
+    fetchCartItems,
+    refetchCart: fetchCartItems // Add alias for refetching
   };
 
   return (

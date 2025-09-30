@@ -1,16 +1,19 @@
 // src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
 import { useForm } from 'react-hook-form';
 import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext'; // Added useCart
 
 const Login = () => {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { addToCart } = useCart(); // Added cart context
   const navigate = useNavigate();
+  const location = useLocation(); // Added location hook
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +23,11 @@ const Login = () => {
     handleSubmit,
     formState: { errors }
   } = useForm();
+
+  // Get the redirect state from location
+  const from = location.state?.from || '';
+  const productId = location.state?.productId;
+  const returnTo = location.state?.returnTo || '/products';
 
   const normalizeMyanmarPhone = (phone) => {
     let cleanPhone = phone.replace(/\D/g, '');
@@ -60,6 +68,59 @@ const Login = () => {
     return true;
   };
 
+  const handleLoginSuccess = async (user) => {
+    try {
+      // If user was trying to add to cart before login
+      if (from === 'cart-add' && productId) {
+        try {
+          // Automatically add the product to cart after successful login
+          await addToCart({
+            id: productId,
+            quantity: 1
+          });
+          
+          // Show success message or navigate to cart
+          console.log('Product automatically added to cart after login');
+          
+          // Option 1: Redirect to cart page
+          // navigate('/cart');
+          
+          // Option 2: Redirect back to original page with success state
+          navigate(returnTo, { 
+            state: { 
+              message: 'Product added to cart successfully!',
+              messageType: 'success'
+            }
+          });
+        } catch (cartError) {
+          console.error('Failed to add product to cart after login:', cartError);
+          // Still redirect but show error message
+          navigate(returnTo, { 
+            state: { 
+              message: 'Logged in successfully, but failed to add product to cart. Please try again.',
+              messageType: 'error'
+            }
+          });
+        }
+      } else {
+        // Normal redirect based on user role
+        if (user.roles?.includes('admin')) {
+          navigate('/admin');
+        } else if (user.roles?.includes('seller')) {
+          navigate('/seller');
+        } else if (user.roles?.includes('buyer')) {
+          navigate(returnTo);
+        } else {
+          navigate('/admin');
+        }
+      }
+    } catch (error) {
+      console.error('Error in login success handler:', error);
+      // Fallback redirect
+      navigate(returnTo);
+    }
+  };
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
@@ -73,16 +134,7 @@ const Login = () => {
       });
       
       if (result.success) {
-        const user = result.user;
-        if (user.roles?.includes('admin')) {
-          navigate('/admin');
-        } else if (user.roles?.includes('seller')) {
-          navigate('/seller');
-        } else if (user.roles?.includes('buyer')) {
-          navigate('/products');
-        } else {
-          navigate('/admin');
-        }
+        await handleLoginSuccess(result.user);
       } else {
         setError(result.message || t('login.invalidCredentials'));
       }
@@ -93,11 +145,32 @@ const Login = () => {
     }
   };
 
+  // Show informative message if user was redirected from cart
+  const showRedirectMessage = from === 'cart-add' && productId;
+
   return (
     <AuthLayout
       title={t('login.title')}
       subtitle={t('login.subtitle')}
     >
+      {/* Redirect Info Message */}
+      {showRedirectMessage && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                {t('login.redirectMessage') || 'Please login to add items to your cart. The product will be automatically added after login.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
@@ -218,17 +291,26 @@ const Login = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {t('login.signingIn')}
+                {showRedirectMessage 
+                  ? (t('login.signingInAndAdding') || 'Logging in & Adding to Cart...') 
+                  : t('login.signingIn')
+                }
               </>
             ) : (
-              t('login.signIn')
+              showRedirectMessage 
+                ? (t('login.signInAndAdd') || 'Login & Add to Cart') 
+                : t('login.signIn')
             )}
           </button>
         </div>
         
         <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">{t('login.noAccount')} </span>
-          <Link to="/register" className="font-medium text-green-600 hover:text-green-500">
+          <Link 
+            to="/register" 
+            state={location.state} // Pass the same state to register page
+            className="font-medium text-green-600 hover:text-green-500"
+          >
             {t('login.register')}
           </Link>
         </div>
