@@ -56,8 +56,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 
 function App() {
-  return (
-    <I18nextProvider i18n={i18n}>
+  return <I18nextProvider i18n={i18n}>
       <AuthProvider>
         <CartProvider>
           <Router>
@@ -72,10 +71,7 @@ function App() {
                   <Route path="/categories" element={<CategoryBrowser />} />
                   <Route path="/sellers" element={<Sellers />} />
                   <Route path="/sellers/:id" element={<SellerProfile />} />
-                  <Route
-                    path="/product-comparison"
-                    element={<ProductComparison />}
-                  />
+                  <Route path="/product-comparison" element={<ProductComparison />} />
                   <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
                   <Route path="/order-tracking" element={<OrderTracking />} />
                   <Route path="/pricing" element={<Pricing />} />
@@ -84,142 +80,62 @@ function App() {
                   <Route path="/help" element={<HelpCenter />} />
 
                   {/* Guest-only Routes */}
-                  <Route
-                    path="/login"
-                    element={
-                      <GuestRoute>
+                  <Route path="/login" element={<GuestRoute>
                         <Login />
-                      </GuestRoute>
-                    }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <GuestRoute>
+                      </GuestRoute>} />
+                  <Route path="/register" element={<GuestRoute>
                         <Register />
-                      </GuestRoute>
-                    }
-                  />
-                  <Route
-                    path="/forgot-password"
-                    element={
-                      <GuestRoute>
+                      </GuestRoute>} />
+                  <Route path="/forgot-password" element={<GuestRoute>
                         <ForgotPassword />
-                      </GuestRoute>
-                    }
-                  />
+                      </GuestRoute>} />
 
                   {/* Buyer Routes */}
-                  <Route
-                    path="/cart"
-                    element={
-                      <ProtectedRoute roles={["buyer"]}>
+                  <Route path="/cart" element={<ProtectedRoute roles={["buyer"]}>
                         <Cart />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/checkout"
-                    element={
-                      <ProtectedRoute roles={["buyer"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute roles={["buyer"]}>
                         <Checkout />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/buyer"
-                    element={
-                      <ProtectedRoute roles={["buyer"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}>
                         <BuyerDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/wishlist"
-                    element={
-                      <ProtectedRoute roles={["buyer", "admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/wishlist" element={<ProtectedRoute roles={["buyer", "admin"]}>
                         <Wishlist />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </ProtectedRoute>} />
 
                   {/* Seller Routes */}
-                  <Route
-                    path="/seller"
-                    element={
-                      <ProtectedRoute roles={["seller"]}>
+                  <Route path="/seller" element={<ProtectedRoute roles={["seller"]}>
                         <SellerDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </ProtectedRoute>} />
 
                   {/* Admin Routes */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute roles={["admin"]}>
+                  <Route path="/admin" element={<ProtectedRoute roles={["admin"]}>
                         <AdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/categories/create"
-                    element={
-                      <ProtectedRoute roles={["admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/categories/create" element={<ProtectedRoute roles={["admin"]}>
                         <CategoryCreate />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/categories/:id/edit"
-                    element={
-                      <ProtectedRoute roles={["admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}>
                         <CategoryEdit />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </ProtectedRoute>} />
 
                   {/* Shared Routes */}
-                  <Route
-                    path="/products/create"
-                    element={
-                      <ProtectedRoute roles={["seller", "admin"]}>
+                  <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}>
                         <ProductCreate />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/products/:id/edit"
-                    element={
-                      <ProtectedRoute roles={["seller", "admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}>
                         <ProductEdit />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/rfqmanager"
-                    element={
-                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
                         <RFQManager />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/payment-method"
-                    element={
-                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
                         <PaymentMethod />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/order-confirmation"
-                    element={
-                      <ProtectedRoute roles={["buyer", "seller", "admin"]}>
+                      </ProtectedRoute>} />
+                  <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
                         <OrderConfirmation />
-                      </ProtectedRoute>
-                    }
-                  />
+                      </ProtectedRoute>} />
                 </Routes>
               </main>
               <Footer />
@@ -227,8 +143,7 @@ function App() {
           </Router>
         </CartProvider>
       </AuthProvider>
-    </I18nextProvider>
-  );
+    </I18nextProvider>;
 }
 
 export default App;
