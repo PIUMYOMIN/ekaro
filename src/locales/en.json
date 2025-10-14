@@ -380,5 +380,135 @@
     "invalidEmail": "Please enter a valid email address",
     "minLength": "Must be at least {{count}} characters",
     "passwordMismatch": "Passwords do not match"
+  },
+  "notifications": {
+    "success": "Success",
+    "error": "Error",
+    "info": "Info",
+    "warning": "Warning",
+    "item_added_to_cart": "Item added to cart",
+    "item_removed_from_cart": "Item removed from cart",
+    "cart_cleared": "Cart cleared",
+    "order_placed": "Order placed successfully",
+    "profile_updated": "Profile updated successfully",
+    "password_changed": "Password changed successfully"
+  },
+  "seller_onboarding":{
+    "storeBasicInfo":{
+        "title":"Store Basic Information",
+        "subtitle":"Provide basic details about your store",
+        "store":{
+          "logo":"Store Logo",
+          "banner":"Store Banner",
+          "label":"Store Name",
+          "name":"Store Name",
+          "placeholder":"Enter your store name",
+          "error":"Store name is required"
+        },
+        "businessType":{
+          "label":"Business Type",
+          "selectBusinessType":"Select business type",
+          "individual":"Individual",
+          "company":"Company",
+          "error":"Business type is required"
+        },
+        "contactEmail":{
+          "label":"Contact Email",
+          "placeholder":"Enter your contact email (optional)",
+          "error":"Please enter a valid email address"
+        },
+        "contactPhone":{
+          "label":"Contact Phone",
+          "placeholder":"Enter your contact phone number",
+          "error":"Please enter a valid Myanmar phone number"
+        },
+        "description":{
+          "label":"Store Description",
+          "placeholder":"Briefly describe your store (optional)",
+          "error":"Store description is required"
+        },
+        "storeCategory":{
+          "label":"Store Category",
+          "placeholder":"Select a category",
+          "error":"Store category is required"
+        },
+        "next":"Next",
+        "saving":"Saving..."
+      },
+      "businessDetails":{
+        "title":"Business Information",
+        "subtitle":"Provide your business details",
+        "businessType":{
+          "label":"Business Type",
+          "individual":"Individual",
+          "company":"Company",
+          "error":"Business type is required"
+        },
+        "registrationNumber":{
+          "label":"Registration Number",
+          "placeholder":"Enter your business registration number",
+          "error":"Registration number is required for companies"
+        },
+        "taxId":{
+          "label":"Tax ID",
+          "placeholder":"Enter your tax identification number",
+          "error":"Tax ID is required for companies"
+        },
+        "website":{
+          "label":"Website (optional)",
+          "placeholder":"Enter your business website URL",
+          "error":"Please enter a valid URL"
+        },
+        "accountNumber":{
+          "label":"Bank Account Number",
+          "placeholder":"Enter your bank account number",
+          "error":"Bank account number is required"
+        }
+      },
+      "addressInfo":{
+        "title":"Store Address",
+        "subtitle":"Provide your store's address",
+        "address":{
+          "label":"Street Address",
+          "placeholder":"Enter your street address",
+          "error":"Street address is required"
+        },
+        "addressLine1":{
+          "label":"Address Line 1",
+          "placeholder":"Enter your street address",
+          "error":"Address Line 1 is required"
+        },
+        "addressLine2":{
+          "label":"Address Line 2",
+          "placeholder":"Apartment, suite, unit, building, floor, etc. (optional)"
+        },
+        "city":{
+          "label":"City",
+          "placeholder":"Enter your city",
+          "error":"City is required"
+        },
+        "stateRegion":{
+          "label":"State/Region",
+          "placeholder":"Enter your state or region",
+          "error":"State/Region is required"
+        },
+        "postalCode":{
+          "label":"Postal Code",
+          "placeholder":"Enter your postal code",
+          "error":"Postal code is required"
+        },
+        "country":{
+          "label":"Country",
+          "placeholder":"Select your country",
+          "error":"Country is required"
+        },
+        "next":"Next",
+        "back":"Back",
+        "saving":"Saving..."
+      },
+      "next":"Next",
+      "back":"Back",
+      "saving":"Saving...",
+      "continue":"Continue"
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Disclosure } from '@headlessui/react';
+import { Disclosure, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -147,13 +147,10 @@ const Header = () => {
                     )}
                   </Link>
                   
-                  {/* User profile */}
+                  {/* User profile with click menu */}
                   {user ? (
-                    <div className="ml-1 relative group">
-                      <button 
-                        onClick={handleDashboardNavigation}
-                        className="flex items-center space-x-1 focus:outline-none"
-                      >
+                    <Menu as="div" className="ml-1 relative">
+                      <Menu.Button className="flex items-center space-x-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-full p-1">
                         <div className="flex-shrink-0">
                           <div className="bg-gray-200 border-2 border-dashed rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-xs text-gray-500">
                             {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -165,23 +162,28 @@ const Header = () => {
                             {user.roles?.join(', ')}
                           </div>
                         </div>
-                      </button>
+                      </Menu.Button>
                       
                       {/* Dropdown menu */}
-                      <div className="hidden group-hover:block absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 focus:outline-none">
                         <div className="py-1">
                           {userNavigation.map((item) => (
-                            <button
-                              key={item.name}
-                              onClick={item.onClick}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              {item.name}
-                            </button>
+                            <Menu.Item key={item.name}>
+                              {({ active }) => (
+                                <button
+                                  onClick={item.onClick}
+                                  className={`${
+                                    active ? 'bg-gray-100' : ''
+                                  } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                >
+                                  {item.name}
+                                </button>
+                              )}
+                            </Menu.Item>
                           ))}
                         </div>
-                      </div>
-                    </div>
+                      </Menu.Items>
+                    </Menu>
                   ) : (
                     <Link to="/login" className="ml-1 flex items-center text-gray-700 hover:text-green-600 p-1 sm:p-1.5">
                       <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />

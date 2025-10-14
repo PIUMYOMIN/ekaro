@@ -63,39 +63,61 @@ const Register = () => {
   };
 
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    setError('');
+  setIsLoading(true);
+  setError('');
+  
+  try {
+    const normalizedPhone = normalizeMyanmarPhone(data.phone);
     
-    try {
-      const normalizedPhone = normalizeMyanmarPhone(data.phone);
+    const result = await registerUser({
+      name: data.name,
+      phone: normalizedPhone,
+      email: data.email,
+      password: data.password,
+      password_confirmation: data.confirmPassword,
+      type: userType, // ✅ Using 'type' field (not 'role')
+      address: data.address,
+      city: data.city,
+      state: data.state
+    });
+    
+    console.log('Registration completed, checking result...');
+    
+    if (result.success) {
+      const user = result.user;
       
-      const result = await registerUser({
-        name: data.name,
-        phone: normalizedPhone,
-        email: data.email,
-        password: data.password,
-        password_confirmation: data.confirmPassword,
-        type: userType
-      });
+      console.log('User object:', user);
+      console.log('User type:', user.type); // ✅ Check type field
+      console.log('User roles:', user.roles); // ✅ Check Spatie roles
       
-      if (result.success) {
-        const user = result.user;
-        if (user.roles?.includes('admin')) {
-          navigate('/admin');
-        } else if (user.roles?.includes('seller')) {
-          navigate('/seller/dashboard');
-        } else {
-          navigate('/');
-        }
+      // ✅ Check for seller using both type and roles
+      const isSeller = user.type === 'seller' || user.roles?.includes('seller');
+      console.log('Is seller:', isSeller);
+      
+      if (isSeller) {
+        console.log('Attempting to navigate to seller onboarding...');
+        
+        // Clear any existing localStorage data for fresh start
+        localStorage.removeItem('seller_onboarding_data');
+        
+        // Force navigation with replace to avoid history issues
+        navigate('/seller/onboarding/store-basic', { replace: true });
+      } else if (user.roles?.includes('admin')) {
+        navigate('/admin', { replace: true });
       } else {
-        setError(result.message || t('register.error'));
+        navigate('/', { replace: true });
       }
-    } catch (err) {
-      setError(t('register.error'));
-    } finally {
-      setIsLoading(false);
+    } else {
+      console.log('Registration failed:', result.message);
+      setError(result.message || t('register.error'));
     }
-  };
+  } catch (err) {
+    console.error('Registration error:', err);
+    setError(t('register.error'));
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <AuthLayout

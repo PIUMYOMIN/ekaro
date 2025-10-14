@@ -13,7 +13,12 @@ import {
   TruckIcon,
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon
+  XCircleIcon,
+  HeartIcon,
+  CogIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
+  HomeIcon
 } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 
@@ -369,13 +374,341 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   );
 };
 
+// Tab Components
+const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-6 text-white">
+        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+        <p className="text-green-100">Here's your buying activity overview</p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Orders</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{orders.length}</p>
+            </div>
+            <div className="bg-blue-100 rounded-lg p-3">
+              <ShoppingBagIcon className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Delivered</p>
+              <p className="text-2xl font-bold text-green-600 mt-1">
+                {orders.filter(o => o.status === 'delivered').length}
+              </p>
+            </div>
+            <div className="bg-green-100 rounded-lg p-3">
+              <CheckCircleIcon className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">In Progress</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">
+                {orders.filter(o => ['pending', 'confirmed', 'processing'].includes(o.status)).length}
+              </p>
+            </div>
+            <div className="bg-blue-100 rounded-lg p-3">
+              <ClockIcon className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Spent</p>
+              <p className="text-2xl font-bold text-purple-600 mt-1">
+                {formatMMK(orders.reduce((total, order) => total + order.total_amount, 0))}
+              </p>
+            </div>
+            <div className="bg-purple-100 rounded-lg p-3">
+              <CreditCardIcon className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Orders */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="bg-orange-100 rounded-full p-2">
+              <ChartBarIcon className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+              <p className="text-gray-600">Your latest purchasing activity</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/buyer/orders')}
+            className="text-green-600 hover:text-green-700 font-medium"
+          >
+            View All Orders
+          </button>
+        </div>
+
+        {orders.length === 0 ? (
+          <div className="text-center py-12">
+            <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
+            <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+            <button
+              onClick={() => navigate('/products')}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
+            >
+              Start Shopping
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {orders.slice(0, 4).map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onViewDetails={onViewDetails}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PersonalInfoTab = ({ user }) => {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="bg-green-100 rounded-full p-2">
+            <UserIcon className="h-6 w-6 text-green-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
+            <p className="text-gray-600">Manage your account details</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Full Name</label>
+              <p className="mt-1 text-gray-900">{user?.name || 'Not provided'}</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Email Address</label>
+              <p className="mt-1 text-gray-900">{user?.email || 'Not provided'}</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+              <p className="mt-1 text-gray-900">{user?.phone || 'Not provided'}</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Account Type</label>
+              <p className="mt-1 text-gray-900 capitalize">{user?.roles?.join(', ') || 'Buyer'}</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Member Since</label>
+              <p className="mt-1 text-gray-900">
+                {user?.created_at ? formatDate(user.created_at) : 'Not available'}
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4">
+              <label className="text-sm font-medium text-gray-700">Account Status</label>
+              <p className="mt-1">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Active
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <MapPinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+              <div className="text-sm text-gray-600">
+                {user?.address ? (
+                  <>
+                    <p className="font-medium">{user.address}</p>
+                    <p className="mt-1">
+                      {user.city && `${user.city}, `}
+                      {user.state && `${user.state}, `}
+                      {user.country}
+                      {user.postal_code && `, ${user.postal_code}`}
+                    </p>
+                  </>
+                ) : (
+                  <p>No address provided</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const OrdersTab = ({ orders, onViewDetails, navigate }) => {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-100 rounded-full p-2">
+              <ShoppingBagIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">All Orders</h2>
+              <p className="text-gray-600">Manage and track your orders</p>
+            </div>
+          </div>
+        </div>
+
+        {orders.length === 0 ? (
+          <div className="text-center py-12">
+            <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
+            <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+            <button
+              onClick={() => navigate('/products')}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
+            >
+              Start Shopping
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onViewDetails={onViewDetails}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const WishlistTab = ({ navigate }) => {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="bg-pink-100 rounded-full p-2">
+            <HeartIcon className="h-6 w-6 text-pink-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Wishlist</h2>
+            <p className="text-gray-600">Your saved products</p>
+          </div>
+        </div>
+
+        <div className="text-center py-12">
+          <HeartIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+          <p className="text-gray-600 mb-6">Save products you love for later.</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
+          >
+            Browse Products
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SettingsTab = () => {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="bg-gray-100 rounded-full p-2">
+            <CogIcon className="h-6 w-6 text-gray-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Settings</h2>
+            <p className="text-gray-600">Manage your account settings</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" defaultChecked />
+                <span className="ml-2 text-sm text-gray-700">Order updates</span>
+              </label>
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" defaultChecked />
+                <span className="ml-2 text-sm text-gray-700">Promotional offers</span>
+              </label>
+              <label className="flex items-center">
+                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                <span className="ml-2 text-sm text-gray-700">Product recommendations</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Security</h3>
+            <button className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700">
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Component
 const BuyerDashboard = () => {
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
+
+  const tabs = [
+    { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
+    { id: 'personal', name: 'Personal Information', icon: UserIcon },
+    { id: 'orders', name: 'Orders', icon: ShoppingBagIcon },
+    { id: 'wishlist', name: 'Wishlist', icon: HeartIcon },
+    { id: 'settings', name: 'Settings', icon: CogIcon },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -409,6 +742,23 @@ const BuyerDashboard = () => {
     setSelectedOrder(null);
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+      case 'personal':
+        return <PersonalInfoTab user={user} />;
+      case 'orders':
+        return <OrdersTab orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+      case 'wishlist':
+        return <WishlistTab navigate={navigate} />;
+      case 'settings':
+        return <SettingsTab />;
+      default:
+        return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto min-h-screen bg-gray-50 flex items-center justify-center">
@@ -426,131 +776,51 @@ const BuyerDashboard = () => {
           <p className="text-gray-600 mt-2">Manage your orders and profile</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="bg-green-100 rounded-full p-3">
-                  <UserIcon className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Profile</h2>
-                  <p className="text-gray-600">Your account information</p>
+            <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-8">
+              <nav className="space-y-2">
+                {tabs.map((tab) => {
+                  const IconComponent = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <IconComponent className="h-5 w-5" />
+                      <span className="font-medium">{tab.name}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Quick Stats in Sidebar */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Orders</span>
+                    <span className="font-medium text-gray-900">{orders.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Member Since</span>
+                    <span className="font-medium text-gray-900">
+                      {user?.created_at ? new Date(user.created_at).getFullYear() : 'N/A'}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              {user && (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <UserIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Name</p>
-                      <p className="font-medium text-gray-900">{user.name}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium text-gray-900">{user.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <PhoneIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium text-gray-900">{user.phone || 'Not provided'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <CreditCardIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm text-gray-600">Account Number</p>
-                      <p className="font-medium text-gray-900">{user.account_number || 'Not provided'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Orders Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-100 rounded-full p-3">
-                    <ShoppingBagIcon className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
-                    <p className="text-gray-600">Track and manage your orders</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => navigate('/buyer/orders')}
-                  className="text-green-600 hover:text-green-700 font-medium"
-                >
-                  View All Orders
-                </button>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="text-center py-12">
-                  <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
-                  <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
-                  <button
-                    onClick={() => navigate('/products')}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
-                  >
-                    Start Shopping
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {orders.slice(0, 4).map((order) => (
-                    <OrderCard
-                      key={order.id}
-                      order={order}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Quick Stats */}
-            {orders.length > 0 && (
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200">
-                  <div className="text-2xl font-bold text-gray-900">{orders.length}</div>
-                  <div className="text-sm text-gray-600">Total Orders</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200">
-                  <div className="text-2xl font-bold text-green-600">
-                    {orders.filter(o => o.status === 'delivered').length}
-                  </div>
-                  <div className="text-sm text-gray-600">Delivered</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {orders.filter(o => ['pending', 'confirmed', 'processing'].includes(o.status)).length}
-                  </div>
-                  <div className="text-sm text-gray-600">In Progress</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {orders.filter(o => o.status === 'shipped').length}
-                  </div>
-                  <div className="text-sm text-gray-600">Shipped</div>
-                </div>
-              </div>
-            )}
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {renderTabContent()}
           </div>
         </div>
 

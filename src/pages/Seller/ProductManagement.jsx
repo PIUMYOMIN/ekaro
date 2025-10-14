@@ -35,11 +35,20 @@ const ProductManagement = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/seller/products/my-products");
-      setProducts(response.data.data || []);
+      // Option 1: Use the existing route
+      const response = await api.get("/products");
+      
+      console.log("Products response:", response.data); // Debug log
+      
+      if (response.data.success) {
+        setProducts(response.data.data || []);
+      } else {
+        setError(response.data.message || "Failed to fetch products");
+      }
     } catch (err) {
-      setError("Failed to fetch products");
       console.error("Error fetching products:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to fetch products";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -54,12 +63,13 @@ const ProductManagement = () => {
     if (!selectedProduct) return;
     try {
       await api.delete(`/products/${selectedProduct.id}`);
-      fetchProducts();
-    } catch (error) {
-      alert("Failed to delete product");
-    } finally {
+      await fetchProducts(); // Refresh the list
       setDeleteModalOpen(false);
       setSelectedProduct(null);
+    } catch (error) {
+      console.error("Delete error:", error);
+      const errorMessage = error.response?.data?.message || "Failed to delete product";
+      alert(errorMessage);
     }
   };
 
@@ -75,13 +85,14 @@ const ProductManagement = () => {
       await api.put(`/products/${selectedProduct.id}`, {
         is_active: statusTarget,
       });
-      fetchProducts();
-    } catch (error) {
-      console.error("Failed to update product status:", error);
-    } finally {
+      await fetchProducts(); // Refresh the list
       setStatusModalOpen(false);
       setSelectedProduct(null);
       setStatusTarget(null);
+    } catch (error) {
+      console.error("Status update error:", error);
+      const errorMessage = error.response?.data?.message || "Failed to update product status";
+      alert(errorMessage);
     }
   };
 
@@ -97,10 +108,20 @@ const ProductManagement = () => {
     if (!sortConfig.key) return products;
 
     return [...products].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      // Handle nested properties
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+      
+      // Handle category name sorting
+      if (sortConfig.key === 'category' && a.category && b.category) {
+        aValue = a.category.name;
+        bValue = b.category.name;
+      }
+
+      if (aValue < bValue) {
         return sortConfig.direction === "ascending" ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.direction === "ascending" ? 1 : -1;
       }
       return 0;
@@ -119,6 +140,18 @@ const ProductManagement = () => {
       style: "currency",
       currency: "USD",
     }).format(price);
+
+  const getProductImage = (product) => {
+    if (product.images && product.images.length > 0) {
+      // Handle different image formats
+      const firstImage = product.images[0];
+      if (typeof firstImage === 'string') {
+        return firstImage;
+      }
+      return firstImage.url || firstImage.path || '/placeholder-product.jpg';
+    }
+    return '/placeholder-product.jpg';
+  };
 
   if (loading) {
     return (
@@ -191,6 +224,32 @@ const ProductManagement = () => {
         </div>
       </div>
 
+      {/* Products Count */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Products Summary</h3>
+            <p className="text-sm text-gray-500">
+              Total: {products.length} products
+            </p>
+          </div>
+          <div className="flex space-x-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {products.filter(p => p.is_active).length}
+              </div>
+              <div className="text-sm text-gray-500">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-400">
+                {products.filter(p => !p.is_active).length}
+              </div>
+              <div className="text-sm text-gray-500">Inactive</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
@@ -198,10 +257,21 @@ const ProductManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t("product.name")}
+                  Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t("product.category")}
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer"
+                  onClick={() => requestSort('category')}
+                >
+                  <div className="flex items-center">
+                    {t("product.category")}
+                    {sortConfig.key === 'category' &&
+                      (sortConfig.direction === "ascending" ? (
+                        <ArrowUpIcon className="ml-1 h-3 w-3" />
+                      ) : (
+                        <ArrowDownIcon className="ml-1 h-3 w-3" />
+                      ))}
+                  </div>
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer"
@@ -244,23 +314,66 @@ const ProductManagement = () => {
                 <tr>
                   <td
                     colSpan="6"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
+                    className="px-6 py-8 text-center text-sm text-gray-500"
                   >
-                    {t("product.no_products")}
+                    <div className="flex flex-col items-center">
+                      <CubeIcon className="h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No products found
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        You haven't added any products yet.
+                      </p>
+                      <button
+                        onClick={() => navigate("/products/create")}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
+                      >
+                        Add Your First Product
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 sortedProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{product.name}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 flex-shrink-0">
+                          <img
+                            className="h-10 w-10 rounded-lg object-cover"
+                            src={getProductImage(product)}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.target.src = '/placeholder-product.jpg';
+                            }}
+                          />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {product.name}
+                          </div>
+                          <div className="text-sm text-gray-500 line-clamp-1">
+                            {product.description}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {product.category?.name || "Uncategorized"}
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
                       {formatPrice(product.price)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {product.quantity}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        product.quantity > 10 
+                          ? 'bg-green-100 text-green-800'
+                          : product.quantity > 0
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.quantity} in stock
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <button

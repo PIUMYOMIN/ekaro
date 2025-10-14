@@ -36,7 +36,6 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import SellerDashboard from "./pages/Seller/SellerDashboard";
 import AdminDashboard from "./pages/Admin/Dashboard";
-import Orders from "./pages/Orders";
 
 // Admin Management
 import CategoryCreate from "./pages/Admin/categories/CategoryCreate";
@@ -47,6 +46,10 @@ import ProductCreate from "./pages/Seller/products/ProductCreate";
 import ProductEdit from "./pages/Seller/products/ProductEdit";
 import ProductView from "./pages/Seller/products/ProductView";
 
+import StoreBasicInfo from "./pages/Seller/StoreBasicInfo";
+import BusinessDetails from "./pages/Seller/BusinessDetails";
+import AddressInfo from "./pages/Seller/AddressInfo";
+
 // Common Components
 import PaymentMethod from "./components/ui/PaymentMethod";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
@@ -55,6 +58,8 @@ import RFQManager from "./pages/RFQManager";
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import SellerOnboardingRoute from "./components/SellerOnboardingRoute";
+import SubmitStoreInfo from "./pages/SubmitStoreInfo";
 
 function App() {
   return (
@@ -110,6 +115,41 @@ function App() {
                     }
                   />
 
+                  {/* Seller Onboarding Routes */}
+                  <Route
+                    path="/seller/onboarding/store-basic"
+                    element={
+                      <SellerOnboardingRoute>
+                        <StoreBasicInfo />
+                      </SellerOnboardingRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/onboarding/business-details"
+                    element={
+                      <SellerOnboardingRoute>
+                        <BusinessDetails />
+                      </SellerOnboardingRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/onboarding/address"
+                    element={
+                      <SellerOnboardingRoute>
+                        <AddressInfo />
+                      </SellerOnboardingRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/seller/onboarding/submit"
+                    element={
+                      <SellerOnboardingRoute>
+                        <SubmitStoreInfo />
+                      </SellerOnboardingRoute>
+                    }
+                  />
+
                   {/* Buyer Routes */}
                   <Route
                     path="/cart"
@@ -136,14 +176,6 @@ function App() {
                     }
                   />
                   <Route
-                    path="/buyer/orders"
-                    element={
-                      <ProtectedRoute roles={["buyer"]}>
-                        <Orders />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
                     path="/buyer"
                     element={
                       <ProtectedRoute roles={["buyer"]}>
@@ -163,6 +195,14 @@ function App() {
                   {/* Seller Routes */}
                   <Route
                     path="/seller"
+                    element={
+                      <ProtectedRoute roles={["seller"]}>
+                        <SellerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/seller/dashboard"
                     element={
                       <ProtectedRoute roles={["seller"]}>
                         <SellerDashboard />

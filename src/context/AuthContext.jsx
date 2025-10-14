@@ -42,21 +42,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
-    try {
-      const response = await api.post('/register', userData);
-      localStorage.setItem('token', response.data.data.token);
-      const registeredUser = response.data.data.user;
-      localStorage.setItem('user', JSON.stringify(registeredUser));
-      setUser(registeredUser);
-      return { success: true, user: registeredUser };
-    } catch (err) {
-      return { 
-        success: false, 
-        message: err.response?.data?.message || 'Registration failed' 
-      };
+  // In AuthContext.jsx - update the register function
+const register = async (userData) => {
+  try {
+    const response = await api.post('/register', userData);
+    localStorage.setItem('token', response.data.data.token);
+    const registeredUser = response.data.data.user;
+    
+    // Normalize roles to array of strings
+    if (registeredUser.roles) {
+      if (Array.isArray(registeredUser.roles)) {
+        // If it's an array of objects, extract the role names
+        if (registeredUser.roles.length > 0 && typeof registeredUser.roles[0] === 'object') {
+          registeredUser.roles = registeredUser.roles.map(role => role.name);
+        }
+        // If it's already array of strings, leave as is
+      } else {
+        // If it's a single string, convert to array
+        registeredUser.roles = [registeredUser.roles];
+      }
     }
-  };
+    
+    localStorage.setItem('user', JSON.stringify(registeredUser));
+    setUser(registeredUser);
+    return { success: true, user: registeredUser };
+  } catch (err) {
+    return { 
+      success: false, 
+      message: err.response?.data?.message || 'Registration failed' 
+    };
+  }
+};
+
 
   const logout = () => {
     localStorage.removeItem('token');
