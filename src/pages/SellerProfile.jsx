@@ -451,7 +451,7 @@ const SellerProfile = () => {
               ) : products.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-12 text-center">
                   <ShoppingBagIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">No products yet</h3>
+                  <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_products_found")}</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     This seller hasn't added any products yet.
                   </p>
@@ -471,7 +471,7 @@ const SellerProfile = () => {
                 <div className="p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">Customer Reviews</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t("seller.customers_reviews")}</h3>
                       <div className="mt-1 flex items-center">
                         {renderStars(rating)}
                         <span className="ml-2 text-sm font-medium text-gray-900">
@@ -483,7 +483,7 @@ const SellerProfile = () => {
                       onClick={() => setShowReviewForm(true)}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
                     >
-                      Write Review
+                      {t("seller.write_review") || "Write a Review"}
                     </button>
                   </div>
 
@@ -496,7 +496,7 @@ const SellerProfile = () => {
                       className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200"
                     >
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-medium text-gray-900">Write a Review</h4>
+                        <h4 className="text-lg font-medium text-gray-900">{t("seller.write_review") || "Write a Review"}</h4>
                         <button
                           onClick={() => setShowReviewForm(false)}
                           className="text-gray-400 hover:text-gray-500 transition-colors"
@@ -517,7 +517,7 @@ const SellerProfile = () => {
                         
                         <div className="mb-4">
                           <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
-                            Review Comment
+                            {t("seller.write_review") || "Your Review"}
                           </label>
                           <textarea
                             id="reviewComment"
@@ -525,7 +525,7 @@ const SellerProfile = () => {
                             value={reviewComment}
                             onChange={(e) => setReviewComment(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                            placeholder="Share your experience with this seller..."
+                            placeholder={t("seller.rating.placeholder") || "Write your review here..."}
                           />
                         </div>
                         
@@ -538,10 +538,10 @@ const SellerProfile = () => {
                             {submittingReview ? (
                               <>
                                 <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                                Submitting...
+                                {t("seller.submitting") || "Submitting..."}
                               </>
                             ) : (
-                              'Submit Review'
+                              t("seller.submit_review") || "Submit Review"
                             )}
                           </button>
                           <button
@@ -549,7 +549,7 @@ const SellerProfile = () => {
                             onClick={() => setShowReviewForm(false)}
                             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
                           >
-                            Cancel
+                            {t("seller.cancel") || "Cancel"}
                           </button>
                         </div>
                       </form>
@@ -600,20 +600,20 @@ const SellerProfile = () => {
                 <div className="lg:col-span-2">
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">About the Seller</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t("seller.about_seller") || "About the Seller"}</h3>
                       <p className="mt-4 text-gray-600 leading-relaxed">
-                        {seller.description || "No description available."}
+                        {t("seller.no_description") || "No additional information provided."}
                       </p>
-                      
-                      <h4 className="mt-6 text-md font-medium text-gray-900">Business Information</h4>
+
+                      <h4 className="mt-6 text-md font-medium text-gray-900">{t("seller.business_information") || "Business Information"}</h4>
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Business Type</p>
+                          <p className="text-sm font-medium text-gray-500">{t("seller.business_type") || "Business Type"}</p>
                           <p className="mt-1 text-gray-900">{seller.business_type || "Not specified"}</p>
                         </div>
                         {seller.business_registration_number && (
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Registration Number</p>
+                            <p className="text-sm font-medium text-gray-500">{t("seller.registration_number") || "Registration Number"}</p>
                             <p className="mt-1 text-gray-900">{seller.business_registration_number}</p>
                           </div>
                         )}
@@ -635,7 +635,7 @@ const SellerProfile = () => {
                 <div>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
+                      <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_information") || "Contact Information"}</h3>
                       
                       <div className="mt-4 space-y-4">
                         {seller.address && (
