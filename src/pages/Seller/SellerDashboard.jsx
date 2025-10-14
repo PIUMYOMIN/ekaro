@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Tab } from "@headlessui/react";
 import {
   ChartBarIcon,
   ShoppingBagIcon,
@@ -10,10 +9,8 @@ import {
   UserGroupIcon,
   TruckIcon,
   CogIcon,
-  DocumentTextIcon,
   BuildingStorefrontIcon
 } from "@heroicons/react/24/outline";
-import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "./DashboardSummary";
 import OrderManagement from "./OrderManagement";
 import ProductManagement from "./ProductManagement";
@@ -22,6 +19,7 @@ import Reviews from "./Reviews";
 import Customers from "./Customers";
 import ShippingSettings from "./ShippingSettings";
 import StoreSettings from "./StoreSettings";
+import ProductForm from "./products/ProductForm";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 
@@ -41,13 +39,16 @@ const SellerDashboard = () => {
     totalRevenue: 0,
     pendingOrders: 0
   });
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
         const [storeResponse, statsResponse] = await Promise.all([
           api.get("/sellers/my-store"),
-          api.get("/dashboard/seller-sales-summary")
+          api.get("/sellers/seller-sales-summary")
         ]);
 
         setStoreData(storeResponse.data.data);
@@ -74,41 +75,57 @@ const SellerDashboard = () => {
 
   const navigation = [
     {
+      id: "dashboard",
       name: t("seller.dashboard"),
       icon: ChartBarIcon,
       component: <DashboardSummary storeData={storeData} stats={stats} />
     },
     {
-      name: t("seller.orders"),
+      id: "orders",
+      name: t("seller.order.title"),
       icon: ShoppingBagIcon,
       component: <OrderManagement />
     },
     {
-      name: t("seller.products"),
+      id: "products",
+      name: t("seller.product.title"),
       icon: CubeIcon,
-      component: <ProductManagement />
+      component: (
+        <ProductManagement 
+          onAddProduct={() => setShowProductForm(true)}
+          onEditProduct={(product) => {
+            setEditingProduct(product);
+            setShowProductForm(true);
+          }}
+        />
+      )
     },
     {
+      id: "sales",
       name: t("seller.sales"),
       icon: CurrencyDollarIcon,
       component: <SalesReports />
     },
     {
+      id: "reviews",
       name: t("seller.reviews"),
       icon: StarIcon,
       component: <Reviews />
     },
     {
+      id: "customers",
       name: t("seller.customers"),
       icon: UserGroupIcon,
       component: <Customers />
     },
     {
+      id: "shipping",
       name: t("seller.shipping"),
       icon: TruckIcon,
       component: <ShippingSettings storeData={storeData} />
     },
     {
+      id: "settings",
       name: t("seller.settings"),
       icon: CogIcon,
       component: (
@@ -116,6 +133,25 @@ const SellerDashboard = () => {
       )
     }
   ];
+
+  const handleProductFormSuccess = () => {
+    setShowProductForm(false);
+    setEditingProduct(null);
+    // Refresh products list if we're on the products tab
+    if (activeTab === "products") {
+      // You might want to add a callback to refresh products
+    }
+  };
+
+  const handleProductFormCancel = () => {
+    setShowProductForm(false);
+    setEditingProduct(null);
+  };
+
+  const getActiveComponent = () => {
+    const activeNav = navigation.find(item => item.id === activeTab);
+    return activeNav ? activeNav.component : null;
+  };
 
   if (loading) {
     return (
@@ -129,76 +165,42 @@ const SellerDashboard = () => {
   }
 
   return (
-    <Tab.Group>
-      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="flex items-center space-x-4">
-          <div className="hidden md:flex items-center space-x-2 text-sm">
-            {storeData?.status === "pending" && (
-              <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                <span>Pending Approval</span>
-              </div>
-            )}
-            {storeData?.status === "approved" && (
-              <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Store Active</span>
-              </div>
-            )}
-            {storeData?.status === "pending_setup" && (
-              <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span>Setup Required</span>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Mobile sidebar toggle */}
-        <div className="md:hidden fixed top-4 left-4 z-20">
-          <button
-            type="button"
-            className="inline-flex items-center justify-center p-2 rounded-lg bg-white shadow-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+    <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      {/* Mobile sidebar toggle */}
+      <div className="md:hidden fixed top-4 left-4 z-20">
+        <button
+          type="button"
+          className="inline-flex items-center justify-center p-2 rounded-lg bg-white shadow-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <span className="sr-only">{t("seller.open_sidebar")}</span>
+          <svg
+            className="h-6 w-6"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <span className="sr-only">{t("seller.open_sidebar")}</span>
-            <svg
-              className="h-6 w-6"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
 
-        {/* Sidebar - Mobile */}
-        {sidebarOpen && (
+      {/* Sidebar - Mobile */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        >
           <div
-            className="md:hidden fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl transform transition-transform"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl transform transition-transform"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Sidebar
-                navigation={navigation}
-                onClose={() => setSidebarOpen(false)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Sidebar - Desktop */}
-        <div className="hidden md:flex md:flex-shrink-0">
-          <div className="flex flex-col w-80 bg-white/80 backdrop-blur-lg border-r border-gray-200/60 shadow-xl">
             <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
               {/* Store Header */}
               <div className="flex items-center px-6 mb-8">
@@ -228,143 +230,260 @@ const SellerDashboard = () => {
 
               {/* Navigation */}
               <nav className="flex-1 px-4 space-y-2">
-                <Tab.List className="space-y-2">
-                  {navigation.map((item) => (
-                    <Tab
-                      key={item.name}
-                      className={({ selected }) =>
-                        classNames(
-                          "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200",
-                          selected
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
-                            : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
-                        )
-                      }
-                    >
-                      <item.icon
-                        className={classNames(
-                          "mr-3 h-5 w-5 transition-all duration-200",
-                          "group-[:not([class*='bg-gradient'])]:text-gray-400",
-                          "group-hover:scale-110"
-                        )}
-                      />
-                      {item.name}
-                    </Tab>
-                  ))}
-                </Tab.List>
-              </nav>
-            </div>
-
-            {/* User Profile Footer */}
-            <div className="flex-shrink-0 border-t border-gray-200/60 p-6 bg-white/50">
-              <div className="flex items-center">
-                <div className="relative">
-                  {user?.profile_photo ? (
-                    <img
-                      src={user.profile_photo}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-xl object-cover border-2 border-green-200"
+                {navigation.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={classNames(
+                      "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200",
+                      activeTab === item.id
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
+                        : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                    )}
+                  >
+                    <item.icon
+                      className={classNames(
+                        "mr-3 h-5 w-5 transition-all duration-200",
+                        activeTab === item.id ? "text-white" : "text-gray-400 group-hover:text-green-600",
+                        "group-hover:scale-110"
+                      )}
                     />
-                  ) : (
-                    <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">
-                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="ml-3 min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {user?.email}
-                  </p>
-                </div>
-              </div>
+                    {item.name}
+                  </button>
+                ))}
+              </nav>
 
-              {/* Quick Stats */}
-              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                <div className="text-center p-2 bg-green-50 rounded-lg">
-                  <div className="font-bold text-green-700">
-                    {stats.totalProducts}
+              {/* User Profile Footer */}
+              <div className="flex-shrink-0 border-t border-gray-200 p-6 bg-white/50">
+                <div className="flex items-center">
+                  <div className="relative">
+                    {user?.profile_photo ? (
+                      <img
+                        src={user.profile_photo}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-xl object-cover border-2 border-green-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-gray-600">Products</div>
-                </div>
-                <div className="text-center p-2 bg-blue-50 rounded-lg">
-                  <div className="font-bold text-blue-700">
-                    {stats.totalOrders}
+                  <div className="ml-3 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email}
+                    </p>
                   </div>
-                  <div className="text-gray-600">Orders</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header Bar */}
-          <div className="flex-shrink-0 bg-white/80 backdrop-blur-lg border-b border-gray-200/60">
-            <div className="flex items-center justify-between px-6 py-4">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                  Seller Center
+      {/* Sidebar - Desktop */}
+      <div className="hidden md:flex md:flex-shrink-0">
+        <div className="flex flex-col w-80 bg-white/80 backdrop-blur-lg border-r border-gray-200/60 shadow-xl">
+          <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
+            {/* Store Header */}
+            <div className="flex items-center px-6 mb-8">
+              <div className="relative">
+                {storeData?.store_logo ? (
+                  <img
+                    src={storeData.store_logo}
+                    alt={storeData.store_name}
+                    className="w-12 h-12 rounded-2xl object-cover border-2 border-green-200 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <BuildingStorefrontIcon className="h-6 w-6 text-white" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+              </div>
+              <div className="ml-4">
+                <h1 className="text-lg font-bold text-gray-900 truncate max-w-[180px]">
+                  {storeData?.store_name || t("seller.seller_center")}
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Manage your store and grow your business
+                <p className="text-sm text-green-600 font-medium">
+                  Seller Account
                 </p>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>Store Active</span>
-                </div>
-              </div>
             </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-4 space-y-2">
+              {navigation.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={classNames(
+                    "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200",
+                    activeTab === item.id
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
+                      : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                  )}
+                >
+                  <item.icon
+                    className={classNames(
+                      "mr-3 h-5 w-5 transition-all duration-200",
+                      activeTab === item.id ? "text-white" : "text-gray-400 group-hover:text-green-600",
+                      "group-hover:scale-110"
+                    )}
+                  />
+                  {item.name}
+                </button>
+              ))}
+            </nav>
           </div>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-6">
-              {/* Mobile Tabs */}
-              <div className="md:hidden mb-6">
-                <Tab.List className="flex space-x-2 rounded-2xl bg-white/80 backdrop-blur-lg p-2 shadow-lg overflow-x-auto">
-                  {navigation.map((item) => (
-                    <Tab
-                      key={item.name}
-                      className={({ selected }) =>
-                        classNames(
-                          "flex-1 min-w-[120px] rounded-xl py-3 text-sm font-medium leading-5 transition-all duration-200",
-                          "focus:outline-none focus:ring-2 ring-offset-2 ring-offset-green-400 ring-white ring-opacity-60",
-                          selected
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                            : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
-                        )
-                      }
-                    >
-                      <div className="flex flex-col items-center justify-center space-y-1">
-                        <item.icon className="h-5 w-5" />
-                        <span className="text-xs">{item.name}</span>
-                      </div>
-                    </Tab>
-                  ))}
-                </Tab.List>
+          {/* User Profile Footer */}
+          <div className="flex-shrink-0 border-t border-gray-200/60 p-6 bg-white/50">
+            <div className="flex items-center">
+              <div className="relative">
+                {user?.profile_photo ? (
+                  <img
+                    src={user.profile_photo}
+                    alt={user.name}
+                    className="w-10 h-10 rounded-xl object-cover border-2 border-green-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                    </span>
+                  </div>
+                )}
               </div>
+              <div className="ml-3 min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
 
-              {/* Tab Content */}
-              <Tab.Panels className="mt-2">
-                {navigation.map((item, idx) => (
-                  <Tab.Panel key={idx} className="focus:outline-none">
-                    {item.component}
-                  </Tab.Panel>
-                ))}
-              </Tab.Panels>
+            {/* Quick Stats */}
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div className="text-center p-2 bg-green-50 rounded-lg">
+                <div className="font-bold text-green-700">
+                  {stats.totalProducts}
+                </div>
+                <div className="text-gray-600">Products</div>
+              </div>
+              <div className="text-center p-2 bg-blue-50 rounded-lg">
+                <div className="font-bold text-blue-700">
+                  {stats.totalOrders}
+                </div>
+                <div className="text-gray-600">Orders</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </Tab.Group>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header Bar */}
+        <div className="flex-shrink-0 bg-white/80 backdrop-blur-lg border-b border-gray-200/60">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                Seller Center
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your store and grow your business
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm">
+                {storeData?.status === "pending" && (
+                  <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                    <span>Pending Approval</span>
+                  </div>
+                )}
+                {storeData?.status === "approved" && (
+                  <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Store Active</span>
+                  </div>
+                )}
+                {storeData?.status === "pending_setup" && (
+                  <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span>Setup Required</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            {/* Mobile Tabs */}
+            <div className="md:hidden mb-6">
+              <div className="flex space-x-2 rounded-2xl bg-white/80 backdrop-blur-lg p-2 shadow-lg overflow-x-auto">
+                {navigation.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={classNames(
+                      "flex-1 min-w-[120px] rounded-xl py-3 text-sm font-medium leading-5 transition-all duration-200",
+                      "focus:outline-none focus:ring-2 ring-offset-2 ring-offset-green-400 ring-white ring-opacity-60",
+                      activeTab === item.id
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
+                        : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                    )}
+                  >
+                    <div className="flex flex-col items-center justify-center space-y-1">
+                      <item.icon className="h-5 w-5" />
+                      <span className="text-xs">{item.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-2">
+              {getActiveComponent()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Product Form Modal */}
+      {showProductForm && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={handleProductFormCancel}></div>
+            
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            
+            <div className="inline-block w-full max-w-6xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <ProductForm 
+                product={editingProduct}
+                onSuccess={handleProductFormSuccess}
+                onCancel={handleProductFormCancel}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

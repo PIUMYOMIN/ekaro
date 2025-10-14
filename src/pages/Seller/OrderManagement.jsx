@@ -19,13 +19,13 @@ const OrderManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const statuses = [
-    { id: "all", name: t("order.all_orders") },
-    { id: "pending", name: t("order.pending") },
-    { id: "confirmed", name: t("order.confirmed") },
-    { id: "processing", name: t("order.processing") },
-    { id: "shipped", name: t("order.shipped") },
-    { id: "delivered", name: t("order.delivered") },
-    { id: "cancelled", name: t("order.cancelled") }
+    { id: "all", name: t("seller.order.all_orders") },
+    { id: "pending", name: t("seller.order.pending") },
+    { id: "confirmed", name: t("seller.order.confirmed") },
+    { id: "processing", name: t("seller.order.processing") },
+    { id: "shipped", name: t("seller.order.shipped") },
+    { id: "delivered", name: t("seller.order.delivered") },
+    { id: "cancelled", name: t("seller.order.cancelled") }
   ];
 
   useEffect(() => {
@@ -161,10 +161,10 @@ const OrderManagement = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900">
-          {t("order.order_management")}
+          {t("seller.order.order_management")}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
-          {t("order.manage_your_orders")}
+          {t("seller.order.manage_your_orders")}
         </p>
       </div>
 

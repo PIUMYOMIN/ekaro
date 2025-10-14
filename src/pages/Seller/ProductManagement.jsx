@@ -10,10 +10,11 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ArrowPathIcon,
+  CubeIcon
 } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
 
-const ProductManagement = () => {
+const ProductManagement = ({ onAddProduct, onEditProduct }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -37,9 +38,9 @@ const ProductManagement = () => {
     try {
       // Option 1: Use the existing route
       const response = await api.get("/products");
-      
+
       console.log("Products response:", response.data); // Debug log
-      
+
       if (response.data.success) {
         setProducts(response.data.data || []);
       } else {
@@ -47,7 +48,10 @@ const ProductManagement = () => {
       }
     } catch (err) {
       console.error("Error fetching products:", err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to fetch products";
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to fetch products";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -68,7 +72,8 @@ const ProductManagement = () => {
       setSelectedProduct(null);
     } catch (error) {
       console.error("Delete error:", error);
-      const errorMessage = error.response?.data?.message || "Failed to delete product";
+      const errorMessage =
+        error.response?.data?.message || "Failed to delete product";
       alert(errorMessage);
     }
   };
@@ -83,7 +88,7 @@ const ProductManagement = () => {
     if (!selectedProduct) return;
     try {
       await api.put(`/products/${selectedProduct.id}`, {
-        is_active: statusTarget,
+        is_active: statusTarget
       });
       await fetchProducts(); // Refresh the list
       setStatusModalOpen(false);
@@ -91,7 +96,8 @@ const ProductManagement = () => {
       setStatusTarget(null);
     } catch (error) {
       console.error("Status update error:", error);
-      const errorMessage = error.response?.data?.message || "Failed to update product status";
+      const errorMessage =
+        error.response?.data?.message || "Failed to update product status";
       alert(errorMessage);
     }
   };
@@ -111,9 +117,9 @@ const ProductManagement = () => {
       // Handle nested properties
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
-      
+
       // Handle category name sorting
-      if (sortConfig.key === 'category' && a.category && b.category) {
+      if (sortConfig.key === "category" && a.category && b.category) {
         aValue = a.category.name;
         bValue = b.category.name;
       }
@@ -138,19 +144,19 @@ const ProductManagement = () => {
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "USD"
     }).format(price);
 
   const getProductImage = (product) => {
     if (product.images && product.images.length > 0) {
       // Handle different image formats
       const firstImage = product.images[0];
-      if (typeof firstImage === 'string') {
+      if (typeof firstImage === "string") {
         return firstImage;
       }
-      return firstImage.url || firstImage.path || '/placeholder-product.jpg';
+      return firstImage.url || firstImage.path || "/placeholder-product.jpg";
     }
-    return '/placeholder-product.jpg';
+    return "/placeholder-product.jpg";
   };
 
   if (loading) {
@@ -200,10 +206,10 @@ const ProductManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">
-            {t("product.product_management")}
+            {t("seller.product_management")}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            {t("product.manage_your_products")}
+            {t("seller.manage_your_products")}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-3">
@@ -212,14 +218,14 @@ const ProductManagement = () => {
             className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
             <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            {t("product.refresh")}
+            {t("seller.product.refresh")}
           </button>
           <button
-            onClick={() => navigate("/products/create")}
+            onClick={onAddProduct}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            {t("product.add_product")}
+            {t("seller.product.add_product")}
           </button>
         </div>
       </div>
@@ -228,7 +234,9 @@ const ProductManagement = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Products Summary</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Products Summary
+            </h3>
             <p className="text-sm text-gray-500">
               Total: {products.length} products
             </p>
@@ -236,13 +244,13 @@ const ProductManagement = () => {
           <div className="flex space-x-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {products.filter(p => p.is_active).length}
+                {products.filter((p) => p.is_active).length}
               </div>
               <div className="text-sm text-gray-500">Active</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-400">
-                {products.filter(p => !p.is_active).length}
+                {products.filter((p) => !p.is_active).length}
               </div>
               <div className="text-sm text-gray-500">Inactive</div>
             </div>
@@ -261,11 +269,11 @@ const ProductManagement = () => {
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer"
-                  onClick={() => requestSort('category')}
+                  onClick={() => requestSort("category")}
                 >
                   <div className="flex items-center">
                     {t("product.category")}
-                    {sortConfig.key === 'category' &&
+                    {sortConfig.key === "category" &&
                       (sortConfig.direction === "ascending" ? (
                         <ArrowUpIcon className="ml-1 h-3 w-3" />
                       ) : (
@@ -344,7 +352,7 @@ const ProductManagement = () => {
                             src={getProductImage(product)}
                             alt={product.name}
                             onError={(e) => {
-                              e.target.src = '/placeholder-product.jpg';
+                              e.target.src = "/placeholder-product.jpg";
                             }}
                           />
                         </div>
@@ -365,13 +373,15 @@ const ProductManagement = () => {
                       {formatPrice(product.price)}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        product.quantity > 10 
-                          ? 'bg-green-100 text-green-800'
-                          : product.quantity > 0
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          product.quantity > 10
+                            ? "bg-green-100 text-green-800"
+                            : product.quantity > 0
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
                         {product.quantity} in stock
                       </span>
                     </td>
@@ -395,7 +405,7 @@ const ProductManagement = () => {
                           <EyeIcon className="h-5 w-5" />
                         </button>
                         <button
-                          onClick={() => navigate(`/products/${product.id}/edit`)}
+                          onClick={() => onEditProduct(product)}
                           className="text-green-600 hover:text-green-900"
                           title="Edit Product"
                         >
@@ -456,10 +466,10 @@ const ProductManagement = () => {
             <p className="text-sm text-gray-600 mb-6">
               {statusTarget
                 ? t("product.activate_message", {
-                    name: selectedProduct?.name,
+                    name: selectedProduct?.name
                   })
                 : t("product.deactivate_message", {
-                    name: selectedProduct?.name,
+                    name: selectedProduct?.name
                   })}
             </p>
             <div className="flex justify-end space-x-3">
