@@ -1769,7 +1769,7 @@ const AdminDashboard = () => {
       )
     },
     {
-      name: t("products"),
+      name: t("seller.product.title"),
       icon: CubeIcon,
       component: (
         <ProductManagement

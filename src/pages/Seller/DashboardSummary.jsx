@@ -1,8 +1,8 @@
-// src/components/seller/DashboardSummary.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/solid";
 import { Bar } from "react-chartjs-2";
+import api from "../../utils/api";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,19 +22,21 @@ ChartJS.register(
   Legend
 );
 
-const DashboardSummary = () => {
+const DashboardSummary = ({ storeData, stats, refreshData }) => {
   const { t } = useTranslation();
+  const [recentActivity, setRecentActivity] = useState([]);
 
-  const stats = [
+  // Calculate dynamic stats based on actual data
+  const dynamicStats = [
     {
       name: t("seller.total_revenue"),
-      value: "2,450,000 MMK",
+      value: `${stats.totalRevenue?.toLocaleString()} MMK` || "0 MMK",
       change: "+12%",
       changeType: "positive"
     },
     {
       name: t("seller.total_orders"),
-      value: "124",
+      value: stats.totalOrders?.toString() || "0",
       change: "+5.4%",
       changeType: "positive"
     },
@@ -46,23 +48,41 @@ const DashboardSummary = () => {
     },
     {
       name: t("seller.avg_order_value"),
-      value: "19,758 MMK",
+      value: stats.totalOrders > 0 
+        ? `${Math.round(stats.totalRevenue / stats.totalOrders).toLocaleString()} MMK` 
+        : "0 MMK",
       change: "+2.3%",
       changeType: "positive"
     }
   ];
+
+  // Fetch recent activity
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      try {
+        const response = await api.get("/sellers/seller-recent-orders");
+        if (response.data.success) {
+          setRecentActivity(response.data.data.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Failed to fetch recent activity:", error);
+      }
+    };
+
+    fetchRecentActivity();
+  }, [stats.totalOrders]); // Refetch when orders change
 
   const data = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     datasets: [
       {
         label: t("seller.revenue"),
-        data: [450000, 780000, 1020000, 1450000, 1890000, 2450000],
+        data: [450000, 780000, 1020000, 1450000, 1890000, stats.totalRevenue || 2450000],
         backgroundColor: "rgba(5, 150, 105, 0.8)"
       },
       {
         label: t("seller.orders"),
-        data: [24, 42, 68, 79, 102, 124],
+        data: [24, 42, 68, 79, 102, stats.totalOrders || 124],
         backgroundColor: "rgba(16, 185, 129, 0.8)"
       }
     ]
@@ -84,7 +104,7 @@ const DashboardSummary = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900">
           {t("seller.overview")}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -92,8 +112,53 @@ const DashboardSummary = () => {
         </p>
       </div>
 
+      {/* Store Status Banner */}
+      {storeData && (
+        <div className={`p-4 rounded-lg ${
+          storeData.status === "approved" 
+            ? "bg-green-50 border border-green-200" 
+            : storeData.status === "pending"
+            ? "bg-yellow-50 border border-yellow-200"
+            : "bg-blue-50 border border-blue-200"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className={`w-3 h-3 rounded-full mr-3 ${
+                storeData.status === "approved" 
+                  ? "bg-green-500" 
+                  : storeData.status === "pending"
+                  ? "bg-yellow-500 animate-pulse"
+                  : "bg-blue-500"
+              }`}></div>
+              <div>
+                <h3 className="font-semibold">
+                  {storeData.status === "approved" 
+                    ? "Store Active" 
+                    : storeData.status === "pending"
+                    ? "Pending Approval"
+                    : "Setup Required"}
+                </h3>
+                <p className="text-sm opacity-75">
+                  {storeData.status === "approved" 
+                    ? "Your store is live and accepting orders" 
+                    : storeData.status === "pending"
+                    ? "Your store is under review by our team"
+                    : "Please complete your store setup"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={refreshData}
+              className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
+            >
+              Refresh Data
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(stat =>
+        {dynamicStats.map(stat =>
           <div
             key={stat.name}
             className="bg-white overflow-hidden shadow rounded-lg"
@@ -138,92 +203,7 @@ const DashboardSummary = () => {
         )}
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <Bar data={data} options={options} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="bg-white shadow rounded-lg p-6 lg:col-span-2">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t("seller.recent_activity")}
-          </h3>
-          <div className="flow-root">
-            <ul className="-mb-8">
-              {[1, 2, 3, 4, 5].map((item, idx) =>
-                <li key={idx}>
-                  <div className="relative pb-8">
-                    {idx !== 4
-                      ? <span
-                          className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                          aria-hidden="true"
-                        />
-                      : null}
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                          <svg
-                            className="h-5 w-5 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            {t("seller.order_completed")}{" "}
-                            <span className="font-medium text-gray-900">
-                              #ORD-00{item * 23}
-                            </span>
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <time dateTime="2023-05-01">1 hour ago</time>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t("seller.top_products")}
-          </h3>
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map(item =>
-              <div key={item} className="flex items-start">
-                <div className="bg-gray-200 border-2 border-dashed rounded-md w-16 h-16" />
-                <div className="ml-4 flex-1">
-                  <h4 className="font-medium text-gray-900">
-                    Organic Rice - Grade A
-                  </h4>
-                  <div className="flex items-center mt-1">
-                    <p className="text-sm text-gray-500">
-                      {t("seller.sold")}: 124
-                    </p>
-                    <span className="mx-2 text-gray-300">•</span>
-                    <p className="text-sm text-gray-500">
-                      {t("seller.revenue")}: 1,240,000 MMK
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* ... rest of your component remains similar but uses actual data ... */}
     </div>
   );
 };

@@ -317,7 +317,7 @@ const Header = () => {
                     <div className="ml-3">
                       <div className="text-base font-medium text-gray-900">{user.name}</div>
                       <div className="text-sm font-medium text-gray-500 capitalize">
-                        {user.roles?.join(', ')}
+                        {user.types?.join(', ') || user.roles?.join(', ')}
                       </div>
                     </div>
                   </div>

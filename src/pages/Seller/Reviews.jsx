@@ -71,35 +71,30 @@ const Reviews = () => {
   };
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
+    return <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          {t("seller.reviews")}
+          {t("seller.reviews.loading")}
         </h2>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
         </div>
-      </div>
-    );
+      </div>;
   }
 
   if (error) {
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
+    return <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
-          {t("seller.reviews")}
+          {t("seller.reviews.error_title")}
         </h2>
         <div className="text-center text-red-500 py-8">
           {error}
         </div>
-      </div>
-    );
+      </div>;
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
+  return <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        {t("seller.reviews")}
+        {t("seller.reviews.title")}
       </h2>
 
       {/* Review Summary */}
@@ -126,7 +121,7 @@ const Reviews = () => {
                 )}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                {t("seller.based_on", { count: reviews.length })}
+                {t("seller.reviews.based_on", { count: reviews.length })}
               </p>
             </div>
           </div>
@@ -157,14 +152,8 @@ const Reviews = () => {
 
       {/* Review Filters */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          onClick={() => setActiveFilter("all")}
-          className={`px-4 py-2 rounded-full text-sm font-medium ${activeFilter ===
-          "all"
-            ? "bg-blue-100 text-blue-800"
-            : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-        >
-          {t("seller.all_reviews")} ({reviews.length})
+        <button onClick={() => setActiveFilter("all")} className={`px-4 py-2 rounded-full text-sm font-medium ${activeFilter === "all" ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+          {t("seller.reviews.all_reviews")} ({reviews.length})
         </button>
         {ratingCounts.map(({ rating, count }) =>
           <button
@@ -183,18 +172,16 @@ const Reviews = () => {
                       : "bg-red-100 text-red-800"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
           >
-            {rating} {t("seller.star")} ({count})
+            {rating} {t("seller.reviews.star")} ({count})
           </button>
         )}
       </div>
 
       {/* Reviews List */}
       <div className="space-y-6">
-        {filteredReviews.length === 0
-          ? <div className="text-center py-8 text-gray-500">
+        {filteredReviews.length === 0 ? <div className="text-center py-8 text-gray-500">
               {t("seller.no_reviews_found")}
-            </div>
-          : filteredReviews.map(review =>
+            </div> : filteredReviews.map(review =>
               <div
                 key={review.id}
                 className="border border-gray-200 rounded-lg p-6"
@@ -219,7 +206,9 @@ const Reviews = () => {
                           className={`h-5 w-5 ${star <= review.rating
                             ? "text-yellow-400"
                             : "text-gray-300"}`}
-                          fill={star <= review.rating ? "currentColor" : "none"}
+                          fill={
+                            star <= review.rating ? "currentColor" : "none"
+                          }
                         />
                       )}
                     </div>
@@ -235,7 +224,7 @@ const Reviews = () => {
                   </p>
                   <div className="mt-3 flex items-center text-sm text-gray-500">
                     <span className="mr-2">
-                      {t("seller.for_product")}:
+                      {t("seller.reviews.for_product")}:
                     </span>
                     <span className="font-medium text-gray-900">
                       {review.product.name}
@@ -251,14 +240,14 @@ const Reviews = () => {
                         </div>
                         <div className="ml-3">
                           <h4 className="text-sm font-medium text-blue-800">
-                            {t("seller.your_response")}
+                            {t("seller.reviews.your_response")}
                           </h4>
                           <p className="mt-1 text-sm text-blue-700">
                             {review.reply}
                           </p>
                           <div className="mt-2 text-sm">
                             <button className="font-medium text-blue-600 hover:text-blue-500">
-                              {t("seller.edit_response")}
+                              {t("seller.reviews.edit_response")}
                             </button>
                           </div>
                         </div>
@@ -275,37 +264,26 @@ const Reviews = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 &&
-        <div className="mt-8 flex items-center justify-between">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage ===
-            1
-              ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-              : "text-gray-700 bg-white hover:bg-gray-50"}`}
-          >
+      {totalPages > 1 && <div className="mt-8 flex items-center justify-between">
+          <button onClick={() => setCurrentPage(prev =>
+                Math.max(prev - 1, 1)
+              )} disabled={currentPage === 1} className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage === 1 ? "text-gray-400 bg-gray-100 cursor-not-allowed" : "text-gray-700 bg-white hover:bg-gray-50"}`}>
             {t("seller.previous")}
           </button>
           <div className="text-sm text-gray-700">
-            {t("seller.page")}{" "}
-            <span className="font-medium">{currentPage}</span> {t("seller.of")}{" "}
-            <span className="font-medium">{totalPages}</span>
+            {t("seller.page")} <span className="font-medium">
+              {currentPage}
+            </span> {t("seller.of")} <span className="font-medium">
+              {totalPages}
+            </span>
           </div>
-          <button
-            onClick={() =>
-              setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage ===
-            totalPages
-              ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-              : "text-gray-700 bg-white hover:bg-gray-50"}`}
-          >
+          <button onClick={() => setCurrentPage(prev =>
+                Math.min(prev + 1, totalPages)
+              )} disabled={currentPage === totalPages} className={`inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage === totalPages ? "text-gray-400 bg-gray-100 cursor-not-allowed" : "text-gray-700 bg-white hover:bg-gray-50"}`}>
             {t("seller.next")}
           </button>
         </div>}
-    </div>
-  );
+    </div>;
 };
 
 export default Reviews;

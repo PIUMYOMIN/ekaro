@@ -11,7 +11,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CheckCircleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
 
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
@@ -55,6 +56,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Available options for dropdowns
   const minOrderUnits = [
@@ -120,6 +123,18 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     };
   }, [imagePreviews]);
 
+  // Auto-close success popup and redirect
+  useEffect(() => {
+    if (showSuccessPopup) {
+      const timer = setTimeout(() => {
+        setShowSuccessPopup(false);
+        onCancel(); // Return to previous page
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessPopup, onCancel]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -154,83 +169,106 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     });
   };
 
-  const handleImageSelect = async (e) => {
-  const files = Array.from(e.target.files);
-  if (files.length === 0) return;
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-  try {
-    setUploadingImages(true);
-    
-    const newPreviews = [];
-    
-    for (const file of files) {
-      const uploadFormData = new FormData();
-      uploadFormData.append("image", file);
-      uploadFormData.append("angle", "default");
-      
-      console.log("Uploading file:", file.name, file.type, file.size);
-      
-      const response = await api.post("/products/upload-image", uploadFormData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-      
-      console.log("Upload response:", response.data);
-      
-      if (response.data.success) {
-        const uploadedImage = response.data.data;
-        
-        const newPreview = {
-          url: uploadedImage.full_url || uploadedImage.url, // Use full_url for display
-          tempPath: uploadedImage.url, // Store the path for backend processing
-          is_primary: imagePreviews.length === 0 && newPreviews.length === 0,
-          angle: uploadedImage.angle || "default",
-          isExisting: false
-        };
-        
-        newPreviews.push(newPreview);
-      } else {
-        console.error("Upload failed:", response.data);
-        throw new Error(response.data.message || "Upload failed");
-      }
-    }
-    
+    const newPreviews = files.map((file, index) => ({
+      url: URL.createObjectURL(file),
+      file: file, // Store the file object
+      is_primary: imagePreviews.length === 0 && index === 0, // First image is primary
+      angle: "default",
+      isExisting: false
+    }));
+
     setImagePreviews((prev) => [...prev, ...newPreviews]);
-    
-  } catch (err) {
-    console.error("Failed to upload images:", err);
-    console.error("Error details:", err.response?.data);
-    
-    let errorMessage = "Failed to upload images. Please try again.";
-    
-    if (err.response?.data?.errors) {
-      // Handle validation errors from server
-      const errorMessages = Object.values(err.response.data.errors).flat();
-      errorMessage = `Upload failed: ${errorMessages.join(", ")}`;
-    } else if (err.response?.data?.message) {
-      errorMessage = err.response.data.message;
-    }
-    
-    setError(errorMessage);
-  } finally {
-    setUploadingImages(false);
-    e.target.value = ""; // Reset file input
-  }
-};
+    e.target.value = "";
+  };
 
-  const removeImage = async (index) => {
-    const previewToRemove = imagePreviews[index];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      if (!previewToRemove.isExisting && previewToRemove.url.startsWith("blob:")) {
-        URL.revokeObjectURL(previewToRemove.url);
+      // Step 1: Upload images to temporary storage
+      const uploadedImages = [];
+      for (const preview of imagePreviews) {
+        if (preview.file) {
+          const formData = new FormData();
+          formData.append("image", preview.file);
+          
+          const response = await api.post("/products/upload-image", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data"
+            }
+          });
+          
+          uploadedImages.push({
+            url: response.data.data.url, // This is the temporary path
+            angle: preview.angle,
+            is_primary: preview.is_primary
+          });
+        } else if (preview.isExisting) {
+          // For existing images (when editing), keep the original data
+          uploadedImages.push({
+            url: preview.url,
+            angle: preview.angle,
+            is_primary: preview.is_primary
+          });
+        }
       }
 
-      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+      // Step 2: Prepare and send the complete product data
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+        quantity: parseInt(formData.quantity),
+        moq: parseInt(formData.moq),
+        category_id: parseInt(formData.category_id),
+        specifications: formData.specifications,
+        images: uploadedImages, // Send the uploaded image paths
+        // ... other field conversions
+      };
+
+      let response;
+      if (product) {
+        response = await api.put(`/products/${product.id}`, payload);
+        setSuccessMessage("Product updated successfully!");
+      } else {
+        response = await api.post("/products", payload);
+        setSuccessMessage("Product created successfully!");
+      }
+
+      // Show success and redirect
+      setShowSuccessPopup(true);
+      
+      if (onSuccess) {
+        onSuccess(response.data);
+      }
+
     } catch (err) {
-      console.error("Failed to delete image:", err);
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        setError(errorMessages.join(", "));
+      } else {
+        setError(err.response?.data?.message || "Something went wrong");
+      }
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const removeImage = (index) => {
+    const previewToRemove = imagePreviews[index];
+
+    // Clean up blob URL
+    if (previewToRemove.url.startsWith("blob:")) {
+      URL.revokeObjectURL(previewToRemove.url);
+    }
+
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const setPrimaryImage = (index) => {
@@ -242,12 +280,45 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     );
   };
 
-  const prepareImagesPayload = () => {
-    return imagePreviews.map((img) => ({
-      url: img.tempPath || img.url,
-      angle: img.angle,
-      is_primary: img.is_primary
-    }));
+  // Upload images and return their paths
+  const uploadImages = async () => {
+    if (imageFiles.length === 0) return [];
+
+    setUploadingImages(true);
+    const uploadedImages = [];
+
+    try {
+      for (const file of imageFiles) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("image", file);
+        
+        const response = await api.post("/products/upload-image", uploadFormData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        });
+        
+        uploadedImages.push(response.data.data);
+      }
+      return uploadedImages;
+    } catch (err) {
+      console.error("Failed to upload images:", err);
+      throw new Error("Failed to upload images");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  // Prepare the final payload with uploaded image paths
+  const prepareImagesPayload = (uploadedImages) => {
+    return uploadedImages.map((uploadedImg, index) => {
+      const matchingPreview = imagePreviews[index];
+      return {
+        url: uploadedImg.url,
+        angle: matchingPreview?.angle || "default",
+        is_primary: matchingPreview?.is_primary || false
+      };
+    });
   };
 
   const validateStep = (step) => {
@@ -284,58 +355,30 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity),
-        moq: parseInt(formData.moq),
-        category_id: parseInt(formData.category_id),
-        specifications: formData.specifications,
-        images: prepareImagesPayload(),
-        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
-        shipping_cost: formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
-        brand: formData.brand || null,
-        model: formData.model || null,
-        color: formData.color || null,
-        material: formData.material || null,
-        origin: formData.origin || null,
-        warranty: formData.warranty || null,
-        warranty_type: formData.warranty_type || null,
-        warranty_period: formData.warranty_period || null,
-        return_policy: formData.return_policy || null,
-        shipping_time: formData.shipping_time || null,
-        packaging_details: formData.packaging_details || null,
-        additional_info: formData.additional_info || null
-      };
-
-      let response;
-      if (product) {
-        response = await api.put(`/products/${product.id}`, payload);
-      } else {
-        response = await api.post("/products", payload);
-      }
-
-      onSuccess(response.data);
-    } catch (err) {
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(errorMessages.join(", "));
-      } else {
-        setError(err.response?.data?.message || "Something went wrong");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-xl transform transition-all">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircleIcon className="h-10 w-10 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Success!
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {successMessage}
+              </p>
+              <p className="text-sm text-gray-500">
+                Redirecting back to products...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
@@ -405,7 +448,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
           {error && (
             <div className="mx-8 mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
-              <InformationCircleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+              <ExclamationCircleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -708,29 +751,19 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   
                   <label className="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 transition-all duration-200 cursor-pointer bg-gray-50 hover:bg-green-50">
                     <div className="flex flex-col items-center justify-center h-full">
-                      {uploadingImages ? (
-                        <div className="flex items-center space-x-2">
-                          <CloudArrowUpIcon className="h-8 w-8 text-green-500 animate-pulse" />
-                          <span className="text-green-600">Uploading...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <PhotoIcon className="h-10 w-10 text-gray-400 mb-2" />
-                          <span className="text-base font-medium text-gray-600">
-                            Click to upload images
-                          </span>
-                          <span className="text-sm text-gray-500 mt-1">
-                            PNG, JPG, WebP up to 5MB each
-                          </span>
-                        </>
-                      )}
+                      <PhotoIcon className="h-10 w-10 text-gray-400 mb-2" />
+                      <span className="text-base font-medium text-gray-600">
+                        Click to upload images
+                      </span>
+                      <span className="text-sm text-gray-500 mt-1">
+                        PNG, JPG, WebP up to 5MB each
+                      </span>
                     </div>
                     <input
                       type="file"
                       multiple
                       accept="image/*"
                       onChange={handleImageSelect}
-                      disabled={uploadingImages}
                       className="hidden"
                     />
                   </label>
@@ -1024,10 +1057,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     disabled={loading || uploadingImages}
                     className="flex items-center space-x-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? (
+                    {loading || uploadingImages ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>{product ? "Updating..." : "Creating..."}</span>
+                        <span>
+                          {uploadingImages ? "Uploading Images..." : (product ? "Updating..." : "Creating...")}
+                        </span>
                       </>
                     ) : (
                       <>

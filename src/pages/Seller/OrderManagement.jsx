@@ -44,6 +44,17 @@ const OrderManagement = () => {
     }
   };
 
+  // When confirming an order, call refreshData()
+  const handleConfirmOrder = async (orderId) => {
+    try {
+      await api.post(`/orders/${orderId}/confirm`);
+      // Refresh the dashboard data
+      refreshData();
+    } catch (error) {
+      console.error("Failed to confirm order:", error);
+    }
+  };
+
   const updateOrderStatus = async (orderId, status) => {
     try {
       let endpoint = "";
