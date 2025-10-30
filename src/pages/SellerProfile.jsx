@@ -66,7 +66,7 @@ const SellerProfile = () => {
         // Fetch seller details
         try {
           const sellerRes = await api.get(`/sellers/${id}`);
-          
+          console.log("Fetched seller data:", sellerRes.data);
           if (sellerRes.data.success && sellerRes.data.data) {
             const sellerData = sellerRes.data.data.seller;
             setSeller(sellerData);

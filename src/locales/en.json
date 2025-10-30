@@ -194,6 +194,8 @@
     }
   },
   "seller": {
+    "profile": "Seller Profile",
+    "my_store": "My Store",
     "seller_center": "Seller Center",
     "view_profile": "View profile",
     "open_sidebar": "Open sidebar",

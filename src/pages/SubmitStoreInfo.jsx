@@ -12,7 +12,8 @@ import { useSellerOnboarding } from "../hooks/useSellerOnboarding";
 const SubmitStoreInfo = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { onboardingData, clearOnboardingData, isLoaded } = useSellerOnboarding();
+  const { onboardingData, clearOnboardingData, isLoaded } =
+    useSellerOnboarding();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -20,10 +21,10 @@ const SubmitStoreInfo = () => {
   useEffect(() => {
     // console.log('🔍 SubmitStoreInfo - Current onboardingData:', onboardingData);
     // console.log('🔍 SubmitStoreInfo - isLoaded:', isLoaded);
-    
+
     if (isLoaded) {
-      const storedData = localStorage.getItem('seller_onboarding_data');
-      console.log('🔍 SubmitStoreInfo - Raw localStorage:', storedData);
+      const storedData = localStorage.getItem("seller_onboarding_data");
+      console.log("🔍 SubmitStoreInfo - Raw localStorage:", storedData);
     }
   }, [onboardingData, isLoaded]);
 
@@ -40,54 +41,83 @@ const SubmitStoreInfo = () => {
   }
 
   const requiredFields = [
-    { field: 'store_name', label: 'Store Name', value: onboardingData.store_name },
-    { field: 'business_type', label: 'Business Type', value: onboardingData.business_type },
-    { field: 'contact_email', label: 'Contact Email', value: onboardingData.contact_email },
-    { field: 'contact_phone', label: 'Contact Phone', value: onboardingData.contact_phone },
-    { field: 'address', label: 'Address', value: onboardingData.address },
-    { field: 'city', label: 'City', value: onboardingData.city },
-    { field: 'state', label: 'State', value: onboardingData.state },
-    { field: 'country', label: 'Country', value: onboardingData.country },
+    {
+      field: "store_name",
+      label: "Store Name",
+      value: onboardingData.store_name
+    },
+    {
+      field: "business_type",
+      label: "Business Type",
+      value: onboardingData.business_type
+    },
+    {
+      field: "contact_email",
+      label: "Contact Email",
+      value: onboardingData.contact_email
+    },
+    {
+      field: "contact_phone",
+      label: "Contact Phone",
+      value: onboardingData.contact_phone
+    },
+    { field: "address", label: "Address", value: onboardingData.address },
+    { field: "city", label: "City", value: onboardingData.city },
+    { field: "state", label: "State", value: onboardingData.state },
+    { field: "country", label: "Country", value: onboardingData.country }
   ];
 
-  const missingFields = requiredFields.filter(field => !field.value || field.value.trim() === '');
+  const missingFields = requiredFields.filter(
+    (field) => !field.value || field.value.trim() === ""
+  );
 
   const handleSubmit = async () => {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    console.log('🚀 Submitting data:', onboardingData);
-    const response = await api.post('/sellers', onboardingData);
+    try {
+      console.log("🚀 Submitting data:", onboardingData);
 
-    if (response.data.success) {
-      
-      // Clear local storage
-      clearOnboardingData();
-      
-      // Redirect to dashboard with success state
-      navigate('/seller', { 
-        replace: true, // Ensure the navigation replaces the current history entry
-        state: { 
-          message: 'Store submitted for approval!',
-          success: true 
-        }
-      });
-    } else {
-      throw new Error(response.data.message || 'Failed to create store');
+      const response = await api.put("/sellers/update-profile", onboardingData);
+
+      if (response.data.success) {
+        console.log("✅ Store updated successfully:", response.data);
+        clearOnboardingData();
+        navigate("/seller", {
+          replace: true,
+          state: {
+            message: "Store submitted for approval!",
+            success: true,
+            store: response.data.data
+          }
+        });
+      } else {
+        throw new Error(response.data.message || "Failed to update store");
+      }
+    } catch (error) {
+      console.error("❌ Failed to submit store information:", error);
+
+      if (error.response?.status === 403) {
+        setError(
+          "Access denied: You don't have seller permissions. Please make sure you registered as a seller and have the seller role."
+        );
+      } else if (error.response?.status === 404) {
+        setError(
+          "API endpoint not found. Please check if the server is running correctly."
+        );
+      } else if (error.response?.data?.errors) {
+        const firstError = Object.values(error.response.data.errors)[0][0];
+        setError(firstError);
+      } else {
+        setError(
+          error.response?.data?.message ||
+            "Failed to submit store information. Please try again."
+        );
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('❌ Failed to submit store information:', error);
-    setError(
-      error.response?.data?.message || 
-      error.response?.data?.errors?.store_name?.[0] || 
-      "Failed to submit store information"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -114,14 +144,18 @@ const SubmitStoreInfo = () => {
           {/* Debug Info - Remove in production */}
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
             <p className="text-sm text-blue-700">
-              <strong>Debug Info:</strong> Fields filled: {requiredFields.filter(f => f.value).length} / {requiredFields.length}
+              <strong>Debug Info:</strong> Fields filled:{" "}
+              {requiredFields.filter((f) => f.value).length} /{" "}
+              {requiredFields.length}
             </p>
           </div>
 
           {/* Requirements Check */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Requirements Check</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Requirements Check
+            </h3>
+
             {missingFields.length > 0 ? (
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
                 <div className="flex">
@@ -131,7 +165,7 @@ const SubmitStoreInfo = () => {
                       Please complete the following required fields:
                     </p>
                     <ul className="mt-2 text-sm text-yellow-700 list-disc list-inside">
-                      {missingFields.map(field => (
+                      {missingFields.map((field) => (
                         <li key={field.field}>{field.label}</li>
                       ))}
                     </ul>
@@ -154,11 +188,17 @@ const SubmitStoreInfo = () => {
 
           {/* Store Information Summary */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Store Information Summary</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Store Information Summary
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              {requiredFields.map(field => (
-                <div key={field.field} className={field.value ? "text-gray-900" : "text-red-600"}>
-                  <strong>{field.label}:</strong> {field.value || 'Not provided'}
+              {requiredFields.map((field) => (
+                <div
+                  key={field.field}
+                  className={field.value ? "text-gray-900" : "text-red-600"}
+                >
+                  <strong>{field.label}:</strong>{" "}
+                  {field.value || "Not provided"}
                 </div>
               ))}
             </div>
@@ -167,7 +207,7 @@ const SubmitStoreInfo = () => {
           <div className="flex space-x-4">
             <button
               type="button"
-              onClick={() => navigate('/seller/onboarding/address')}
+              onClick={() => navigate("/seller/onboarding/address")}
               className="flex-1 py-4 px-6 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
             >
               Back to Edit
@@ -181,7 +221,7 @@ const SubmitStoreInfo = () => {
               {loading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
               ) : (
-                'Submit for Approval'
+                "Submit for Approval"
               )}
             </button>
           </div>

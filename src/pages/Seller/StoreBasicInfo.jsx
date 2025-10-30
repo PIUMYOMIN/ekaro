@@ -21,9 +21,13 @@ const StoreBasicInfo = () => {
   const [error, setError] = useState("");
   const [businessTypes, setBusinessTypes] = useState([]);
   const [storeLogo, setStoreLogo] = useState(null);
-  const [storeLogoPreview, setStoreLogoPreview] = useState(onboardingData.store_logo || "");
+  const [storeLogoPreview, setStoreLogoPreview] = useState(
+    onboardingData.store_logo || ""
+  );
   const [storeBanner, setStoreBanner] = useState(null);
-  const [storeBannerPreview, setStoreBannerPreview] = useState(onboardingData.store_banner || "");
+  const [storeBannerPreview, setStoreBannerPreview] = useState(
+    onboardingData.store_banner || ""
+  );
 
   const {
     register,
@@ -37,7 +41,7 @@ const StoreBasicInfo = () => {
       business_type: onboardingData.business_type,
       contact_email: onboardingData.contact_email || user?.email,
       contact_phone: onboardingData.contact_phone || user?.phone,
-      description: onboardingData.description,
+      description: onboardingData.description
     }
   });
 
@@ -47,14 +51,7 @@ const StoreBasicInfo = () => {
         const response = await api.get("/business-types");
         setBusinessTypes(response.data.data);
       } catch (error) {
-        console.log("Using default business types");
-        setBusinessTypes([
-          { value: "retail", label: "Retail Business" },
-          { value: "wholesale", label: "Wholesale Business" },
-          { value: "service", label: "Service Business" },
-          { value: "individual", label: "Individual/Sole Proprietorship" },
-          { value: "company", label: "Company" }
-        ]);
+        console.error("Failed to fetch business types:", error);
       }
     };
 
@@ -117,48 +114,47 @@ const StoreBasicInfo = () => {
   };
 
   const onSubmit = async (data) => {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    // Upload images if selected
-    let logoUrl = onboardingData.store_logo;
-    let bannerUrl = onboardingData.store_banner;
+    try {
+      // Upload images if selected
+      let logoUrl = onboardingData.store_logo;
+      let bannerUrl = onboardingData.store_banner;
 
-    if (storeLogo) {
-      logoUrl = await uploadImage(storeLogo, "logo");
+      if (storeLogo) {
+        logoUrl = await uploadImage(storeLogo, "logo");
+      }
+
+      if (storeBanner) {
+        bannerUrl = await uploadImage(storeBanner, "banner");
+      }
+
+      // ✅ Create complete form data object
+      const formData = {
+        ...data,
+        store_logo: logoUrl,
+        store_banner: bannerUrl
+      };
+
+      console.log("Saving StoreBasicInfo data:", formData); // Debug log
+
+      // ✅ Update local storage with current form data
+      updateOnboardingData(formData);
+
+      // ✅ Add a small delay to ensure state is updated before navigation
+      setTimeout(() => {
+        navigate("/seller/onboarding/business-details");
+      }, 100);
+    } catch (error) {
+      console.error("Error saving store basic info:", error);
+      setError(
+        error.response?.data?.message || "Failed to save store information"
+      );
+    } finally {
+      setLoading(false);
     }
-
-    if (storeBanner) {
-      bannerUrl = await uploadImage(storeBanner, "banner");
-    }
-
-    // ✅ Create complete form data object
-    const formData = {
-      ...data,
-      store_logo: logoUrl,
-      store_banner: bannerUrl
-    };
-    
-    console.log('Saving StoreBasicInfo data:', formData); // Debug log
-    
-    // ✅ Update local storage with current form data
-    updateOnboardingData(formData);
-
-    // ✅ Add a small delay to ensure state is updated before navigation
-    setTimeout(() => {
-      navigate("/seller/onboarding/business-details");
-    }, 100);
-
-  } catch (error) {
-    console.error("Error saving store basic info:", error);
-    setError(
-      error.response?.data?.message || "Failed to save store information"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Update local storage when form fields change
   useEffect(() => {
@@ -277,7 +273,10 @@ const StoreBasicInfo = () => {
 
             {/* Store Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {t("seller_onboarding.storeBasicInfo.store.name")} *
               </label>
               <input
@@ -297,6 +296,10 @@ const StoreBasicInfo = () => {
                   }
                 })}
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Default: {user?.name}'s Store - You can change this to your
+                preferred store name
+              </p>
               {errors.store_name && (
                 <p className="mt-1 text-sm text-red-600">
                   {errors.store_name.message}
@@ -306,7 +309,10 @@ const StoreBasicInfo = () => {
 
             {/* Business Type */}
             <div>
-              <label htmlFor="business_type" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="business_type"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {t("seller_onboarding.storeBasicInfo.businessType.label")} *
               </label>
               <select
@@ -319,7 +325,9 @@ const StoreBasicInfo = () => {
                 })}
               >
                 <option value="">
-                  {t("seller_onboarding.storeBasicInfo.businessType.selectBusinessType")}
+                  {t(
+                    "seller_onboarding.storeBasicInfo.businessType.selectBusinessType"
+                  )}
                 </option>
                 {businessTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -336,7 +344,10 @@ const StoreBasicInfo = () => {
 
             {/* Contact Email */}
             <div>
-              <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="contact_email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {t("seller_onboarding.storeBasicInfo.contactEmail.label")} *
               </label>
               <input
@@ -365,7 +376,10 @@ const StoreBasicInfo = () => {
 
             {/* Contact Phone */}
             <div>
-              <label htmlFor="contact_phone" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="contact_phone"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {t("seller_onboarding.storeBasicInfo.contactPhone.label")} *
               </label>
               <input
@@ -390,7 +404,10 @@ const StoreBasicInfo = () => {
 
             {/* Store Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {t("seller_onboarding.storeBasicInfo.description.label")}
               </label>
               <textarea

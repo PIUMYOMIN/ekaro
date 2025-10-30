@@ -480,8 +480,8 @@ const SellerManagement = ({
   onPageChange
 }) => {
   const columns = [
-    { header: "Store ID", accessor: "store_id" },
     { header: "Store Name", accessor: "store_name" },
+    { header: "Store ID", accessor: "store_id" },
     { header: "Owner", accessor: "owner_name" },
     { header: "Business Type", accessor: "business_type" },
     { header: "Contact Email", accessor: "contact_email" },

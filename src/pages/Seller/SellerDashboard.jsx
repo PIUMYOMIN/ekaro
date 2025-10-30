@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tab } from "@headlessui/react";
 import {
@@ -24,12 +24,15 @@ import StoreSettings from "./StoreSettings";
 import MyStore from "./MyStore";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
+import { useLocation } from "react-router-dom";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
 const SellerDashboard = () => {
+  const location = useLocation();
+  const { state } = location;
   const { t } = useTranslation();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,12 +45,23 @@ const SellerDashboard = () => {
     pendingOrders: 0
   });
 
+  // Show success message if redirected from onboarding
+  useEffect(() => {
+    if (state?.success && state?.message) {
+      // You can show a toast notification here
+      console.log('🎉 Success:', state.message);
+      
+      // Clear the state to prevent showing the message again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [state]);
+
   // Fetch store data and stats
   const fetchStoreData = useCallback(async () => {
     try {
       const [storeResponse, statsResponse] = await Promise.all([
-        api.get("/sellers/my-store"),
-        api.get("/sellers/seller-sales-summary")
+        api.get("/dashboard/seller/my-store"), // Fixed endpoint
+        api.get("/dashboard/seller/sales-summary") // Fixed endpoint
       ]);
 
       setStoreData(storeResponse.data.data);
@@ -89,7 +103,6 @@ const SellerDashboard = () => {
 
     return () => clearInterval(interval);
   }, [user, fetchStoreData]);
-
 
   const navigation = [
     {
@@ -140,7 +153,6 @@ const SellerDashboard = () => {
       )
     }
   ];
-
 
   if (loading) {
     return (
