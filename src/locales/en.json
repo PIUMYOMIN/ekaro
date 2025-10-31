@@ -372,7 +372,26 @@
     "reset_filters": "Reset Filters",
     "become_seller_title": "Become a Seller",
     "become_seller_description": "Join our platform and start selling your products to customers worldwide.",
-    "join_now": "Join Now"
+    "join_now": "Join Now",
+    "products": {
+      "title": "Products",
+      "subtitle": "Explore products from this seller",
+      "no_products": "No products found for this seller",
+      "loading": "Loading products...",
+      "fetch_error": "Failed to load products. Please try again later."
+    },
+    "reviews": {
+      "title": "Reviews",
+      "subtitle": "Read reviews from customers",
+      "no_reviews": "No reviews found for this seller",
+      "loading": "Loading reviews...",
+      "fetch_error": "Failed to load reviews. Please try again later."
+    },
+    "about": {
+      "title": "About",
+      "subtitle": "Learn more about this seller",
+      "no_description": "No description available for this seller."
+    }
   },
   "productDetail": {
     "not_found": "Product not found",

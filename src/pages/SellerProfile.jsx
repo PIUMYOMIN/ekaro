@@ -410,7 +410,7 @@ const SellerProfile = () => {
                   )
                 }
               >
-                {t("seller.products") || "Products"} ({productCount})
+                {t("sellers.products.title") || "Products"} ({productCount})
               </Tab>
               <Tab
                 className={({ selected }) =>
@@ -422,7 +422,7 @@ const SellerProfile = () => {
                   )
                 }
               >
-                {t("seller.reviews") || "Reviews"} ({reviewCount})
+                {t("sellers.reviews.title") || "Reviews"} ({reviewCount})
               </Tab>
               <Tab
                 className={({ selected }) =>
@@ -434,7 +434,7 @@ const SellerProfile = () => {
                   )
                 }
               >
-                {t("seller.about") || "About"}
+                {t("sellers.about.title") || "About"}
               </Tab>
             </Tab.List>
           </div>
