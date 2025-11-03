@@ -75,7 +75,7 @@ const Register = () => {
       email: data.email,
       password: data.password,
       password_confirmation: data.confirmPassword,
-      type: userType, // ✅ Using 'type' field (not 'role')
+      type: userType,
       address: data.address,
       city: data.city,
       state: data.state
@@ -87,20 +87,19 @@ const Register = () => {
       const user = result.user;
       
       console.log('User object:', user);
-      console.log('User type:', user.type); // ✅ Check type field
-      console.log('User roles:', user.roles); // ✅ Check Spatie roles
+      console.log('User type:', user.type);
+      console.log('User roles:', user.roles);
       
-      // ✅ Check for seller using both type and roles
       const isSeller = user.type === 'seller' || user.roles?.includes('seller');
       console.log('Is seller:', isSeller);
       
       if (isSeller) {
-        console.log('Attempting to navigate to seller onboarding...');
+        console.log('Navigating to seller onboarding...');
         
         // Clear any existing localStorage data for fresh start
         localStorage.removeItem('seller_onboarding_data');
         
-        // Force navigation with replace to avoid history issues
+        // Navigate to seller onboarding
         navigate('/seller/onboarding/store-basic', { replace: true });
       } else if (user.roles?.includes('admin')) {
         navigate('/admin', { replace: true });

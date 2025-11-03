@@ -1,4 +1,3 @@
-// src/pages/Seller/SubmitStoreInfo.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -12,23 +11,17 @@ import { useSellerOnboarding } from "../hooks/useSellerOnboarding";
 const SubmitStoreInfo = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { onboardingData, clearOnboardingData, isLoaded } =
-    useSellerOnboarding();
+  const { onboardingData, clearOnboardingData, isLoaded } = useSellerOnboarding();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Debug effect
   useEffect(() => {
-    // console.log('🔍 SubmitStoreInfo - Current onboardingData:', onboardingData);
-    // console.log('🔍 SubmitStoreInfo - isLoaded:', isLoaded);
-
     if (isLoaded) {
       const storedData = localStorage.getItem("seller_onboarding_data");
       console.log("🔍 SubmitStoreInfo - Raw localStorage:", storedData);
     }
   }, [onboardingData, isLoaded]);
 
-  // Show loading while data is being loaded
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
@@ -76,12 +69,13 @@ const SubmitStoreInfo = () => {
     setError("");
 
     try {
-      console.log("🚀 Submitting data:", onboardingData);
+      console.log("🚀 Submitting onboarding data:", onboardingData);
 
-      const response = await api.put("/sellers/update-profile", onboardingData);
+      // Use the new onboarding complete endpoint
+      const response = await api.post("/seller/onboarding/complete", onboardingData);
 
       if (response.data.success) {
-        console.log("✅ Store updated successfully:", response.data);
+        console.log("✅ Onboarding completed successfully:", response.data);
         clearOnboardingData();
         navigate("/seller", {
           replace: true,
@@ -92,14 +86,14 @@ const SubmitStoreInfo = () => {
           }
         });
       } else {
-        throw new Error(response.data.message || "Failed to update store");
+        throw new Error(response.data.message || "Failed to complete onboarding");
       }
     } catch (error) {
       console.error("❌ Failed to submit store information:", error);
 
       if (error.response?.status === 403) {
         setError(
-          "Access denied: You don't have seller permissions. Please make sure you registered as a seller and have the seller role."
+          "Access denied: You don't have seller permissions. Please make sure you registered as a seller."
         );
       } else if (error.response?.status === 404) {
         setError(
@@ -141,15 +135,6 @@ const SubmitStoreInfo = () => {
         )}
 
         <div className="mt-8 space-y-6 bg-white p-8 rounded-2xl shadow-lg">
-          {/* Debug Info - Remove in production */}
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-            <p className="text-sm text-blue-700">
-              <strong>Debug Info:</strong> Fields filled:{" "}
-              {requiredFields.filter((f) => f.value).length} /{" "}
-              {requiredFields.length}
-            </p>
-          </div>
-
           {/* Requirements Check */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">

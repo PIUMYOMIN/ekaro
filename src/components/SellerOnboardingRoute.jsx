@@ -25,7 +25,7 @@ const SellerOnboardingRoute = ({ children }) => {
     }
 
     try {
-      const response = await api.get("/onboarding-status");
+      const response = await api.get("/seller/onboarding/status");
       const status = response.data.data;
 
       // ONLY redirect when onboarding is complete
