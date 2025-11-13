@@ -112,7 +112,7 @@ function App() {
                       </SellerOnboardingRoute>} />
 
                   {/* Buyer Routes */}
-                  <Route path="/cart" element={<ProtectedRoute roles={["buyer"]}>
+                  <Route path="/cart" element={<ProtectedRoute>
                         <Cart />
                       </ProtectedRoute>} />
                   <Route path="/payment" element={<ProtectedRoute roles={["buyer"]}>
@@ -124,7 +124,7 @@ function App() {
                   <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}>
                         <BuyerDashboard />
                       </ProtectedRoute>} />
-                  <Route path="/wishlist" element={<ProtectedRoute roles={["buyer", "admin"]}>
+                  <Route path="/wishlist" element={<ProtectedRoute>
                         <Wishlist />
                       </ProtectedRoute>} />
 

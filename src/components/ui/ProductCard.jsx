@@ -47,15 +47,6 @@ const ProductCard = ({ product }) => {
       return;
     }
 
-    if (user.role === 'admin' || user.role === 'seller') {
-      setMessage({
-        type: 'error',
-        message: 'Admins and sellers cannot add items to cart'
-      });
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-
     setAddingToCart(true);
     try {
       const result = await addToCart({

@@ -20,12 +20,6 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart items from backend
   const fetchCartItems = async () => {
-    // Don't fetch cart if user is admin or seller
-    if (user && (user.role === 'admin' || user.role === 'seller')) {
-      setCartItems([]);
-      return;
-    }
-
     // Don't fetch cart if user is not logged in
     if (!user) {
       setCartItems([]);
@@ -38,9 +32,9 @@ export const CartProvider = ({ children }) => {
       const response = await api.get('/cart');
       setCartItems(response.data.data.cart_items || []);
     } catch (error) {
-      // Handle 403 (Forbidden for non-buyers) gracefully
+      // Handle 403 (Forbidden) gracefully - should not happen now but keep for safety
       if (error.response?.status === 403) {
-        console.log('User is not a buyer, cart not available');
+        console.log('Cart access not available');
         setCartItems([]);
       } else if (error.response?.status === 500) {
         console.error('Server error fetching cart:', error);
@@ -59,10 +53,6 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product) => {
     if (!user) {
       throw new Error('Please login to add items to cart');
-    }
-
-    if (user.role === 'admin' || user.role === 'seller') {
-      throw new Error('Admins and sellers cannot add items to cart');
     }
 
     setLoading(true);
@@ -84,7 +74,7 @@ export const CartProvider = ({ children }) => {
       let errorMessage = 'Failed to add product to cart';
       
       if (error.response?.status === 403) {
-        errorMessage = 'Only buyers can add items to cart';
+        errorMessage = 'Cart functionality not available for your account type';
       } else if (error.response?.status === 400) {
         errorMessage = error.response.data.message || errorMessage;
       } else if (error.response?.status === 500) {
@@ -100,8 +90,8 @@ export const CartProvider = ({ children }) => {
 
   // Update quantity
   const updateQuantity = async (cartItemId, quantity) => {
-    if (!user || user.role === 'admin' || user.role === 'seller') {
-      return;
+    if (!user) {
+      throw new Error('Please login to update cart');
     }
 
     setLoading(true);
@@ -122,8 +112,8 @@ export const CartProvider = ({ children }) => {
 
   // Remove from cart
   const removeFromCart = async (cartItemId) => {
-    if (!user || user.role === 'admin' || user.role === 'seller') {
-      return;
+    if (!user) {
+      throw new Error('Please login to modify cart');
     }
 
     setLoading(true);
@@ -144,8 +134,8 @@ export const CartProvider = ({ children }) => {
 
   // Clear cart
   const clearCart = async () => {
-    if (!user || user.role === 'admin' || user.role === 'seller') {
-      return;
+    if (!user) {
+      throw new Error('Please login to clear cart');
     }
 
     setLoading(true);
@@ -164,7 +154,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate totals - FIXED: Ensure proper calculation
+  // Calculate totals
   const subtotal = cartItems.reduce((total, item) => {
     return total + (Number(item.price) * Number(item.quantity));
   }, 0);
@@ -193,7 +183,7 @@ export const CartProvider = ({ children }) => {
     removeFromCart,
     clearCart,
     fetchCartItems,
-    refetchCart: fetchCartItems // Add alias for refetching
+    refetchCart: fetchCartItems
   };
 
   return (

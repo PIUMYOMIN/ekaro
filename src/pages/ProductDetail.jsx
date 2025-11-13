@@ -118,12 +118,6 @@ const ProductDetail = () => {
       return;
     }
 
-    // Check if user is admin or seller
-    if (user.role === "admin" || user.role === "seller") {
-      alert("Admins and sellers cannot add items to cart");
-      return;
-    }
-
     if (quantity < (product?.min_order || 1)) {
       alert(`Minimum order quantity is ${product.min_order}`);
       return;
@@ -141,13 +135,11 @@ const ProductDetail = () => {
         quantity: quantity
       });
 
-      // Show success popup
       setSuccessMessage(
         result.message || "Product added to cart successfully!"
       );
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      // Show error popup
       setSuccessMessage({
         type: "error",
         message: error.message || "Failed to add product to cart"
@@ -168,26 +160,23 @@ const ProductDetail = () => {
       return;
     }
 
-    // Check if user is admin or seller
-    if (user.role === "admin" || user.role === "seller") {
-      alert("Admins and sellers cannot add products to wishlist");
-      return;
-    }
-
     setWishlistLoading(true);
     try {
       if (isInWishlist) {
         await api.delete(`/wishlist/${product.id}`);
         setIsInWishlist(false);
-        alert("Removed from wishlist");
+        setSuccessMessage("Removed from wishlist");
       } else {
         await api.post("/wishlist", { product_id: product.id });
         setIsInWishlist(true);
-        alert("Added to wishlist");
+        setSuccessMessage("Added to wishlist");
       }
     } catch (error) {
       console.error("Failed to update wishlist:", error);
-      alert(error.response?.data?.message || "Failed to update wishlist");
+      setSuccessMessage({
+        type: "error",
+        message: error.response?.data?.message || "Failed to update wishlist"
+      });
     } finally {
       setWishlistLoading(false);
     }
@@ -328,7 +317,7 @@ const ProductDetail = () => {
                 typeof product.images[activeImage] === "string"
                   ? product.images[activeImage]
                   : product.images[activeImage]?.url ||
-                    "/placeholder-product.jpg"
+                  "/placeholder-product.jpg"
               }
               alt={product.name}
               className="max-h-full max-w-full object-contain"
@@ -344,11 +333,10 @@ const ProductDetail = () => {
                 <button
                   key={index}
                   onClick={() => setActiveImage(index)}
-                  className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${
-                    activeImage === index
-                      ? "border-green-500"
-                      : "border-transparent"
-                  }`}
+                  className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index
+                    ? "border-green-500"
+                    : "border-transparent"
+                    }`}
                 >
                   <img
                     src={
@@ -385,11 +373,10 @@ const ProductDetail = () => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <StarIcon
                   key={star}
-                  className={`h-5 w-5 ${
-                    star <= Math.round(product.average_rating || 0)
-                      ? "text-yellow-400"
-                      : "text-gray-300"
-                  }`}
+                  className={`h-5 w-5 ${star <= Math.round(product.average_rating || 0)
+                    ? "text-yellow-400"
+                    : "text-gray-300"
+                    }`}
                 />
               ))}
             </div>
@@ -492,28 +479,16 @@ const ProductDetail = () => {
 
             <button
               onClick={handleAddToWishlist}
-              disabled={
-                wishlistLoading ||
-                (user && (user.role === "admin" || user.role === "seller"))
-              }
+              disabled={wishlistLoading}
               className="p-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              title={
-                !user
-                  ? "Please login to add to wishlist"
-                  : user.role === "admin" || user.role === "seller"
-                  ? "Admins and sellers cannot add to wishlist"
-                  : isInWishlist
-                  ? "Remove from wishlist"
-                  : "Add to wishlist"
-              }
+              title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             >
               {wishlistLoading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
               ) : (
                 <HeartIcon
-                  className={`h-6 w-6 ${
-                    isInWishlist ? "text-red-500 fill-current" : ""
-                  }`}
+                  className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""
+                    }`}
                 />
               )}
             </button>
@@ -575,9 +550,8 @@ const ProductDetail = () => {
                       className="focus:outline-none mr-1"
                     >
                       <StarIcon
-                        className={`h-8 w-8 ${
-                          star <= rating ? "text-yellow-400" : "text-gray-300"
-                        }`}
+                        className={`h-8 w-8 ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                          }`}
                       />
                     </button>
                   ))}
@@ -652,11 +626,10 @@ const ProductDetail = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <StarIcon
                             key={star}
-                            className={`h-4 w-4 ${
-                              star <= review.rating
-                                ? "text-yellow-400"
-                                : "text-gray-300"
-                            }`}
+                            className={`h-4 w-4 ${star <= review.rating
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                              }`}
                           />
                         ))}
                       </div>
