@@ -221,7 +221,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct }) => {
             {t("seller.product.refresh")}
           </button>
           <button
-            onClick={onAddProduct}
+            onClick={() => navigate("/products/create")}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />

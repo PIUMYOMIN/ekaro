@@ -1,65 +1,87 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../../../utils/api";
 import { useAuth } from "../../../context/AuthContext";
 import {
   XMarkIcon,
   PhotoIcon,
-  CloudArrowUpIcon,
   TrashIcon,
   PlusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CheckCircleIcon,
-  InformationCircleIcon,
   ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
+
+// Local storage keys
+const STORAGE_KEYS = {
+  PRODUCT_DRAFT: 'product_draft',
+  IMAGE_PREVIEWS: 'product_image_previews'
+};
 
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    name: product?.name || "",
-    description: product?.description || "",
-    price: product?.price || "",
-    quantity: product?.quantity || 0,
-    category_id: product?.category_id || "",
-    specifications: product?.specifications || {},
-    moq: product?.moq || 1,
-    min_order_unit: product?.min_order_unit || "piece",
-    lead_time: product?.lead_time || "",
-    is_active: product?.is_active ?? true,
-    seller_id: product?.seller_id || user?.id,
-    brand: product?.brand || "",
-    model: product?.model || "",
-    color: product?.color || "",
-    material: product?.material || "",
-    origin: product?.origin || "",
-    weight_kg: product?.weight_kg || "",
-    warranty: product?.warranty || "",
-    warranty_type: product?.warranty_type || "",
-    warranty_period: product?.warranty_period || "",
-    return_policy: product?.return_policy || "",
-    shipping_cost: product?.shipping_cost || "",
-    shipping_time: product?.shipping_time || "",
-    packaging_details: product?.packaging_details || "",
-    additional_info: product?.additional_info || ""
-  });
+  const navigate = useNavigate();
   
+  const defaultFormData = {
+    name: "",
+    description: "",
+    price: "",
+    quantity: 0,
+    category_id: "",
+    specifications: {},
+    moq: 1,
+    min_order_unit: "piece",
+    lead_time: "",
+    is_active: true,
+    seller_id: user?.id,
+    brand: "",
+    model: "",
+    color: "",
+    material: "",
+    origin: "",
+    weight_kg: "",
+    warranty: "",
+    warranty_type: "",
+    warranty_period: "",
+    return_policy: "",
+    shipping_cost: "",
+    shipping_time: "",
+    packaging_details: "",
+    additional_info: ""
+  };
+
+  // Load from product, local storage, or defaults
+  const [formData, setFormData] = useState(() => {
+    if (product) {
+      return { ...defaultFormData, ...product };
+    }
+    
+    const savedDraft = localStorage.getItem(STORAGE_KEYS.PRODUCT_DRAFT);
+    if (savedDraft) {
+      try {
+        return { ...defaultFormData, ...JSON.parse(savedDraft) };
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }
+    
+    return defaultFormData;
+  });
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [error, setError] = useState("");
   const [specInput, setSpecInput] = useState({ key: "", value: "" });
   const [imagePreviews, setImagePreviews] = useState([]);
-  const [imageFiles, setImageFiles] = useState([]);
-  const [uploadingImages, setUploadingImages] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Available options for dropdowns
   const minOrderUnits = [
     { value: "piece", label: "Piece" },
     { value: "kg", label: "Kilogram" },
@@ -86,12 +108,37 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { id: 5, title: "Shipping", description: "Delivery and warranty" }
   ];
 
+  // Save form data to local storage whenever it changes
+  useEffect(() => {
+    if (!product) {
+      const draftToSave = { ...formData };
+      delete draftToSave.seller_id;
+      localStorage.setItem(STORAGE_KEYS.PRODUCT_DRAFT, JSON.stringify(draftToSave));
+    }
+  }, [formData, product]);
+
+  // Save image previews to local storage
+  useEffect(() => {
+    if (!product) {
+      const previewsToSave = imagePreviews.map(preview => ({
+        url: preview.url,
+        is_primary: preview.is_primary,
+        angle: preview.angle,
+        isExisting: preview.isExisting
+      }));
+      localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
+    }
+  }, [imagePreviews, product]);
+
+  // Load saved data on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
         const response = await api.get("/categories");
-        setCategories(response.data.data || []);
+        if (response.data.success && Array.isArray(response.data.data)) {
+          setCategories(response.data.data);
+        }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
       } finally {
@@ -99,6 +146,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }
     };
 
+    // Load existing product images if editing
     if (product && product.images) {
       const previews = product.images.map((img) => ({
         url: typeof img === "string" ? img : img.url,
@@ -107,6 +155,17 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         isExisting: true
       }));
       setImagePreviews(previews);
+    } else if (!product) {
+      // Load draft image previews
+      const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
+      if (savedPreviews) {
+        try {
+          const parsedPreviews = JSON.parse(savedPreviews);
+          setImagePreviews(parsedPreviews);
+        } catch (error) {
+          console.error('Error loading image previews:', error);
+        }
+      }
     }
 
     fetchCategories();
@@ -128,12 +187,22 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
         setShowSuccessPopup(false);
-        onCancel(); // Return to previous page
+        clearDraft();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate("/admin");
+        }
       }, 3000);
 
       return () => clearTimeout(timer);
     }
-  }, [showSuccessPopup, onCancel]);
+  }, [showSuccessPopup, onSuccess, navigate]);
+
+  const clearDraft = () => {
+    localStorage.removeItem(STORAGE_KEYS.PRODUCT_DRAFT);
+    localStorage.removeItem(STORAGE_KEYS.IMAGE_PREVIEWS);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -175,8 +244,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
     const newPreviews = files.map((file, index) => ({
       url: URL.createObjectURL(file),
-      file: file, // Store the file object
-      is_primary: imagePreviews.length === 0 && index === 0, // First image is primary
+      file: file,
+      is_primary: imagePreviews.length === 0 && index === 0,
       angle: "default",
       isExisting: false
     }));
@@ -185,90 +254,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     e.target.value = "";
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      // Step 1: Upload images to temporary storage
-      const uploadedImages = [];
-      for (const preview of imagePreviews) {
-        if (preview.file) {
-          const formData = new FormData();
-          formData.append("image", preview.file);
-          
-          const response = await api.post("/products/upload-image", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data"
-            }
-          });
-          
-          uploadedImages.push({
-            url: response.data.data.url, // This is the temporary path
-            angle: preview.angle,
-            is_primary: preview.is_primary
-          });
-        } else if (preview.isExisting) {
-          // For existing images (when editing), keep the original data
-          uploadedImages.push({
-            url: preview.url,
-            angle: preview.angle,
-            is_primary: preview.is_primary
-          });
-        }
-      }
-
-      // Step 2: Prepare and send the complete product data
-      const payload = {
-        ...formData,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity),
-        moq: parseInt(formData.moq),
-        category_id: parseInt(formData.category_id),
-        specifications: formData.specifications,
-        images: uploadedImages, // Send the uploaded image paths
-        // ... other field conversions
-      };
-
-      let response;
-      if (product) {
-        response = await api.put(`/products/${product.id}`, payload);
-        setSuccessMessage("Product updated successfully!");
-      } else {
-        response = await api.post("/products", payload);
-        setSuccessMessage("Product created successfully!");
-      }
-
-      // Show success and redirect
-      setShowSuccessPopup(true);
-      
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-
-    } catch (err) {
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(errorMessages.join(", "));
-      } else {
-        setError(err.response?.data?.message || "Something went wrong");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const removeImage = (index) => {
     const previewToRemove = imagePreviews[index];
 
-    // Clean up blob URL
     if (previewToRemove.url.startsWith("blob:")) {
       URL.revokeObjectURL(previewToRemove.url);
     }
 
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const setPrimaryImage = (index) => {
@@ -280,45 +273,34 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     );
   };
 
-  // Upload images and return their paths
-  const uploadImages = async () => {
-    if (imageFiles.length === 0) return [];
-
-    setUploadingImages(true);
-    const uploadedImages = [];
-
-    try {
-      for (const file of imageFiles) {
-        const uploadFormData = new FormData();
-        uploadFormData.append("image", file);
-        
-        const response = await api.post("/products/upload-image", uploadFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        });
-        
-        uploadedImages.push(response.data.data);
-      }
-      return uploadedImages;
-    } catch (err) {
-      console.error("Failed to upload images:", err);
-      throw new Error("Failed to upload images");
-    } finally {
-      setUploadingImages(false);
-    }
+  // Recursive function to render category options with hierarchy
+  const renderCategoryOptions = (categoryList, level = 0) => {
+    return categoryList.map((category) => (
+      <React.Fragment key={category.id}>
+        <option value={category.id}>
+          {'- '.repeat(level)}{category.name}
+        </option>
+        {category.children && renderCategoryOptions(category.children, level + 1)}
+      </React.Fragment>
+    ));
   };
 
-  // Prepare the final payload with uploaded image paths
-  const prepareImagesPayload = (uploadedImages) => {
-    return uploadedImages.map((uploadedImg, index) => {
-      const matchingPreview = imagePreviews[index];
-      return {
-        url: uploadedImg.url,
-        angle: matchingPreview?.angle || "default",
-        is_primary: matchingPreview?.is_primary || false
-      };
-    });
+  // Get only leaf categories (categories without children) for product assignment
+  const getLeafCategories = (categoryList) => {
+    let leaves = [];
+    
+    const findLeaves = (categories) => {
+      categories.forEach(category => {
+        if (!category.children || category.children.length === 0) {
+          leaves.push(category);
+        } else {
+          findLeaves(category.children);
+        }
+      });
+    };
+    
+    findLeaves(categoryList);
+    return leaves;
   };
 
   const validateStep = (step) => {
@@ -326,13 +308,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       case 1:
         return formData.name && formData.description && formData.category_id;
       case 2:
-        return true; // Details are optional
+        return true;
       case 3:
         return formData.price && formData.quantity && formData.moq;
       case 4:
         return imagePreviews.length > 0;
       case 5:
-        return true; // Shipping info is optional
+        return true;
       default:
         return false;
     }
@@ -355,6 +337,117 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
+  // SINGLE FINAL SUBMISSION - Only called when clicking Create Product button
+  const handleFinalSubmit = async () => {
+    // Prevent multiple submissions
+    if (loading) {
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+
+    try {
+      console.log("Starting final product submission from local storage...");
+      
+      // Step 1: Upload all images at once (only now, not before)
+      const uploadedImages = [];
+      
+      for (const preview of imagePreviews) {
+        if (preview.file) {
+          console.log("Uploading image:", preview.file.name);
+          const uploadFormData = new FormData();
+          uploadFormData.append("image", preview.file);
+          
+          const uploadResponse = await api.post("/products/upload-image", uploadFormData, {
+            headers: {
+              "Content-Type": "multipart/form-data"
+            }
+          });
+          
+          console.log("Image upload response:", uploadResponse.data);
+          
+          if (uploadResponse.data.success) {
+            uploadedImages.push({
+              url: uploadResponse.data.data.url,
+              angle: preview.angle,
+              is_primary: preview.is_primary
+            });
+          }
+        } else if (preview.isExisting) {
+          // For existing images (when editing)
+          uploadedImages.push({
+            url: preview.url,
+            angle: preview.angle,
+            is_primary: preview.is_primary
+          });
+        }
+      }
+
+      console.log("All images uploaded:", uploadedImages);
+
+      // Step 2: Prepare and send the complete product data from local storage
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+        quantity: parseInt(formData.quantity),
+        moq: parseInt(formData.moq),
+        category_id: parseInt(formData.category_id),
+        specifications: formData.specifications,
+        images: uploadedImages,
+      };
+
+      console.log("Sending final product payload from local storage:", payload);
+
+      // SINGLE API CALL for product creation/update
+      let response;
+      if (product) {
+        response = await api.put(`/products/${product.id}`, payload);
+        setSuccessMessage("Product updated successfully!");
+      } else {
+        response = await api.post("/products", payload);
+        setSuccessMessage("Product created successfully!");
+      }
+
+      console.log("Product API response:", response.data);
+
+      // Show success and redirect
+      setShowSuccessPopup(true);
+      
+    } catch (err) {
+      console.error("Product submission error:", err);
+      
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        setError(errorMessages.join(", "));
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (!product) {
+      const confirmLeave = window.confirm(
+        "You have unsaved changes. Are you sure you want to leave? Your draft will be saved."
+      );
+      if (!confirmLeave) return;
+    }
+    
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate("/admin");
+    }
+  };
+
+  // Get leaf categories for the select dropdown
+  const leafCategories = getLeafCategories(categories);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       {/* Success Popup */}
@@ -372,7 +465,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 {successMessage}
               </p>
               <p className="text-sm text-gray-500">
-                Redirecting back to products...
+                Redirecting to admin panel...
               </p>
             </div>
           </div>
@@ -390,10 +483,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 </h1>
                 <p className="text-gray-600 mt-1">
                   {product ? "Update your product details" : "Create a new product listing in a few simple steps"}
+                  {!product && (
+                    <span className="text-blue-600 text-sm ml-2">• Draft auto-saved</span>
+                  )}
                 </p>
               </div>
               <button
-                onClick={onCancel}
+                onClick={handleCancel}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
               >
                 <XMarkIcon className="h-6 w-6" />
@@ -453,7 +549,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="p-8">
+          <div className="p-8">
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
               <div className="space-y-6">
@@ -507,14 +603,23 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       <option value="">Select a category</option>
                       {loadingCategories ? (
                         <option disabled>Loading categories...</option>
-                      ) : (
-                        categories.map((category) => (
+                      ) : leafCategories.length > 0 ? (
+                        leafCategories.map((category) => (
                           <option key={category.id} value={category.id}>
                             {category.name}
                           </option>
                         ))
+                      ) : (
+                        categories.length > 0 ? (
+                          renderCategoryOptions(categories)
+                        ) : (
+                          <option disabled>No categories available</option>
+                        )
                       )}
                     </select>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Select a sub-category for your product
+                    </p>
                   </div>
 
                   <div>
@@ -1053,16 +1158,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   </button>
                 ) : (
                   <button
-                    type="submit"
-                    disabled={loading || uploadingImages}
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    disabled={loading}
                     className="flex items-center space-x-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading || uploadingImages ? (
+                    {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>
-                          {uploadingImages ? "Uploading Images..." : (product ? "Updating..." : "Creating...")}
-                        </span>
+                        <span>{product ? "Updating..." : "Creating..."}</span>
                       </>
                     ) : (
                       <>
@@ -1074,7 +1178,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 )}
               </div>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
