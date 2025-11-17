@@ -63,6 +63,7 @@ const OrderManagement = () => {
       switch (status) {
         case "confirmed":
           endpoint = `confirm`;
+          // When order is confirmed, a delivery record will be automatically created via backend
           break;
         case "processing":
           endpoint = `process`;
@@ -183,11 +184,10 @@ const OrderManagement = () => {
         {statuses.map((status) => (
           <button
             key={status.id}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              selectedStatus === status.id
+            className={`px-4 py-2 rounded-full text-sm font-medium ${selectedStatus === status.id
                 ? "bg-green-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+              }`}
             onClick={() => setSelectedStatus(status.id)}
           >
             {status.name}

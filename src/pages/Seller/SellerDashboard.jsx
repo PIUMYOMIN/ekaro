@@ -10,7 +10,7 @@ import {
   UserGroupIcon,
   TruckIcon,
   CogIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "./DashboardSummary";
@@ -25,6 +25,7 @@ import MyStore from "./MyStore";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import { useLocation } from "react-router-dom";
+import DeliveryManagement from "./DeliveryManagement";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -119,6 +120,11 @@ const SellerDashboard = () => {
       name: t("seller.order.title"),
       icon: ShoppingBagIcon,
       component: <OrderManagement refreshData={refreshStoreData} />
+    },
+    {
+      name: "Delivery Management",
+      icon: TruckIcon,
+      component: <DeliveryManagement refreshData={refreshStoreData} />
     },
     {
       name: t("seller.product.title"),

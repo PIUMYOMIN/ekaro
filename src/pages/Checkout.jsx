@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { 
-  CubeIcon, 
+import {
+  CubeIcon,
   CurrencyDollarIcon,
   TruckIcon,
   ShieldCheckIcon,
@@ -13,11 +13,14 @@ import {
   EnvelopeIcon,
   XCircleIcon,
   XMarkIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  QrCodeIcon
 } from "@heroicons/react/24/outline";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
+import MMQRPayment from "./MMQRPayment";
+import PaymentSuccess from './PaymentSuccess';
 
 // Utility functions
 function classNames(...classes) {
@@ -43,6 +46,14 @@ export default function Checkout() {
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
+
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState(null);
+  const [successPaymentData, setSuccessPaymentData] = useState(null);
+
+  const [paymentAttempts, setPaymentAttempts] = useState(0);
 
   const [shippingAddress, setShippingAddress] = useState({
     full_name: "",
@@ -53,7 +64,7 @@ export default function Checkout() {
     postal_code: "",
     country: "Myanmar"
   });
-  const [paymentMethod, setPaymentMethod] = useState("kbz_pay");
+  const [paymentMethod, setPaymentMethod] = useState("mmqr");
   const [orderNotes, setOrderNotes] = useState("");
 
   const shippingFee = 5000;
@@ -68,7 +79,7 @@ export default function Checkout() {
         const response = await api.get('/auth/me');
         const userData = response.data.data || response.data;
         setUserProfile(userData);
-        
+
         // Pre-fill shipping address with user data
         setShippingAddress(prev => ({
           ...prev,
@@ -96,65 +107,206 @@ export default function Checkout() {
     }));
   };
 
-  const handleConfirmOrder = async () => {
-  if (!user) {
-    navigate("/login");
-    return;
-  }
+  const createOrderWithPendingPayment = async () => {
+    setLoading(true);
+    try {
+      const orderData = {
+        items: cartItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        shipping_address: shippingAddress,
+        payment_method: paymentMethod,
+        payment_status: 'pending',
+        notes: orderNotes,
+        total_amount: total,
+        subtotal_amount: subtotal,
+        shipping_fee: shippingFee,
+        tax_amount: tax
+      };
 
-  // Validate shipping address
-  if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
-    setSuccessMessage({
-      type: 'error',
-      message: 'Please fill in all required shipping information'
-    });
-    setShowSuccessPopup(true);
-    return;
-  }
+      const response = await api.post('/orders', orderData);
 
-  setLoading(true);
-  try {
-    // Prepare order data with cart items
-    const orderData = {
-      items: cartItems.map(item => ({
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      shipping_address: shippingAddress,
-      payment_method: paymentMethod,
-      notes: orderNotes
-    };
-
-    const response = await api.post('/orders', orderData);
-    
-    if (response.data.success) {
-      // Show success popup
+      if (response.data.success) {
+        const order = response.data.data.orders?.[0] || response.data.data.order;
+        setCurrentOrder(order);
+        setShowPaymentModal(true);
+        setPaymentAttempts(prev => prev + 1);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to create order:", error);
       setSuccessMessage({
-        type: 'success',
-        message: `Order created successfully! Order #${response.data.data.orders?.[0]?.order_number || ''}`
+        type: 'error',
+        message: error.response?.data?.message || "Failed to create order. Please try again."
       });
       setShowSuccessPopup(true);
-      
-      // Navigate to orders page after a delay
-      setTimeout(() => {
-        navigate("/buyer");
-      }, 2000);
+      return false;
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to create order:", error);
-    setSuccessMessage({
-      type: 'error',
-      message: error.response?.data?.message || "Failed to create order. Please try again."
-    });
-    setShowSuccessPopup(true);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const createOrder = async (paymentData = null) => {
+    setLoading(true);
+    try {
+      const orderData = {
+        items: cartItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        shipping_address: shippingAddress,
+        payment_method: paymentMethod,
+        payment_status: paymentData ? 'paid' : 'pending',
+        payment_data: paymentData,
+        notes: orderNotes,
+        total_amount: total,
+        subtotal_amount: subtotal,
+        shipping_fee: shippingFee,
+        tax_amount: tax
+      };
+
+      const response = await api.post('/orders', orderData);
+
+      if (response.data.success) {
+        const order = response.data.data.orders?.[0] || response.data.data.order;
+        setSuccessMessage({
+          type: 'success',
+          message: `Order created successfully! Order #${order?.order_number || ''}`
+        });
+        setShowSuccessPopup(true);
+
+        // Clear cart on successful order
+        setTimeout(() => {
+          clearCart();
+          navigate("/buyer");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Failed to create order:", error);
+      setSuccessMessage({
+        type: 'error',
+        message: error.response?.data?.message || "Failed to create order. Please try again."
+      });
+      setShowSuccessPopup(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    // Validate shipping address
+    if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
+      setSuccessMessage({
+        type: 'error',
+        message: 'Please fill in all required shipping information'
+      });
+      setShowSuccessPopup(true);
+      return;
+    }
+
+    // For MMQR, show payment modal instead of immediately creating order
+    if (paymentMethod === 'mmqr') {
+      await createOrderWithPendingPayment();
+    } else if (paymentMethod === 'cash_on_delivery') {
+      await createOrder();
+    } else {
+      // For other payment methods, create order with pending payment
+      await createOrderWithPendingPayment();
+    }
+  };
+
+  const handleMMQRSuccess = async (paymentData) => {
+    console.log('Payment success called with:', { paymentData, currentOrder });
+
+    try {
+      // Update order with successful payment
+      const updateResponse = await api.patch(`/orders/${currentOrder.id}/payment`, {
+        payment_status: 'paid',
+        payment_data: paymentData
+      });
+
+      console.log('Payment update response:', updateResponse.data);
+
+      setShowPaymentModal(false);
+
+      // Fetch the complete order details with items
+      const orderResponse = await api.get(`/orders/${currentOrder.id}`);
+      console.log('Order details response:', orderResponse.data);
+
+      if (orderResponse.data.success) {
+        setSuccessOrder(orderResponse.data.data);
+        setSuccessPaymentData(paymentData);
+        setPaymentSuccess(true);
+
+        console.log('Setting payment success to true - user can now download receipt');
+
+        // Clear cart on successful payment
+        clearCart();
+
+        // Reset payment attempts
+        setPaymentAttempts(0);
+      } else {
+        throw new Error('Failed to fetch order details');
+      }
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+      setSuccessMessage({
+        type: 'error',
+        message: 'Payment successful but failed to load order details. Please check your orders page.'
+      });
+      setShowSuccessPopup(true);
+    }
+  };
+
+  const handleMMQRFailed = async (error) => {
+    console.log('Payment failed called with:', error);
+
+    try {
+      if (currentOrder && currentOrder.id) {
+        // Update order with failed payment
+        await api.patch(`/orders/${currentOrder.id}/payment`, {
+          payment_status: 'failed',
+          payment_data: { error }
+        });
+      }
+
+      setShowPaymentModal(false);
+
+      // Don't clear cart on failed payment - allow retry
+      setSuccessMessage({
+        type: 'error',
+        message: `Payment failed: ${error}. Please try again.`
+      });
+      setShowSuccessPopup(true);
+
+    } catch (updateError) {
+      console.error("Failed to update payment status:", updateError);
+      setShowPaymentModal(false);
+      setSuccessMessage({
+        type: 'error',
+        message: `Payment failed: ${error}. Please try again.`
+      });
+      setShowSuccessPopup(true);
+    }
+  };
 
   const paymentMethods = [
+    {
+      id: "mmqr",
+      name: "MMQR Payment",
+      description: "Scan QR code with any mobile banking app",
+      icon: QrCodeIcon,
+      color: "bg-blue-500"
+    },
     {
       id: "kbz_pay",
       name: "KBZ Pay",
@@ -174,7 +326,14 @@ export default function Checkout() {
       name: "CB Pay",
       description: "Pay with CB Pay mobile wallet",
       icon: CreditCardIcon,
-      color: "bg-blue-500"
+      color: "bg-red-500"
+    },
+    {
+      id: "aya_pay",
+      name: "AYA Pay",
+      description: "Pay with AYA Pay mobile wallet",
+      icon: CreditCardIcon,
+      color: "bg-orange-500"
     },
     {
       id: "cash_on_delivery",
@@ -185,7 +344,22 @@ export default function Checkout() {
     }
   ];
 
-  if (cartItems.length === 0) {
+  // If payment is successful, ONLY show PaymentSuccess component
+  if (paymentSuccess && successOrder) {
+    return (
+      <PaymentSuccess
+        order={successOrder}
+        paymentData={successPaymentData}
+        onClose={() => {
+          setPaymentSuccess(false);
+          navigate('/buyer');
+        }}
+      />
+    );
+  }
+
+  // If cart is empty and we're not in any payment process, show empty cart
+  if (cartItems.length === 0 && !showPaymentModal && !loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto text-center">
@@ -211,46 +385,85 @@ export default function Checkout() {
     );
   }
 
+  // Otherwise, show the normal checkout page
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Popup Message */}
+        {/* MMQR Payment Modal */}
+        {showPaymentModal && currentOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Complete Your Payment</h3>
+                  <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <MMQRPayment
+                key={paymentAttempts}
+                amount={total}
+                orderNumber={currentOrder.order_number}
+                onPaymentSuccess={handleMMQRSuccess}
+                onPaymentFailed={handleMMQRFailed}
+              />
+              <div className="p-4 border-t bg-gray-50">
+                <p className="text-sm text-gray-600 text-center">
+                  Having issues? <button
+                    onClick={() => {
+                      setShowPaymentModal(false);
+                      setCurrentOrder(null);
+                    }}
+                    className="text-green-600 hover:text-green-700 font-medium"
+                  >
+                    Try a different payment method
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success/Error Popup */}
         {showSuccessPopup && (
-  <div className="fixed top-4 right-4 z-50 max-w-sm">
-    <div className={`rounded-lg shadow-lg p-4 ${
-      successMessage.type === 'success' 
-        ? 'bg-green-50 border border-green-200' 
-        : 'bg-red-50 border border-red-200'
-    }`}>
-      <div className="flex items-center">
-        <div className={`flex-shrink-0 ${
-          successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
-        }`}>
-          {successMessage.type === 'success' ? (
-            <CheckCircleIcon className="h-6 w-6" />
-          ) : (
-            <XCircleIcon className="h-6 w-6" />
-          )}
-        </div>
-        <div className="ml-3">
-          <p className={`text-sm font-medium ${
-            successMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
-          }`}>
-            {successMessage.message}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowSuccessPopup(false)}
-          className="ml-auto pl-3"
-        >
-          <XMarkIcon className={`h-5 w-5 ${
-            successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
-          }`} />
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+          <div className="fixed top-4 right-4 z-50 max-w-sm">
+            <div className={`rounded-lg shadow-lg p-4 ${successMessage.type === 'success'
+              ? 'bg-green-50 border border-green-200'
+              : 'bg-red-50 border border-red-200'
+              }`}>
+              <div className="flex items-center">
+                <div className={`flex-shrink-0 ${successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                  {successMessage.type === 'success' ? (
+                    <CheckCircleIcon className="h-6 w-6" />
+                  ) : (
+                    <XCircleIcon className="h-6 w-6" />
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className={`text-sm font-medium ${successMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
+                    }`}>
+                    {successMessage.message}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSuccessPopup(false)}
+                  className="ml-auto pl-3"
+                >
+                  <XMarkIcon className={`h-5 w-5 ${successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
+                    }`} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
@@ -314,7 +527,7 @@ export default function Checkout() {
                     onChange={(e) => handleInputChange('address', e.target.value)}
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter your complete address"
+                    placeholder="Enter your complete address including township and city"
                   />
                 </div>
 
@@ -341,6 +554,32 @@ export default function Checkout() {
                     onChange={(e) => handleInputChange('state', e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="State/Region"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Postal Code
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingAddress.postal_code}
+                    onChange={(e) => handleInputChange('postal_code', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Postal Code"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingAddress.country}
+                    disabled
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                    placeholder="Country"
                   />
                 </div>
               </div>
@@ -392,6 +631,23 @@ export default function Checkout() {
                   </div>
                 ))}
               </div>
+
+              {/* Payment Method Instructions */}
+              {paymentMethod === 'mmqr' && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>How MMQR works:</strong> After confirming your order, you'll see a QR code to scan with any mobile banking app that supports MMQR.
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === 'cash_on_delivery' && (
+                <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Cash on Delivery:</strong> You'll pay the delivery person when you receive your order. An additional verification call may be made.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Order Notes */}
@@ -404,7 +660,7 @@ export default function Checkout() {
                 onChange={(e) => setOrderNotes(e.target.value)}
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Any special instructions for your order..."
+                placeholder="Any special instructions for your order, delivery timing preferences, or additional information..."
               />
             </div>
           </div>
@@ -418,7 +674,7 @@ export default function Checkout() {
               </h2>
 
               {/* Order Items */}
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -432,13 +688,18 @@ export default function Checkout() {
                           }}
                         />
                       </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
+                      <div className="max-w-[180px]">
+                        <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
                           {item.name}
                         </h4>
                         <p className="text-gray-500 text-sm">
                           Qty: {item.quantity}
                         </p>
+                        {item.seller_name && (
+                          <p className="text-gray-400 text-xs">
+                            Sold by: {item.seller_name}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -459,17 +720,17 @@ export default function Checkout() {
                   <span className="text-gray-600">Subtotal ({totalItems} items)</span>
                   <span className="text-gray-900">{formatMMK(subtotal)}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
                   <span className="text-gray-900">{formatMMK(shippingFee)}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax (5%)</span>
                   <span className="text-gray-900">{formatMMK(tax)}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-3">
                   <span className="text-gray-900">Total</span>
                   <span className="text-green-600">{formatMMK(total)}</span>
@@ -498,8 +759,10 @@ export default function Checkout() {
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     Processing Order...
                   </div>
+                ) : paymentMethod === 'cash_on_delivery' ? (
+                  `Confirm Cash Order - ${formatMMK(total)}`
                 ) : (
-                  `Confirm Order - ${formatMMK(total)}`
+                  `Proceed to Payment - ${formatMMK(total)}`
                 )}
               </button>
 
@@ -518,13 +781,34 @@ export default function Checkout() {
                 <div>
                   <TruckIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
                   <p className="text-sm font-medium text-gray-900">Fast Delivery</p>
-                  <p className="text-xs text-gray-600">2-3 days</p>
+                  <p className="text-xs text-gray-600">2-5 business days</p>
                 </div>
                 <div>
                   <ShieldCheckIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
                   <p className="text-sm font-medium text-gray-900">Secure Payment</p>
                   <p className="text-xs text-gray-600">SSL Protected</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Delivery Information */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Delivery Information
+              </h3>
+              <div className="space-y-3 text-sm text-gray-600">
+                <p>
+                  • Orders are processed within 24 hours
+                </p>
+                <p>
+                  • Suppliers may contact you for delivery details
+                </p>
+                <p>
+                  • Tracking information will be provided after shipment
+                </p>
+                <p>
+                  • Free returns within 7 days for eligible items
+                </p>
               </div>
             </div>
           </div>
