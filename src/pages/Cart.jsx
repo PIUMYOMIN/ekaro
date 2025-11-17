@@ -117,7 +117,7 @@ const Cart = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-full h-full object-center object-cover"
+                        className="w-full h-full object-center object-contain"
                         onError={(e) => {
                           e.target.src = '/placeholder-product.jpg';
                         }}

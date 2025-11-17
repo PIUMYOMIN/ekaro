@@ -1,7 +1,7 @@
 // src/pages/BuyerDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
+import {
   ShoppingBagIcon,
   UserIcon,
   EnvelopeIcon,
@@ -124,7 +124,13 @@ const OrderCard = ({ order, onViewDetails }) => {
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                 <img
-                  src={item.product_data?.images?.[0]?.url || item.product_data?.image || '/placeholder-product.jpg'}
+                  src={
+                    item.product_data?.images?.find(img => img.is_primary)?.url || // primary image from product_data
+                    item.product_data?.images?.[0]?.url ||                         // first image from product_data
+                    item.product?.images?.find(img => img.is_primary)?.url ||      // primary image from product
+                    item.product?.images?.[0]?.url ||                              // first image from product
+                    '/placeholder-product.jpg'                                     // fallback
+                  }
                   alt={item.product_name}
                   className="w-8 h-8 object-cover rounded"
                   onError={(e) => {
@@ -132,6 +138,7 @@ const OrderCard = ({ order, onViewDetails }) => {
                   }}
                 />
               </div>
+
               <div>
                 <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
                   {item.product_name}
@@ -148,7 +155,7 @@ const OrderCard = ({ order, onViewDetails }) => {
             </div>
           </div>
         ))}
-        
+
         {order.items?.length > 2 && (
           <div className="text-center pt-2 border-t border-gray-100">
             <p className="text-sm text-gray-500">
@@ -226,26 +233,23 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               <div className="flex items-center justify-between">
                 {progressSteps.map((step, index) => (
                   <div key={step.key} className="flex flex-col items-center flex-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      step.completed 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-gray-200 text-gray-500'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.completed
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                      }`}>
                       {step.completed ? (
                         <CheckCircleIcon className="h-5 w-5" />
                       ) : (
                         <span>{index + 1}</span>
                       )}
                     </div>
-                    <span className={`text-xs mt-2 text-center ${
-                      step.completed ? 'text-green-600 font-medium' : 'text-gray-500'
-                    }`}>
+                    <span className={`text-xs mt-2 text-center ${step.completed ? 'text-green-600 font-medium' : 'text-gray-500'
+                      }`}>
                       {step.label}
                     </span>
                     {index < progressSteps.length - 1 && (
-                      <div className={`h-1 flex-1 mt-4 ${
-                        step.completed ? 'bg-green-500' : 'bg-gray-200'
-                      }`}></div>
+                      <div className={`h-1 flex-1 mt-4 ${step.completed ? 'bg-green-500' : 'bg-gray-200'
+                        }`}></div>
                     )}
                   </div>
                 ))}
@@ -319,9 +323,8 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                       </div>
                       <div className="flex justify-between">
                         <span>Payment Status:</span>
-                        <span className={`font-medium ${
-                          order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'
-                        }`}>
+                        <span className={`font-medium ${order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'
+                          }`}>
                           {order.payment_status?.charAt(0).toUpperCase() + order.payment_status?.slice(1)}
                         </span>
                       </div>
@@ -639,7 +642,7 @@ const WishlistTab = ({ navigate }) => {
 
   const handleRemoveFromWishlist = async (productId, e) => {
     e.stopPropagation();
-    
+
     setRemovingItem(productId);
     try {
       await api.delete(`/wishlist/${productId}`);
@@ -716,21 +719,26 @@ const WishlistTab = ({ navigate }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {wishlistItems.map((product) => (
-              <div 
-                key={product.id} 
+              <div
+                key={product.id}
                 className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => handleProductClick(product.id)}
               >
                 <div className="relative">
                   <div className="w-full h-48 overflow-hidden">
                     <img
-                      src={product.images?.[0]?.url || '/placeholder-product.jpg'}
+                      src={
+                        Array.isArray(product.images) && product.images.length > 0
+                          ? product.images[0]
+                          : product.image || '/placeholder-product.jpg'
+                      }
                       alt={product.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         e.target.src = '/placeholder-product.jpg';
                       }}
                     />
+
                   </div>
                   <button
                     onClick={(e) => handleRemoveFromWishlist(product.id, e)}
@@ -750,7 +758,7 @@ const WishlistTab = ({ navigate }) => {
                   <h3 className="font-semibold text-lg mb-2 line-clamp-2">
                     {product.name}
                   </h3>
-                  
+
                   {product.name_mm && (
                     <p className="text-gray-600 text-sm mb-2">{product.name_mm}</p>
                   )}
@@ -760,11 +768,10 @@ const WishlistTab = ({ navigate }) => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <svg
                           key={star}
-                          className={`w-4 h-4 ${
-                            star <= Math.round(product.average_rating || 0)
-                              ? "text-yellow-400 fill-current"
-                              : "text-gray-300"
-                          }`}
+                          className={`w-4 h-4 ${star <= Math.round(product.average_rating || 0)
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
+                            }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -947,11 +954,10 @@ const BuyerDashboard = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
-                        activeTab === tab.id
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${activeTab === tab.id
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'text-gray-700 hover:bg-gray-50'
+                        }`}
                     >
                       <IconComponent className="h-5 w-5" />
                       <span className="font-medium">{tab.name}</span>
