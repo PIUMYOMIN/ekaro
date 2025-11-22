@@ -16,12 +16,14 @@ import {
   ChevronRightIcon,
   StarIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  TruckIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import Sidebar from "../../components/layout/Sidebar";
+import PlatformLogistics from "./PlatformLogistics";
 
 // StatCard Component
 const StatCard = ({ title, value, change, icon: Icon, iconColor, bgColor }) => {
@@ -323,8 +325,6 @@ const DashboardOverview = ({ data, loading, error }) => {
   );
 };
 
-// UserManagement Component
-// UserManagement Component - Enhanced
 // UserManagement Component - Enhanced
 const UserManagement = ({
   users,
@@ -1804,6 +1804,11 @@ const AdminDashboard = () => {
           updateOrderStatus={updateOrderStatus}
         />
       )
+    },
+    {
+      name: "Platform Logistics",
+      icon: TruckIcon,
+      component: <PlatformLogistics />
     },
     {
       name: "Categories",

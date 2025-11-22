@@ -1,7 +1,19 @@
+// src/components/seller/DashboardSummary.jsx
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/solid";
-import { Bar } from "react-chartjs-2";
+import { 
+  ArrowUpIcon, 
+  ArrowDownIcon,
+  ShoppingBagIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  StarIcon,
+  TruckIcon
+} from "@heroicons/react/24/solid";
+import { Bar, Doughnut } from "react-chartjs-2";
 import api from "../../utils/api";
 import {
   Chart as ChartJS,
@@ -10,7 +22,8 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 } from "chart.js";
 
 ChartJS.register(
@@ -19,117 +32,304 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 );
 
 const DashboardSummary = ({ storeData, stats, refreshData }) => {
   const { t } = useTranslation();
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [dashboardStats, setDashboardStats] = useState({
-    totalProducts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0
+  const [dashboardData, setDashboardData] = useState({
+    orders: {
+      total: 0,
+      byStatus: {},
+      recent: []
+    },
+    sales: {
+      totalRevenue: 0,
+      monthlyTrend: [],
+      averageOrderValue: 0
+    },
+    products: {
+      total: 0,
+      active: 0,
+      lowStock: 0
+    },
+    customers: {
+      total: 0,
+      repeatCustomers: 0
+    },
+    deliveries: {
+      total: 0,
+      byStatus: {}
+    }
   });
+  const [loading, setLoading] = useState(true);
 
-  // Fetch dashboard data from API
+  // Fetch comprehensive dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [salesSummaryResponse, recentOrdersResponse] = await Promise.all([
+        setLoading(true);
+        const [
+          salesSummaryResponse, 
+          recentOrdersResponse,
+          productsResponse,
+          deliveriesResponse
+        ] = await Promise.all([
           api.get("/dashboard/seller/sales-summary"),
-          api.get("/dashboard/seller/recent-orders")
+          api.get("/dashboard/seller/recent-orders?limit=8"),
+          api.get("/dashboard/seller/products/my-products?stats=true"),
+          api.get("/dashboard/deliveries?stats=true")
         ]);
 
+        // Process sales summary
         if (salesSummaryResponse.data.success) {
-          const salesData = salesSummaryResponse.data.data.sales || {};
-          setDashboardStats({
-            totalProducts: salesSummaryResponse.data.data.products?.total || 0,
-            totalOrders: salesData.total_orders || 0,
-            totalRevenue: salesData.total_revenue || 0,
-            pendingOrders: salesSummaryResponse.data.data.orders_by_status?.pending || 0
-          });
+          const salesData = salesSummaryResponse.data.data;
+          setDashboardData(prev => ({
+            ...prev,
+            orders: {
+              total: salesData.sales?.total_orders || 0,
+              byStatus: salesData.orders_by_status || {},
+              recent: recentOrdersResponse.data.data || []
+            },
+            sales: {
+              totalRevenue: salesData.sales?.total_revenue || 0,
+              monthlyTrend: salesData.recent_trend || [],
+              averageOrderValue: salesData.sales?.average_order_value || 0
+            },
+            products: {
+              total: salesData.products?.total || 0,
+              active: salesData.products?.active || 0,
+              lowStock: salesData.products?.low_stock || 0
+            }
+          }));
         }
 
-        if (recentOrdersResponse.data.success) {
-          setRecentActivity(recentOrdersResponse.data.data.slice(0, 5));
+        // Process delivery stats
+        if (deliveriesResponse.data.success) {
+          const deliveryStats = deliveriesResponse.data.data.delivery_stats || {};
+          setDashboardData(prev => ({
+            ...prev,
+            deliveries: {
+              total: deliveryStats.total || 0,
+              byStatus: deliveryStats.by_status || {}
+            }
+          }));
         }
+
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, [stats.totalOrders]); // Refetch when orders change
+  }, [stats.totalOrders]);
 
-  // Calculate dynamic stats based on actual data
-  const dynamicStats = [
+  // Calculate key metrics
+  const calculateMetrics = () => {
+    const orders = dashboardData.orders.byStatus;
+    const deliveries = dashboardData.deliveries.byStatus;
+
+    return {
+      // Order metrics
+      successOrders: orders.delivered || 0,
+      pendingOrders: orders.pending || 0,
+      processingOrders: (orders.confirmed || 0) + (orders.processing || 0),
+      cancelledOrders: orders.cancelled || 0,
+
+      // Delivery metrics
+      deliveredOrders: deliveries.delivered || 0,
+      inTransitOrders: (deliveries.in_transit || 0) + (deliveries.out_for_delivery || 0),
+      pendingDelivery: deliveries.pending || deliveries.awaiting_pickup || 0,
+
+      // Financial metrics
+      totalRevenue: dashboardData.sales.totalRevenue,
+      averageOrderValue: dashboardData.sales.averageOrderValue,
+      conversionRate: dashboardData.orders.total > 0 ? 
+        ((orders.delivered || 0) / dashboardData.orders.total * 100).toFixed(1) : 0,
+
+      // Product metrics
+      totalProducts: dashboardData.products.total,
+      activeProducts: dashboardData.products.active,
+      lowStockProducts: dashboardData.products.lowStock || 0
+    };
+  };
+
+  const metrics = calculateMetrics();
+
+  // Stats cards data
+  const statsCards = [
     {
-      name: t("seller.total_revenue"),
-      value: `${dashboardStats.totalRevenue?.toLocaleString()} MMK` || "0 MMK",
-      change: "+12%",
-      changeType: "positive"
+      id: 1,
+      name: "Total Revenue",
+      value: `${metrics.totalRevenue?.toLocaleString()} MMK`,
+      icon: CurrencyDollarIcon,
+      change: "+12.5%",
+      changeType: "positive",
+      description: "Total sales revenue"
     },
     {
-      name: t("seller.total_orders"),
-      value: dashboardStats.totalOrders?.toString() || "0",
-      change: "+5.4%",
-      changeType: "positive"
+      id: 2,
+      name: "Success Orders",
+      value: metrics.successOrders.toString(),
+      icon: CheckCircleIcon,
+      change: "+8.2%",
+      changeType: "positive",
+      description: "Completed orders"
     },
     {
-      name: t("seller.conversion_rate"),
-      value: "4.7%",
-      change: "-1.2%",
-      changeType: "negative"
+      id: 3,
+      name: "Pending Orders",
+      value: metrics.pendingOrders.toString(),
+      icon: ClockIcon,
+      change: "-3.1%",
+      changeType: "negative",
+      description: "Orders awaiting confirmation"
     },
     {
-      name: t("seller.avg_order_value"),
-      value: dashboardStats.totalOrders > 0 
-        ? `${Math.round(dashboardStats.totalRevenue / dashboardStats.totalOrders).toLocaleString()} MMK` 
-        : "0 MMK",
+      id: 4,
+      name: "Processing Orders",
+      value: metrics.processingOrders.toString(),
+      icon: ShoppingBagIcon,
+      change: "+5.7%",
+      changeType: "positive",
+      description: "Orders in progress"
+    },
+    {
+      id: 5,
+      name: "Active Products",
+      value: metrics.activeProducts.toString(),
+      icon: StarIcon,
       change: "+2.3%",
-      changeType: "positive"
+      changeType: "positive",
+      description: "Listed products"
+    },
+    {
+      id: 6,
+      name: "Total Customers",
+      value: dashboardData.customers.total.toString(),
+      icon: UserGroupIcon,
+      change: "+15.4%",
+      changeType: "positive",
+      description: "Unique buyers"
     }
   ];
 
-  const data = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  // Order status distribution for chart
+  const orderStatusData = {
+    labels: ['Delivered', 'Pending', 'Processing', 'Cancelled'],
     datasets: [
       {
-        label: t("seller.revenue"),
-        data: [450000, 780000, 1020000, 1450000, 1890000, dashboardStats.totalRevenue || 2450000],
-        backgroundColor: "rgba(5, 150, 105, 0.8)"
-      },
-      {
-        label: t("seller.orders"),
-        data: [24, 42, 68, 79, 102, dashboardStats.totalOrders || 124],
-        backgroundColor: "rgba(16, 185, 129, 0.8)"
+        data: [
+          metrics.successOrders,
+          metrics.pendingOrders,
+          metrics.processingOrders,
+          metrics.cancelledOrders
+        ],
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.8)',
+          'rgba(251, 191, 36, 0.8)',
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(239, 68, 68, 0.8)'
+        ],
+        borderColor: [
+          'rgb(34, 197, 94)',
+          'rgb(251, 191, 36)',
+          'rgb(59, 130, 246)',
+          'rgb(239, 68, 68)'
+        ],
+        borderWidth: 2
       }
     ]
   };
 
-  const options = {
+  // Sales trend data
+  const salesTrendData = {
+    labels: dashboardData.sales.monthlyTrend.map(item => {
+      const date = new Date(item.date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }),
+    datasets: [
+      {
+        label: 'Daily Revenue (MMK)',
+        data: dashboardData.sales.monthlyTrend.map(item => item.revenue || 0),
+        backgroundColor: 'rgba(5, 150, 105, 0.8)',
+        borderColor: 'rgb(5, 150, 105)',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      {
+        label: 'Orders Count',
+        data: dashboardData.sales.monthlyTrend.map(item => item.orders_count || 0),
+        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+        borderColor: 'rgb(16, 185, 129)',
+        borderWidth: 2,
+        borderRadius: 4
+      }
+    ]
+  };
+
+  const chartOptions = {
     responsive: true,
     plugins: {
       legend: {
-        position: "top"
+        position: 'top',
       },
       title: {
         display: true,
-        text: t("seller.sales_overview")
+        text: 'Sales Performance'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true
       }
     }
   };
 
+  const doughnutOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+      },
+      title: {
+        display: true,
+        text: 'Order Status Distribution'
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          {t("seller.overview")}
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          {t("seller.dashboard_summary")}
-        </p>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {t("seller.overview")}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {t("seller.dashboard_summary")}
+          </p>
+        </div>
+        <button
+          onClick={refreshData}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
+        >
+          <span>Refresh Data</span>
+        </button>
       </div>
 
       {/* Store Status Banner */}
@@ -167,136 +367,164 @@ const DashboardSummary = ({ storeData, stats, refreshData }) => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={refreshData}
-              className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
-            >
-              Refresh Data
-            </button>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {dynamicStats.map(stat =>
-          <div
-            key={stat.name}
-            className="bg-white overflow-hidden shadow rounded-lg"
-          >
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {statsCards.map((stat) => {
+          const IconComponent = stat.icon;
+          return (
+            <div
+              key={stat.id}
+              className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+            >
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className={`p-3 rounded-lg ${
+                      stat.changeType === "positive" 
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
+                    }`}>
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p className="text-sm font-medium text-gray-500">
                       {stat.name}
-                    </dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">
+                    </p>
+                    <div className="flex items-baseline">
+                      <p className="text-2xl font-semibold text-gray-900">
                         {stat.value}
-                      </div>
+                      </p>
                       <div
-                        className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType ===
-                        "positive"
-                          ? "text-green-600"
-                          : "text-red-600"}`}
+                        className={`ml-2 flex items-baseline text-sm font-semibold ${
+                          stat.changeType === "positive"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
                       >
-                        {stat.changeType === "positive"
-                          ? <ArrowUpIcon className="h-4 w-4 text-green-500" />
-                          : <ArrowDownIcon className="h-4 w-4 text-red-500" />}
+                        {stat.changeType === "positive" ? (
+                          <ArrowUpIcon className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <ArrowDownIcon className="h-4 w-4 text-red-500" />
+                        )}
                         <span className="sr-only">
-                          {stat.changeType === "positive"
-                            ? t("seller.increased")
-                            : t("seller.decreased")}{" "}
-                          by
+                          {stat.changeType === "positive" ? "Increased" : "Decreased"} by
                         </span>
                         {stat.change}
                       </div>
-                    </dd>
-                  </dl>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {stat.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <Bar data={data} options={options} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <div className="bg-white shadow rounded-lg p-6 lg:col-span-2">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t("seller.recent_activity")}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Trend Chart */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Sales Trend (Last 7 Days)
           </h3>
-          <div className="flow-root">
-            <ul className="-mb-8">
-              {recentActivity.map((order, idx) =>
-                <li key={order.id}>
-                  <div className="relative pb-8">
-                    {idx !== recentActivity.length - 1
-                      ? <span
-                          className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200"
-                          aria-hidden="true"
-                        />
-                      : null}
-                    <div className="relative flex space-x-3">
-                      <div>
-                        <span className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                          <svg
-                            className="h-5 w-5 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            {t("seller.order_completed")}{" "}
-                            <span className="font-medium text-gray-900">
-                              {order.order_number}
-                            </span>
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Customer: {order.buyer?.name}
-                          </p>
-                        </div>
-                        <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                          <div className="font-medium text-gray-900">
-                            {order.total_amount?.toLocaleString()} MMK
-                          </div>
-                          <time>{order.created_at}</time>
-                        </div>
-                      </div>
+          <Bar data={salesTrendData} options={chartOptions} height={300} />
+        </div>
+
+        {/* Order Distribution Chart */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Order Status Distribution
+          </h3>
+          <div className="h-64 flex items-center justify-center">
+            <Doughnut data={orderStatusData} options={doughnutOptions} />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity & Quick Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Orders */}
+        <div className="bg-white shadow rounded-lg p-6 lg:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Recent Orders
+          </h3>
+          <div className="space-y-4">
+            {dashboardData.orders.recent.length > 0 ? (
+              dashboardData.orders.recent.map((order) => (
+                <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      order.status === 'delivered' ? 'bg-green-500' :
+                      order.status === 'pending' ? 'bg-yellow-500' :
+                      order.status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'
+                    }`}></div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        #{order.order_number}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {order.buyer?.name || 'Customer'}
+                      </p>
                     </div>
                   </div>
-                </li>
-              )}
-            </ul>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">
+                      {order.total_amount_formatted || `${order.total_amount?.toLocaleString()} MMK`}
+                    </p>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {order.status}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingBagIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p>No recent orders</p>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Quick Stats */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {t("seller.top_products")}
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Stats
           </h3>
           <div className="space-y-4">
-            {/* Top products will be fetched from API */}
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading top products...</p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Order Completion Rate</span>
+              <span className="font-semibold text-green-600">
+                {metrics.conversionRate}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Avg. Order Value</span>
+              <span className="font-semibold text-gray-900">
+                {metrics.averageOrderValue?.toLocaleString()} MMK
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Low Stock Products</span>
+              <span className="font-semibold text-red-600">
+                {metrics.lowStockProducts}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Delivery Success Rate</span>
+              <span className="font-semibold text-green-600">
+                {metrics.deliveredOrders > 0 ? 
+                  Math.round((metrics.deliveredOrders / dashboardData.deliveries.total) * 100) : 0
+                }%
+              </span>
             </div>
           </div>
         </div>
