@@ -7,7 +7,7 @@ import {
   StarIcon,
   CheckCircleIcon,
   ShoppingBagIcon,
-  CalendarIcon,
+  PlusIcon,
   MapPinIcon,
   PhoneIcon,
   EnvelopeIcon,
@@ -45,24 +45,28 @@ const SellerProfile = () => {
     reviews: true
   });
   const [error, setError] = useState(null);
-  
+
+  // Follow state
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+
   // Review form state
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
-  
+
   // Popup notification state
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-  const [popupType, setPopupType] = useState("success"); // "success" or "error"
+  const [popupType, setPopupType] = useState("success");
 
   useEffect(() => {
     const fetchSellerData = async () => {
       try {
         setLoading({ seller: true, products: true, reviews: true });
         setError(null);
-        
+
         // Fetch seller details
         try {
           const sellerRes = await api.get(`/sellers/${id}`);
@@ -70,17 +74,21 @@ const SellerProfile = () => {
           if (sellerRes.data.success && sellerRes.data.data) {
             const sellerData = sellerRes.data.data.seller;
             setSeller(sellerData);
-            
+
+            // Set follow data
+            setIsFollowing(sellerRes.data.data.is_following || false);
+            setFollowersCount(sellerRes.data.data.stats?.followers_count || 0);
+
             // Set products from the response
             if (sellerRes.data.data.products && sellerRes.data.data.products.data) {
               setProducts(sellerRes.data.data.products.data);
             }
-            
+
             // Set reviews from the seller data
             if (sellerData.reviews) {
               setReviews(sellerData.reviews);
             }
-            
+
             // Set stats if included
             if (sellerRes.data.data.stats) {
               setStats(sellerRes.data.data.stats);
@@ -104,13 +112,41 @@ const SellerProfile = () => {
     fetchSellerData();
   }, [id]);
 
+  // Handle follow toggle
+  const handleFollowToggle = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showNotification('Please login to follow sellers', 'error');
+        return;
+      }
+
+      const response = await api.post(`/follow/seller/${seller.user_id}/toggle`);
+      if (response.data.success) {
+        setIsFollowing(response.data.data.is_following);
+        setFollowersCount(response.data.data.followers_count);
+
+        showNotification(
+          response.data.data.is_following ? 'Successfully followed seller' : 'Successfully unfollowed seller',
+          'success'
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      if (error.response?.status === 401) {
+        showNotification('Please login to follow sellers', 'error');
+      } else {
+        showNotification('Failed to update follow status', 'error');
+      }
+    }
+  };
+
   // Show popup notification
   const showNotification = (message, type = "success") => {
     setPopupMessage(message);
     setPopupType(type);
     setShowPopup(true);
-    
-    // Auto hide after 5 seconds
+
     setTimeout(() => {
       setShowPopup(false);
     }, 5000);
@@ -119,7 +155,7 @@ const SellerProfile = () => {
   // Handle review submission
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (!reviewRating) {
       showNotification("Please select a rating", "error");
       return;
@@ -139,8 +175,7 @@ const SellerProfile = () => {
           setSeller(sellerRes.data.data.seller);
           setReviews(sellerRes.data.data.seller.reviews || []);
         }
-        
-        // Reset form
+
         setReviewRating(0);
         setReviewComment("");
         setShowReviewForm(false);
@@ -175,12 +210,12 @@ const SellerProfile = () => {
         </div>
       );
     }
-    
+
     const stars = [];
     const numericRating = parseFloat(rating);
     const fullStars = Math.floor(numericRating);
     const hasHalfStar = numericRating % 1 >= 0.5;
-    
+
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
         stars.push(<StarIcon key={i} className={`${size} text-yellow-400`} fill="currentColor" />);
@@ -190,7 +225,7 @@ const SellerProfile = () => {
         stars.push(<StarIcon key={i} className={`${size} text-gray-300`} />);
       }
     }
-    
+
     return stars;
   };
 
@@ -206,9 +241,8 @@ const SellerProfile = () => {
             className="focus:outline-none transition-transform hover:scale-110"
           >
             <StarIcon
-              className={`h-8 w-8 ${
-                star <= reviewRating ? "text-yellow-400" : "text-gray-300"
-              }`}
+              className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"
+                }`}
               fill={star <= reviewRating ? "currentColor" : "none"}
             />
           </button>
@@ -227,11 +261,10 @@ const SellerProfile = () => {
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
           className="fixed top-4 mx-auto z-50 max-w-sm w-full"
         >
-          <div className={`rounded-lg shadow-lg border-l-4 ${
-            popupType === "success" 
-              ? "bg-green-50 border-green-500" 
+          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success"
+              ? "bg-green-50 border-green-500"
               : "bg-red-50 border-red-500"
-          }`}>
+            }`}>
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -242,20 +275,18 @@ const SellerProfile = () => {
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1">
-                  <p className={`text-sm font-medium ${
-                    popupType === "success" ? "text-green-800" : "text-red-800"
-                  }`}>
+                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"
+                    }`}>
                     {popupMessage}
                   </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
                     onClick={() => setShowPopup(false)}
-                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      popupType === "success" 
-                        ? "focus:ring-green-500 text-green-400 hover:text-green-500" 
+                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success"
+                        ? "focus:ring-green-500 text-green-400 hover:text-green-500"
                         : "focus:ring-red-500 text-red-400 hover:text-red-500"
-                    }`}
+                      }`}
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
@@ -344,51 +375,126 @@ const SellerProfile = () => {
 
       {/* Seller Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row">
-              <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6">
-                {seller.store_logo ? (
-                  <img 
-                    src={seller.store_logo} 
-                    alt={seller.store_name}
-                    className="rounded-xl w-32 h-32 object-cover border-2 border-gray-200"
-                  />
-                ) : (
-                  <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl w-32 h-32 flex items-center justify-center">
-                    <UserIcon className="h-12 w-12 text-gray-400" />
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 mb-6 md:mb-0">
+              {seller.store_logo ? (
+                <img
+                  src={seller.store_logo}
+                  alt={seller.store_name}
+                  className="w-32 h-32 rounded-full object-cover border-2 border-gray-200 mx-auto"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              {!seller.store_logo && (
+                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mx-auto border-2 border-gray-300">
+                  <span className="text-gray-600 text-xl font-bold">
+                    {seller.store_name ? seller.store_name.charAt(0).toUpperCase() : 'S'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="md:w-3/4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="flex items-center mb-2">
+                    <h1 className="text-2xl font-bold mr-2">
+                      {seller.store_name}
+                    </h1>
+                    {(seller.status === "approved" || seller.status === "active") && (
+                      <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
+                    )}
                   </div>
-                )}
+
+                  <div className="flex items-center mb-4">
+                    <div className="flex text-yellow-400 mr-2">
+                      {renderStars(rating, "h-5 w-5")}
+                    </div>
+                    <span className="text-gray-600">
+                      {rating.toFixed(1)} ({stats.total_sales || 0} sales)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
+                    <div className="text-xs text-gray-500">Followers</div>
+                  </div>
+                  <button
+                    onClick={handleFollowToggle}
+                    disabled={!seller.user_id}
+                    className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium ${isFollowing
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                        : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                      } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isFollowing ? (
+                      <div className="flex items-center space-x-2">
+                        <CheckCircleIcon className="h-5 w-5" />
+                        <span>Following</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <PlusIcon className="h-5 w-5" />
+                        <span>Follow</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center flex-wrap">
-                  <h1 className="text-2xl font-bold text-gray-900 mr-2">{seller.store_name}</h1>
-                  {(seller.status === "approved" || seller.status === "active") && (
-                    <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
-                  )}
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{seller.business_type || "Business"}</p>
-                
-                <div className="mt-2 flex items-center flex-wrap">
-                  {renderStars(rating)}
-                  <span className="mx-2 text-gray-300">•</span>
-                  <span className="text-sm text-gray-500">{reviewCount} reviews</span>
-                </div>
-                
-                <p className="mt-4 text-gray-600 leading-relaxed">
-                  {seller.description || "No description available."}
-                </p>
-                
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                    <CalendarIcon className="h-3 w-3 mr-1" />
-                    Member since {memberSince}
+
+              <p className="text-gray-700 mb-4 leading-relaxed">
+                {seller.description || "No description available."}
+              </p>
+
+              {/* Categories and Business Type */}
+              {seller.business_type && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200">
+                    {seller.business_type}
                   </span>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                    <ShoppingBagIcon className="h-3 w-3 mr-1" />
-                    {productCount} products
-                  </span>
+                  {seller.categories && seller.categories.map((category, index) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200"
+                    >
+                      {category}
+                    </span>
+                  ))}
                 </div>
+              )}
+
+              {/* Products, Rating, Sales, Since Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                  <div className="font-bold text-lg text-gray-900">
+                    {productCount}
+                  </div>
+                  <div className="text-gray-600 text-sm">Products</div>
+                </div>
+                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                  <div className="font-bold text-lg text-gray-900">
+                    {rating.toFixed(1)}
+                  </div>
+                  <div className="text-gray-600 text-sm">Rating</div>
+                </div>
+                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                  <div className="font-bold text-lg text-gray-900">
+                    {stats.total_sales || 0}
+                  </div>
+                  <div className="text-gray-600 text-sm">Sales</div>
+                </div>
+                {/* <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                  <div className="font-bold text-lg text-gray-900">
+                    {followersCount}
+                  </div>
+                  <div className="text-gray-600 text-sm">Followers</div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -479,7 +585,7 @@ const SellerProfile = () => {
                         </span>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setShowReviewForm(true)}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
                     >
@@ -489,7 +595,7 @@ const SellerProfile = () => {
 
                   {/* Review Form */}
                   {showReviewForm && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
@@ -514,7 +620,7 @@ const SellerProfile = () => {
                             {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
                           </p>
                         </div>
-                        
+
                         <div className="mb-4">
                           <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
                             {t("seller.write_review") || "Your Review"}
@@ -528,7 +634,7 @@ const SellerProfile = () => {
                             placeholder={t("seller.rating.placeholder") || "Write your review here..."}
                           />
                         </div>
-                        
+
                         <div className="flex space-x-3">
                           <button
                             type="submit"
@@ -631,12 +737,12 @@ const SellerProfile = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
                       <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_information") || "Contact Information"}</h3>
-                      
+
                       <div className="mt-4 space-y-4">
                         {seller.address && (
                           <div className="flex">
@@ -644,28 +750,28 @@ const SellerProfile = () => {
                             <p className="ml-3 text-gray-600">{seller.address}</p>
                           </div>
                         )}
-                        
+
                         {seller.contact_phone && (
                           <div className="flex">
                             <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                             <p className="ml-3 text-gray-600">{seller.contact_phone}</p>
                           </div>
                         )}
-                        
+
                         {seller.contact_email && (
                           <div className="flex">
                             <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                             <p className="ml-3 text-gray-600">{seller.contact_email}</p>
                           </div>
                         )}
-                        
+
                         {seller.website && (
                           <div className="flex">
                             <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                            <a 
-                              href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
+                            <a
+                              href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200"
                             >
                               {seller.website}
@@ -673,7 +779,7 @@ const SellerProfile = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="mt-6">
                         <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
                           <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />

@@ -44,6 +44,10 @@
     "cta_subtitle": "Join thousands of businesses already using our platform",
     "get_started": "Get Started"
   },
+  "category": {
+    "products": "products",
+    "subcategories": "subcategories"
+  },
   "sidebar": {
     "platform_name": "Myanmar B2B",
     "seller_portal": "Seller Portal",

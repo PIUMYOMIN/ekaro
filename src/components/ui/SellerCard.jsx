@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon, CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 
 const SellerCard = ({ seller }) => {
@@ -12,18 +12,27 @@ const SellerCard = ({ seller }) => {
   const displayRating = Number(apiSeller.reviews_avg_rating) || 0;
   const reviewsCount = apiSeller.reviews_count || 0;
   const productsCount = apiSeller.products_count || 0;
-  const city = apiSeller.user?.city || 'Unknown City';
+  const city = apiSeller.city || apiSeller.user?.city || 'Unknown City';
   const storeLogo = apiSeller.store_logo;
+  const businessType = apiSeller.business_type || "General Merchant";
+  const isVerified = apiSeller.status === 'approved' || apiSeller.status === 'active';
   
-  // For category - you might need to adjust this based on your data
-  // Since the API doesn't provide a category field, you can use a default or derive it
-  const category = "General Merchant"; // Default category
-
   // Render star ratings
   const renderStars = (rating) => {
+    if (!rating || rating === 0) {
+      return (
+        <div className="flex items-center">
+          {[...Array(5)].map((_, i) => (
+            <StarIcon key={i} className="h-4 w-4 text-gray-300" />
+          ))}
+          <span className="ml-1 text-sm text-gray-500">No ratings</span>
+        </div>
+      );
+    }
+
     const stars = [];
     const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
+    const hasHalfStar = rating % 1 >= 0.5;
     
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
@@ -31,7 +40,7 @@ const SellerCard = ({ seller }) => {
       } else if (i === fullStars + 1 && hasHalfStar) {
         stars.push(<StarIcon key={i} className="h-4 w-4 text-yellow-400" fill="currentColor" />);
       } else {
-        stars.push(<StarIcon key={i} className="h-4 w-4 text-gray-300" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className="h-4 w-4 text-gray-300" />);
       }
     }
     
@@ -47,38 +56,73 @@ const SellerCard = ({ seller }) => {
       transition={{ duration: 0.3 }}
     >
       <div className="p-4">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
+        <div className="flex items-start space-x-3">
+          {/* Seller Logo */}
+          <div className="flex-shrink-0 relative">
             {storeLogo ? (
-              <img
-                src={storeLogo}
-                alt={storeName}
-                className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
-              />
+              <div className="relative">
+                <img
+                  src={storeLogo}
+                  alt={storeName}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                  onError={(e) => {
+                    // If image fails to load, hide it and show fallback
+                    e.target.style.display = 'none';
+                    const fallback = e.target.parentElement?.nextElementSibling;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                {isVerified && (
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                    <CheckBadgeIcon className="h-4 w-4 text-green-500" />
+                  </div>
+                )}
+              </div>
             ) : null}
-            <div className={`${storeLogo ? 'hidden' : 'flex'} bg-gray-100 border-2 border-dashed border-gray-300 rounded-full w-16 h-16 items-center justify-center`}>
-              <span className="text-gray-400 text-xs text-center px-1">No Logo</span>
+            
+            {/* Fallback when no logo or image fails to load */}
+            <div 
+              className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 rounded-full w-16 h-16 items-center justify-center`}
+            >
+              <span className="text-gray-500 font-semibold text-lg">
+                {storeName.charAt(0).toUpperCase()}
+              </span>
+              {isVerified && (
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                  <CheckBadgeIcon className="h-4 w-4 text-green-500" />
+                </div>
+              )}
             </div>
           </div>
-          <div className="ml-4 flex-1">
+          
+          {/* Seller Info */}
+          <div className="flex-1 min-w-0">
             <Link to={`/sellers/${apiSeller.id}`}>
               <h3 className="text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
                 {storeName}
               </h3>
             </Link>
-            <p className="text-sm text-gray-600 mt-1">{category}</p>
-            <p className="text-xs text-gray-500 mt-1">{city}</p>
             
+            <div className="flex items-center flex-wrap gap-1 mt-1">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                {businessType}
+              </span>
+              {city && (
+                <span className="text-xs text-gray-500 truncate">
+                  {city}
+                </span>
+              )}
+            </div>
+            
+            {/* Rating and Reviews */}
             <div className="flex items-center mt-2">
               <div className="flex items-center">
                 {renderStars(displayRating)}
-                <span className="ml-1 text-sm font-medium text-gray-900">
-                  {displayRating > 0 ? displayRating.toFixed(1) : 'No ratings'}
-                </span>
+                {displayRating > 0 && (
+                  <span className="ml-1 text-sm font-medium text-gray-900">
+                    {displayRating.toFixed(1)}
+                  </span>
+                )}
               </div>
               {reviewsCount > 0 && (
                 <>
@@ -103,18 +147,6 @@ const SellerCard = ({ seller }) => {
             <p className="text-xs text-blue-600">Reviews</p>
           </div>
         </div>
-
-        {/* Verification Badge - You can add logic based on your business rules */}
-        {apiSeller.status === 'active' && (
-          <div className="mt-3 flex items-center justify-center">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-              <svg className="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Verified Seller
-            </span>
-          </div>
-        )}
 
         {/* View Profile Button */}
         <Link
