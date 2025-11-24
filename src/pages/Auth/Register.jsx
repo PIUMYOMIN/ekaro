@@ -1,4 +1,3 @@
-// src/pages/Auth/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -26,14 +25,18 @@ const Register = () => {
   const normalizeMyanmarPhone = (phone) => {
     let cleanPhone = phone.replace(/\D/g, '');
     
-    if (cleanPhone.startsWith('0')) {
+    if (cleanPhone.startsWith('09')) {
       return '+95' + cleanPhone.substring(1);
-    } else if (cleanPhone.startsWith('9')) {
+    } else if (cleanPhone.startsWith('9') && !cleanPhone.startsWith('95')) {
       return '+95' + cleanPhone;
-    } else if (cleanPhone.startsWith('95')) {
-      return '+' + cleanPhone;
     } else if (cleanPhone.startsWith('959')) {
       return '+' + cleanPhone;
+    } else if (cleanPhone.startsWith('95') && !cleanPhone.startsWith('959')) {
+      return '+9' + cleanPhone;
+    } else if (phone.startsWith('+959')) {
+      return phone;
+    } else if (phone.startsWith('+95')) {
+      return '+9' + phone.substring(1);
     } else {
       return phone.startsWith('+') ? phone : '+' + phone;
     }
@@ -44,15 +47,15 @@ const Register = () => {
     
     const cleanPhone = phone.replace(/\D/g, '');
     
-    if (cleanPhone.length < 7 || cleanPhone.length > 10) {
+    // Check length: 7-9 digits after prefix
+    const digitsOnly = cleanPhone.replace(/^(\+?959|09|9)/, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 9) {
       return t('validation.invalidPhone');
     }
     
-    const validPrefixes = ['0', '9', '95', '959'];
+    const validPrefixes = ['09', '9', '959', '+959', '+95'];
     const hasValidPrefix = validPrefixes.some(prefix => 
-      cleanPhone.startsWith(prefix) || 
-      phone.startsWith('+95') || 
-      phone.startsWith('+959')
+      phone.startsWith(prefix)
     );
     
     if (!hasValidPrefix) {
@@ -63,60 +66,54 @@ const Register = () => {
   };
 
   const onSubmit = async (data) => {
-  setIsLoading(true);
-  setError('');
-  
-  try {
-    const normalizedPhone = normalizeMyanmarPhone(data.phone);
+    setIsLoading(true);
+    setError('');
     
-    const result = await registerUser({
-      name: data.name,
-      phone: normalizedPhone,
-      email: data.email,
-      password: data.password,
-      password_confirmation: data.confirmPassword,
-      type: userType,
-      address: data.address,
-      city: data.city,
-      state: data.state
-    });
-    
-    console.log('Registration completed, checking result...');
-    
-    if (result.success) {
-      const user = result.user;
+    try {
+      const normalizedPhone = normalizeMyanmarPhone(data.phone);
       
-      console.log('User object:', user);
-      console.log('User type:', user.type);
-      console.log('User roles:', user.roles);
+      const result = await registerUser({
+        name: data.name,
+        phone: normalizedPhone,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.confirmPassword,
+        type: userType,
+        address: data.address,
+        city: data.city,
+        state: data.state
+      });
       
-      const isSeller = user.type === 'seller' || user.roles?.includes('seller');
-      console.log('Is seller:', isSeller);
+      console.log('Registration completed, checking result...');
       
-      if (isSeller) {
-        console.log('Navigating to seller onboarding...');
+      if (result.success) {
+        const user = result.user;
         
-        // Clear any existing localStorage data for fresh start
-        localStorage.removeItem('seller_onboarding_data');
+        const isSeller = user.type === 'seller' || user.roles?.includes('seller');
         
-        // Navigate to seller onboarding
-        navigate('/seller/onboarding/store-basic', { replace: true });
-      } else if (user.roles?.includes('admin')) {
-        navigate('/admin', { replace: true });
+        if (isSeller) {
+          console.log('Navigating to seller onboarding...');
+          
+          // Clear any existing localStorage data for fresh start
+          localStorage.removeItem('seller_onboarding_data');
+          
+          // Navigate to seller onboarding
+          navigate('/seller/onboarding/store-basic', { replace: true });
+        } else if (user.roles?.includes('admin')) {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } else {
-        navigate('/', { replace: true });
+        setError(result.message || t('register.error'));
       }
-    } else {
-      console.log('Registration failed:', result.message);
-      setError(result.message || t('register.error'));
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(t('register.error'));
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error('Registration error:', err);
-    setError(t('register.error'));
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <AuthLayout
@@ -167,25 +164,30 @@ const Register = () => {
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
               {t('register.phone.label')}
             </label>
-            <div className="mt-1">
+            <div className="mt-1 flex rounded-md shadow-sm">
+              {/* Myanmar Flag and Country Code */}
+              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                <span className="mr-2 text-base">🇲🇲</span>
+                +95
+              </div>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
-                className={`appearance-none block w-full px-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                placeholder={t('register.phone.placeholder')}
+                className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                placeholder="912345678"
                 {...register('phone', { 
                   required: t('validation.required'),
                   validate: validateMyanmarPhone
                 })}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                {t('register.phone.examples')}
-              </p>
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-              )}
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              {t('register.phone.examples') || 'Examples: 912345678, 0912345678, +95912345678'}
+            </p>
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+            )}
           </div>
           
           <div>

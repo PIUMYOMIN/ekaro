@@ -1,0 +1,7 @@
+{
+  "roles": {
+    "buyer": "Buyer",
+    "seller": "Seller", 
+    "admin": "Administrator"
+  }
+}

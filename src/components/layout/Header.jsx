@@ -8,8 +8,8 @@ import { useCart } from '../../context/CartContext.jsx';
 
 const Header = () => {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
-  const { cartItems, totalItems } = useCart(); // Use totalItems from CartContext
+  const { user, logout, hasRole } = useAuth();
+  const { cartItems, totalItems } = useCart();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -34,13 +34,47 @@ const Header = () => {
   const handleDashboardNavigation = () => {
     if (!user) return;
     
-    if (user.roles?.includes('admin')) {
+    if (hasRole('admin')) {
       navigate('/admin');
-    } else if (user.roles?.includes('seller')) {
+    } else if (hasRole('seller')) {
       navigate('/seller');
     } else {
       navigate('/buyer');
     }
+  };
+
+  // Safer helper function to get display role
+  const getDisplayRole = () => {
+    if (!user) return '';
+    
+    let displayRoles = [];
+    
+    // Try roles array first
+    if (user.roles && Array.isArray(user.roles)) {
+      displayRoles = user.roles.map(role => {
+        if (typeof role === 'string') {
+          return t(`roles.${role}`, role);
+        } else if (typeof role === 'object' && role !== null) {
+          // Extract role name from object
+          const roleName = role.name || role.role || role.title;
+          return roleName ? t(`roles.${roleName}`, roleName) : JSON.stringify(role);
+        }
+        return String(role);
+      });
+    }
+    // Fallback to type or role field
+    else if (user.type) {
+      displayRoles = [t(`roles.${user.type}`, user.type)];
+    } else if (user.role) {
+      displayRoles = [t(`roles.${user.role}`, user.role)];
+    }
+    
+    // If still no roles, use default
+    if (displayRoles.length === 0) {
+      displayRoles = [t('roles.buyer', 'Buyer')];
+    }
+    
+    return displayRoles.join(', ');
   };
 
   const navigation = [
@@ -159,7 +193,7 @@ const Header = () => {
                         <div className="hidden lg:block text-left">
                           <div className="text-sm font-medium text-gray-900 truncate max-w-xs">{user.name}</div>
                           <div className="text-xs text-gray-500 capitalize">
-                            {user.roles?.join(', ')}
+                            {getDisplayRole()}
                           </div>
                         </div>
                       </Menu.Button>
@@ -317,7 +351,7 @@ const Header = () => {
                     <div className="ml-3">
                       <div className="text-base font-medium text-gray-900">{user.name}</div>
                       <div className="text-sm font-medium text-gray-500 capitalize">
-                        {user.types?.join(', ') || user.roles?.join(', ')}
+                        {getDisplayRole()}
                       </div>
                     </div>
                   </div>

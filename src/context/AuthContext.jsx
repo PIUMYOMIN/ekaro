@@ -8,16 +8,89 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to normalize user roles with deep extraction
+  const normalizeUserRoles = (userData) => {
+    if (!userData) return userData;
+    
+    let roles = [];
+    
+    // Case 1: roles is an array of role objects
+    if (userData.roles && Array.isArray(userData.roles)) {
+      roles = userData.roles.map(role => {
+        if (typeof role === 'object' && role !== null) {
+          // Try different possible property names
+          return role.name || role.role || role.title || JSON.stringify(role);
+        }
+        return role; // Already a string
+      });
+    } 
+    // Case 2: roles is a single object
+    else if (userData.roles && typeof userData.roles === 'object') {
+      roles = [userData.roles.name || userData.roles.role || JSON.stringify(userData.roles)];
+    }
+    // Case 3: roles is a single string
+    else if (typeof userData.roles === 'string') {
+      roles = [userData.roles];
+    }
+    // Case 4: use type field as fallback
+    else if (userData.type) {
+      roles = [userData.type];
+    }
+    // Case 5: check for role field (singular)
+    else if (userData.role) {
+      roles = [userData.role];
+    }
+    
+    // Filter out any null/undefined and ensure strings
+    roles = roles.filter(role => role).map(role => role.toString());
+    
+    return {
+      ...userData,
+      roles: roles,
+      // For backward compatibility
+      role: roles[0] || userData.type || userData.role || 'buyer'
+    };
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
           const response = await api.get('/auth/me');
-          setUser(response.data.data);
+          const normalizedUser = normalizeUserRoles(response.data.data);
+          setUser(normalizedUser);
+          localStorage.setItem('user', JSON.stringify(normalizedUser));
         } catch (err) {
-          console.error('Failed to load user', err);
-          logout();
+          console.error('Failed to load user from API', err);
+          // Try to load from localStorage as fallback
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            try {
+              const parsedUser = JSON.parse(savedUser);
+              const normalizedUser = normalizeUserRoles(parsedUser);
+              console.log('Loaded user from localStorage:', normalizedUser); // Debug log
+              setUser(normalizedUser);
+            } catch (parseError) {
+              console.error('Failed to parse saved user', parseError);
+              logout();
+            }
+          } else {
+            logout();
+          }
+        }
+      } else {
+        // No token, try to load from localStorage
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            const parsedUser = JSON.parse(savedUser);
+            const normalizedUser = normalizeUserRoles(parsedUser);
+            console.log('Loaded user from localStorage (no token):', normalizedUser); // Debug log
+            setUser(normalizedUser);
+          } catch (parseError) {
+            console.error('Failed to parse saved user', parseError);
+          }
         }
       }
       setLoading(false);
@@ -30,10 +103,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/login', credentials);
       localStorage.setItem('token', response.data.data.token);
-      const userData = response.data.data.user;
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-      return { success: true, user: userData };
+      const normalizedUser = normalizeUserRoles(response.data.data.user);
+      console.log('Login user normalized:', normalizedUser); // Debug log
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+      return { success: true, user: normalizedUser };
     } catch (err) {
       return { 
         success: false, 
@@ -46,25 +120,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/register', userData);
       localStorage.setItem('token', response.data.data.token);
-      const registeredUser = response.data.data.user;
-      
-      // Normalize roles to array of strings
-      if (registeredUser.roles) {
-        if (Array.isArray(registeredUser.roles)) {
-          // If it's an array of objects, extract the role names
-          if (registeredUser.roles.length > 0 && typeof registeredUser.roles[0] === 'object') {
-            registeredUser.roles = registeredUser.roles.map(role => role.name);
-          }
-          // If it's already array of strings, leave as is
-        } else {
-          // If it's a single string, convert to array
-          registeredUser.roles = [registeredUser.roles];
-        }
-      }
-      
-      localStorage.setItem('user', JSON.stringify(registeredUser));
-      setUser(registeredUser);
-      return { success: true, user: registeredUser };
+      const normalizedUser = normalizeUserRoles(response.data.data.user);
+      console.log('Register user normalized:', normalizedUser); // Debug log
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+      return { success: true, user: normalizedUser };
     } catch (err) {
       return { 
         success: false, 
@@ -80,14 +140,14 @@ export const AuthProvider = ({ children }) => {
     api.post('/auth/logout').catch(err => console.error('Logout error', err));
   };
 
-  // Helper methods for cart and wishlist access
-  const canAddToCart = () => {
-    return !!user; // Any authenticated user can add to cart
+  // Helper methods for role checks
+  const hasRole = (role) => {
+    return user?.roles?.includes(role) || user?.role === role;
   };
 
-  const canAddToWishlist = () => {
-    return !!user; // Any authenticated user can add to wishlist
-  };
+  const isBuyer = () => hasRole('buyer');
+  const isSeller = () => hasRole('seller');
+  const isAdmin = () => hasRole('admin');
 
   const value = {
     user,
@@ -95,14 +155,14 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    canAddToCart,
-    canAddToWishlist,
+    canAddToCart: () => !!user,
+    canAddToWishlist: () => !!user,
     isAuthenticated: !!user,
-    // Helper methods for role checks (if still needed elsewhere)
-    isBuyer: () => user?.role === 'buyer',
-    isSeller: () => user?.role === 'seller',
-    isAdmin: () => user?.role === 'admin',
-    hasRole: (role) => user?.role === role,
+    // Role check methods
+    isBuyer,
+    isSeller,
+    isAdmin,
+    hasRole,
   };
 
   return (

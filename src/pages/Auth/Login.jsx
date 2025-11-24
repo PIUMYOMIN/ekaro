@@ -1,19 +1,18 @@
-// src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // Added useLocation
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext'; // Added useCart
+import { useCart } from '../../context/CartContext';
 
 const Login = () => {
   const { t } = useTranslation();
   const { login } = useAuth();
-  const { addToCart } = useCart(); // Added cart context
+  const { addToCart } = useCart();
   const navigate = useNavigate();
-  const location = useLocation(); // Added location hook
+  const location = useLocation();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +23,6 @@ const Login = () => {
     formState: { errors }
   } = useForm();
 
-  // Get the redirect state from location
   const from = location.state?.from || '';
   const productId = location.state?.productId;
   const returnTo = location.state?.returnTo || '/products';
@@ -32,14 +30,18 @@ const Login = () => {
   const normalizeMyanmarPhone = (phone) => {
     let cleanPhone = phone.replace(/\D/g, '');
     
-    if (cleanPhone.startsWith('0')) {
+    if (cleanPhone.startsWith('09')) {
       return '+95' + cleanPhone.substring(1);
-    } else if (cleanPhone.startsWith('9')) {
+    } else if (cleanPhone.startsWith('9') && !cleanPhone.startsWith('95')) {
       return '+95' + cleanPhone;
-    } else if (cleanPhone.startsWith('95')) {
-      return '+' + cleanPhone;
     } else if (cleanPhone.startsWith('959')) {
       return '+' + cleanPhone;
+    } else if (cleanPhone.startsWith('95') && !cleanPhone.startsWith('959')) {
+      return '+9' + cleanPhone;
+    } else if (phone.startsWith('+959')) {
+      return phone;
+    } else if (phone.startsWith('+95')) {
+      return '+9' + phone.substring(1);
     } else {
       return phone.startsWith('+') ? phone : '+' + phone;
     }
@@ -50,15 +52,15 @@ const Login = () => {
     
     const cleanPhone = phone.replace(/\D/g, '');
     
-    if (cleanPhone.length < 7 || cleanPhone.length > 10) {
+    // Check length: 7-9 digits after prefix
+    const digitsOnly = cleanPhone.replace(/^(\+?959|09|9)/, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 9) {
       return t('validation.invalidPhone');
     }
     
-    const validPrefixes = ['0', '9', '95', '959'];
+    const validPrefixes = ['09', '9', '959', '+959', '+95'];
     const hasValidPrefix = validPrefixes.some(prefix => 
-      cleanPhone.startsWith(prefix) || 
-      phone.startsWith('+95') || 
-      phone.startsWith('+959')
+      phone.startsWith(prefix)
     );
     
     if (!hasValidPrefix) {
@@ -70,22 +72,13 @@ const Login = () => {
 
   const handleLoginSuccess = async (user) => {
     try {
-      // If user was trying to add to cart before login
       if (from === 'cart-add' && productId) {
         try {
-          // Automatically add the product to cart after successful login
           await addToCart({
             id: productId,
             quantity: 1
           });
           
-          // Show success message or navigate to cart
-          console.log('Product automatically added to cart after login');
-          
-          // Option 1: Redirect to cart page
-          // navigate('/cart');
-          
-          // Option 2: Redirect back to original page with success state
           navigate(returnTo, { 
             state: { 
               message: 'Product added to cart successfully!',
@@ -94,7 +87,6 @@ const Login = () => {
           });
         } catch (cartError) {
           console.error('Failed to add product to cart after login:', cartError);
-          // Still redirect but show error message
           navigate(returnTo, { 
             state: { 
               message: 'Logged in successfully, but failed to add product to cart. Please try again.',
@@ -103,7 +95,6 @@ const Login = () => {
           });
         }
       } else {
-        // Normal redirect based on user role
         if (user.roles?.includes('admin')) {
           navigate('/admin');
         } else if (user.roles?.includes('seller')) {
@@ -116,7 +107,6 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error in login success handler:', error);
-      // Fallback redirect
       navigate(returnTo);
     }
   };
@@ -145,7 +135,6 @@ const Login = () => {
     }
   };
 
-  // Show informative message if user was redirected from cart
   const showRedirectMessage = from === 'cart-add' && productId;
 
   return (
@@ -153,7 +142,6 @@ const Login = () => {
       title={t('login.title')}
       subtitle={t('login.subtitle')}
     >
-      {/* Redirect Info Message */}
       {showRedirectMessage && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <div className="flex">
@@ -192,26 +180,31 @@ const Login = () => {
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
               {t('login.phone.label')}
             </label>
-            <div className="mt-1">
+            <div className="mt-1 flex rounded-md shadow-sm">
+              {/* Myanmar Flag and Country Code */}
+              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                <span className="mr-2 text-base">🇲🇲</span>
+                +95
+              </div>
               <input
                 id="phone"
                 name="phone"
                 type="tel"
                 autoComplete="tel"
-                className={`appearance-none block w-full px-3 py-3 border ${errors.phone ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                placeholder={t('login.phone.placeholder')}
+                className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                placeholder="912345678"
                 {...register('phone', { 
                   required: t('validation.required'),
                   validate: validateMyanmarPhone
                 })}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                {t('register.phone.examples')}
-              </p>
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-              )}
             </div>
+            <p className="mt-1 text-xs text-gray-500">
+              {t('register.phone.examples') || 'Examples: 912345678, 0912345678, +95912345678'}
+            </p>
+            {errors.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+            )}
           </div>
           
           <div>
@@ -308,7 +301,7 @@ const Login = () => {
           <span className="text-gray-600">{t('login.noAccount')} </span>
           <Link 
             to="/register" 
-            state={location.state} // Pass the same state to register page
+            state={location.state}
             className="font-medium text-green-600 hover:text-green-500"
           >
             {t('login.register')}
