@@ -1,12 +1,12 @@
-// src/utils/api.js
+// src/utils/api.js - Simpler alternative
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://b2bdb.piueducation.org/api/v1", // Make sure this matches your Laravel server
+  baseURL: "https://b2bdb.piueducation.org/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Include cookies for CSRF protection if needed
+  withCredentials: true,
 });
 
 // Request interceptor for auth token
@@ -28,7 +28,13 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      
+      // Check if we're already on login page to avoid redirect loops
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login')) {
+        // Use window.location.pathname for client-side routing compatible redirect
+        window.location.pathname = '/login';
+      }
     }
     return Promise.reject(error);
   }

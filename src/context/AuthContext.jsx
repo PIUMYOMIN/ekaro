@@ -132,11 +132,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    api.post('/auth/logout').catch(err => console.error('Logout error', err));
-  };
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  setUser(null);
+  // Don't wait for API call, just fire and forget
+  api.post('/auth/logout').catch(err => console.error('Logout error', err));
+};
 
   // Helper methods for role checks
   const hasRole = (role) => {
