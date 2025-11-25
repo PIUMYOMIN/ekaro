@@ -27,7 +27,7 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-  logout();
+    logout();
     // Use navigate for client-side routing instead of full page reload
     navigate('/login', { replace: true });
   };

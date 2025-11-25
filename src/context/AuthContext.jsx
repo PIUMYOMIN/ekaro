@@ -132,12 +132,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  setUser(null);
-  // Don't wait for API call, just fire and forget
-  api.post('/auth/logout').catch(err => console.error('Logout error', err));
-};
+    // Immediate client-side cleanup
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+
+    // Fire-and-forget server logout - ignore any errors
+    api.post('/auth/logout').catch(() => {
+      // This is expected to sometimes fail with 401 - that's OK!
+    });
+  };
 
   // Helper methods for role checks
   const hasRole = (role) => {
