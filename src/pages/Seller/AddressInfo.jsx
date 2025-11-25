@@ -40,7 +40,6 @@ const AddressInfo = () => {
     try {
       // Update local storage with address info
       updateOnboardingData(data);
-      console.log("Address info saved:", data);
       
       // Move to submit page
       navigate("/seller/onboarding/submit");

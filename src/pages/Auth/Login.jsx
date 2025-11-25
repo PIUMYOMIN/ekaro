@@ -16,7 +16,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -29,7 +29,7 @@ const Login = () => {
 
   const normalizeMyanmarPhone = (phone) => {
     let cleanPhone = phone.replace(/\D/g, '');
-    
+
     if (cleanPhone.startsWith('09')) {
       return '+95' + cleanPhone.substring(1);
     } else if (cleanPhone.startsWith('9') && !cleanPhone.startsWith('95')) {
@@ -49,80 +49,97 @@ const Login = () => {
 
   const validateMyanmarPhone = (phone) => {
     if (!phone) return t('validation.required');
-    
+
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     // Check length: 7-9 digits after prefix
     const digitsOnly = cleanPhone.replace(/^(\+?959|09|9)/, '');
     if (digitsOnly.length < 7 || digitsOnly.length > 9) {
       return t('validation.invalidPhone');
     }
-    
+
     const validPrefixes = ['09', '9', '959', '+959', '+95'];
-    const hasValidPrefix = validPrefixes.some(prefix => 
+    const hasValidPrefix = validPrefixes.some(prefix =>
       phone.startsWith(prefix)
     );
-    
+
     if (!hasValidPrefix) {
       return t('validation.invalidPhone');
     }
-    
+
     return true;
   };
 
   const handleLoginSuccess = async (user) => {
     try {
+      // Check if there's a redirect location from ProtectedRoute
+      const from = location.state?.from;
+
+      if (from && from !== '/login') {
+        // Redirect to the originally requested page
+        navigate(from, { replace: true });
+        return;
+      }
+
+      // Handle cart addition after login if needed
       if (from === 'cart-add' && productId) {
         try {
           await addToCart({
             id: productId,
             quantity: 1
           });
-          
-          navigate(returnTo, { 
-            state: { 
+          navigate(returnTo, {
+            state: {
               message: 'Product added to cart successfully!',
               messageType: 'success'
-            }
+            },
+            replace: true
           });
         } catch (cartError) {
           console.error('Failed to add product to cart after login:', cartError);
-          navigate(returnTo, { 
-            state: { 
+          navigate(returnTo, {
+            state: {
               message: 'Logged in successfully, but failed to add product to cart. Please try again.',
               messageType: 'error'
-            }
+            },
+            replace: true
           });
         }
+        return;
+      }
+
+      // Role-based redirection
+      const userRoles = user.roles || [];
+      const userRole = user.role || user.type;
+
+      if (userRoles.includes('admin') || userRole === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (userRoles.includes('seller') || userRole === 'seller') {
+        navigate('/seller/dashboard', { replace: true });
+      } else if (userRoles.includes('buyer') || userRole === 'buyer') {
+        navigate('/buyer/dashboard', { replace: true });
       } else {
-        if (user.roles?.includes('admin')) {
-          navigate('/admin');
-        } else if (user.roles?.includes('seller')) {
-          navigate('/seller');
-        } else if (user.roles?.includes('buyer')) {
-          navigate(returnTo);
-        } else {
-          navigate('/admin');
-        }
+        // Default fallback
+        navigate('/', { replace: true });
       }
     } catch (error) {
       console.error('Error in login success handler:', error);
-      navigate(returnTo);
+      navigate('/', { replace: true });
     }
   };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       const normalizedPhone = normalizeMyanmarPhone(data.phone);
-      
+
       const result = await login({
         phone: normalizedPhone,
         password: data.password
       });
-      
+
       if (result.success) {
         await handleLoginSuccess(result.user);
       } else {
@@ -158,7 +175,7 @@ const Login = () => {
           </div>
         </div>
       )}
-      
+
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
@@ -173,7 +190,7 @@ const Login = () => {
           </div>
         </div>
       )}
-      
+
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <div>
@@ -193,7 +210,7 @@ const Login = () => {
                 autoComplete="tel"
                 className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder="912345678"
-                {...register('phone', { 
+                {...register('phone', {
                   required: t('validation.required'),
                   validate: validateMyanmarPhone
                 })}
@@ -206,7 +223,7 @@ const Login = () => {
               <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
             )}
           </div>
-          
+
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               {t('login.password.label')}
@@ -219,7 +236,7 @@ const Login = () => {
                 autoComplete="current-password"
                 className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder={t('login.password.placeholder')}
-                {...register('password', { 
+                {...register('password', {
                   required: t('validation.required'),
                   minLength: {
                     value: 6,
@@ -272,11 +289,10 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${
-              isLoading 
-                ? 'bg-green-400 cursor-not-allowed' 
+            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${isLoading
+                ? 'bg-green-400 cursor-not-allowed'
                 : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
-            }`}
+              }`}
           >
             {isLoading ? (
               <>
@@ -284,23 +300,23 @@ const Login = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {showRedirectMessage 
-                  ? (t('login.signingInAndAdding') || 'Logging in & Adding to Cart...') 
+                {showRedirectMessage
+                  ? (t('login.signingInAndAdding') || 'Logging in & Adding to Cart...')
                   : t('login.signingIn')
                 }
               </>
             ) : (
-              showRedirectMessage 
-                ? (t('login.signInAndAdd') || 'Login & Add to Cart') 
+              showRedirectMessage
+                ? (t('login.signInAndAdd') || 'Login & Add to Cart')
                 : t('login.signIn')
             )}
           </button>
         </div>
-        
+
         <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">{t('login.noAccount')} </span>
-          <Link 
-            to="/register" 
+          <Link
+            to="/register"
             state={location.state}
             className="font-medium text-green-600 hover:text-green-500"
           >
@@ -308,7 +324,7 @@ const Login = () => {
           </Link>
         </div>
       </form>
-      
+
       <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

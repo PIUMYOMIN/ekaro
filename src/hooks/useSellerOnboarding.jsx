@@ -48,11 +48,9 @@ export const useSellerOnboarding = () => {
     const loadData = () => {
       try {
         const savedData = localStorage.getItem(STORAGE_KEY);
-        console.log("🔄 Loading from localStorage:", savedData);
 
         if (savedData) {
           const parsedData = JSON.parse(savedData);
-          console.log("✅ Parsed localStorage data:", parsedData);
           setOnboardingData(parsedData);
         }
       } catch (error) {

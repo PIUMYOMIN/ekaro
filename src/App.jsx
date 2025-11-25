@@ -61,6 +61,7 @@ import GuestRoute from "./components/GuestRoute";
 import SellerOnboardingRoute from "./components/SellerOnboardingRoute";
 import SubmitStoreInfo from "./pages/SubmitStoreInfo";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
+import NotFound from "./components/NotFound";
 
 function App() {
   return <I18nextProvider i18n={i18n}>
@@ -85,86 +86,52 @@ function App() {
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/terms" element={<Legal />} />
                 <Route path="/help" element={<HelpCenter />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/privacy-policy" element={<Legal />} />
+                <Route path="/page-not-found" element={<NotFound />} />
 
                 {/* Guest-only Routes */}
-                <Route path="/login" element={<GuestRoute>
-                  <Login />
-                </GuestRoute>} />
-                <Route path="/register" element={<GuestRoute>
-                  <Register />
-                </GuestRoute>} />
-                <Route path="/forgot-password" element={<GuestRoute>
-                  <ForgotPassword />
-                </GuestRoute>} />
+                <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+                <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
 
                 {/* Seller Onboarding Routes */}
-                <Route path="/seller/onboarding/store-basic" element={<SellerOnboardingRoute>
-                  <StoreBasicInfo />
-                </SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/business-details" element={<SellerOnboardingRoute>
-                  <BusinessDetails />
-                </SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/address" element={<SellerOnboardingRoute>
-                  <AddressInfo />
-                </SellerOnboardingRoute>} />
-
-                <Route path="/seller/onboarding/submit" element={<SellerOnboardingRoute>
-                  <SubmitStoreInfo />
-                </SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/store-basic" element={<SellerOnboardingRoute><StoreBasicInfo /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/business-details" element={<SellerOnboardingRoute><BusinessDetails /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/address" element={<SellerOnboardingRoute><AddressInfo /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/submit" element={<SellerOnboardingRoute><SubmitStoreInfo /></SellerOnboardingRoute>} />
 
                 {/* Buyer Routes */}
-                <Route path="/cart" element={<ProtectedRoute>
-                  <Cart />
-                </ProtectedRoute>} />
-                <Route path="/payment" element={<ProtectedRoute roles={["buyer"]}>
-                  <PaymentMethod />
-                </ProtectedRoute>} />
-                <Route path="/checkout" element={<ProtectedRoute roles={["buyer"]}>
-                  <Checkout />
-                </ProtectedRoute>} />
-                <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}>
-                  <BuyerDashboard />
-                </ProtectedRoute>} />
-                <Route path="/wishlist" element={<ProtectedRoute>
-                  <Wishlist />
-                </ProtectedRoute>} />
+                <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                <Route path="/payment" element={<ProtectedRoute roles={["buyer"]}><PaymentMethod /></ProtectedRoute>} />
+                <Route path="/checkout" element={<ProtectedRoute roles={["buyer"]}><Checkout /></ProtectedRoute>} />
+                <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
+                <Route path="/buyer/dashboard" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
+                <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
 
                 {/* Seller Routes */}
-                <Route path="/seller" element={<ProtectedRoute roles={["seller"]}>
-                  <SellerDashboard />
-                </ProtectedRoute>} />
+                <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
+                <Route path="/seller/dashboard" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
+                <Route path="/seller/products" element={<ProtectedRoute roles={["seller"]}><ProductView /></ProtectedRoute>} />
+                <Route path="/seller/products/create" element={<ProtectedRoute roles={["seller"]}><ProductCreate /></ProtectedRoute>} />
+                <Route path="/seller/products/:id/edit" element={<ProtectedRoute roles={["seller"]}><ProductEdit /></ProtectedRoute>} />
 
                 {/* Admin Routes */}
-                <Route path="/admin" element={<ProtectedRoute roles={["admin"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>} />
-                <Route path="/categories/create" element={<ProtectedRoute roles={["admin"]}>
-                  <CategoryCreate />
-                </ProtectedRoute>} />
-                <Route path="/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}>
-                  <CategoryEdit />
-                </ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/admin/dashboard" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/admin/categories/create" element={<ProtectedRoute roles={["admin"]}><CategoryCreate /></ProtectedRoute>} />
+                <Route path="/admin/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}><CategoryEdit /></ProtectedRoute>} />
 
                 {/* Shared Routes */}
-                <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}>
-                  <ProductCreate />
-                </ProtectedRoute>} />
-                <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}>
-                  <ProductEdit />
-                </ProtectedRoute>} />
-                <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
-                  <RFQManager />
-                </ProtectedRoute>} />
-                <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
-                  <PaymentMethod />
-                </ProtectedRoute>} />
-                <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}>
-                  <OrderConfirmation />
-                </ProtectedRoute>} />
-                <Route path="/order-tracking/:orderId" element={<ProtectedRoute>
-                  <OrderTrackingPage />
-                </ProtectedRoute>} />
-                
+                <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}><ProductCreate /></ProtectedRoute>} />
+                <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}><ProductEdit /></ProtectedRoute>} />
+                <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
+                <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
+                <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
+                <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
+
+                {/* Catch-all route for 404 */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
             <Footer />

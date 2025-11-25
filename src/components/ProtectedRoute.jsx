@@ -1,26 +1,41 @@
-// src/components/ProtectedRoute.jsx
+// src/components/ProtectedRoute.jsx - Enhanced version
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
-  const { user, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <div>Loading...</div>;
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      </div>
+    );
   }
 
-  const userRoleNames = user.roles?.map(r => r.name) || [];
+  if (!isAuthenticated) {
+    // Redirect to login with return url
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
 
-  if (roles.length > 0 && !roles.some(role => userRoleNames.includes(role))) {
-    if (userRoleNames.includes('admin')) {
-      return <Navigate to="/admin" replace />;
-    } else if (userRoleNames.includes('seller')) {
-      return <Navigate to="/seller" replace />;
+  // Check if user has required roles
+  if (roles.length > 0) {
+    const hasRequiredRole = roles.some(role => 
+      user?.roles?.includes(role) || user?.role === role || user?.type === role
+    );
+    
+    if (!hasRequiredRole) {
+      // Redirect to appropriate dashboard based on user role
+      if (user?.roles?.includes('admin') || user?.role === 'admin') {
+        return <Navigate to="/admin" replace />;
+      } else if (user?.roles?.includes('seller') || user?.role === 'seller') {
+        return <Navigate to="/seller" replace />;
+      } else {
+        return <Navigate to="/buyer" replace />;
+      }
     }
-    return <Navigate to="/products" replace />;
   }
 
   return children;

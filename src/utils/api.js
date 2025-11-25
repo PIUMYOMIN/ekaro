@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api/v1", // Make sure this matches your Laravel server
+  baseURL: "https://b2bdb.piueducation.org/api/v1", // Make sure this matches your Laravel server
   headers: {
     "Content-Type": "application/json",
   },

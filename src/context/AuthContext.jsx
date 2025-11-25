@@ -11,9 +11,9 @@ export const AuthProvider = ({ children }) => {
   // Helper function to normalize user roles with deep extraction
   const normalizeUserRoles = (userData) => {
     if (!userData) return userData;
-    
+
     let roles = [];
-    
+
     // Case 1: roles is an array of role objects
     if (userData.roles && Array.isArray(userData.roles)) {
       roles = userData.roles.map(role => {
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
         }
         return role; // Already a string
       });
-    } 
+    }
     // Case 2: roles is a single object
     else if (userData.roles && typeof userData.roles === 'object') {
       roles = [userData.roles.name || userData.roles.role || JSON.stringify(userData.roles)];
@@ -40,10 +40,10 @@ export const AuthProvider = ({ children }) => {
     else if (userData.role) {
       roles = [userData.role];
     }
-    
+
     // Filter out any null/undefined and ensure strings
     roles = roles.filter(role => role).map(role => role.toString());
-    
+
     return {
       ...userData,
       roles: roles,
@@ -69,7 +69,6 @@ export const AuthProvider = ({ children }) => {
             try {
               const parsedUser = JSON.parse(savedUser);
               const normalizedUser = normalizeUserRoles(parsedUser);
-              console.log('Loaded user from localStorage:', normalizedUser); // Debug log
               setUser(normalizedUser);
             } catch (parseError) {
               console.error('Failed to parse saved user', parseError);
@@ -104,14 +103,13 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/login', credentials);
       localStorage.setItem('token', response.data.data.token);
       const normalizedUser = normalizeUserRoles(response.data.data.user);
-      console.log('Login user normalized:', normalizedUser); // Debug log
       localStorage.setItem('user', JSON.stringify(normalizedUser));
       setUser(normalizedUser);
       return { success: true, user: normalizedUser };
     } catch (err) {
-      return { 
-        success: false, 
-        message: err.response?.data?.message || 'Login failed' 
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Login failed'
       };
     }
   };
@@ -126,9 +124,9 @@ export const AuthProvider = ({ children }) => {
       setUser(normalizedUser);
       return { success: true, user: normalizedUser };
     } catch (err) {
-      return { 
-        success: false, 
-        message: err.response?.data?.message || 'Registration failed' 
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Registration failed'
       };
     }
   };
@@ -142,7 +140,31 @@ export const AuthProvider = ({ children }) => {
 
   // Helper methods for role checks
   const hasRole = (role) => {
-    return user?.roles?.includes(role) || user?.role === role;
+    if (!user) return false;
+
+    // Check roles array
+    if (user.roles && Array.isArray(user.roles)) {
+      const hasRoleInArray = user.roles.some(r => {
+        if (typeof r === 'string') return r === role;
+        if (typeof r === 'object') return (r.name || r.role || r.title) === role;
+        return false;
+      });
+      if (hasRoleInArray) return true;
+    }
+
+    // Check single role fields
+    return user.role === role || user.type === role;
+  };
+
+  // Add method to get user's primary role
+  const getPrimaryRole = () => {
+    if (!user) return null;
+
+    if (hasRole('admin')) return 'admin';
+    if (hasRole('seller')) return 'seller';
+    if (hasRole('buyer')) return 'buyer';
+
+    return user.role || user.type || 'buyer';
   };
 
   const isBuyer = () => hasRole('buyer');

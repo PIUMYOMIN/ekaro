@@ -32,23 +32,27 @@ const Header = () => {
   };
 
   const handleDashboardNavigation = () => {
-    if (!user) return;
-    
-    if (hasRole('admin')) {
-      navigate('/admin');
-    } else if (hasRole('seller')) {
-      navigate('/seller');
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (hasRole('admin') || user.role === 'admin' || user.type === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (hasRole('seller') || user.role === 'seller' || user.type === 'seller') {
+      navigate('/seller/dashboard');
     } else {
-      navigate('/buyer');
+      navigate('/buyer/dashboard');
     }
   };
+
 
   // Safer helper function to get display role
   const getDisplayRole = () => {
     if (!user) return '';
-    
+
     let displayRoles = [];
-    
+
     // Try roles array first
     if (user.roles && Array.isArray(user.roles)) {
       displayRoles = user.roles.map(role => {
@@ -68,12 +72,12 @@ const Header = () => {
     } else if (user.role) {
       displayRoles = [t(`roles.${user.role}`, user.role)];
     }
-    
+
     // If still no roles, use default
     if (displayRoles.length === 0) {
       displayRoles = [t('roles.buyer', 'Buyer')];
     }
-    
+
     return displayRoles.join(', ');
   };
 
@@ -107,7 +111,7 @@ const Header = () => {
                     </span>
                   </Link>
                 </div>
-                
+
                 {/* Desktop navigation */}
                 <div className="hidden md:ml-4 md:flex md:space-x-2 lg:space-x-4">
                   {navigation.map((item) => (
@@ -140,7 +144,7 @@ const Header = () => {
                     />
                   </div>
                 </form>
-                
+
                 {/* Mobile search button */}
                 <button
                   type="button"
@@ -170,7 +174,7 @@ const Header = () => {
                       {t('header.burmese')}
                     </button>
                   </div>
-                  
+
                   {/* Cart - Show count from CartContext */}
                   <Link to="/cart" className="relative p-1 text-gray-700 hover:text-green-600">
                     <ShoppingCartIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -180,7 +184,7 @@ const Header = () => {
                       </span>
                     )}
                   </Link>
-                  
+
                   {/* User profile with click menu */}
                   {user ? (
                     <Menu as="div" className="ml-1 relative">
@@ -197,7 +201,7 @@ const Header = () => {
                           </div>
                         </div>
                       </Menu.Button>
-                      
+
                       {/* Dropdown menu */}
                       <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 focus:outline-none">
                         <div className="py-1">
@@ -206,9 +210,8 @@ const Header = () => {
                               {({ active }) => (
                                 <button
                                   onClick={item.onClick}
-                                  className={`${
-                                    active ? 'bg-gray-100' : ''
-                                  } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  className={`${active ? 'bg-gray-100' : ''
+                                    } block w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   {item.name}
                                 </button>
@@ -304,7 +307,7 @@ const Header = () => {
                   </button>
                 </form>
               </div>
-              
+
               {/* Navigation links */}
               {navigation.map((item) => (
                 <Disclosure.Button
@@ -316,7 +319,7 @@ const Header = () => {
                   {item.name}
                 </Disclosure.Button>
               ))}
-              
+
               {/* Mobile language switcher */}
               <div className="px-3 py-2 border-t border-gray-200">
                 <div className="flex items-center justify-between">
@@ -337,7 +340,7 @@ const Header = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* User section */}
             <div className="pt-4 pb-3 border-t border-gray-200">
               {user ? (

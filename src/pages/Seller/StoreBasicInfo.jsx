@@ -137,8 +137,6 @@ const StoreBasicInfo = () => {
         store_banner: bannerUrl
       };
 
-      console.log("Saving StoreBasicInfo data:", formData); // Debug log
-
       // ✅ Update local storage with current form data
       updateOnboardingData(formData);
 
