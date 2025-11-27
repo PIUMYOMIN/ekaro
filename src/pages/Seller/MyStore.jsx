@@ -8,7 +8,9 @@ import {
   GlobeAltIcon,
   PhoneIcon,
   EnvelopeIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CheckIcon,
+  XMarkIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 
@@ -26,7 +28,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     // Use a fallback base URL if REACT_APP_API_URL is not defined
     const baseUrl = (typeof process !== "undefined" && process.env?.REACT_APP_API_URL) 
       ? process.env.REACT_APP_API_URL 
-      : window?.location?.origin || 'http://localhost:8000';
+      : window?.location?.origin || 'https://b2bdb.piueducation.org';
 
     // If it's already a full URL, return as is
     if (imagePath.startsWith('http')) {
@@ -211,6 +213,41 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     }
   };
 
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setLogoFile(null);
+    setBannerFile(null);
+    // Reset form data to original store data
+    if (storeData) {
+      setFormData({
+        store_name: storeData.store_name || "",
+        description: storeData.description || "",
+        business_type: storeData.business_type || "",
+        business_registration_number: storeData.business_registration_number || "",
+        tax_id: storeData.tax_id || "",
+        contact_email: storeData.contact_email || "",
+        contact_phone: storeData.contact_phone || "",
+        website: storeData.website || "",
+        address: storeData.address || "",
+        city: storeData.city || "",
+        state: storeData.state || "",
+        country: storeData.country || "Myanmar",
+        postal_code: storeData.postal_code || "",
+        social_facebook: storeData.social_facebook || "",
+        social_instagram: storeData.social_instagram || "",
+        social_twitter: storeData.social_twitter || "",
+        account_number: storeData.account_number || ""
+      });
+      if (storeData.store_logo) {
+        setLogoPreview(getImageUrl(storeData.store_logo));
+      }
+      if (storeData.store_banner) {
+        setBannerPreview(getImageUrl(storeData.store_banner));
+      }
+    }
+    setMessage({ type: "", text: "" });
+  };
+
   if (!storeData) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -238,13 +275,15 @@ const MyStore = ({ storeData, stats, refreshData }) => {
             {t("seller.my_store_summary")}
           </p>
         </div>
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
-        >
-          <PencilIcon className="h-4 w-4" />
-          <span>{isEditing ? "Cancel Edit" : "Edit Store"}</span>
-        </button>
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
+          >
+            <PencilIcon className="h-4 w-4" />
+            <span>Edit Store</span>
+          </button>
+        )}
       </div>
 
       {/* Status Message */}
@@ -261,12 +300,409 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       )}
 
       {isEditing ? (
-        /* Edit Form - Same as before */
+        /* Edit Form */
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ... edit form JSX remains the same ... */}
+          {/* Store Media Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Media</h3>
+            
+            {/* Logo Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Store Logo
+              </label>
+              <div className="flex items-center space-x-6">
+                <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                  {logoPreview ? (
+                    <img
+                      src={logoPreview}
+                      alt="Store logo preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <CameraIcon className="h-8 w-8 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block">
+                    <span className="sr-only">Choose logo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Recommended: 400x400px, Max 2MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Store Banner
+              </label>
+              <div className="space-y-3">
+                <div className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                  {bannerPreview ? (
+                    <img
+                      src={bannerPreview}
+                      alt="Store banner preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <CameraIcon className="h-8 w-8 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <label className="block">
+                    <span className="sr-only">Choose banner</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Recommended: 1200x300px, Max 5MB
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Store Basic Information */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Basic Information</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Store Name */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Store Name *
+                </label>
+                <input
+                  type="text"
+                  name="store_name"
+                  value={formData.store_name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Enter your store name"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Store Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Describe your store and what you offer..."
+                />
+              </div>
+
+              {/* Business Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Type *
+                </label>
+                <select
+                  name="business_type"
+                  value={formData.business_type}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                >
+                  <option value="">Select business type</option>
+                  {businessTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Contact Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Email *
+                </label>
+                <input
+                  type="email"
+                  name="contact_email"
+                  value={formData.contact_email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="contact@yourstore.com"
+                />
+              </div>
+
+              {/* Contact Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Phone *
+                </label>
+                <input
+                  type="tel"
+                  name="contact_phone"
+                  value={formData.contact_phone}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="+95 123 456 789"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Business Details */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Business Registration Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Registration Number
+                </label>
+                <input
+                  type="text"
+                  name="business_registration_number"
+                  value={formData.business_registration_number}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Registration number"
+                />
+              </div>
+
+              {/* Tax ID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tax ID
+                </label>
+                <input
+                  type="text"
+                  name="tax_id"
+                  value={formData.tax_id}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Tax identification number"
+                />
+              </div>
+
+              {/* Website */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="https://yourstore.com"
+                />
+              </div>
+
+              {/* Account Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  name="account_number"
+                  value={formData.account_number}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Bank account number"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Address Information */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Address */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Address *
+                </label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Full street address"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="City"
+                />
+              </div>
+
+              {/* State */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State/Region *
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="State or region"
+                />
+              </div>
+
+              {/* Country */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Country *
+                </label>
+                <input
+                  type="text"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Country"
+                />
+              </div>
+
+              {/* Postal Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Postal Code
+                </label>
+                <input
+                  type="text"
+                  name="postal_code"
+                  value={formData.postal_code}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="Postal code"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Links</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Facebook */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Facebook
+                </label>
+                <input
+                  type="url"
+                  name="social_facebook"
+                  value={formData.social_facebook}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="https://facebook.com/yourpage"
+                />
+              </div>
+
+              {/* Instagram */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Instagram
+                </label>
+                <input
+                  type="url"
+                  name="social_instagram"
+                  value={formData.social_instagram}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="https://instagram.com/yourprofile"
+                />
+              </div>
+
+              {/* Twitter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Twitter
+                </label>
+                <input
+                  type="url"
+                  name="social_twitter"
+                  value={formData.social_twitter}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  placeholder="https://twitter.com/yourprofile"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={saving}
+              className="flex items-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium disabled:opacity-50"
+            >
+              <XMarkIcon className="h-4 w-4" />
+              <span>Cancel</span>
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center space-x-2 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-medium disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <CheckIcon className="h-4 w-4" />
+                  <span>Save Changes</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       ) : (
-        /* Display View */
+        /* Display View - Your existing display view remains the same */
         <div className="space-y-6">
           {/* Store Header with Stats */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
