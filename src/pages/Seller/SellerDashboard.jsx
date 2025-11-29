@@ -21,7 +21,7 @@ import Reviews from "./Reviews";
 import Customers from "./Customers";
 import ShippingSettings from "./ShippingSettings";
 import StoreSettings from "./StoreSettings";
-import MyStore from "./MyStore";
+import MyStore from "./MyStore.jsx";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import { useLocation } from "react-router-dom";

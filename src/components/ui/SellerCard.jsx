@@ -72,11 +72,11 @@ const SellerCard = ({ seller }) => {
                     if (fallback) fallback.style.display = 'flex';
                   }}
                 />
-                {isVerified && (
+                {/* {isVerified && (
                   <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
                     <CheckBadgeIcon className="h-4 w-4 text-green-500" />
                   </div>
-                )}
+                )} */}
               </div>
             ) : null}
             

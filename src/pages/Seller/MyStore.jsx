@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  BuildingStorefrontIcon, 
+import {
+  BuildingStorefrontIcon,
   PencilIcon,
   CameraIcon,
   MapPinIcon,
   GlobeAltIcon,
   PhoneIcon,
   EnvelopeIcon,
-  DocumentTextIcon,
   CheckIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
@@ -25,25 +24,23 @@ const MyStore = ({ storeData, stats, refreshData }) => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
 
-    // Use a fallback base URL if REACT_APP_API_URL is not defined
-    const baseUrl = (typeof process !== "undefined" && process.env?.REACT_APP_API_URL) 
-      ? process.env.REACT_APP_API_URL 
-      : window?.location?.origin || 'https://b2bdb.piueducation.org';
+    const baseUrl = "https://b2bdb.piueducation.org";
 
-    // If it's already a full URL, return as is
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
 
-    // Remove any leading slashes and construct the URL
-    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
-
-    // For Laravel storage paths, they're usually served from /storage
-    if (imagePath.includes('products/temp') || imagePath.includes('storage')) {
-      return `${baseUrl}/storage/${cleanPath}`;
+    // Handle different path formats
+    if (imagePath.includes('storage/')) {
+      return `${baseUrl}/${imagePath}`;
     }
 
-    return `${baseUrl}/${cleanPath}`;
+    if (imagePath.includes('stores/') || imagePath.includes('store_profile/') || imagePath.includes('products/')) {
+      return `${baseUrl}/storage/${imagePath}`;
+    }
+
+    // Default case - assume it's a storage path
+    return `${baseUrl}/storage/${imagePath}`;
   };
 
   const [formData, setFormData] = useState({
@@ -151,43 +148,49 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     }
   };
 
-  const uploadImage = async (file, type) => {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const response = await api.post("/products/upload-image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-      return response.data.data.url;
-    } catch (error) {
-      console.error(`Failed to upload ${type}:`, error);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setMessage({ type: "", text: "" });
 
     try {
-      const updateData = { ...formData };
+      const submitFormData = new FormData();
 
-      // Upload images if they exist
+      // Append all form fields EXCEPT store_logo and store_banner
+      Object.keys(formData).forEach(key => {
+        if (key !== 'store_logo' && key !== 'store_banner' &&
+            formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+          submitFormData.append(key, formData[key]);
+        }
+      });
+
+      // Append files if they exist - use the actual file objects
       if (logoFile) {
-        const logoUrl = await uploadImage(logoFile, "logo");
-        updateData.store_logo = logoUrl;
+        console.log("Appending logo file:", logoFile);
+        submitFormData.append('store_logo', logoFile);
       }
 
       if (bannerFile) {
-        const bannerUrl = await uploadImage(bannerFile, "banner");
-        updateData.store_banner = bannerUrl;
+        console.log("Appending banner file:", bannerFile);
+        submitFormData.append('store_banner', bannerFile);
       }
 
-      const response = await api.put("/sellers/my-store/update", updateData);
+      // Debug: Log what's being sent
+      console.log("=== FORM DATA DEBUG ===");
+      for (let [key, value] of submitFormData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}: File - ${value.name} (${value.size} bytes, ${value.type})`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+
+      // Make the API call
+      const response = await api.put('/sellers/my-store/update', submitFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       if (response.data.success) {
         setMessage({
@@ -201,12 +204,30 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         if (refreshData) {
           refreshData();
         }
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setMessage({ type: "", text: "" });
+        }, 5000);
       }
     } catch (error) {
       console.error("Failed to update store:", error);
+      console.error("Error response:", error.response);
+
+      let errorMessage = "Failed to update store profile";
+
+      if (error.response?.data?.errors) {
+        // Handle validation errors
+        const errors = error.response.data.errors;
+        console.log("Validation errors:", errors);
+        errorMessage = Object.values(errors).flat().join(', ');
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
       setMessage({
         type: "error",
-        text: error.response?.data?.message || "Failed to update store profile"
+        text: errorMessage
       });
     } finally {
       setSaving(false);
@@ -289,13 +310,24 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       {/* Status Message */}
       {message.text && (
         <div
-          className={`p-4 rounded-xl ${
+          className={`p-4 rounded-xl flex items-center space-x-3 ${
             message.type === "success"
               ? "bg-green-50 border border-green-200 text-green-700"
               : "bg-red-50 border border-red-200 text-red-700"
           }`}
         >
-          {message.text}
+          {message.type === "success" ? (
+            <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+          ) : (
+            <XMarkIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
+          )}
+          <span className="flex-1">{message.text}</span>
+          <button
+            onClick={() => setMessage({ type: "", text: "" })}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
         </div>
       )}
 
@@ -305,7 +337,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           {/* Store Media Section */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Media</h3>
-            
+
             {/* Logo Upload */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -378,7 +410,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           {/* Store Basic Information */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Basic Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Store Name */}
               <div className="md:col-span-2">
@@ -469,7 +501,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           {/* Business Details */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Details</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Business Registration Number */}
               <div>
@@ -536,7 +568,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           {/* Address Information */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Address */}
               <div className="md:col-span-2">
@@ -622,7 +654,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           {/* Social Media Links */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Links</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Facebook */}
               <div>
@@ -702,7 +734,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           </div>
         </form>
       ) : (
-        /* Display View - Your existing display view remains the same */
+        /* Display View */
         <div className="space-y-6">
           {/* Store Header with Stats */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -728,7 +760,6 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                     alt={storeData.store_name}
                     className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
                     onError={(e) => {
-                      // If image fails to load, show fallback
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';
                     }}
