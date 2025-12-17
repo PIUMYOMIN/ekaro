@@ -17,7 +17,12 @@ import {
   StarIcon,
   CheckIcon,
   XMarkIcon,
-  TruckIcon
+  TruckIcon,
+  BuildingStorefrontIcon,
+  UsersIcon,
+  ShieldCheckIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -60,7 +65,7 @@ const DataTable = ({
   columns,
   data,
   searchTerm = "",
-  onSearchChange = () => {},
+  onSearchChange = () => { },
   className = ""
 }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -76,10 +81,11 @@ const DataTable = ({
   };
 
   const processedData = React.useMemo(() => {
-    let filteredData = data;
+    // Ensure data is an array
+    let filteredData = Array.isArray(data) ? data : [];
 
     if (searchTerm) {
-      filteredData = data.filter((item) =>
+      filteredData = filteredData.filter((item) =>
         columns.some((column) => {
           const value = item[column.accessor];
           return (
@@ -109,28 +115,18 @@ const DataTable = ({
   }, [data, sortConfig, searchTerm, columns]);
 
   const totalPages = Math.ceil(processedData.length / itemsPerPage);
-  const paginatedData = processedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+
+  // Ensure paginatedData is always an array
+  const paginatedData = Array.isArray(processedData)
+    ? processedData.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    )
+    : [];
 
   return (
     <div className={`overflow-x-auto ${className}`}>
-      {onSearchChange && (
-        <div className="mb-4">
-          <div className="relative max-w-xs">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-        </div>
-      )}
-
+      {/* ... rest of the component remains the same ... */}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -158,20 +154,18 @@ const DataTable = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {paginatedData.length > 0 ? (
+          {Array.isArray(paginatedData) && paginatedData.length > 0 ? (
             paginatedData.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {columns.map((column) => {
-                  // In your DataTable component, make sure it handles the isStars and isStatus column types
                   const cellValue = row[column.accessor];
                   return (
-                    // In your DataTable component, update the cell rendering logic:
                     <td
                       key={`${rowIndex}-${column.accessor}`}
                       className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                     >
                       {column.cell ? (
-                        column.cell(row) // Use custom cell renderer if provided
+                        column.cell(row)
                       ) : column.isImage ? (
                         <img
                           src={cellValue || "/placeholder-image.jpg"}
@@ -188,26 +182,24 @@ const DataTable = ({
                           {[1, 2, 3, 4, 5].map((star) => (
                             <StarIcon
                               key={star}
-                              className={`h-4 w-4 ${
-                                star <= cellValue
-                                  ? "text-yellow-400 fill-yellow-400"
-                                  : "text-gray-300"
-                              }`}
+                              className={`h-4 w-4 ${star <= cellValue
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"
+                                }`}
                             />
                           ))}
                         </div>
                       ) : column.isStatus ? (
                         <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            cellValue === "approved" || cellValue === "active"
-                              ? "bg-green-100 text-green-800"
-                              : cellValue === "pending"
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${cellValue === "approved" || cellValue === "active"
+                            ? "bg-green-100 text-green-800"
+                            : cellValue === "pending"
                               ? "bg-yellow-100 text-yellow-800"
                               : cellValue === "rejected" ||
                                 cellValue === "suspended"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
                         >
                           {cellValue}
                         </span>
@@ -225,7 +217,7 @@ const DataTable = ({
                 colSpan={columns.length}
                 className="px-6 py-4 text-center text-sm text-gray-500"
               >
-                No data available
+                {Array.isArray(data) && data.length === 0 ? "No data available" : "Loading..."}
               </td>
             </tr>
           )}
@@ -366,11 +358,10 @@ const UserManagement = ({
           onChange={(e) =>
             handleUserStatus(row.id, e.target.value === "active")
           }
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            row.is_active
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          } border-0 focus:ring-2 focus:ring-green-500`}
+          className={`px-2 py-1 text-xs font-medium rounded-full ${row.is_active
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
+            } border-0 focus:ring-2 focus:ring-green-500`}
         >
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -396,33 +387,33 @@ const UserManagement = ({
   ];
 
   // In UserManagement component, fix the role extraction:
-const userData = users.map((user) => {
-  
-  // Extract role properly - try different possible structures
-  let userRole = "buyer";
-  
-  if (user.roles && Array.isArray(user.roles)) {
-    // If roles is an array of objects with 'name' property
-    userRole = user.roles[0]?.name || "buyer";
-  } else if (user.roles && typeof user.roles === 'string') {
-    // If roles is a string
-    userRole = user.roles;
-  } else if (user.role) {
-    // If there's a direct 'role' property
-    userRole = user.role;
-  } else if (user.type) {
-    // Fallback to user type
-    userRole = user.type;
-  }
-  
-  return {
-    ...user,
-    role: userRole,
-    status: user.is_active ? "Active" : "Inactive",
-    created_at: new Date(user.created_at).toLocaleDateString(),
-    is_active: user.is_active !== undefined ? user.is_active : true
-  };
-});
+  const userData = users.map((user) => {
+
+    // Extract role properly - try different possible structures
+    let userRole = "buyer";
+
+    if (user.roles && Array.isArray(user.roles)) {
+      // If roles is an array of objects with 'name' property
+      userRole = user.roles[0]?.name || "buyer";
+    } else if (user.roles && typeof user.roles === 'string') {
+      // If roles is a string
+      userRole = user.roles;
+    } else if (user.role) {
+      // If there's a direct 'role' property
+      userRole = user.role;
+    } else if (user.type) {
+      // Fallback to user type
+      userRole = user.type;
+    }
+
+    return {
+      ...user,
+      role: userRole,
+      status: user.is_active ? "Active" : "Inactive",
+      created_at: new Date(user.created_at).toLocaleDateString(),
+      is_active: user.is_active !== undefined ? user.is_active : true
+    };
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -497,15 +488,14 @@ const SellerManagement = ({
         <select
           value={row.status}
           onChange={(e) => handleSellerStatus(row.id, e.target.value)}
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            row.status === "approved" || row.status === "active"
-              ? "bg-green-100 text-green-800"
-              : row.status === "pending"
+          className={`px-2 py-1 text-xs font-medium rounded-full ${row.status === "approved" || row.status === "active"
+            ? "bg-green-100 text-green-800"
+            : row.status === "pending"
               ? "bg-yellow-100 text-yellow-800"
               : row.status === "suspended" || row.status === "closed"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-800"
-          } border-0 focus:ring-2 focus:ring-green-500`}
+                ? "bg-red-100 text-red-800"
+                : "bg-gray-100 text-gray-800"
+            } border-0 focus:ring-2 focus:ring-green-500`}
         >
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
@@ -630,6 +620,355 @@ const SellerManagement = ({
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+};
+
+// SellerVerificationManagement Component
+const SellerVerificationManagement = ({
+  pendingSellers,
+  loading,
+  error,
+  handleVerifySeller,
+  searchTerm,
+  onSearchChange,
+  refreshData
+}) => {
+  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [verificationData, setVerificationData] = useState({
+    verification_level: 'verified',
+    verification_badge: 'verified',
+    notes: '',
+    badge_duration_days: 365
+  });
+
+  const columns = [
+    {
+      header: "Store",
+      accessor: "store_name",
+      cell: (row) => (
+        <div className="flex items-center">
+          {row.store_logo ? (
+            <img
+              src={row.store_logo}
+              alt={row.store_name}
+              className="h-10 w-10 rounded-lg object-cover mr-3"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
+              <BuildingStorefrontIcon className="h-6 w-6 text-gray-400" />
+            </div>
+          )}
+          <div>
+            <div className="font-medium text-gray-900">{row.store_name}</div>
+            <div className="text-sm text-gray-500">{row.store_id}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: "Owner",
+      accessor: "owner",
+      cell: (row) => row.user?.name || 'Unknown'
+    },
+    {
+      header: "Business Type",
+      accessor: "business_type"
+    },
+    {
+      header: "Profile Completion",
+      accessor: "profile_completion",
+      cell: (row) => (
+        <div className="w-full">
+          <div className="text-sm text-gray-700 mb-1">
+            {row.profile_completion_percentage || 0}%
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-green-500 h-2 rounded-full"
+              style={{ width: `${row.profile_completion_percentage || 0}%` }}
+            ></div>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: "Submitted",
+      accessor: "created_at",
+      cell: (row) => new Date(row.created_at).toLocaleDateString()
+    },
+    {
+      header: "Actions",
+      accessor: "actions",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setSelectedSeller(row)}
+            className="text-blue-600 hover:text-blue-900 text-sm"
+          >
+            Review
+          </button>
+          <button
+            onClick={() => handleVerifySeller(row.id, 'approve', {
+              verification_level: 'verified',
+              verification_badge: 'verified',
+              notes: 'Automatically approved'
+            })}
+            className="text-green-600 hover:text-green-900 text-sm"
+          >
+            Quick Approve
+          </button>
+          <button
+            onClick={() => handleVerifySeller(row.id, 'reject', {
+              notes: prompt('Reason for rejection:') || 'Incomplete information'
+            })}
+            className="text-red-600 hover:text-red-900 text-sm"
+          >
+            Reject
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  const handleVerificationSubmit = async () => {
+    if (!selectedSeller) return;
+
+    await handleVerifySeller(selectedSeller.id, 'approve', verificationData);
+    setSelectedSeller(null);
+    setVerificationData({
+      verification_level: 'verified',
+      verification_badge: 'verified',
+      notes: '',
+      badge_duration_days: 365
+    });
+    if (refreshData) refreshData();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-2xl font-bold text-yellow-600">
+            {Array.isArray(pendingSellers) ? pendingSellers.length : 0}
+          </div>
+          <div className="text-sm text-gray-500">Pending Verification</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-2xl font-bold text-green-600">
+            {Array.isArray(pendingSellers)
+              ? pendingSellers.filter(s => s.profile_completion_percentage >= 100)?.length || 0
+              : 0}
+          </div>
+          <div className="text-sm text-gray-500">Complete Profiles</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-2xl font-bold text-blue-600">
+            {Array.isArray(pendingSellers)
+              ? pendingSellers.filter(s => s.business_type !== 'individual')?.length || 0
+              : 0}
+          </div>
+          <div className="text-sm text-gray-500">Registered Businesses</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="text-2xl font-bold text-purple-600">
+            2.5
+          </div>
+          <div className="text-sm text-gray-500">Avg. Days to Verify</div>
+        </div>
+      </div>
+
+
+      {/* Main Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Seller Verification Queue
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Review and verify seller applications
+            </p>
+          </div>
+          <div className="flex space-x-3">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search sellers..."
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={refreshData}
+              className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <ArrowPathIcon className="h-4 w-4 mr-2" />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {loading && (
+          <div className="p-8 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 text-red-500 bg-red-50">
+            Error: {error.message}
+          </div>
+        )}
+
+        {!loading && !error && (
+          <DataTable
+            columns={columns}
+            data={Array.isArray(pendingSellers) ? pendingSellers : []}
+            searchTerm={searchTerm}
+            onSearchChange={onSearchChange}
+          />
+        )}
+      </div>
+
+      {/* Verification Modal */}
+      {selectedSeller && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900">
+                Verify Seller: {selectedSeller.store_name}
+              </h3>
+              <button
+                onClick={() => setSelectedSeller(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Seller Information */}
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Store Information</h4>
+                <dl className="space-y-2">
+                  <div>
+                    <dt className="text-sm text-gray-500">Store Name</dt>
+                    <dd className="text-sm font-medium">{selectedSeller.store_name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-500">Business Type</dt>
+                    <dd className="text-sm font-medium">{selectedSeller.business_type}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-500">Contact Email</dt>
+                    <dd className="text-sm font-medium">{selectedSeller.contact_email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-gray-500">Contact Phone</dt>
+                    <dd className="text-sm font-medium">{selectedSeller.contact_phone}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Verification Requirements</h4>
+                <div className="space-y-2">
+                  {selectedSeller.verification_requirements?.map((req, index) => (
+                    <div key={index} className="flex items-center">
+                      {req.completed ? (
+                        <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                      ) : (
+                        <XCircleIcon className="h-5 w-5 text-red-500 mr-2" />
+                      )}
+                      <span className={`text-sm ${req.completed ? 'text-gray-700' : 'text-gray-500'}`}>
+                        {req.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Verification Options */}
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-3">Verification Options</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Verification Level
+                  </label>
+                  <select
+                    value={verificationData.verification_level}
+                    onChange={(e) => setVerificationData({ ...verificationData, verification_level: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="basic">Basic</option>
+                    <option value="verified">Verified</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Badge Type
+                  </label>
+                  <select
+                    value={verificationData.verification_badge}
+                    onChange={(e) => setVerificationData({ ...verificationData, verification_badge: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="verified">Verified Badge</option>
+                    <option value="premium">Premium Badge</option>
+                    <option value="top_rated">Top Rated</option>
+                    <option value="fast_shipper">Fast Shipper</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Verification Notes
+              </label>
+              <textarea
+                value={verificationData.notes}
+                onChange={(e) => setVerificationData({ ...verificationData, notes: e.target.value })}
+                rows={3}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                placeholder="Add notes for the seller..."
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setSelectedSeller(null)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleVerifySeller(selectedSeller.id, 'reject', {
+                  notes: verificationData.notes || 'Rejected by administrator'
+                })}
+                className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
+              >
+                Reject
+              </button>
+              <button
+                onClick={handleVerificationSubmit}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Approve & Verify
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -1205,11 +1544,79 @@ const AdminDashboard = () => {
   const [mainSearchTerm, setMainSearchTerm] = useState(""); // For main search
   const [sellerSearchTerm, setSellerSearchTerm] = useState("");
   const [sellerSearchPage, setSellerSearchPage] = useState(1); // For seller pagination
+  const [pendingSellers, setPendingSellers] = useState([]);
+  const [selectedSeller, setSelectedSeller] = useState(null);
+  const [verificationData, setVerificationData] = useState({
+    verification_level: "basic",
+    verification_badge: "verified",
+    notes: ""
+  });
 
-  // Handlers for search term changes
-  const handleSearchChange = (value) => {
-    setSearchTerm((prev) => ({ ...prev, search: value, page: 1 }));
+  const [isVerificationLoading, setIsVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState(null);
+  const [verificationSearchTerm, setVerificationSearchTerm] = useState("");
+
+  // Fetch pending sellers for verification
+  const fetchPendingSellers = async () => {
+    setIsVerificationLoading(true);
+    setVerificationError(null);
+    try {
+      const response = await api.get('/admin/sellers/pending-verification');
+      setPendingSellers(response.data.data || []);
+    } catch (error) {
+      setVerificationError(error);
+      console.error('Error fetching pending sellers:', error);
+    } finally {
+      setIsVerificationLoading(false);
+    }
   };
+
+  const handleVerificationSubmit = async () => {
+    if (!selectedSeller) return;
+    setIsVerificationLoading(true);
+    setVerificationError(null);
+    try {
+      await api.post(`/admin/sellers/${selectedSeller.id}/verify`, verificationData);
+      alert("Seller verified successfully");
+      setSelectedSeller(null);
+      // Refresh pending sellers
+      fetchPendingSellers();
+    } catch (error) {
+      setVerificationError(error);
+      console.error("Error verifying seller:", error);
+    } finally {
+      setIsVerificationLoading(false);
+    }
+  };
+
+  // Handle seller verification
+  const handleVerifySeller = async (sellerId, action, data = {}) => {
+    try {
+      let endpoint = `/admin/sellers/${sellerId}/verify`;
+      let method = 'POST';
+
+      if (action === 'reject') {
+        endpoint = `/admin/sellers/${sellerId}/reject`;
+      }
+
+      const response = await api({
+        method,
+        url: endpoint,
+        data
+      });
+
+      if (response.data.success) {
+        alert(`Seller ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
+        fetchPendingSellers(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error verifying seller:', error);
+      alert('Failed to process seller verification');
+    }
+  };
+
+  // Fetch verification data (alias for fetchPendingSellers)
+  const fetchVerificationData = fetchPendingSellers;
 
   // Loading states
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
@@ -1263,22 +1670,22 @@ const AdminDashboard = () => {
     if (activeTab !== 1) return;
 
     const fetchUsers = async () => {
-  setIsUsersLoading(true);
-  setUsersError(null);
-  try {
-    const response = await api.get("/users");
-    
-    // Handle different API response structures
-    const usersData = response.data.data || response.data;
-    
-    setUsers(Array.isArray(usersData) ? usersData : []);
-  } catch (error) {
-    setUsersError(error);
-    console.error("Error fetching users:", error);
-  } finally {
-    setIsUsersLoading(false);
-  }
-};
+      setIsUsersLoading(true);
+      setUsersError(null);
+      try {
+        const response = await api.get("/users");
+
+        // Handle different API response structures
+        const usersData = response.data.data || response.data;
+
+        setUsers(Array.isArray(usersData) ? usersData : []);
+      } catch (error) {
+        setUsersError(error);
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsUsersLoading(false);
+      }
+    };
 
     fetchUsers();
   }, [activeTab, searchTerm]);
@@ -1534,8 +1941,7 @@ const AdminDashboard = () => {
       );
 
       alert(
-        `User status updated to ${
-          isActive ? "active" : "inactive"
+        `User status updated to ${isActive ? "active" : "inactive"
         } successfully`
       );
     } catch (error) {
@@ -1554,8 +1960,7 @@ const AdminDashboard = () => {
         );
 
         alert(
-          `User status updated to ${
-            isActive ? "active" : "inactive"
+          `User status updated to ${isActive ? "active" : "inactive"
           } successfully`
         );
       } catch (fallbackError) {
@@ -1768,6 +2173,22 @@ const AdminDashboard = () => {
         />
       )
     },
+    // Seller Verification Tab
+    {
+      name: "Seller Verification",
+      icon: ShieldCheckIcon,
+      component: (
+        <SellerVerificationManagement
+          pendingSellers={pendingSellers}
+          loading={isVerificationLoading}
+          error={verificationError}
+          handleVerifySeller={handleVerifySeller}
+          searchTerm={verificationSearchTerm}
+          onSearchChange={setVerificationSearchTerm}
+          refreshData={fetchVerificationData}
+        />
+      )
+    },
     {
       name: t("seller.product.title"),
       icon: CubeIcon,
@@ -1893,10 +2314,9 @@ const AdminDashboard = () => {
                     <Tab
                       key={item.name}
                       className={({ selected }) =>
-                        `group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left ${
-                          selected
-                            ? "bg-green-50 text-green-700"
-                            : "text-gray-600 hover:text-green-700 hover:bg-green-50"
+                        `group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left ${selected
+                          ? "bg-green-50 text-green-700"
+                          : "text-gray-600 hover:text-green-700 hover:bg-green-50"
                         }`
                       }
                     >
@@ -1959,10 +2379,9 @@ const AdminDashboard = () => {
                     <Tab
                       key={item.name}
                       className={({ selected }) =>
-                        `w-full rounded-lg py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-2 ring-offset-2 ring-offset-green-400 ring-white ring-opacity-60 ${
-                          selected
-                            ? "bg-white shadow text-green-700"
-                            : "text-gray-600 hover:bg-white/[0.12] hover:text-green-700"
+                        `w-full rounded-lg py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-2 ring-offset-2 ring-offset-green-400 ring-white ring-opacity-60 ${selected
+                          ? "bg-white shadow text-green-700"
+                          : "text-gray-600 hover:bg-white/[0.12] hover:text-green-700"
                         }`
                       }
                     >

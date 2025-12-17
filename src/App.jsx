@@ -62,6 +62,9 @@ import SellerOnboardingRoute from "./components/SellerOnboardingRoute";
 import SubmitStoreInfo from "./pages/SubmitStoreInfo";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import NotFound from "./components/NotFound";
+import SubmitOnboarding from './pages/Seller/SubmitOnboarding';
+import DocumentUpload from './pages/Seller/DocumentUpload';
+import ReviewSubmit from "./pages/Seller/ReviewSubmit";
 
 function App() {
   return <I18nextProvider i18n={i18n}>
@@ -99,7 +102,8 @@ function App() {
                 <Route path="/seller/onboarding/store-basic" element={<SellerOnboardingRoute><StoreBasicInfo /></SellerOnboardingRoute>} />
                 <Route path="/seller/onboarding/business-details" element={<SellerOnboardingRoute><BusinessDetails /></SellerOnboardingRoute>} />
                 <Route path="/seller/onboarding/address" element={<SellerOnboardingRoute><AddressInfo /></SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/submit" element={<SellerOnboardingRoute><SubmitStoreInfo /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/documents" element={<SellerOnboardingRoute><DocumentUpload /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/submit" element={<SellerOnboardingRoute><ReviewSubmit /></SellerOnboardingRoute>} />
 
                 {/* Buyer Routes */}
                 <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />

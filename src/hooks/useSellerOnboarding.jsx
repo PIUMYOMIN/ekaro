@@ -1,101 +1,81 @@
-// src/hooks/useSellerOnboarding.js
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-
-const STORAGE_KEY = "seller_onboarding_data";
-
-const initialData = {
-  // Store Basic Info
-  store_name: "",
-  business_type: "",
-  description: "",
-  contact_email: "",
-  contact_phone: "",
-  store_logo: "",
-  store_banner: "",
-
-  // Business Details
-  business_registration_number: "",
-  tax_id: "",
-  website: "",
-  account_number: "",
-  social_facebook: "",
-  social_instagram: "",
-  social_twitter: "",
-  social_linkedin: "",
-
-  // Address Info
-  address: "",
-  city: "",
-  state: "",
-  country: "Myanmar",
-  postal_code: "",
-  location: "",
-
-  // Additional Info
-  year_established: "",
-  employees_count: "",
-  production_capacity: ""
-};
+import { useState, useEffect } from 'react';
+import api from '../utils/api';
 
 export const useSellerOnboarding = () => {
-  const { t } = useTranslation();
-  const [onboardingData, setOnboardingData] = useState(initialData);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [onboardingData, setOnboardingData] = useState(() => {
+    const savedData = localStorage.getItem('seller_onboarding_data');
+    try {
+      return savedData ? JSON.parse(savedData) : {};
+    } catch (error) {
+      console.error('Error parsing onboarding data:', error);
+      return {};
+    }
+  });
 
-  // Load data from localStorage on mount
+  const [currentStep, setCurrentStep] = useState('store-basic');
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const loadData = () => {
-      try {
-        const savedData = localStorage.getItem(STORAGE_KEY);
-
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          setOnboardingData(parsedData);
-        }
-      } catch (error) {
-        console.error(
-          "❌ Failed to parse onboarding data from localStorage:",
-          error
-        );
-        // If parsing fails, clear corrupted data
-        localStorage.removeItem(STORAGE_KEY);
-      }
-      setIsLoaded(true);
-    };
-
-    loadData();
+    checkOnboardingStatus();
   }, []);
 
-  // Save data to localStorage whenever it changes
-  useEffect(
-    () => {
-      if (isLoaded) {
-        console.log("💾 Saving to localStorage:", onboardingData);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(onboardingData));
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await api.get('/seller/onboarding/status');
+      if (response.data.success) {
+        const { data } = response.data;
+        
+        if (data.has_profile) {
+          setCurrentStep(data.current_step || 'store-basic');
+          
+          // If we have stored data but API says we're at a different step, 
+          // clear local storage to avoid conflicts
+          if (data.current_step && Object.keys(onboardingData).length > 0) {
+            const stepOrder = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
+            const currentIndex = stepOrder.indexOf(currentStep);
+            const apiIndex = stepOrder.indexOf(data.current_step);
+            
+            if (apiIndex < currentIndex) {
+              // Clear local storage if API says we're behind
+              clearOnboardingData();
+            }
+          }
+        }
       }
-    },
-    [onboardingData, isLoaded]
-  );
+    } catch (error) {
+      console.error('Failed to check onboarding status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const updateOnboardingData = newData => {
-    console.log("📝 Updating onboarding data:", newData);
-    setOnboardingData(prev => ({
-      ...prev,
-      ...newData
-    }));
+  const updateOnboardingData = (newData) => {
+    const updatedData = { ...onboardingData, ...newData };
+    setOnboardingData(updatedData);
+    localStorage.setItem('seller_onboarding_data', JSON.stringify(updatedData));
   };
 
   const clearOnboardingData = () => {
-    console.log("🗑️ Clearing onboarding data");
-    localStorage.removeItem(STORAGE_KEY);
-    setOnboardingData(initialData);
+    setOnboardingData({});
+    localStorage.removeItem('seller_onboarding_data');
+  };
+
+  const getCurrentStep = () => {
+    return currentStep;
+  };
+
+  const getProgressPercentage = () => {
+    const steps = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
+    const currentIndex = steps.indexOf(currentStep);
+    return currentIndex >= 0 ? ((currentIndex + 1) / steps.length) * 100 : 0;
   };
 
   return {
     onboardingData,
     updateOnboardingData,
     clearOnboardingData,
-    isLoaded
+    getCurrentStep,
+    getProgressPercentage,
+    loading
   };
 };

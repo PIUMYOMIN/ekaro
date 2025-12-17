@@ -85,7 +85,6 @@ export const AuthProvider = ({ children }) => {
           try {
             const parsedUser = JSON.parse(savedUser);
             const normalizedUser = normalizeUserRoles(parsedUser);
-            console.log('Loaded user from localStorage (no token):', normalizedUser); // Debug log
             setUser(normalizedUser);
           } catch (parseError) {
             console.error('Failed to parse saved user', parseError);
@@ -119,7 +118,6 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/register', userData);
       localStorage.setItem('token', response.data.data.token);
       const normalizedUser = normalizeUserRoles(response.data.data.user);
-      console.log('Register user normalized:', normalizedUser); // Debug log
       localStorage.setItem('user', JSON.stringify(normalizedUser));
       setUser(normalizedUser);
       return { success: true, user: normalizedUser };
