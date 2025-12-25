@@ -58,13 +58,11 @@ import RFQManager from "./pages/RFQManager";
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
-import SellerOnboardingRoute from "./components/SellerOnboardingRoute";
-import SubmitStoreInfo from "./pages/SubmitStoreInfo";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
-import NotFound from "./components/NotFound";
-import SubmitOnboarding from './pages/Seller/SubmitOnboarding';
 import DocumentUpload from './pages/Seller/DocumentUpload';
 import ReviewSubmit from "./pages/Seller/ReviewSubmit";
+import StepGuard from "./components/StepGuard";
+import Error from "./pages/Errors/404";
 
 function App() {
   return <I18nextProvider i18n={i18n}>
@@ -91,7 +89,7 @@ function App() {
                 <Route path="/help" element={<HelpCenter />} />
                 <Route path="/legal" element={<Legal />} />
                 <Route path="/privacy-policy" element={<Legal />} />
-                <Route path="/page-not-found" element={<NotFound />} />
+                <Route path="/page-not-found" element={<Error />} />
 
                 {/* Guest-only Routes */}
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
@@ -99,11 +97,31 @@ function App() {
                 <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
 
                 {/* Seller Onboarding Routes */}
-                <Route path="/seller/onboarding/store-basic" element={<SellerOnboardingRoute><StoreBasicInfo /></SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/business-details" element={<SellerOnboardingRoute><BusinessDetails /></SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/address" element={<SellerOnboardingRoute><AddressInfo /></SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/documents" element={<SellerOnboardingRoute><DocumentUpload /></SellerOnboardingRoute>} />
-                <Route path="/seller/onboarding/submit" element={<SellerOnboardingRoute><ReviewSubmit /></SellerOnboardingRoute>} />
+                <Route path="/seller/onboarding/store-basic" element={
+                  <StepGuard step="store-basic">
+                    <StoreBasicInfo />
+                  </StepGuard>
+                } />
+                <Route path="/seller/onboarding/business-details" element={
+                  <StepGuard step="business-details">
+                    <BusinessDetails />
+                  </StepGuard>
+                } />
+                <Route path="/seller/onboarding/address" element={
+                  <StepGuard step="address">
+                    <AddressInfo />
+                  </StepGuard>
+                } />
+                <Route path="/seller/onboarding/documents" element={
+                  <StepGuard step="documents">
+                    <DocumentUpload />
+                  </StepGuard>
+                } />
+                <Route path="/seller/onboarding/review-submit" element={
+                  <StepGuard step="review">
+                    <ReviewSubmit />
+                  </StepGuard>
+                } />
 
                 {/* Buyer Routes */}
                 <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
@@ -135,7 +153,7 @@ function App() {
                 <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
 
                 {/* Catch-all route for 404 */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Error />} />
               </Routes>
             </main>
             <Footer />

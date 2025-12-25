@@ -1,81 +1,96 @@
+// hooks/useOnboardingState.js
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
 
-export const useSellerOnboarding = () => {
-  const [onboardingData, setOnboardingData] = useState(() => {
-    const savedData = localStorage.getItem('seller_onboarding_data');
-    try {
-      return savedData ? JSON.parse(savedData) : {};
-    } catch (error) {
-      console.error('Error parsing onboarding data:', error);
-      return {};
-    }
-  });
+export const useOnboardingState = () => {
+    const [currentStep, setCurrentStep] = useState('store-basic');
+    const [formData, setFormData] = useState({});
+    const [progress, setProgress] = useState(0);
+    const [documents, setDocuments] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-  const [currentStep, setCurrentStep] = useState('store-basic');
-  const [loading, setLoading] = useState(true);
+    const steps = [
+        { id: 'store-basic', title: 'Store Basic', icon: '🏪' },
+        { id: 'business-details', title: 'Business Details', icon: '📄' },
+        { id: 'address', title: 'Address', icon: '📍' },
+        { id: 'documents', title: 'Documents', icon: '📎' },
+        { id: 'review', title: 'Review', icon: '✅' }
+    ];
 
-  useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
-
-  const checkOnboardingStatus = async () => {
-    try {
-      const response = await api.get('/seller/onboarding/status');
-      if (response.data.success) {
-        const { data } = response.data;
-        
-        if (data.has_profile) {
-          setCurrentStep(data.current_step || 'store-basic');
-          
-          // If we have stored data but API says we're at a different step, 
-          // clear local storage to avoid conflicts
-          if (data.current_step && Object.keys(onboardingData).length > 0) {
-            const stepOrder = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
-            const currentIndex = stepOrder.indexOf(currentStep);
-            const apiIndex = stepOrder.indexOf(data.current_step);
-            
-            if (apiIndex < currentIndex) {
-              // Clear local storage if API says we're behind
-              clearOnboardingData();
+    const loadOnboardingData = async () => {
+        try {
+            setIsLoading(true);
+            const response = await api.get('/seller/onboarding/data');
+            if (response.data.success) {
+                setFormData(response.data.data);
+                // Determine current step from progress
+                const statusResponse = await api.get('/seller/onboarding/status');
+                if (statusResponse.data.success) {
+                    setCurrentStep(statusResponse.data.data.current_step);
+                    setProgress(statusResponse.data.data.progress_percentage || 0);
+                }
             }
-          }
+        } catch (error) {
+            console.error('Failed to load onboarding data:', error);
+        } finally {
+            setIsLoading(false);
         }
-      }
-    } catch (error) {
-      console.error('Failed to check onboarding status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const updateOnboardingData = (newData) => {
-    const updatedData = { ...onboardingData, ...newData };
-    setOnboardingData(updatedData);
-    localStorage.setItem('seller_onboarding_data', JSON.stringify(updatedData));
-  };
+    const saveStep = async (step, data) => {
+        try {
+            setIsLoading(true);
+            const response = await api.post(`/seller/onboarding/step/${step}`, data);
+            
+            if (response.data.success) {
+                setFormData(prev => ({ ...prev, ...data }));
+                setCurrentStep(response.data.next_step);
+                setProgress(response.data.progress);
+                return { success: true, nextStep: response.data.next_step };
+            }
+            return { success: false, errors: response.data.errors };
+        } catch (error) {
+            console.error('Save step failed:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to save' };
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  const clearOnboardingData = () => {
-    setOnboardingData({});
-    localStorage.removeItem('seller_onboarding_data');
-  };
+    const uploadDocument = async (file, type) => {
+        const formData = new FormData();
+        formData.append('document_type', type);
+        formData.append('document', file);
 
-  const getCurrentStep = () => {
-    return currentStep;
-  };
+        try {
+            const response = await api.post('/seller/onboarding/upload-document', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            if (response.data.success) {
+                setDocuments(prev => [...prev, { type, url: response.data.data.url }]);
+                return { success: true, url: response.data.data.url };
+            }
+            return { success: false, message: response.data.message };
+        } catch (error) {
+            return { success: false, message: 'Upload failed' };
+        }
+    };
 
-  const getProgressPercentage = () => {
-    const steps = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
-    const currentIndex = steps.indexOf(currentStep);
-    return currentIndex >= 0 ? ((currentIndex + 1) / steps.length) * 100 : 0;
-  };
+    useEffect(() => {
+        loadOnboardingData();
+    }, []);
 
-  return {
-    onboardingData,
-    updateOnboardingData,
-    clearOnboardingData,
-    getCurrentStep,
-    getProgressPercentage,
-    loading
-  };
+    return {
+        currentStep,
+        setCurrentStep,
+        formData,
+        setFormData,
+        progress,
+        steps,
+        isLoading,
+        saveStep,
+        uploadDocument,
+        documents
+    };
 };
