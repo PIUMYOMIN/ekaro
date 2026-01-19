@@ -1,4 +1,3 @@
-// src/components/admin/PlatformLogistics.jsx
 import React, { useState, useEffect } from "react";
 import {
   TruckIcon,

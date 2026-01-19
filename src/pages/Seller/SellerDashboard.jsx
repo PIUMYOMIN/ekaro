@@ -26,6 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import { useLocation } from "react-router-dom";
 import DeliveryManagement from "./DeliveryManagement";
+import { useNavigate } from "react-router-dom";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -39,12 +40,62 @@ const SellerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [onboardingStatus, setOnboardingStatus] = useState(null);
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
     totalRevenue: 0,
     pendingOrders: 0
   });
+
+  // Check onboarding status first
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user) return;
+
+      try {
+        // First, check if user is a seller
+        if (user.type !== 'seller' && !user.roles?.includes('seller')) {
+          // User is not a seller, redirect to appropriate page
+          navigate('/');
+          return;
+        }
+
+        // Check onboarding status
+        const response = await api.get('/seller/onboarding/status');
+        
+        if (response.data.success) {
+          const statusData = response.data.data;
+          setOnboardingStatus(statusData);
+
+          // If onboarding is not complete, redirect to onboarding
+          if (statusData.needs_onboarding || !statusData.onboarding_complete) {
+            console.log('Onboarding incomplete, redirecting to:', statusData.current_step);
+            
+            // Determine where to redirect
+            let redirectPath = '/seller/onboarding/store-basic';
+            
+            if (statusData.current_step) {
+              redirectPath = `/seller/onboarding/${statusData.current_step}`;
+            }
+            
+            navigate(redirectPath, { replace: true });
+            return;
+          }
+
+          // If onboarding is complete, fetch store data
+          fetchStoreData();
+        }
+      } catch (error) {
+        console.error("Failed to check onboarding status:", error);
+        // If there's an error, assume onboarding needed
+        navigate('/seller/onboarding/store-basic');
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [user, navigate]);
 
   // Show success message if redirected from onboarding
   useEffect(() => {
@@ -57,12 +108,12 @@ const SellerDashboard = () => {
     }
   }, [state]);
 
-  // Fetch store data and stats
+  // Fetch store data and stats - only called if onboarding is complete
   const fetchStoreData = useCallback(async () => {
     try {
       const [storeResponse, statsResponse] = await Promise.all([
-        api.get("/dashboard/seller/my-store"), // Fixed endpoint
-        api.get("/dashboard/seller/sales-summary") // Fixed endpoint
+        api.get("/seller/my-store"),
+        api.get("/seller/sales-summary")
       ]);
 
       setStoreData(storeResponse.data.data);
@@ -78,10 +129,16 @@ const SellerDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to fetch store data:", error);
+      
+      // If store data fetch fails, check if profile exists
+      if (error.response?.status === 404) {
+        // Profile doesn't exist, redirect to onboarding
+        navigate('/seller/onboarding/store-basic');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   // Refresh function that can be passed to child components
   const refreshStoreData = useCallback(() => {
@@ -160,12 +217,43 @@ const SellerDashboard = () => {
     }
   ];
 
-  if (loading) {
+  if (loading || !onboardingStatus) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your store...</p>
+          <p className="text-gray-600">Checking your seller status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show onboarding prompt if somehow still here but needs onboarding
+  if (onboardingStatus.needs_onboarding || !onboardingStatus.onboarding_complete) {
+    return (
+      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <BuildingStorefrontIcon className="h-10 w-10 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Store Setup</h2>
+          <p className="text-gray-600 mb-6">
+            Before you can access your seller dashboard, you need to complete your store setup.
+          </p>
+          <div className="space-y-4">
+            <button
+              onClick={() => navigate('/seller/onboarding/store-basic')}
+              className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-medium rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg"
+            >
+              Start Store Setup
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Return to Home
+            </button>
+          </div>
         </div>
       </div>
     );

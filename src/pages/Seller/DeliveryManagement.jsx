@@ -30,7 +30,7 @@ const DeliveryManagement = ({ refreshData }) => {
   const fetchDeliveries = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/dashboard/deliveries");
+      const response = await api.get("/deliveries");
       const deliveriesData = response.data.data.data || response.data.data || [];
       setDeliveries(deliveriesData);
     } catch (error) {
@@ -55,7 +55,7 @@ const DeliveryManagement = ({ refreshData }) => {
         platformFee = calculatePlatformFee();
       }
 
-      const response = await api.post(`/dashboard/orders/${order.id}/delivery-method`, {
+      const response = await api.post(`/orders/${order.id}/delivery-method`, {
         delivery_method: method,
         platform_delivery_fee: platformFee,
         pickup_address: "Supplier Warehouse, Yangon, Myanmar" // This should come from seller profile
@@ -75,7 +75,7 @@ const DeliveryManagement = ({ refreshData }) => {
 
   const updateDeliveryStatus = async (deliveryId, status, notes = "") => {
     try {
-      const response = await api.post(`/dashboard/deliveries/${deliveryId}/status`, {
+      const response = await api.post(`/deliveries/${deliveryId}/status`, {
         status,
         notes
       });
@@ -97,7 +97,7 @@ const DeliveryManagement = ({ refreshData }) => {
       formData.append('recipient_name', recipientName);
       formData.append('recipient_phone', recipientPhone);
 
-      const response = await api.post(`/dashboard/deliveries/${deliveryId}/proof`, formData, {
+      const response = await api.post(`/deliveries/${deliveryId}/proof`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

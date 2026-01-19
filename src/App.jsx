@@ -63,6 +63,7 @@ import DocumentUpload from './pages/Seller/DocumentUpload';
 import ReviewSubmit from "./pages/Seller/ReviewSubmit";
 import StepGuard from "./components/StepGuard";
 import Error from "./pages/Errors/404";
+import SellerRouteGuard from "./components/SellerRouteGuard";
 
 function App() {
   return <I18nextProvider i18n={i18n}>
@@ -132,8 +133,22 @@ function App() {
                 <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
 
                 {/* Seller Routes */}
-                <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
-                <Route path="/seller/dashboard" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} />
+                {/* <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} /> */}
+                <Route path="/seller" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerRouteGuard>
+                      <SellerDashboard />
+                    </SellerRouteGuard>
+                  </ProtectedRoute>
+                } />
+                {/* <Route path="/seller/dashboard" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} /> */}
+                <Route path="/seller/dashboard" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerRouteGuard>
+                      <SellerDashboard />
+                    </SellerRouteGuard>
+                  </ProtectedRoute>
+                } />
                 <Route path="/seller/products" element={<ProtectedRoute roles={["seller"]}><ProductView /></ProtectedRoute>} />
                 <Route path="/seller/products/create" element={<ProtectedRoute roles={["seller"]}><ProductCreate /></ProtectedRoute>} />
                 <Route path="/seller/products/:id/edit" element={<ProtectedRoute roles={["seller"]}><ProductEdit /></ProtectedRoute>} />

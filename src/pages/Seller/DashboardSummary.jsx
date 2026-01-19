@@ -76,10 +76,10 @@ const DashboardSummary = ({ storeData, stats, refreshData }) => {
           productsResponse,
           deliveriesResponse
         ] = await Promise.all([
-          api.get("/dashboard/seller/sales-summary"),
-          api.get("/dashboard/seller/recent-orders?limit=8"),
-          api.get("/dashboard/seller/products/my-products?stats=true"),
-          api.get("/dashboard/deliveries?stats=true")
+          api.get("/seller/sales-summary"),
+          api.get("/seller/recent-orders?limit=8"),
+          api.get("/seller/products/my-products?stats=true"),
+          api.get("/deliveries?stats=true")
         ]);
 
         // Process sales summary

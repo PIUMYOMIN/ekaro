@@ -24,7 +24,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
 
-    const baseUrl = "https://b2bdb.piueducation.org";
+    const baseUrl = "http://localhost:8000";
 
     if (imagePath.startsWith('http')) {
       return imagePath;

@@ -22,1504 +22,228 @@ import {
   UsersIcon,
   ShieldCheckIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  PlusIcon,
+  BriefcaseIcon,
+  BuildingOfficeIcon,
+  BanknotesIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 import Sidebar from "../../components/layout/Sidebar";
-import PlatformLogistics from "./PlatformLogistics";
-
-// StatCard Component
-const StatCard = ({ title, value, change, icon: Icon, iconColor, bgColor }) => {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <div className="flex items-center">
-        <div className={`p-3 ${bgColor} rounded-lg`}>
-          <Icon className={`h-8 w-8 ${iconColor}`} />
-        </div>
-        <div className="ml-4">
-          <p className="text-gray-500">{title}</p>
-          <h3 className="text-2xl font-bold">{value}</h3>
-        </div>
-      </div>
-      <div className="mt-4 flex items-center text-sm">
-        {change > 0 ? (
-          <span className="text-green-600 flex items-center">
-            <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />+{change}%
-          </span>
-        ) : (
-          <span className="text-red-600 flex items-center">
-            <ArrowTrendingDownIcon className="h-4 w-4 mr-1" />
-            {change}%
-          </span>
-        )}
-        <span className="ml-2 text-gray-500">from last month</span>
-      </div>
-    </div>
-  );
-};
+import PlatformLogistics from "../../components/admin/PlatformLogistics";
+import BusinessTypeManagement from "../../components/admin/BusinessTypeManagement";
+import UserManagement from "../../components/admin/UserManagement";
+import SellerManagement from "../../components/admin/SellerManagement";
+import DashboardOverview from "../../components/admin/DashboardOverview";
+import ProductManagement from "../../components/admin/ProductManagement";
+import ReviewManagement from "../../components/admin/ReviewManagement";
+import OrderManagement from "../../components/admin/OrderManagement";
+import AnalyticsManagement from "../../components/admin/AnalyticsManagement";
+import CategoryManagement from "../../components/admin/CategoryManagement";
+import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
+import Settings from "../../components/admin/Settings";
 
 // DataTable Component
-const DataTable = ({
-  columns,
-  data,
-  searchTerm = "",
-  onSearchChange = () => { },
-  className = ""
-}) => {
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  const processedData = React.useMemo(() => {
-    // Ensure data is an array
-    let filteredData = Array.isArray(data) ? data : [];
-
-    if (searchTerm) {
-      filteredData = filteredData.filter((item) =>
-        columns.some((column) => {
-          const value = item[column.accessor];
-          return (
-            value &&
-            value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        })
-      );
-    }
-
-    if (sortConfig.key) {
-      filteredData = [...filteredData].sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    return filteredData;
-  }, [data, sortConfig, searchTerm, columns]);
-
-  const totalPages = Math.ceil(processedData.length / itemsPerPage);
-
-  // Ensure paginatedData is always an array
-  const paginatedData = Array.isArray(processedData)
-    ? processedData.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    )
-    : [];
-
-  return (
-    <div className={`overflow-x-auto ${className}`}>
-      {/* ... rest of the component remains the same ... */}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column.accessor}
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => requestSort(column.accessor)}
-              >
-                <div className="flex items-center">
-                  {column.header}
-                  {sortConfig.key === column.accessor && (
-                    <span className="ml-1">
-                      {sortConfig.direction === "asc" ? (
-                        <ChevronUpIcon className="h-4 w-4" />
-                      ) : (
-                        <ChevronDownIcon className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {Array.isArray(paginatedData) && paginatedData.length > 0 ? (
-            paginatedData.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {columns.map((column) => {
-                  const cellValue = row[column.accessor];
-                  return (
-                    <td
-                      key={`${rowIndex}-${column.accessor}`}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                    >
-                      {column.cell ? (
-                        column.cell(row)
-                      ) : column.isImage ? (
-                        <img
-                          src={cellValue || "/placeholder-image.jpg"}
-                          alt=""
-                          className="h-10 w-10 rounded-md object-cover"
-                        />
-                      ) : column.isCurrency ? (
-                        new Intl.NumberFormat("en-US", {
-                          style: "currency",
-                          currency: "USD"
-                        }).format(cellValue || 0)
-                      ) : column.isStars ? (
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <StarIcon
-                              key={star}
-                              className={`h-4 w-4 ${star <= cellValue
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                      ) : column.isStatus ? (
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded-full ${cellValue === "approved" || cellValue === "active"
-                            ? "bg-green-100 text-green-800"
-                            : cellValue === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : cellValue === "rejected" ||
-                                cellValue === "suspended"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                        >
-                          {cellValue}
-                        </span>
-                      ) : (
-                        cellValue
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="px-6 py-4 text-center text-sm text-gray-500"
-              >
-                {Array.isArray(data) && data.length === 0 ? "No data available" : "Loading..."}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing{" "}
-            <span className="font-medium">
-              {(currentPage - 1) * itemsPerPage + 1}
-            </span>{" "}
-            to{" "}
-            <span className="font-medium">
-              {Math.min(currentPage * itemsPerPage, processedData.length)}
-            </span>{" "}
-            of <span className="font-medium">{processedData.length}</span>{" "}
-            results
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// DashboardOverview Component
-const DashboardOverview = ({ data, loading, error }) => {
-  if (loading)
-    return (
-      <div className="flex justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-      </div>
-    );
-  if (error)
-    return <div className="p-4 text-red-500">Error loading dashboard data</div>;
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Users"
-          value={data?.user_count || 0}
-          change={5}
-          icon={UserGroupIcon}
-          iconColor="text-green-600"
-          bgColor="bg-green-100"
-        />
-        <StatCard
-          title="Total Products"
-          value={data?.product_count || 0}
-          change={12}
-          icon={CubeIcon}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-100"
-        />
-        <StatCard
-          title="Total Orders"
-          value={data?.order_count || 0}
-          change={8}
-          icon={ShoppingBagIcon}
-          iconColor="text-purple-600"
-          bgColor="bg-purple-100"
-        />
-        <StatCard
-          title="Total Revenue"
-          value={
-            data?.total_revenue?.toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-              minimumFractionDigits: 0
-            }) || "$0"
-          }
-          change={15}
-          icon={CurrencyDollarIcon}
-          iconColor="text-yellow-600"
-          bgColor="bg-yellow-100"
-        />
-      </div>
-    </div>
-  );
-};
-
-// UserManagement Component - Enhanced
-const UserManagement = ({
-  users,
-  loading,
-  error,
-  searchTerm,
-  onSearchChange,
-  handleRoleChange,
-  handleUserStatus,
-  handleDeleteUser
-}) => {
-  const columns = [
-    { header: "ID", accessor: "id" },
-    { header: "Name", accessor: "name" },
-    { header: "Email", accessor: "email" },
-    { header: "Phone", accessor: "phone" },
-    {
-      header: "Role",
-      accessor: "role",
-      cell: (row) => (
-        <select
-          value={row.role}
-          onChange={(e) => handleRoleChange(row.id, e.target.value)}
-          className="text-sm border rounded p-1 focus:ring-2 focus:ring-green-500"
-        >
-          <option value="admin">Admin</option>
-          <option value="seller">Seller</option>
-          <option value="buyer">Buyer</option>
-        </select>
-      )
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      isStatus: true,
-      cell: (row) => (
-        <select
-          value={row.is_active ? "active" : "inactive"}
-          onChange={(e) =>
-            handleUserStatus(row.id, e.target.value === "active")
-          }
-          className={`px-2 py-1 text-xs font-medium rounded-full ${row.is_active
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800"
-            } border-0 focus:ring-2 focus:ring-green-500`}
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      )
-    },
-    { header: "Created At", accessor: "created_at" },
-    {
-      header: "Actions",
-      accessor: "actions",
-      cell: (row) => (
-        <div className="flex space-x-2">
-          <button
-            className="text-red-600 hover:text-red-900"
-            onClick={() => handleDeleteUser(row.id)}
-            title="Delete User"
-          >
-            Delete
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  // In UserManagement component, fix the role extraction:
-  const userData = users.map((user) => {
-
-    // Extract role properly - try different possible structures
-    let userRole = "buyer";
-
-    if (user.roles && Array.isArray(user.roles)) {
-      // If roles is an array of objects with 'name' property
-      userRole = user.roles[0]?.name || "buyer";
-    } else if (user.roles && typeof user.roles === 'string') {
-      // If roles is a string
-      userRole = user.roles;
-    } else if (user.role) {
-      // If there's a direct 'role' property
-      userRole = user.role;
-    } else if (user.type) {
-      // Fallback to user type
-      userRole = user.type;
-    }
-
-    return {
-      ...user,
-      role: userRole,
-      status: user.is_active ? "Active" : "Inactive",
-      created_at: new Date(user.created_at).toLocaleDateString(),
-      is_active: user.is_active !== undefined ? user.is_active : true
-    };
-  });
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">User Management</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage all registered users
-          </p>
-        </div>
-        <div className="relative max-w-xs">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search users by name, email, or phone..."
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {loading && (
-        <div className="p-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-        </div>
-      )}
-      {error && (
-        <div className="p-4 text-red-500">
-          Error loading users: {error.message}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <DataTable
-          columns={columns}
-          data={userData}
-          searchTerm={searchTerm}
-          onSearchChange={onSearchChange}
-        />
-      )}
-    </div>
-  );
-};
-
-//Seller Management Component
-const SellerManagement = ({
-  sellers,
-  loading,
-  error,
-  handleSellerStatus,
-  searchTerm,
-  onSearchChange,
-  pagination,
-  onPageChange
-}) => {
-  const columns = [
-    { header: "Store Name", accessor: "store_name" },
-    { header: "Store ID", accessor: "store_id" },
-    { header: "Owner", accessor: "owner_name" },
-    { header: "Business Type", accessor: "business_type" },
-    { header: "Contact Email", accessor: "contact_email" },
-    { header: "City", accessor: "city" },
-    { header: "Rating", accessor: "rating", isStars: true },
-    { header: "Reviews", accessor: "reviews_count" },
-    {
-      header: "Status",
-      accessor: "status",
-      isStatus: true,
-      // Custom status display with dropdown for management
-      cell: (row) => (
-        <select
-          value={row.status}
-          onChange={(e) => handleSellerStatus(row.id, e.target.value)}
-          className={`px-2 py-1 text-xs font-medium rounded-full ${row.status === "approved" || row.status === "active"
-            ? "bg-green-100 text-green-800"
-            : row.status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : row.status === "suspended" || row.status === "closed"
-                ? "bg-red-100 text-red-800"
-                : "bg-gray-100 text-gray-800"
-            } border-0 focus:ring-2 focus:ring-green-500`}
-        >
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="closed">Closed</option>
-        </select>
-      )
-    },
-    { header: "Created At", accessor: "created_at" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const sellerData = sellers.map((seller) => ({
-    ...seller,
-    owner_name: seller.user?.name || "Unknown",
-    rating: seller.reviews_avg_rating || 0,
-    reviews_count: seller.reviews_count || 0,
-    created_at: new Date(seller.created_at).toLocaleDateString(),
-    status: seller.status || "pending",
-    actions: (
-      <div className="flex space-x-2">
-        <button
-          className="text-indigo-600 hover:text-indigo-900"
-          onClick={() =>
-            window.open(`/sellers/${seller.store_slug || seller.id}`, "_blank")
-          }
-          title="View Store"
-        >
-          View Store
-        </button>
-        {seller.status === "pending" && (
-          <button
-            className="text-green-600 hover:text-green-900 flex items-center"
-            onClick={() => handleSellerStatus(seller.id, "approved")}
-            title="Approve Seller"
-          >
-            <CheckIcon className="h-4 w-4 mr-1" />
-            Quick Approve
-          </button>
-        )}
-        {(seller.status === "approved" || seller.status === "active") && (
-          <button
-            className="text-red-600 hover:text-red-900 flex items-center"
-            onClick={() => {
-              const reason = prompt("Please provide a reason for suspension:");
-              if (reason) handleSellerStatus(seller.id, "suspended", reason);
-            }}
-            title="Suspend Seller"
-          >
-            <XMarkIcon className="h-4 w-4 mr-1" />
-            Suspend
-          </button>
-        )}
-      </div>
-    )
-  }));
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Seller Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage seller accounts and status
-          </p>
-        </div>
-        <div className="relative max-w-xs">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search sellers by name, ID, or email..."
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && (
-        <div className="p-4 text-red-500">
-          Error loading sellers: {error.message}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <>
-          <DataTable
-            columns={columns}
-            data={sellerData}
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
-          />
-
-          {/* Pagination */}
-          {pagination && pagination.total > pagination.per_page && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Showing <span className="font-medium">{pagination.from}</span>{" "}
-                to <span className="font-medium">{pagination.to}</span> of{" "}
-                <span className="font-medium">{pagination.total}</span> results
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => onPageChange(pagination.current_page - 1)}
-                  disabled={pagination.current_page === 1}
-                  className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => onPageChange(pagination.current_page + 1)}
-                  disabled={pagination.current_page === pagination.last_page}
-                  className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
-
-// SellerVerificationManagement Component
-const SellerVerificationManagement = ({
-  pendingSellers,
-  loading,
-  error,
-  handleVerifySeller,
-  searchTerm,
-  onSearchChange,
-  refreshData
-}) => {
-  const [selectedSeller, setSelectedSeller] = useState(null);
-  const [verificationData, setVerificationData] = useState({
-    verification_level: 'verified',
-    verification_badge: 'verified',
-    notes: '',
-    badge_duration_days: 365
-  });
-
-  const columns = [
-    {
-      header: "Store",
-      accessor: "store_name",
-      cell: (row) => (
-        <div className="flex items-center">
-          {row.store_logo ? (
-            <img
-              src={row.store_logo}
-              alt={row.store_name}
-              className="h-10 w-10 rounded-lg object-cover mr-3"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
-              <BuildingStorefrontIcon className="h-6 w-6 text-gray-400" />
-            </div>
-          )}
-          <div>
-            <div className="font-medium text-gray-900">{row.store_name}</div>
-            <div className="text-sm text-gray-500">{row.store_id}</div>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Owner",
-      accessor: "owner",
-      cell: (row) => row.user?.name || 'Unknown'
-    },
-    {
-      header: "Business Type",
-      accessor: "business_type"
-    },
-    {
-      header: "Profile Completion",
-      accessor: "profile_completion",
-      cell: (row) => (
-        <div className="w-full">
-          <div className="text-sm text-gray-700 mb-1">
-            {row.profile_completion_percentage || 0}%
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-green-500 h-2 rounded-full"
-              style={{ width: `${row.profile_completion_percentage || 0}%` }}
-            ></div>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Submitted",
-      accessor: "created_at",
-      cell: (row) => new Date(row.created_at).toLocaleDateString()
-    },
-    {
-      header: "Actions",
-      accessor: "actions",
-      cell: (row) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setSelectedSeller(row)}
-            className="text-blue-600 hover:text-blue-900 text-sm"
-          >
-            Review
-          </button>
-          <button
-            onClick={() => handleVerifySeller(row.id, 'approve', {
-              verification_level: 'verified',
-              verification_badge: 'verified',
-              notes: 'Automatically approved'
-            })}
-            className="text-green-600 hover:text-green-900 text-sm"
-          >
-            Quick Approve
-          </button>
-          <button
-            onClick={() => handleVerifySeller(row.id, 'reject', {
-              notes: prompt('Reason for rejection:') || 'Incomplete information'
-            })}
-            className="text-red-600 hover:text-red-900 text-sm"
-          >
-            Reject
-          </button>
-        </div>
-      )
-    }
-  ];
-
-  const handleVerificationSubmit = async () => {
-    if (!selectedSeller) return;
-
-    await handleVerifySeller(selectedSeller.id, 'approve', verificationData);
-    setSelectedSeller(null);
-    setVerificationData({
-      verification_level: 'verified',
-      verification_badge: 'verified',
-      notes: '',
-      badge_duration_days: 365
-    });
-    if (refreshData) refreshData();
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-yellow-600">
-            {Array.isArray(pendingSellers) ? pendingSellers.length : 0}
-          </div>
-          <div className="text-sm text-gray-500">Pending Verification</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {Array.isArray(pendingSellers)
-              ? pendingSellers.filter(s => s.profile_completion_percentage >= 100)?.length || 0
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Complete Profiles</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-blue-600">
-            {Array.isArray(pendingSellers)
-              ? pendingSellers.filter(s => s.business_type !== 'individual')?.length || 0
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Registered Businesses</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-purple-600">
-            2.5
-          </div>
-          <div className="text-sm text-gray-500">Avg. Days to Verify</div>
-        </div>
-      </div>
-
-
-      {/* Main Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Seller Verification Queue
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Review and verify seller applications
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search sellers..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-            <button
-              onClick={refreshData}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-2" />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        {loading && (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-          </div>
-        )}
-
-        {error && (
-          <div className="p-4 text-red-500 bg-red-50">
-            Error: {error.message}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <DataTable
-            columns={columns}
-            data={Array.isArray(pendingSellers) ? pendingSellers : []}
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
-          />
-        )}
-      </div>
-
-      {/* Verification Modal */}
-      {selectedSeller && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">
-                Verify Seller: {selectedSeller.store_name}
-              </h3>
-              <button
-                onClick={() => setSelectedSeller(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Seller Information */}
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Store Information</h4>
-                <dl className="space-y-2">
-                  <div>
-                    <dt className="text-sm text-gray-500">Store Name</dt>
-                    <dd className="text-sm font-medium">{selectedSeller.store_name}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm text-gray-500">Business Type</dt>
-                    <dd className="text-sm font-medium">{selectedSeller.business_type}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm text-gray-500">Contact Email</dt>
-                    <dd className="text-sm font-medium">{selectedSeller.contact_email}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm text-gray-500">Contact Phone</dt>
-                    <dd className="text-sm font-medium">{selectedSeller.contact_phone}</dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Verification Requirements</h4>
-                <div className="space-y-2">
-                  {selectedSeller.verification_requirements?.map((req, index) => (
-                    <div key={index} className="flex items-center">
-                      {req.completed ? (
-                        <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                      ) : (
-                        <XCircleIcon className="h-5 w-5 text-red-500 mr-2" />
-                      )}
-                      <span className={`text-sm ${req.completed ? 'text-gray-700' : 'text-gray-500'}`}>
-                        {req.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Verification Options */}
-            <div className="mb-6">
-              <h4 className="font-medium text-gray-900 mb-3">Verification Options</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Verification Level
-                  </label>
-                  <select
-                    value={verificationData.verification_level}
-                    onChange={(e) => setVerificationData({ ...verificationData, verification_level: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="basic">Basic</option>
-                    <option value="verified">Verified</option>
-                    <option value="premium">Premium</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Badge Type
-                  </label>
-                  <select
-                    value={verificationData.verification_badge}
-                    onChange={(e) => setVerificationData({ ...verificationData, verification_badge: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="verified">Verified Badge</option>
-                    <option value="premium">Premium Badge</option>
-                    <option value="top_rated">Top Rated</option>
-                    <option value="fast_shipper">Fast Shipper</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Verification Notes
-              </label>
-              <textarea
-                value={verificationData.notes}
-                onChange={(e) => setVerificationData({ ...verificationData, notes: e.target.value })}
-                rows={3}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                placeholder="Add notes for the seller..."
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setSelectedSeller(null)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleVerifySeller(selectedSeller.id, 'reject', {
-                  notes: verificationData.notes || 'Rejected by administrator'
-                })}
-                className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
-              >
-                Reject
-              </button>
-              <button
-                onClick={handleVerificationSubmit}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Approve & Verify
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ProductManagement Component
-const ProductManagement = ({
-  products,
-  loading,
-  error,
-  navigate,
-  handleProductStatus
-}) => {
-  const columns = [
-    { header: "Image", accessor: "image", isImage: true },
-    { header: "Name", accessor: "name" },
-    { header: "Myanmar Name", accessor: "name_mm" },
-    { header: "Category", accessor: "category" },
-    { header: "Price", accessor: "price", isCurrency: true },
-    { header: "Stock", accessor: "stock" },
-    { header: "Min Order", accessor: "min_order" },
-    { header: "Status", accessor: "status" },
-    { header: "Created At", accessor: "created_at" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const handleDelete = async (productId) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await api.delete(`/products/${productId}`);
-        // You might want to add a callback to refresh the product list
-        alert("Product deleted successfully");
-      } catch (error) {
-        alert("Failed to delete product");
-      }
-    }
-  };
-
-  const productData = products.map((product) => ({
-    ...product,
-    image: product.images?.[0]?.url || "/placeholder-product.jpg",
-    category: product.category?.name || "Uncategorized",
-    price: product.price || 0,
-    stock: product.quantity || 0,
-    min_order: product.min_order || 1,
-    status: product.is_active ? "Active" : "Inactive",
-    created_at: new Date(product.created_at).toLocaleDateString(),
-    actions: (
-      <div className="flex space-x-2">
-        <button
-          className="text-indigo-600 hover:text-indigo-900"
-          onClick={() => navigate(`/products/${product.id}/edit`)}
-        >
-          Edit
-        </button>
-        <select
-          value={product.is_active ? "active" : "inactive"}
-          onChange={(e) =>
-            handleProductStatus(product.id, e.target.value === "active")
-          }
-          className="text-sm border rounded p-1"
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <button
-          className="text-red-600 hover:text-red-900"
-          onClick={() => handleDelete(product.id)}
-        >
-          Delete
-        </button>
-      </div>
-    )
-  }));
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Product Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">Manage all products</p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            onClick={() => navigate("/products/create")}
-          >
-            Add New Product
-          </button>
-        </div>
-      </div>
-
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading products</div>}
-
-      {!loading && !error && <DataTable columns={columns} data={productData} />}
-    </div>
-  );
-};
-
-// ReviewManagement Component
-const ReviewManagement = ({ reviews, loading, error, handleReviewStatus }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const columns = [
-    { header: "ID", accessor: "id" },
-    { header: "User", accessor: "user_name" },
-    { header: "Product", accessor: "product_name" },
-    { header: "Rating", accessor: "rating", isStars: true },
-    { header: "Comment", accessor: "comment" },
-    { header: "Status", accessor: "status", isStatus: true },
-    { header: "Date", accessor: "date" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const reviewData = reviews.map((review) => ({
-    ...review,
-    user_name: review.user?.name || "Unknown User",
-    product_name: review.product?.name || "Unknown Product",
-    status: review.status || "pending",
-    date: new Date(review.created_at).toLocaleDateString(),
-    actions: (
-      <div className="flex space-x-2">
-        {review.status === "pending" && (
-          <>
-            <button
-              className="text-green-600 hover:text-green-900 flex items-center"
-              onClick={() => handleReviewStatus(review.id, "approved")}
-              title="Approve Review"
-            >
-              <CheckIcon className="h-4 w-4 mr-1" />
-              Approve
-            </button>
-            <button
-              className="text-red-600 hover:text-red-900 flex items-center"
-              onClick={() => handleReviewStatus(review.id, "rejected")}
-              title="Reject Review"
-            >
-              <XMarkIcon className="h-4 w-4 mr-1" />
-              Reject
-            </button>
-          </>
-        )}
-        {review.status === "approved" && (
-          <button
-            className="text-red-600 hover:text-red-900 flex items-center"
-            onClick={() => handleReviewStatus(review.id, "rejected")}
-            title="Reject Review"
-          >
-            <XMarkIcon className="h-4 w-4 mr-1" />
-            Reject
-          </button>
-        )}
-        {review.status === "rejected" && (
-          <button
-            className="text-green-600 hover:text-green-900 flex items-center"
-            onClick={() => handleReviewStatus(review.id, "approved")}
-            title="Approve Review"
-          >
-            <CheckIcon className="h-4 w-4 mr-1" />
-            Approve
-          </button>
-        )}
-      </div>
-    )
-  }));
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Review Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage product reviews and ratings
-          </p>
-        </div>
-      </div>
-
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading reviews</div>}
-
-      {!loading && !error && (
-        <DataTable
-          columns={columns}
-          data={reviewData}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
-      )}
-    </div>
-  );
-};
-
-// OrderManagement Component
-const OrderManagement = ({ orders, loading, error, updateOrderStatus }) => {
-  const columns = [
-    { header: "Order #", accessor: "id" },
-    { header: "Date", accessor: "date" },
-    { header: "Customer", accessor: "customer" },
-    { header: "Amount", accessor: "amount", isCurrency: true },
-    { header: "Status", accessor: "status" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const orderData = orders.map((order) => ({
-    ...order,
-    date: new Date(order.created_at).toLocaleDateString(),
-    customer: order.user?.name || order.customer_name || "Unknown",
-    amount: order.total_amount || order.total || 0,
-    status: order.status || "pending",
-    actions: (
-      <div className="flex space-x-2">
-        <select
-          value={order.status || "pending"}
-          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-          className="text-sm border rounded p-1"
-        >
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <button className="text-indigo-600 hover:text-indigo-900">
-          View Details
-        </button>
-      </div>
-    )
-  }));
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Order Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Track and manage all orders
-          </p>
-        </div>
-      </div>
-
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading orders</div>}
-
-      {!loading && !error && <DataTable columns={columns} data={orderData} />}
-    </div>
-  );
-};
-
-// Analytics Component
-const Analytics = ({ products }) => {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-6">
-        Sales Analytics
-      </h3>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gray-50 p-6 rounded-xl">
-          <h4 className="text-md font-medium text-gray-700 mb-4">
-            Revenue Overview
-          </h4>
-          <div className="bg-white p-4 rounded-lg h-64 flex items-center justify-center">
-            <div className="text-gray-500">Revenue chart visualization</div>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 p-6 rounded-xl">
-          <h4 className="text-md font-medium text-gray-700 mb-4">
-            Top Selling Products
-          </h4>
-          <div className="space-y-4">
-            {products.slice(0, 5).map((product, index) => (
-              <div key={product.id} className="flex items-center">
-                <div className="text-gray-500 font-medium mr-4">
-                  {index + 1}
-                </div>
-                <div className="flex-shrink-0 h-10 w-10">
-                  <img
-                    className="h-10 w-10 rounded-md object-cover"
-                    src={
-                      product.images?.[0]?.url ||
-                      product.image ||
-                      "/placeholder-product.jpg"
-                    }
-                    alt={product.name}
-                  />
-                </div>
-                <div className="ml-3">
-                  <div className="text-sm font-medium text-gray-900">
-                    {product.name}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Sold: {product.sold_count || 0}
-                  </div>
-                </div>
-                <div className="ml-auto text-sm font-medium">
-                  {product.price.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 0
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Settings Component
-const Settings = () => {
-  return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-6">
-        System Settings
-      </h3>
-      <div className="space-y-6">
-        <div className="bg-gray-50 p-6 rounded-xl">
-          <h4 className="text-md font-medium text-gray-700 mb-4">
-            General Settings
-          </h4>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
-                Maintenance Mode
-              </label>
-              <button className="bg-gray-200 relative inline-flex h-6 w-11 items-center rounded-full">
-                <span className="sr-only">Enable maintenance mode</span>
-                <span className="translate-x-1 inline-block h-4 w-4 transform rounded-full bg-white"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// CategoryManagement Component
-const CategoryManagement = ({ categories, loading, error, navigate }) => {
-  const [expandedCategories, setExpandedCategories] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const toggleCategory = (categoryId) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [categoryId]: !prev[categoryId]
-    }));
-  };
-
-  const handleDelete = async (categoryId) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      try {
-        await api.delete(`/categories/${categoryId}`);
-        // You might want to add a callback to refresh the category list
-        alert("Category deleted successfully");
-      } catch (error) {
-        alert(error.response?.data?.message || "Failed to delete category");
-      }
-    }
-  };
-
-  // Flatten the category tree for display with proper indentation
-  const flattenCategories = (categories, level = 0) => {
-    let result = [];
-
-    categories.forEach((category) => {
-      result.push({
-        ...category,
-        level,
-        hasChildren: category.children && category.children.length > 0,
-        isExpanded: expandedCategories[category.id] || false
-      });
-
-      // If category is expanded, add its children
-      if (expandedCategories[category.id] && category.children) {
-        result = result.concat(flattenCategories(category.children, level + 1));
-      }
-    });
-
-    return result;
-  };
-
-  // Filter categories based on search term
-  const filteredCategories = categories.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.name_mm?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const flattenedCategories = flattenCategories(filteredCategories);
-
-  const columns = [
-    { header: "Name", accessor: "name" },
-    { header: "Myanmar Name", accessor: "name_mm" },
-    { header: "Description", accessor: "description" },
-    { header: "Commission", accessor: "commission_rate" },
-    { header: "Level", accessor: "level" },
-    { header: "Actions", accessor: "actions" }
-  ];
-
-  const categoryData = flattenedCategories.map((category) => ({
-    ...category,
-    commission_rate: `${category.commission_rate}%`,
-    name: (
-      <div
-        className="flex items-center"
-        style={{ paddingLeft: `${category.level * 24}px` }}
-      >
-        {category.hasChildren && (
-          <button
-            onClick={() => toggleCategory(category.id)}
-            className="mr-1 text-gray-500 hover:text-gray-700"
-          >
-            {category.isExpanded ? (
-              <ChevronDownIcon className="h-4 w-4" />
-            ) : (
-              <ChevronRightIcon className="h-4 w-4" />
-            )}
-          </button>
-        )}
-        {!category.hasChildren && <span className="ml-5"></span>}
-        <span className="ml-1">{category.name}</span>
-      </div>
-    ),
-    actions: (
-      <div className="flex space-x-2">
-        <button
-          className="text-indigo-600 hover:text-indigo-900"
-          onClick={() => navigate(`/categories/${category.id}/edit`)}
-        >
-          Edit
-        </button>
-        <button
-          className="text-red-600 hover:text-red-900"
-          onClick={() => handleDelete(category.id)}
-        >
-          Delete
-        </button>
-      </div>
-    )
-  }));
-
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Category Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage product categories and hierarchy
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <button
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            onClick={() => navigate("/categories/create")}
-          >
-            Add New Category
-          </button>
-        </div>
-      </div>
-
-      <div className="p-4 border-b border-gray-200">
-        <div className="relative max-w-xs">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search categories..."
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {loading && (
-        <div className="p-8 flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 text-red-500 bg-red-50">
-          Error loading categories: {error.message}
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                {columns.map((column) => (
-                  <th
-                    key={column.accessor}
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    {column.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {categoryData.length > 0 ? (
-                categoryData.map((category, index) => (
-                  <tr
-                    key={index}
-                    className={category.level > 0 ? "bg-gray-50" : ""}
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={column.accessor}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                      >
-                        {category[column.accessor]}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    {searchTerm
-                      ? "No categories found matching your search"
-                      : "No categories available"}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-};
+// const DataTable = ({
+//   columns,
+//   data,
+//   searchTerm = "",
+//   onSearchChange = () => { },
+//   className = ""
+// }) => {
+//   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const itemsPerPage = 10;
+
+//   const requestSort = (key) => {
+//     let direction = "asc";
+//     if (sortConfig.key === key && sortConfig.direction === "asc") {
+//       direction = "desc";
+//     }
+//     setSortConfig({ key, direction });
+//   };
+
+//   const processedData = React.useMemo(() => {
+//     // Ensure data is an array
+//     let filteredData = Array.isArray(data) ? data : [];
+
+//     if (searchTerm) {
+//       filteredData = filteredData.filter((item) =>
+//         columns.some((column) => {
+//           const value = item[column.accessor];
+//           return (
+//             value &&
+//             value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+//           );
+//         })
+//       );
+//     }
+
+//     if (sortConfig.key) {
+//       filteredData = [...filteredData].sort((a, b) => {
+//         const aValue = a[sortConfig.key];
+//         const bValue = b[sortConfig.key];
+
+//         if (aValue < bValue) {
+//           return sortConfig.direction === "asc" ? -1 : 1;
+//         }
+//         if (aValue > bValue) {
+//           return sortConfig.direction === "asc" ? 1 : -1;
+//         }
+//         return 0;
+//       });
+//     }
+
+//     return filteredData;
+//   }, [data, sortConfig, searchTerm, columns]);
+
+//   const totalPages = Math.ceil(processedData.length / itemsPerPage);
+
+//   // Ensure paginatedData is always an array
+//   const paginatedData = Array.isArray(processedData)
+//     ? processedData.slice(
+//       (currentPage - 1) * itemsPerPage,
+//       currentPage * itemsPerPage
+//     )
+//     : [];
+
+//   return (
+//     <div className={`overflow-x-auto ${className}`}>
+//       {/* ... rest of the component remains the same ... */}
+//       <table className="min-w-full divide-y divide-gray-200">
+//         <thead className="bg-gray-50">
+//           <tr>
+//             {columns.map((column) => (
+//               <th
+//                 key={column.accessor}
+//                 scope="col"
+//                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+//                 onClick={() => requestSort(column.accessor)}
+//               >
+//                 <div className="flex items-center">
+//                   {column.header}
+//                   {sortConfig.key === column.accessor && (
+//                     <span className="ml-1">
+//                       {sortConfig.direction === "asc" ? (
+//                         <ChevronUpIcon className="h-4 w-4" />
+//                       ) : (
+//                         <ChevronDownIcon className="h-4 w-4" />
+//                       )}
+//                     </span>
+//                   )}
+//                 </div>
+//               </th>
+//             ))}
+//           </tr>
+//         </thead>
+//         <tbody className="bg-white divide-y divide-gray-200">
+//           {Array.isArray(paginatedData) && paginatedData.length > 0 ? (
+//             paginatedData.map((row, rowIndex) => (
+//               <tr key={rowIndex}>
+//                 {columns.map((column) => {
+//                   const cellValue = row[column.accessor];
+//                   return (
+//                     <td
+//                       key={`${rowIndex}-${column.accessor}`}
+//                       className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+//                     >
+//                       {column.cell ? (
+//                         column.cell(row)
+//                       ) : column.isImage ? (
+//                         <img
+//                           src={cellValue || "/placeholder-image.jpg"}
+//                           alt=""
+//                           className="h-10 w-10 rounded-md object-cover"
+//                         />
+//                       ) : column.isCurrency ? (
+//                         new Intl.NumberFormat("en-US", {
+//                           style: "currency",
+//                           currency: "USD"
+//                         }).format(cellValue || 0)
+//                       ) : column.isStars ? (
+//                         <div className="flex">
+//                           {[1, 2, 3, 4, 5].map((star) => (
+//                             <StarIcon
+//                               key={star}
+//                               className={`h-4 w-4 ${star <= cellValue
+//                                 ? "text-yellow-400 fill-yellow-400"
+//                                 : "text-gray-300"
+//                                 }`}
+//                             />
+//                           ))}
+//                         </div>
+//                       ) : column.isStatus ? (
+//                         <span
+//                           className={`px-2 py-1 text-xs font-medium rounded-full ${cellValue === "approved" || cellValue === "active"
+//                             ? "bg-green-100 text-green-800"
+//                             : cellValue === "pending"
+//                               ? "bg-yellow-100 text-yellow-800"
+//                               : cellValue === "rejected" ||
+//                                 cellValue === "suspended"
+//                                 ? "bg-red-100 text-red-800"
+//                                 : "bg-gray-100 text-gray-800"
+//                             }`}
+//                         >
+//                           {cellValue}
+//                         </span>
+//                       ) : (
+//                         cellValue
+//                       )}
+//                     </td>
+//                   );
+//                 })}
+//               </tr>
+//             ))
+//           ) : (
+//             <tr>
+//               <td
+//                 colSpan={columns.length}
+//                 className="px-6 py-4 text-center text-sm text-gray-500"
+//               >
+//                 {Array.isArray(data) && data.length === 0 ? "No data available" : "Loading..."}
+//               </td>
+//             </tr>
+//           )}
+//         </tbody>
+//       </table>
+
+//       {totalPages > 1 && (
+//         <div className="mt-4 flex items-center justify-between">
+//           <div className="text-sm text-gray-500">
+//             Showing{" "}
+//             <span className="font-medium">
+//               {(currentPage - 1) * itemsPerPage + 1}
+//             </span>{" "}
+//             to{" "}
+//             <span className="font-medium">
+//               {Math.min(currentPage * itemsPerPage, processedData.length)}
+//             </span>{" "}
+//             of <span className="font-medium">{processedData.length}</span>{" "}
+//             results
+//           </div>
+//           <div className="flex space-x-2">
+//             <button
+//               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+//               disabled={currentPage === 1}
+//               className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
+//             >
+//               Previous
+//             </button>
+//             <button
+//               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+//               disabled={currentPage === totalPages}
+//               className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50"
+//             >
+//               Next
+//             </button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
@@ -1556,69 +280,12 @@ const AdminDashboard = () => {
   const [verificationError, setVerificationError] = useState(null);
   const [verificationSearchTerm, setVerificationSearchTerm] = useState("");
 
-  // Fetch pending sellers for verification
-  const fetchPendingSellers = async () => {
-    setIsVerificationLoading(true);
-    setVerificationError(null);
-    try {
-      const response = await api.get('/admin/sellers/pending-verification');
-      setPendingSellers(response.data.data || []);
-    } catch (error) {
-      setVerificationError(error);
-      console.error('Error fetching pending sellers:', error);
-    } finally {
-      setIsVerificationLoading(false);
-    }
-  };
+  // ADD BUSINESS TYPES STATE
+  const [businessTypes, setBusinessTypes] = useState([]);
+  const [isBusinessTypesLoading, setIsBusinessTypesLoading] = useState(false);
+  const [businessTypesError, setBusinessTypesError] = useState(null);
 
-  const handleVerificationSubmit = async () => {
-    if (!selectedSeller) return;
-    setIsVerificationLoading(true);
-    setVerificationError(null);
-    try {
-      await api.post(`/admin/sellers/${selectedSeller.id}/verify`, verificationData);
-      alert("Seller verified successfully");
-      setSelectedSeller(null);
-      // Refresh pending sellers
-      fetchPendingSellers();
-    } catch (error) {
-      setVerificationError(error);
-      console.error("Error verifying seller:", error);
-    } finally {
-      setIsVerificationLoading(false);
-    }
-  };
-
-  // Handle seller verification
-  const handleVerifySeller = async (sellerId, action, data = {}) => {
-    try {
-      let endpoint = `/admin/sellers/${sellerId}/verify`;
-      let method = 'POST';
-
-      if (action === 'reject') {
-        endpoint = `/admin/sellers/${sellerId}/reject`;
-      }
-
-      const response = await api({
-        method,
-        url: endpoint,
-        data
-      });
-
-      if (response.data.success) {
-        alert(`Seller ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
-        fetchPendingSellers(); // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error verifying seller:', error);
-      alert('Failed to process seller verification');
-    }
-  };
-
-  // Fetch verification data (alias for fetchPendingSellers)
-  const fetchVerificationData = fetchPendingSellers;
-
-  // Loading states
+  // Loading states - ADD BUSINESS TYPES LOADING
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [isProductsLoading, setIsProductsLoading] = useState(false);
@@ -1636,6 +303,152 @@ const AdminDashboard = () => {
   const [ordersError, setOrdersError] = useState(null);
   const [categoriesError, setCategoriesError] = useState(null);
   const [sellersError, setSellersError] = useState(null);
+
+  // In AdminDashboard.js
+  const handleVerifySeller = async (sellerId, action, data = {}) => {
+    try {
+      let endpoint = '';
+      let method = 'POST';
+
+      if (action === 'approve') {
+        // Use the seller verification endpoint
+        endpoint = `/dashboard/seller/${sellerId}/verify`;
+        method = 'POST';
+
+        // Prepare verification data
+        const verificationData = {
+          verification_level: data.verification_level || 'verified',
+          badge_type: data.badge_type || 'verified',
+          notes: data.notes || 'Approved by admin',
+        };
+
+        const response = await api({
+          method,
+          url: endpoint,
+          data: verificationData
+        });
+
+        if (response.data.success) {
+          alert('Seller verification approved successfully');
+          fetchPendingSellers(); // Refresh verification queue
+          // Also refresh sellers list
+          fetchSellers();
+        }
+      } else if (action === 'reject') {
+        endpoint = `/dashboard/seller/${sellerId}/reject`;
+        method = 'POST';
+
+        const response = await api({
+          method,
+          url: endpoint,
+          data: { reason: data.reason || 'Rejected by administrator' }
+        });
+
+        if (response.data.success) {
+          alert('Seller verification rejected successfully');
+          fetchPendingSellers();
+        }
+      }
+
+    } catch (error) {
+      console.error('Error processing seller verification:', error);
+      alert(error.response?.data?.message || `Failed to ${action} seller verification`);
+    }
+  };
+
+  // Separate function for verification actions
+  const handleSellerVerification = async (sellerId, action, data = {}) => {
+    try {
+      let endpoint, method;
+
+      if (action === 'approve') {
+        endpoint = `/${sellerId}/verify`;
+        method = 'POST';
+      } else if (action === 'reject') {
+        endpoint = `/dashboard/seller/${sellerId}/reject`;
+        method = 'POST';
+      } else if (action === 'update_status') {
+        endpoint = `/dashboard/seller/${sellerId}/verification-status`;
+        method = 'PUT';
+      }
+
+      const response = await api({
+        method,
+        url: endpoint,
+        data
+      });
+
+      if (response.data.success) {
+        alert(`Seller ${action}ed successfully`);
+        fetchPendingSellers(); // Refresh verification queue
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Error in seller verification:', error);
+      throw error;
+    }
+  };
+
+  // Separate function for status management
+  const handleSellerStatusUpdate = async (sellerId, status, reason = '') => {
+    try {
+      const response = await api.put(`/dashboard/seller/${sellerId}/status`, {
+        status,
+        reason
+      });
+
+      if (response.data.success) {
+        alert(`Seller status updated to ${status} successfully`);
+        // Update local state for SellerManagement
+        setSellers(prevSellers =>
+          prevSellers.map(seller =>
+            seller.id === sellerId ? { ...seller, status } : seller
+          )
+        );
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Error updating seller status:', error);
+      throw error;
+    }
+  };
+
+  // Fetch pending sellers
+  const fetchPendingSellers = async () => {
+    setIsVerificationLoading(true);
+    setVerificationError(null);
+    try {
+      // Use the new verification review endpoint
+      const response = await api.get('/dashboard/seller/verification-review');
+      setPendingSellers(response.data);
+    } catch (error) {
+      setVerificationError(error);
+      console.error('Error fetching sellers for verification:', error);
+    } finally {
+      setIsVerificationLoading(false);
+    }
+  };
+
+  const handleVerificationSubmit = async () => {
+    if (!selectedSeller) return;
+    setIsVerificationLoading(true);
+    setVerificationError(null);
+    try {
+      await api.post(`/dashboard/seller/${selectedSeller.id}/verify`, verificationData);
+      alert("Seller verified successfully");
+      setSelectedSeller(null);
+      // Refresh pending sellers
+      fetchPendingSellers();
+    } catch (error) {
+      setVerificationError(error);
+      console.error("Error verifying seller:", error);
+    } finally {
+      setIsVerificationLoading(false);
+    }
+  };
+
+  // Fetch verification data (alias for fetchPendingSellers)
+  const fetchVerificationData = fetchPendingSellers;
 
   // Check authentication
   useEffect(() => {
@@ -1699,8 +512,8 @@ const AdminDashboard = () => {
       setSellersError(null);
       try {
         const params = {
-          search: sellerSearchTerm || undefined, // Only send if not empty
-          page: sellerSearchPage || 1 // Add page state if you want pagination
+          search: sellerSearchTerm || undefined,
+          page: sellerSearchPage || 1
         };
 
         const response = await api.get("/dashboard/sellers", { params });
@@ -1729,9 +542,8 @@ const AdminDashboard = () => {
     };
 
     fetchSellers();
-  }, [activeTab, sellerSearchTerm, sellerSearchPage]); // Add sellerSearchPage to dependencies if using pagination
+  }, [activeTab, sellerSearchTerm, sellerSearchPage]);
 
-  // Fetch products when products tab is active
   useEffect(() => {
     if (activeTab !== 3) return;
 
@@ -1740,7 +552,7 @@ const AdminDashboard = () => {
       setProductsError(null);
       try {
         const response = await api.get("/products");
-        // Handle different API response structures
+
         const productsData = response.data.data || response.data;
         setProducts(Array.isArray(productsData) ? productsData : []);
       } catch (error) {
@@ -1754,6 +566,40 @@ const AdminDashboard = () => {
     fetchProducts();
   }, [activeTab]);
 
+  // Add this function to your AdminDashboard component
+  const fetchSellers = async () => {
+    setIsSellersLoading(true);
+    setSellersError(null);
+    try {
+      const params = {
+        search: sellerSearchTerm || undefined,
+        page: sellerSearchPage || 1
+      };
+
+      const response = await api.get("/dashboard/sellers", { params });
+
+      if (response.data.data && response.data.data.data) {
+        setSellers(response.data.data.data);
+        setSellersPagination({
+          current_page: response.data.data.current_page,
+          per_page: response.data.data.per_page,
+          total: response.data.data.total,
+          last_page: response.data.data.last_page,
+          from: response.data.data.from,
+          to: response.data.data.to
+        });
+      } else {
+        setSellers(response.data.data || []);
+        setSellersPagination(null);
+      }
+    } catch (error) {
+      setSellersError(error);
+      console.error("Error fetching sellers:", error);
+    } finally {
+      setIsSellersLoading(false);
+    }
+  };
+
   // Fetch reviews when reviews tab is active
   useEffect(() => {
     if (activeTab !== 4) return;
@@ -1763,7 +609,7 @@ const AdminDashboard = () => {
       setReviewsError(null);
       try {
         const response = await api.get("/dashboard/reviews");
-        // Handle different API response structures
+
         const reviewsData = response.data.data || response.data;
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       } catch (error) {
@@ -1786,7 +632,7 @@ const AdminDashboard = () => {
       setOrdersError(null);
       try {
         const response = await api.get("/orders");
-        // Handle different API response structures
+
         const ordersData = response.data.data || response.data;
         setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (error) {
@@ -1822,6 +668,8 @@ const AdminDashboard = () => {
     fetchCategories();
   }, [activeTab]);
 
+
+  // Refresh handler for all tabs
   const handleRefresh = async () => {
     switch (activeTab) {
       case 0:
@@ -1849,7 +697,7 @@ const AdminDashboard = () => {
         break;
       case 2:
         try {
-          const response = await api.get("/dashboard/sellers", {
+          const response = await api.get("/dashboard/seller", {
             params: sellerSearchTerm
           });
           // Handle response as in useEffect
@@ -1921,13 +769,86 @@ const AdminDashboard = () => {
           setIsCategoriesLoading(false);
         }
         break;
+      case 7:
+        fetchPendingSellers();
+        break;
+      case 8:
+        // Business types tab
+        refreshBusinessTypes();
+        break;
       default:
         break;
     }
   };
 
+  // Fetch business types when business types tab is active
+  useEffect(() => {
+    if (activeTab !== 8) return;
+
+    const fetchBusinessTypes = async () => {
+      setIsBusinessTypesLoading(true);
+      setBusinessTypesError(null);
+      try {
+        const response = await api.get("/business-types");
+        const businessTypesData = response.data.data || response.data;
+        setBusinessTypes(Array.isArray(businessTypesData) ? businessTypesData : []);
+      } catch (error) {
+        setBusinessTypesError(error);
+        console.error("Error fetching business types:", error);
+      } finally {
+        setIsBusinessTypesLoading(false);
+      }
+    };
+
+    fetchBusinessTypes();
+  }, [activeTab]);
+
+
+  // Handlers for business types
+  const handleCreateBusinessType = async (data) => {
+    try {
+      const response = await api.post("/dashboard/business-types", data);
+      alert("Business type created successfully");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleUpdateBusinessType = async (id, data) => {
+    try {
+      const response = await api.put(`/dashboard/business-types/${id}`, data);
+      alert("Business type updated successfully");
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleDeleteBusinessType = async (id) => {
+    try {
+      await api.delete(`/dashboard/business-types/${id}`);
+      alert("Business type deleted successfully");
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Refresh business types
+  const refreshBusinessTypes = async () => {
+    setIsBusinessTypesLoading(true);
+    try {
+      const response = await api.get("/business-types");
+      const businessTypesData = response.data.data || response.data;
+      setBusinessTypes(Array.isArray(businessTypesData) ? businessTypesData : []);
+    } catch (error) {
+      setBusinessTypesError(error);
+    } finally {
+      setIsBusinessTypesLoading(false);
+    }
+  };
+
   //Handle user status
-  // In your handleUserStatus function, add a fallback:
   const handleUserStatus = async (userId, isActive) => {
     try {
       // Try the new endpoint first
@@ -1947,9 +868,9 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Failed to update user status:", error);
 
-      // Fallback: try using the role assignment endpoint
+
       try {
-        const role = isActive ? "buyer" : "suspended"; // Adjust based on your role system
+        const role = isActive ? "buyer" : "suspended";
         await api.post(`/users/${userId}/assign-roles`, { roles: [role] });
 
         // Update local state
@@ -2018,10 +939,8 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle seller status change
   const handleSellerStatus = async (sellerId, status, reason = "") => {
     try {
-      let response;
       let data = { status };
 
       // Add reason if provided
@@ -2029,8 +948,9 @@ const AdminDashboard = () => {
         data.reason = reason;
       }
 
-      // Use PUT request to update seller status
-      response = await api.put(`/sellers/${sellerId}`, data);
+      // Use Post request to update seller status
+      const response = await api.post(`/dashboard/seller/${sellerId}/approve`, data);
+      // OR use the seller endpoint: `/sellers/${sellerId}`
 
       if (response.data.success) {
         // Update the local state
@@ -2052,7 +972,7 @@ const AdminDashboard = () => {
   // Handle search for sellers
   const handleSellerSearch = (value, type = "search") => {
     if (type === "status" && value === "") {
-      // When "All Status" is selected, set status to empty
+
       setSellerSearchTerm((prev) => ({ ...prev, status: "", page: 1 }));
     } else {
       setSellerSearchTerm((prev) => ({ ...prev, [type]: value, page: 1 }));
@@ -2071,11 +991,10 @@ const AdminDashboard = () => {
       let method = "POST";
 
       if (status === "approved") {
-        endpoint = `/reviews/${reviewId}/approve`; // Changed from 'approved' to 'approve'
+        endpoint = `/reviews/${reviewId}/approve`;
       } else if (status === "rejected") {
         endpoint = `/reviews/${reviewId}/reject`;
       } else {
-        // For other status changes, use the generic endpoint
         endpoint = `/reviews/${reviewId}/status`;
         method = "PUT";
       }
@@ -2106,7 +1025,7 @@ const AdminDashboard = () => {
   // Handle order status update
   const updateOrderStatus = async (orderId, status) => {
     try {
-      // Use appropriate endpoint based on status
+
       let endpoint = "";
       if (status === "confirmed") endpoint = "confirm";
       else if (status === "shipped") endpoint = "ship";
@@ -2115,7 +1034,7 @@ const AdminDashboard = () => {
       if (endpoint) {
         await api.post(`/orders/${orderId}/${endpoint}`);
       } else {
-        // For other status updates, use a generic update
+
         await api.put(`/orders/${orderId}`, { status });
       }
 
@@ -2137,7 +1056,7 @@ const AdminDashboard = () => {
         <DashboardOverview
           data={dashboardData}
           loading={isDashboardLoading}
-          error={dashboardError} // Pass the error state to the component
+          error={dashboardError}
         />
       )
     },
@@ -2165,15 +1084,14 @@ const AdminDashboard = () => {
           sellers={sellers}
           loading={isSellersLoading}
           error={sellersError}
-          handleSellerStatus={handleSellerStatus}
-          searchTerm={sellerSearchTerm} // Now just a string
-          onSearchChange={setSellerSearchTerm} // Simple setter function
+          handleSellerStatus={handleSellerStatus} // This is passed as prop
+          searchTerm={sellerSearchTerm}
+          onSearchChange={setSellerSearchTerm}
           pagination={sellersPagination}
-          onPageChange={setSellerSearchPage} // If you want pagination
+          onPageChange={setSellerSearchPage}
         />
       )
     },
-    // Seller Verification Tab
     {
       name: "Seller Verification",
       icon: ShieldCheckIcon,
@@ -2244,9 +1162,24 @@ const AdminDashboard = () => {
       )
     },
     {
+      name: "Business Types",
+      icon: BriefcaseIcon,
+      component: (
+        <BusinessTypeManagement
+          businessTypes={businessTypes}
+          loading={isBusinessTypesLoading}
+          error={businessTypesError}
+          refreshData={refreshBusinessTypes}
+          onCreate={handleCreateBusinessType}
+          onUpdate={handleUpdateBusinessType}
+          onDelete={handleDeleteBusinessType}
+        />
+      )
+    },
+    {
       name: t("analytics"),
       icon: CurrencyDollarIcon,
-      component: <Analytics products={products} />
+      component: <AnalyticsManagement products={products} />
     },
     {
       name: t("settings"),

@@ -61,6 +61,9 @@ const SellerProfile = () => {
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("success");
 
+  const [logoError, setLogoError] = useState(false);
+
+
   useEffect(() => {
     const fetchSellerData = async () => {
       try {
@@ -262,8 +265,8 @@ const SellerProfile = () => {
           className="fixed top-4 mx-auto z-50 max-w-sm w-full"
         >
           <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success"
-              ? "bg-green-50 border-green-500"
-              : "bg-red-50 border-red-500"
+            ? "bg-green-50 border-green-500"
+            : "bg-red-50 border-red-500"
             }`}>
             <div className="p-4">
               <div className="flex items-start">
@@ -284,8 +287,8 @@ const SellerProfile = () => {
                   <button
                     onClick={() => setShowPopup(false)}
                     className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success"
-                        ? "focus:ring-green-500 text-green-400 hover:text-green-500"
-                        : "focus:ring-red-500 text-red-400 hover:text-red-500"
+                      ? "focus:ring-green-500 text-green-400 hover:text-green-500"
+                      : "focus:ring-red-500 text-red-400 hover:text-red-500"
                       }`}
                   >
                     <XMarkIcon className="h-5 w-5" />
@@ -378,21 +381,17 @@ const SellerProfile = () => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row">
             <div className="md:w-1/4 mb-6 md:mb-0">
-              {seller.store_logo ? (
+              {!logoError && seller.store_logo ? (
                 <img
                   src={seller.store_logo}
                   alt={seller.store_name}
-                  className="w-32 h-32 rounded-full object-cover border-2 border-gray-200 mx-auto"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
+                  className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
+                  onError={() => setLogoError(true)}
                 />
-              ) : null}
-              {!seller.store_logo && (
-                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mx-auto border-2 border-gray-300">
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
                   <span className="text-gray-600 text-xl font-bold">
-                    {seller.store_name ? seller.store_name.charAt(0).toUpperCase() : 'S'}
+                    {seller.store_name?.charAt(0)?.toUpperCase() || 'S'}
                   </span>
                 </div>
               )}
@@ -429,8 +428,8 @@ const SellerProfile = () => {
                     onClick={handleFollowToggle}
                     disabled={!seller.user_id}
                     className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium ${isFollowing
-                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
-                        : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                      : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
                       } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isFollowing ? (

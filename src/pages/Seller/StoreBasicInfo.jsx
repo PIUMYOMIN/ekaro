@@ -439,8 +439,8 @@ const StoreBasicInfo = () => {
                             >
                                 <option value="">Select business type</option>
                                 {businessTypes.map((type) => (
-                                    <option key={type.slug} value={type.slug}>
-                                        {type.name}
+                                    <option key={type.slug_en} value={type.slug_en}>
+                                        {type.name_en}
                                     </option>
                                 ))}
                             </select>
