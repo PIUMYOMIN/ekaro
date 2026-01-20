@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import api from "../utils/api";
+import { useAuth } from "../context/AuthContext"; // Import useAuth
 
 import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
@@ -11,6 +12,9 @@ import CategoryCard from "../components/ui/CategoryCard";
 
 const Home = () => {
   const { t } = useTranslation();
+  const { user, isAuthenticated, isSeller, isBuyer, isAdmin } = useAuth(); // Get auth info
+  const navigate = useNavigate(); // For programmatic navigation
+  
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
@@ -66,6 +70,51 @@ const Home = () => {
     [t]
   );
 
+  // Function to handle CTA button click
+  const handleCTAClick = () => {
+    if (!isAuthenticated) {
+      navigate('/register');
+    } else if (isSeller()) {
+      navigate('/seller/dashboard');
+    } else if (isBuyer()) {
+      navigate('/products');
+    } else if (isAdmin()) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/register');
+    }
+  };
+
+  // Function to get CTA button text based on user status
+  const getCTAButtonText = () => {
+    if (!isAuthenticated) {
+      return t("home.become_seller");
+    } else if (isSeller()) {
+      return t("home.sell_now");
+    } else if (isBuyer()) {
+      return t("home.shop_now");
+    } else if (isAdmin()) {
+      return t("home.dashboard");
+    } else {
+      return t("home.get_started");
+    }
+  };
+
+  // Function to get CTA button link based on user status
+  const getCTAButtonLink = () => {
+    if (!isAuthenticated) {
+      return "/register";
+    } else if (isSeller()) {
+      return "/seller/dashboard";
+    } else if (isBuyer()) {
+      return "/products";
+    } else if (isAdmin()) {
+      return "/admin/dashboard";
+    } else {
+      return "/register";
+    }
+  };
+
   return <div className="bg-gray-50">
     {/* Hero Section */}
     <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
@@ -82,8 +131,11 @@ const Home = () => {
           </p>
           <div className="mt-10 flex justify-center">
             <div className="rounded-md shadow">
-              <Link to="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
-                {t("home.become_seller")}
+              <Link 
+                to={getCTAButtonLink()} 
+                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+              >
+                {getCTAButtonText()}
               </Link>
             </div>
             <div className="ml-4 rounded-md shadow">
@@ -92,6 +144,16 @@ const Home = () => {
               </Link>
             </div>
           </div>
+          {isAuthenticated && isBuyer() && (
+            <div className="mt-4">
+              <Link 
+                to="/register-seller" 
+                className="inline-block text-white hover:text-green-200 font-medium text-sm"
+              >
+                {t("home.become_seller_link")} →
+              </Link>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
@@ -274,10 +336,20 @@ const Home = () => {
             </div>
             <div className="mt-8 lg:mt-0 lg:ml-8">
               <div className="inline-flex rounded-md shadow">
-                <Link to="/register" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50">
-                  {t("home.get_started")}
+                <Link to={getCTAButtonLink()} className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50">
+                  {getCTAButtonText()}
                 </Link>
               </div>
+              {isAuthenticated && isBuyer() && (
+                <div className="mt-3 text-center">
+                  <Link 
+                    to="/register-seller" 
+                    className="inline-block text-green-100 hover:text-white text-sm font-medium"
+                  >
+                    {t("home.become_seller_link")} →
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

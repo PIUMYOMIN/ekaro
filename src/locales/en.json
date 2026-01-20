@@ -13,13 +13,17 @@
     "login": "Login",
     "sign_up": "Sign up",
     "new_user": "New user?",
-    "logo_text": "Myanmar B2B",
+    "logo_text": "Mingalar Mall",
     "burmese": "MM"
   },
   "home": {
     "hero_title": "Myanmar B2B Marketplace",
     "hero_subtitle": "Connecting businesses across Myanmar with trusted suppliers and buyers",
     "become_seller": "Become a Seller",
+    "shop_now": "Shop Now",
+    "sell_now": "Sell Now",
+    "dashboard": "Dashboard",
+    "become_seller_link": "Want to become a seller?",
     "browse_products": "Browse Products",
     "popular_categories": "Popular Categories",
     "browse_all_categories": "Browse all categories",

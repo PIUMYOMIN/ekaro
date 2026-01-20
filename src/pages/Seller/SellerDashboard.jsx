@@ -13,19 +13,19 @@ import {
   BuildingStorefrontIcon,
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
-import DashboardSummary from "./DashboardSummary";
-import OrderManagement from "./OrderManagement";
-import ProductManagement from "./ProductManagement";
-import SalesReports from "./SalesReports";
-import Reviews from "./Reviews";
+import DashboardSummary from "../../components/seller/DashboardSummary";
+import OrderManagement from "../../components/seller/OrderManagement";
+import ProductManagement from "../../components/seller/ProductManagement";
+import SalesReports from "../../components/seller/SalesReports";
+import Reviews from "../../components/seller/Reviews.jsx";
 import Customers from "./Customers";
-import ShippingSettings from "./ShippingSettings";
-import StoreSettings from "./StoreSettings";
-import MyStore from "./MyStore.jsx";
+import ShippingSettings from "../../components/seller/ShippingSettings";
+import StoreSettings from "../../components/seller/StoreSettings";
+import MyStore from "../../components/seller/MyStore";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import { useLocation } from "react-router-dom";
-import DeliveryManagement from "./DeliveryManagement";
+import DeliveryManagement from "../../components/seller/DeliveryManagement";
 import { useNavigate } from "react-router-dom";
 
 function classNames(...classes) {
