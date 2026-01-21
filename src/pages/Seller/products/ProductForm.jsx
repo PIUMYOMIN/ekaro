@@ -24,10 +24,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const defaultFormData = {
     name: "",
+    name_mm: "",
     description: "",
+    description_mm: "",
     price: "",
     quantity: 0,
     category_id: "",
@@ -35,6 +37,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     moq: 1,
     min_order_unit: "piece",
     lead_time: "",
+    condition: "new",
     is_active: true,
     seller_id: user?.id,
     brand: "",
@@ -50,15 +53,19 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     shipping_cost: "",
     shipping_time: "",
     packaging_details: "",
-    additional_info: ""
+    additional_info: "",
+    is_featured: false,
+    is_new: true,
+    discount_price: "",
+    discount_start: "",
+    discount_end: ""
   };
 
-  // Load from product, local storage, or defaults
   const [formData, setFormData] = useState(() => {
     if (product) {
       return { ...defaultFormData, ...product };
     }
-    
+
     const savedDraft = localStorage.getItem(STORAGE_KEYS.PRODUCT_DRAFT);
     if (savedDraft) {
       try {
@@ -67,7 +74,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         console.error('Error loading draft:', error);
       }
     }
-    
+
     return defaultFormData;
   });
 
@@ -81,6 +88,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Product conditions
+  const productConditions = [
+    { value: "new", label: "New", description: "Brand new, never used" },
+    { value: "used_like_new", label: "Used - Like New", description: "Used but looks and functions like new" },
+    { value: "used_good", label: "Used - Good", description: "Used with minor signs of wear" },
+    { value: "used_fair", label: "Used - Fair", description: "Used with visible signs of wear" }
+  ];
 
   const minOrderUnits = [
     { value: "piece", label: "Piece" },
@@ -101,14 +116,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   ];
 
   const steps = [
-    { id: 1, title: "Basic Info", description: "Product name and description" },
-    { id: 2, title: "Details", description: "Product specifications" },
-    { id: 3, title: "Pricing", description: "Price and inventory" },
-    { id: 4, title: "Media", description: "Images and specs" },
-    { id: 5, title: "Shipping", description: "Delivery and warranty" }
+    { id: 1, title: "Basic Info", description: "Product details" },
+    { id: 2, title: "Pricing", description: "Price and inventory" },
+    { id: 3, title: "Media", description: "Images and specs" },
+    { id: 4, title: "Shipping & More", description: "Delivery and details" }
   ];
 
-  // Save form data to local storage whenever it changes
   useEffect(() => {
     if (!product) {
       const draftToSave = { ...formData };
@@ -117,7 +130,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   }, [formData, product]);
 
-  // Save image previews to local storage
   useEffect(() => {
     if (!product) {
       const previewsToSave = imagePreviews.map(preview => ({
@@ -130,7 +142,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   }, [imagePreviews, product]);
 
-  // Load saved data on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
@@ -146,7 +157,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }
     };
 
-    // Load existing product images if editing
     if (product && product.images) {
       const previews = product.images.map((img) => ({
         url: typeof img === "string" ? img : img.url,
@@ -156,7 +166,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }));
       setImagePreviews(previews);
     } else if (!product) {
-      // Load draft image previews
       const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
       if (savedPreviews) {
         try {
@@ -171,7 +180,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     fetchCategories();
   }, [product]);
 
-  // Clean up object URLs
   useEffect(() => {
     return () => {
       imagePreviews.forEach((preview) => {
@@ -182,7 +190,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     };
   }, [imagePreviews]);
 
-  // Auto-close success popup and redirect
   useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
@@ -273,47 +280,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     );
   };
 
-  // Recursive function to render category options with hierarchy
-  const renderCategoryOptions = (categoryList, level = 0) => {
-    return categoryList.map((category) => (
-      <React.Fragment key={category.id}>
-        <option value={category.id}>
-          {'- '.repeat(level)}{category.name}
-        </option>
-        {category.children && renderCategoryOptions(category.children, level + 1)}
-      </React.Fragment>
-    ));
-  };
-
-  // Get only leaf categories (categories without children) for product assignment
-  const getLeafCategories = (categoryList) => {
-    let leaves = [];
-    
-    const findLeaves = (categories) => {
-      categories.forEach(category => {
-        if (!category.children || category.children.length === 0) {
-          leaves.push(category);
-        } else {
-          findLeaves(category.children);
-        }
-      });
-    };
-    
-    findLeaves(categoryList);
-    return leaves;
-  };
-
   const validateStep = (step) => {
     switch (step) {
       case 1:
         return formData.name && formData.description && formData.category_id;
       case 2:
-        return true;
+        return formData.price && formData.quantity && formData.moq && formData.condition;
       case 3:
-        return formData.price && formData.quantity && formData.moq;
-      case 4:
         return imagePreviews.length > 0;
-      case 5:
+      case 4:
         return true;
       default:
         return false;
@@ -337,36 +312,33 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // SINGLE FINAL SUBMISSION - Only called when clicking Create Product button
   const handleFinalSubmit = async () => {
-    // Prevent multiple submissions
     if (loading) {
       return;
     }
-    
+
     setLoading(true);
     setError("");
 
     try {
-      console.log("Starting final product submission from local storage...");
-      
-      // Step 1: Upload all images at once (only now, not before)
+      console.log("Starting final product submission...");
+
       const uploadedImages = [];
-      
+
       for (const preview of imagePreviews) {
         if (preview.file) {
           console.log("Uploading image:", preview.file.name);
           const uploadFormData = new FormData();
           uploadFormData.append("image", preview.file);
-          
+
           const uploadResponse = await api.post("/products/upload-image", uploadFormData, {
             headers: {
               "Content-Type": "multipart/form-data"
             }
           });
-          
+
           console.log("Image upload response:", uploadResponse.data);
-          
+
           if (uploadResponse.data.success) {
             uploadedImages.push({
               url: uploadResponse.data.data.url,
@@ -375,7 +347,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             });
           }
         } else if (preview.isExisting) {
-          // For existing images (when editing)
           uploadedImages.push({
             url: preview.url,
             angle: preview.angle,
@@ -386,7 +357,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       console.log("All images uploaded:", uploadedImages);
 
-      // Step 2: Prepare and send the complete product data from local storage
       const payload = {
         ...formData,
         price: parseFloat(formData.price),
@@ -395,11 +365,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         category_id: parseInt(formData.category_id),
         specifications: formData.specifications,
         images: uploadedImages,
+        discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
+        // Ensure Myanmar fields are empty strings if not provided
+        name_mm: formData.name_mm || "",
+        description_mm: formData.description_mm || ""
       };
 
-      console.log("Sending final product payload from local storage:", payload);
+      console.log("Sending final product payload:", payload);
 
-      // SINGLE API CALL for product creation/update
       let response;
       if (product) {
         response = await api.put(`/products/${product.id}`, payload);
@@ -411,12 +384,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       console.log("Product API response:", response.data);
 
-      // Show success and redirect
       setShowSuccessPopup(true);
-      
+
     } catch (err) {
       console.error("Product submission error:", err);
-      
+
       if (err.response?.data?.errors) {
         const errorMessages = Object.values(err.response.data.errors).flat();
         setError(errorMessages.join(", "));
@@ -437,7 +409,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       );
       if (!confirmLeave) return;
     }
-    
+
     if (onCancel) {
       onCancel();
     } else {
@@ -445,12 +417,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // Get leaf categories for the select dropdown
-  const leafCategories = getLeafCategories(categories);
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      {/* Success Popup */}
       {showSuccessPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-xl transform transition-all">
@@ -473,16 +441,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       )}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
           <div className="px-8 py-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {product ? "Edit Product" : "Add New Product"}
+                  {product ? "Edit Product" : "New Listing"}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  {product ? "Update your product details" : "Create a new product listing in a few simple steps"}
+                  {product ? "Update your product details" : "Create a new product listing"}
                   {!product && (
                     <span className="text-blue-600 text-sm ml-2">• Draft auto-saved</span>
                   )}
@@ -497,20 +464,18 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             </div>
           </div>
 
-          {/* Progress Steps */}
           <div className="px-8 py-6">
             <div className="flex items-center justify-between">
               {steps.map((step, index) => (
                 <div key={step.id} className="flex items-center flex-1">
                   <button
                     onClick={() => goToStep(step.id)}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold text-sm transition-all ${
-                      currentStep === step.id
-                        ? "border-green-500 bg-green-500 text-white"
-                        : completedSteps.has(step.id)
+                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold text-sm transition-all ${currentStep === step.id
+                      ? "border-green-500 bg-green-500 text-white"
+                      : completedSteps.has(step.id)
                         ? "border-green-500 bg-green-500 text-white"
                         : "border-gray-300 text-gray-500"
-                    }`}
+                      }`}
                   >
                     {completedSteps.has(step.id) ? (
                       <CheckCircleIcon className="h-5 w-5" />
@@ -519,10 +484,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     )}
                   </button>
                   <div className="ml-3 flex-1">
-                    <div className={`text-sm font-medium ${
-                      currentStep === step.id ? "text-green-600" : 
+                    <div className={`text-sm font-medium ${currentStep === step.id ? "text-green-600" :
                       completedSteps.has(step.id) ? "text-gray-900" : "text-gray-500"
-                    }`}>
+                      }`}>
                       {step.title}
                     </div>
                     <div className="text-xs text-gray-500 hidden sm:block">
@@ -530,9 +494,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     </div>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-4 ${
-                      completedSteps.has(step.id) ? "bg-green-500" : "bg-gray-300"
-                    }`} />
+                    <div className={`flex-1 h-0.5 mx-4 ${completedSteps.has(step.id) ? "bg-green-500" : "bg-gray-300"
+                      }`} />
                   )}
                 </div>
               ))}
@@ -540,7 +503,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           </div>
         </div>
 
-        {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
           {error && (
             <div className="mx-8 mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
@@ -550,42 +512,76 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           )}
 
           <div className="p-8">
-            {/* Step 1: Basic Information */}
+            {/* Step 1: Basic Information with Category */}
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-2">Basic Information</h2>
-                  <p className="text-gray-600">Tell us about your product</p>
+                  <p className="text-gray-600">Tell us about your product (English fields are required)</p>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    placeholder="Enter product name"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Name (English) *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Enter product name in English"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Name (Myanmar)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name_mm"
+                      value={formData.name_mm}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Enter product name in Myanmar"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    name="description"
-                    rows="4"
-                    required
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    placeholder="Describe your product in detail..."
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (English) *
+                    </label>
+                    <textarea
+                      name="description"
+                      rows="4"
+                      required
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Describe your product in detail in English..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Myanmar)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <textarea
+                      name="description_mm"
+                      rows="4"
+                      value={formData.description_mm}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Describe your product in detail in Myanmar..."
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -593,64 +589,81 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category *
                     </label>
-                    <select
-                      name="category_id"
-                      required
-                      value={formData.category_id}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    >
-                      <option value="">Select a category</option>
-                      {loadingCategories ? (
-                        <option disabled>Loading categories...</option>
-                      ) : leafCategories.length > 0 ? (
-                        leafCategories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))
-                      ) : (
-                        categories.length > 0 ? (
-                          renderCategoryOptions(categories)
-                        ) : (
-                          <option disabled>No categories available</option>
-                        )
-                      )}
-                    </select>
+                    {loadingCategories ? (
+                      <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                        <span className="ml-2 text-gray-600">Loading categories...</span>
+                      </div>
+                    ) : categories.length > 0 ? (
+                      <select
+                        name="category_id"
+                        required
+                        value={formData.category_id}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map((parentCategory) => (
+                          <optgroup
+                            key={parentCategory.id}
+                            label={parentCategory.name}
+                            className="font-semibold text-gray-900"
+                          >
+                            {/* Show child categories as selectable options */}
+                            {parentCategory.children && parentCategory.children.length > 0 ? (
+                              parentCategory.children.map((childCategory) => (
+                                <option key={childCategory.id} value={childCategory.id} className="pl-6 text-gray-700">
+                                  {childCategory.name}
+                                </option>
+                              ))
+                            ) : (
+                              <option disabled className="pl-6 text-gray-500">
+                                No sub-categories available
+                              </option>
+                            )}
+                          </optgroup>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-center py-4 bg-gray-50 rounded-lg border border-gray-300">
+                        <p className="text-gray-600">No categories available</p>
+                        <p className="text-sm text-gray-500 mt-1">Please create categories first</p>
+                      </div>
+                    )}
                     <p className="text-sm text-gray-500 mt-1">
-                      Select a sub-category for your product
+                      Parent categories are shown as section headers. Select a sub-category for your product.
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lead Time
+                      Condition *
                     </label>
-                    <input
-                      type="text"
-                      name="lead_time"
-                      value={formData.lead_time}
+                    <select
+                      name="condition"
+                      required
+                      value={formData.condition}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="e.g., 3-5 days, 1 week"
-                    />
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                    >
+                      {productConditions.map((condition) => (
+                        <option key={condition.value} value={condition.value}>
+                          {condition.label}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.condition && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {productConditions.find(c => c.value === formData.condition)?.description}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Step 2: Product Details */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Product Details</h2>
-                  <p className="text-gray-600">Additional product information</p>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Brand
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -665,6 +678,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Model
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -681,6 +695,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -695,6 +710,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Material
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -709,6 +725,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Origin
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
                     <input
                       type="text"
@@ -720,50 +737,18 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     />
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Weight (kg)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="weight_kg"
-                      value={formData.weight_kg}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="Product weight in kilograms"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Additional Info
-                    </label>
-                    <textarea
-                      name="additional_info"
-                      rows="3"
-                      value={formData.additional_info}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="Any additional product information..."
-                    />
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* Step 3: Pricing & Inventory */}
-            {currentStep === 3 && (
+            {/* Step 2: Pricing & Inventory */}
+            {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-2">Pricing & Inventory</h2>
                   <p className="text-gray-600">Set your pricing and stock information</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Price (MMK) *
@@ -785,7 +770,30 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       />
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Price (MMK)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                        K
+                      </span>
+                      <input
+                        type="number"
+                        name="discount_price"
+                        step="0.01"
+                        min="0"
+                        value={formData.discount_price}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Stock Quantity *
@@ -817,43 +825,76 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       placeholder="Minimum order quantity"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Order Unit *
+                    </label>
+                    <select
+                      name="min_order_unit"
+                      required
+                      value={formData.min_order_unit}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                    >
+                      {minOrderUnits.map((unit) => (
+                        <option key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Order Unit *
-                  </label>
-                  <select
-                    name="min_order_unit"
-                    required
-                    value={formData.min_order_unit}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                  >
-                    {minOrderUnits.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Lead Time
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lead_time"
+                      value={formData.lead_time}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="e.g., 3-5 days, 1 week"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Weight (kg)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="weight_kg"
+                      value={formData.weight_kg}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Product weight in kilograms"
+                    />
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Step 4: Media & Specifications */}
-            {currentStep === 4 && (
+            {/* Step 3: Media & Specifications */}
+            {currentStep === 3 && (
               <div className="space-y-8">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-2">Media & Specifications</h2>
                   <p className="text-gray-600">Add images and product specifications</p>
                 </div>
 
-                {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-4">
                     Product Images *
                   </label>
-                  
+
                   <label className="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 transition-all duration-200 cursor-pointer bg-gray-50 hover:bg-green-50">
                     <div className="flex flex-col items-center justify-center h-full">
                       <PhotoIcon className="h-10 w-10 text-gray-400 mb-2" />
@@ -873,13 +914,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     />
                   </label>
 
-                  {/* Image Previews */}
                   {imagePreviews.length > 0 && (
                     <div className="mt-6">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">
                         Uploaded Images ({imagePreviews.length})
                       </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         {imagePreviews.map((image, index) => (
                           <div key={index} className="relative group">
                             <img
@@ -892,11 +932,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                                 <button
                                   type="button"
                                   onClick={() => setPrimaryImage(index)}
-                                  className={`p-1 rounded text-xs ${
-                                    image.is_primary
-                                      ? "bg-green-600 text-white"
-                                      : "bg-white text-gray-700 hover:bg-gray-100"
-                                  }`}
+                                  className={`p-1 rounded text-xs ${image.is_primary
+                                    ? "bg-green-600 text-white"
+                                    : "bg-white text-gray-700 hover:bg-gray-100"
+                                    }`}
                                 >
                                   {image.is_primary ? "Primary" : "Set Primary"}
                                 </button>
@@ -921,12 +960,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   )}
                 </div>
 
-                {/* Specifications */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-4">
                     Product Specifications
+                    <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                   </label>
-                  
+
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                       <div className="md:col-span-2">
@@ -992,140 +1031,200 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </div>
             )}
 
-            {/* Step 5: Shipping & Warranty */}
-            {currentStep === 5 && (
+            {/* Step 4: Shipping & More */}
+            {currentStep === 4 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Shipping & Warranty</h2>
-                  <p className="text-gray-600">Set shipping details and warranty information</p>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Shipping & More</h2>
+                  <p className="text-gray-600">Set shipping details, warranty, and other information</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Shipping Cost (MMK)
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="shipping_cost"
+                        value={formData.shipping_cost}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="Shipping cost"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Shipping Time
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="shipping_time"
+                        value={formData.shipping_time}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 3-5 business days"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Type
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <select
+                        name="warranty_type"
+                        value={formData.warranty_type}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      >
+                        <option value="">Select warranty type</option>
+                        {warrantyTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Period
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="warranty_period"
+                        value={formData.warranty_period}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 12 months, 2 years"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Details
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="warranty"
+                        value={formData.warranty}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="Warranty coverage details"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Return Policy
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="return_policy"
+                        value={formData.return_policy}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 30 days return policy"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Shipping Cost (MMK)
+                      Packaging Details
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="shipping_cost"
-                      value={formData.shipping_cost}
+                    <textarea
+                      name="packaging_details"
+                      rows="3"
+                      value={formData.packaging_details}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="Shipping cost"
+                      placeholder="Describe how the product is packaged..."
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Shipping Time
+                      Additional Information
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
                     </label>
-                    <input
-                      type="text"
-                      name="shipping_time"
-                      value={formData.shipping_time}
+                    <textarea
+                      name="additional_info"
+                      rows="3"
+                      value={formData.additional_info}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="e.g., 3-5 business days"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Warranty Type
-                    </label>
-                    <select
-                      name="warranty_type"
-                      value={formData.warranty_type}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    >
-                      <option value="">Select warranty type</option>
-                      {warrantyTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Warranty Period
-                    </label>
-                    <input
-                      type="text"
-                      name="warranty_period"
-                      value={formData.warranty_period}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="e.g., 12 months, 2 years"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Return Policy
-                    </label>
-                    <input
-                      type="text"
-                      name="return_policy"
-                      value={formData.return_policy}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="e.g., 30 days return policy"
+                      placeholder="Any additional information about the product..."
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Warranty Details
-                    </label>
-                    <input
-                      type="text"
-                      name="warranty"
-                      value={formData.warranty}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                      placeholder="Warranty coverage details"
-                    />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <input
+                        id="is_featured"
+                        name="is_featured"
+                        type="checkbox"
+                        checked={formData.is_featured}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_featured"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Feature this product on homepage
+                      </label>
+                    </div>
+
+                    <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <input
+                        id="is_active"
+                        name="is_active"
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_active"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Make this product active and visible to customers
+                      </label>
+                    </div>
+
+                    <div className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <input
+                        id="is_new"
+                        name="is_new"
+                        type="checkbox"
+                        checked={formData.is_new}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_new"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Mark as new product (recommended for condition: New)
+                      </label>
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Packaging Details
-                  </label>
-                  <textarea
-                    name="packaging_details"
-                    rows="3"
-                    value={formData.packaging_details}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-                    placeholder="Describe how the product is packaged..."
-                  />
-                </div>
-
-                <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <input
-                    id="is_active"
-                    name="is_active"
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={handleChange}
-                    className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="is_active"
-                    className="text-sm font-medium text-gray-900"
-                  >
-                    Make this product active and visible to customers
-                  </label>
                 </div>
               </div>
             )}
@@ -1171,7 +1270,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     ) : (
                       <>
                         <CheckCircleIcon className="h-4 w-4" />
-                        <span>{product ? "Update Product" : "Create Product"}</span>
+                        <span>{product ? "Update Product" : "Create Listing"}</span>
                       </>
                     )}
                   </button>

@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
 
-const ProductManagement = ({ onAddProduct, onEditProduct }) => {
+const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -26,7 +26,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [statusTarget, setStatusTarget] = useState(null); // true/false
+  const [statusTarget, setStatusTarget] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -39,7 +39,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct }) => {
       // Option 1: Use the existing route
       const response = await api.get("/products");
 
-      console.log("Products response:", response.data); // Debug log
+      console.log("Products response:", response.data);
 
       if (response.data.success) {
         setProducts(response.data.data || []);
@@ -99,6 +99,29 @@ const ProductManagement = ({ onAddProduct, onEditProduct }) => {
       const errorMessage =
         error.response?.data?.message || "Failed to update product status";
       alert(errorMessage);
+    }
+  };
+
+  // Complete the onEditProduct function
+  const handleEditProduct = (product) => {
+    console.log("Editing product:", product);
+    
+    // If a prop function was provided, use it
+    if (typeof propOnEditProduct === 'function') {
+      propOnEditProduct(product);
+    } else {
+      // Otherwise, navigate to the edit page
+      // Choose the appropriate route based on your needs:
+      
+      // Option 1: Seller-specific route (preferred for seller dashboard)
+      navigate(`/seller/products/${product.id}/edit`);
+      
+      // Option 2: General edit route
+      // navigate(`/products/${product.id}/edit`);
+      
+      // Option 3: If you have access to the product creation page
+      // You could pass the product data to that page
+      // navigate(`/seller/products/create`, { state: { editProduct: product } });
     }
   };
 
@@ -405,7 +428,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct }) => {
                           <EyeIcon className="h-5 w-5" />
                         </button>
                         <button
-                          onClick={() => onEditProduct(product)}
+                          onClick={() => handleEditProduct(product)}
                           className="text-green-600 hover:text-green-900"
                           title="Edit Product"
                         >

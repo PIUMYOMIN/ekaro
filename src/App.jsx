@@ -132,8 +132,6 @@ function App() {
                 <Route path="/buyer/dashboard" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
                 <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
 
-                {/* Seller Routes */}
-                {/* <Route path="/seller" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} /> */}
                 <Route path="/seller" element={
                   <ProtectedRoute roles={["seller"]}>
                     <SellerRouteGuard>
@@ -141,7 +139,6 @@ function App() {
                     </SellerRouteGuard>
                   </ProtectedRoute>
                 } />
-                {/* <Route path="/seller/dashboard" element={<ProtectedRoute roles={["seller"]}><SellerDashboard /></ProtectedRoute>} /> */}
                 <Route path="/seller/dashboard" element={
                   <ProtectedRoute roles={["seller"]}>
                     <SellerRouteGuard>

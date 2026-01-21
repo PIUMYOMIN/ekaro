@@ -7,11 +7,11 @@ const SellerProductCreate = () => {
   const navigate = useNavigate();
   
   const handleSuccess = () => {
-    navigate("/admin"); // Fixed redirect
+    navigate("/admin");
   };
 
   const handleCancel = () => {
-    navigate("/admin"); // Fixed redirect
+    navigate("/admin");
   };
 
   return <ProductForm onSuccess={handleSuccess} onCancel={handleCancel} />;
