@@ -243,6 +243,10 @@
       "manage_your_products": "Manage and update your product listings",
       "product_management": "Product Management"
     },
+    "delivery":{
+      "title": "delivery",
+      "subtitle": "Manage and update your delivery"
+    },
     "submit_review": "Submit Review",
     "no_products_found": "No products found",
     "about": "About",

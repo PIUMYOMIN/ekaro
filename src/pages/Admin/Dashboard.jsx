@@ -312,7 +312,7 @@ const AdminDashboard = () => {
 
       if (action === 'approve') {
         // Use the seller verification endpoint
-        endpoint = `/dashboard/seller/${sellerId}/verify`;
+        endpoint = `/admin/seller/${sellerId}/verify`;
         method = 'POST';
 
         // Prepare verification data
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
           fetchSellers();
         }
       } else if (action === 'reject') {
-        endpoint = `/dashboard/seller/${sellerId}/reject`;
+        endpoint = `/admin/seller/${sellerId}/reject`;
         method = 'POST';
 
         const response = await api({
@@ -365,10 +365,10 @@ const AdminDashboard = () => {
         endpoint = `/${sellerId}/verify`;
         method = 'POST';
       } else if (action === 'reject') {
-        endpoint = `/dashboard/seller/${sellerId}/reject`;
+        endpoint = `/admin/seller/${sellerId}/reject`;
         method = 'POST';
       } else if (action === 'update_status') {
-        endpoint = `/dashboard/seller/${sellerId}/verification-status`;
+        endpoint = `/admin/seller/${sellerId}/verification-status`;
         method = 'PUT';
       }
 
@@ -392,7 +392,7 @@ const AdminDashboard = () => {
   // Separate function for status management
   const handleSellerStatusUpdate = async (sellerId, status, reason = '') => {
     try {
-      const response = await api.put(`/dashboard/seller/${sellerId}/status`, {
+      const response = await api.put(`/admin/seller/${sellerId}/status`, {
         status,
         reason
       });
@@ -419,7 +419,7 @@ const AdminDashboard = () => {
     setVerificationError(null);
     try {
       // Use the new verification review endpoint
-      const response = await api.get('/dashboard/seller/verification-review');
+      const response = await api.get('/admin/seller/verification-review');
       setPendingSellers(response.data);
     } catch (error) {
       setVerificationError(error);
@@ -434,7 +434,7 @@ const AdminDashboard = () => {
     setIsVerificationLoading(true);
     setVerificationError(null);
     try {
-      await api.post(`/dashboard/seller/${selectedSeller.id}/verify`, verificationData);
+      await api.post(`/admin/seller/${selectedSeller.id}/verify`, verificationData);
       alert("Seller verified successfully");
       setSelectedSeller(null);
       // Refresh pending sellers
@@ -465,7 +465,7 @@ const AdminDashboard = () => {
       setIsDashboardLoading(true);
       setDashboardError(null);
       try {
-        const response = await api.get("/dashboard");
+        const response = await api.get("/admin");
         setDashboardData(response.data);
       } catch (error) {
         setDashboardError(error);
@@ -516,7 +516,7 @@ const AdminDashboard = () => {
           page: sellerSearchPage || 1
         };
 
-        const response = await api.get("/dashboard/sellers", { params });
+        const response = await api.get("/admin/sellers", { params });
 
         // Handle response
         if (response.data.data && response.data.data.data) {
@@ -576,7 +576,7 @@ const AdminDashboard = () => {
         page: sellerSearchPage || 1
       };
 
-      const response = await api.get("/dashboard/sellers", { params });
+      const response = await api.get("/admin/sellers", { params });
 
       if (response.data.data && response.data.data.data) {
         setSellers(response.data.data.data);
@@ -608,7 +608,7 @@ const AdminDashboard = () => {
       setIsReviewsLoading(true);
       setReviewsError(null);
       try {
-        const response = await api.get("/dashboard/reviews");
+        const response = await api.get("/reviews");
 
         const reviewsData = response.data.data || response.data;
         setReviews(Array.isArray(reviewsData) ? reviewsData : []);
@@ -675,7 +675,7 @@ const AdminDashboard = () => {
       case 0:
         setIsDashboardLoading(true);
         try {
-          const response = await api.get("/dashboard");
+          const response = await api.get("/admin");
           setDashboardData(response.data);
         } catch (error) {
           setDashboardError(error);
@@ -697,7 +697,7 @@ const AdminDashboard = () => {
         break;
       case 2:
         try {
-          const response = await api.get("/dashboard/seller", {
+          const response = await api.get("/admin/seller", {
             params: sellerSearchTerm
           });
           // Handle response as in useEffect
@@ -736,7 +736,7 @@ const AdminDashboard = () => {
       case 4:
         setIsReviewsLoading(true);
         try {
-          const response = await api.get("/dashboard/reviews");
+          const response = await api.get("/admin/reviews");
           const reviewsData = response.data.data || response.data;
           setReviews(Array.isArray(reviewsData) ? reviewsData : []);
         } catch (error) {
@@ -807,7 +807,7 @@ const AdminDashboard = () => {
   // Handlers for business types
   const handleCreateBusinessType = async (data) => {
     try {
-      const response = await api.post("/dashboard/business-types", data);
+      const response = await api.post("/admin/business-types", data);
       alert("Business type created successfully");
       return response.data;
     } catch (error) {
@@ -817,7 +817,7 @@ const AdminDashboard = () => {
 
   const handleUpdateBusinessType = async (id, data) => {
     try {
-      const response = await api.put(`/dashboard/business-types/${id}`, data);
+      const response = await api.put(`/admin/business-types/${id}`, data);
       alert("Business type updated successfully");
       return response.data;
     } catch (error) {
@@ -827,7 +827,7 @@ const AdminDashboard = () => {
 
   const handleDeleteBusinessType = async (id) => {
     try {
-      await api.delete(`/dashboard/business-types/${id}`);
+      await api.delete(`/admin/business-types/${id}`);
       alert("Business type deleted successfully");
     } catch (error) {
       throw error;
@@ -949,7 +949,7 @@ const AdminDashboard = () => {
       }
 
       // Use Post request to update seller status
-      const response = await api.post(`/dashboard/seller/${sellerId}/approve`, data);
+      const response = await api.post(`/admin/seller/${sellerId}/approve`, data);
       // OR use the seller endpoint: `/sellers/${sellerId}`
 
       if (response.data.success) {

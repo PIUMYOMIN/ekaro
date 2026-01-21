@@ -5,7 +5,7 @@ import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon }
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
-import Logo from '../../assets/images/logo.png'
+import Logo from '../../assets/images/logo.jpg'
 
 const Header = () => {
   const { t, i18n } = useTranslation();

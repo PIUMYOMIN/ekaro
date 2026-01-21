@@ -30,7 +30,7 @@ const PlatformLogistics = () => {
   const fetchPlatformDeliveries = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/dashboard/deliveries?delivery_method=platform");
+      const response = await api.get("/deliveries?delivery_method=platform");
       const deliveriesData = response.data.data.data || response.data.data || [];
       setPlatformDeliveries(deliveriesData);
     } catch (error) {
@@ -54,7 +54,7 @@ const PlatformLogistics = () => {
   const handleAssignCourier = async (deliveryId, courierId) => {
     try {
       setAssigningCourier(deliveryId);
-      const response = await api.post(`/dashboard/deliveries/${deliveryId}/assign-courier`, {
+      const response = await api.post(`/deliveries/${deliveryId}/assign-courier`, {
         platform_courier_id: courierId,
         driver_name: couriers.find(c => c.id === courierId)?.name,
         driver_phone: couriers.find(c => c.id === courierId)?.phone,
@@ -75,7 +75,7 @@ const PlatformLogistics = () => {
 
   const updateDeliveryStatus = async (deliveryId, status, notes = "") => {
     try {
-      const response = await api.post(`/dashboard/deliveries/${deliveryId}/status`, {
+      const response = await api.post(`/deliveries/${deliveryId}/status`, {
         status,
         notes,
         location: "Yangon, Myanmar" // This would come from GPS in real app

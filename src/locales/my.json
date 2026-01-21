@@ -263,6 +263,10 @@
       "product_management": "ထုတ်ကုန်စီမံခန့်ခွဲမှု",
       "no_products_found": "ထုတ်ကုန်များ မတွေ့ရှိပါ"
     },
+    "delivery":{
+      "title":"သယ်ယူပို့ဆောင်ရေး",
+      "subtitle":""
+    },
     "about": "ရောင်းချသူ အကြောင်း",
     "sales": "အရောင်း",
     "reviews":{

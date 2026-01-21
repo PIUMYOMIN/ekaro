@@ -179,7 +179,7 @@ const SellerDashboard = () => {
       component: <OrderManagement refreshData={refreshStoreData} />
     },
     {
-      name: "Delivery Management",
+      name: t("seller.delivery.title"),
       icon: TruckIcon,
       component: <DeliveryManagement refreshData={refreshStoreData} />
     },
