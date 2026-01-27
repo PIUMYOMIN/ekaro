@@ -24,7 +24,15 @@ const MyStore = ({ storeData, stats, refreshData }) => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
 
-    const baseUrl = "http://localhost:8000";
+    // Try to get REACT_APP_API_URL from window._env_ (for frontend env injection)
+    let baseUrl = "http://localhost:8000";
+    if (typeof window !== 'undefined') {
+      if (window._env_ && window._env_.REACT_APP_API_URL) {
+        baseUrl = window._env_.REACT_APP_API_URL;
+      } else if (window.REACT_APP_API_URL) {
+        baseUrl = window.REACT_APP_API_URL;
+      }
+    }
 
     if (imagePath.startsWith('http')) {
       return imagePath;
@@ -77,11 +85,11 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       } catch (error) {
         console.log("Using default business types");
         setBusinessTypes([
-          { value: "individual", label: "Individual/Sole Proprietorship" },
-          { value: "partnership", label: "Partnership" },
-          { value: "private_limited", label: "Private Limited Company" },
-          { value: "public_limited", label: "Public Limited Company" },
-          { value: "cooperative", label: "Cooperative" },
+          { value: "individual", label: "Individual/Sole Proprietorship", name_en: "Individual" },
+          { value: "partnership", label: "Partnership", name_en: "Partnership" },
+          { value: "private_limited", label: "Private Limited Company", name_en: "Private Limited" },
+          { value: "public_limited", label: "Public Limited Company", name_en: "Public Limited" },
+          { value: "cooperative", label: "Cooperative", name_en: "Cooperative" },
         ]);
       }
     };
@@ -92,9 +100,10 @@ const MyStore = ({ storeData, stats, refreshData }) => {
   // Initialize form data when storeData is available
   useEffect(() => {
     if (storeData) {
+      console.log("Store data loaded:", storeData);
       setFormData({
         store_name: storeData.store_name || "",
-        description: storeData.description || "",
+        description: storeData.description || storeData.store_description || "",
         business_type: storeData.business_type || "",
         business_registration_number: storeData.business_registration_number || "",
         tax_id: storeData.tax_id || "",
@@ -114,10 +123,14 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
       // Use getImageUrl to get full URLs for previews
       if (storeData.store_logo) {
-        setLogoPreview(getImageUrl(storeData.store_logo));
+        const logoUrl = getImageUrl(storeData.store_logo);
+        console.log("Logo URL:", logoUrl);
+        setLogoPreview(logoUrl);
       }
       if (storeData.store_banner) {
-        setBannerPreview(getImageUrl(storeData.store_banner));
+        const bannerUrl = getImageUrl(storeData.store_banner);
+        console.log("Banner URL:", bannerUrl);
+        setBannerPreview(bannerUrl);
       }
     }
   }, [storeData]);
@@ -159,7 +172,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       // Append all form fields EXCEPT store_logo and store_banner
       Object.keys(formData).forEach(key => {
         if (key !== 'store_logo' && key !== 'store_banner' &&
-            formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+            formData[key] !== null && formData[key] !== undefined) {
           submitFormData.append(key, formData[key]);
         }
       });
@@ -168,11 +181,17 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       if (logoFile) {
         console.log("Appending logo file:", logoFile);
         submitFormData.append('store_logo', logoFile);
+      } else if (logoPreview && !logoPreview.startsWith('blob:')) {
+        // If logoPreview is a URL (not a blob) and no new file, keep existing
+        submitFormData.append('store_logo', logoPreview);
       }
 
       if (bannerFile) {
         console.log("Appending banner file:", bannerFile);
         submitFormData.append('store_banner', bannerFile);
+      } else if (bannerPreview && !bannerPreview.startsWith('blob:')) {
+        // If bannerPreview is a URL (not a blob) and no new file, keep existing
+        submitFormData.append('store_banner', bannerPreview);
       }
 
       // Debug: Log what's being sent
@@ -185,7 +204,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         }
       }
 
-      // Make the API call
+      // Make the API call - Use the correct endpoint
       const response = await api.put('/sellers/my-store/update', submitFormData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -242,7 +261,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     if (storeData) {
       setFormData({
         store_name: storeData.store_name || "",
-        description: storeData.description || "",
+        description: storeData.description || storeData.store_description || "",
         business_type: storeData.business_type || "",
         business_registration_number: storeData.business_registration_number || "",
         tax_id: storeData.tax_id || "",
@@ -457,8 +476,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                 >
                   <option value="">Select business type</option>
                   {businessTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
+                    <option key={type.value || type.slug_en} value={type.value || type.slug_en}>
+                      {type.name_en || type.label}
                     </option>
                   ))}
                 </select>
@@ -745,6 +764,9 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                   src={displayBannerUrl}
                   alt="Store banner"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-20"></div>
               </div>
@@ -761,29 +783,28 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                     className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      // Show fallback icon
+                      const fallback = e.target.parentNode.querySelector('.logo-fallback');
+                      if (fallback) fallback.style.display = 'flex';
                     }}
                   />
                 ) : (
-                  <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback">
                     <BuildingStorefrontIcon className="h-10 w-10 text-white" />
                   </div>
                 )}
                 
                 {/* Fallback if image fails to load */}
-                {displayLogoUrl && (
-                  <div 
-                    className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg hidden"
-                    style={{ display: 'none' }}
-                  >
-                    <BuildingStorefrontIcon className="h-10 w-10 text-white" />
-                  </div>
-                )}
+                <div 
+                  className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback hidden"
+                >
+                  <BuildingStorefrontIcon className="h-10 w-10 text-white" />
+                </div>
 
                 <div className="flex-1">
                   <h1 className="text-2xl font-bold">{storeData.store_name}</h1>
                   <p className={`mt-1 ${displayBannerUrl ? 'text-gray-600' : 'text-green-100 opacity-90'}`}>
-                    {storeData.description || "No description provided"}
+                    {storeData.description || storeData.store_description || "No description provided"}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${

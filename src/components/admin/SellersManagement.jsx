@@ -20,11 +20,11 @@ import {
 } from "@heroicons/react/24/solid";
 import DataTable from "../ui/DataTable";
 
-const SellerManagement = ({
+const SellersManagement = ({
   sellers,
   loading,
   error,
-  handleSellerStatus, // Keep this - it's passed from parent
+  handleSellerStatus,
   searchTerm,
   onSearchChange,
   pagination,
@@ -569,4 +569,4 @@ const SellerManagement = ({
   );
 };
 
-export default SellerManagement;
+export default SellersManagement;

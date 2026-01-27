@@ -60,10 +60,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import OrderTrackingPage from "./pages/OrderTrackingPage";
 import DocumentUpload from './pages/Seller/DocumentUpload';
+import SellerDashboardRedirect from './components/seller/SellerDashboardRedirect';
 import ReviewSubmit from "./pages/Seller/ReviewSubmit";
 import StepGuard from "./components/StepGuard";
 import Error from "./pages/Errors/404";
 import SellerRouteGuard from "./components/SellerRouteGuard";
+import MyStore from "./components/seller/MyStore";
+import ShippingSettings from "./components/seller/ShippingSettings_org"
 
 function App() {
   return <I18nextProvider i18n={i18n}>
@@ -97,31 +100,79 @@ function App() {
                 <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
                 <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
 
-                {/* Seller Onboarding Routes */}
+                <Route path="/seller" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerDashboardRedirect />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/seller/dashboard" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerDashboard />
+                  </ProtectedRoute>
+                } />
+
                 <Route path="/seller/onboarding/store-basic" element={
-                  <StepGuard step="store-basic">
-                    <StoreBasicInfo />
-                  </StepGuard>
+                  <ProtectedRoute roles={["seller"]}>
+                    <StepGuard step="store-basic">
+                      <StoreBasicInfo />
+                    </StepGuard>
+                  </ProtectedRoute>
                 } />
+
                 <Route path="/seller/onboarding/business-details" element={
-                  <StepGuard step="business-details">
-                    <BusinessDetails />
-                  </StepGuard>
+                  <ProtectedRoute roles={["seller"]}>
+                    <StepGuard step="business-details">
+                      <BusinessDetails />
+                    </StepGuard>
+                  </ProtectedRoute>
                 } />
+
                 <Route path="/seller/onboarding/address" element={
-                  <StepGuard step="address">
-                    <AddressInfo />
-                  </StepGuard>
+                  <ProtectedRoute roles={["seller"]}>
+                    <StepGuard step="address">
+                      <AddressInfo />
+                    </StepGuard>
+                  </ProtectedRoute>
                 } />
+
                 <Route path="/seller/onboarding/documents" element={
-                  <StepGuard step="documents">
-                    <DocumentUpload />
-                  </StepGuard>
+                  <ProtectedRoute roles={["seller"]}>
+                    <StepGuard step="documents">
+                      <DocumentUpload />
+                    </StepGuard>
+                  </ProtectedRoute>
                 } />
+
                 <Route path="/seller/onboarding/review-submit" element={
-                  <StepGuard step="review">
-                    <ReviewSubmit />
-                  </StepGuard>
+                  <ProtectedRoute roles={["seller"]}>
+                    <StepGuard step="review-submit">
+                      <ReviewSubmit />
+                    </StepGuard>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/seller/my-store" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerRouteGuard>
+                      <MyStore />
+                    </SellerRouteGuard>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/seller/shipping" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <ShippingSettings />
+                  </ProtectedRoute>
+                } />
+
+                {/* Other seller routes that require complete onboarding */}
+                <Route path="/seller/products" element={
+                  <ProtectedRoute roles={["seller"]}>
+                    <SellerRouteGuard>
+                      <ProductView />
+                    </SellerRouteGuard>
+                  </ProtectedRoute>
                 } />
 
                 {/* Buyer Routes */}
@@ -132,20 +183,6 @@ function App() {
                 <Route path="/buyer/dashboard" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
                 <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
 
-                <Route path="/seller" element={
-                  <ProtectedRoute roles={["seller"]}>
-                    <SellerRouteGuard>
-                      <SellerDashboard />
-                    </SellerRouteGuard>
-                  </ProtectedRoute>
-                } />
-                <Route path="/seller/dashboard" element={
-                  <ProtectedRoute roles={["seller"]}>
-                    <SellerRouteGuard>
-                      <SellerDashboard />
-                    </SellerRouteGuard>
-                  </ProtectedRoute>
-                } />
                 <Route path="/seller/products" element={<ProtectedRoute roles={["seller"]}><ProductView /></ProtectedRoute>} />
                 <Route path="/seller/products/create" element={<ProtectedRoute roles={["seller"]}><ProductCreate /></ProtectedRoute>} />
                 <Route path="/seller/products/:id/edit" element={<ProtectedRoute roles={["seller"]}><ProductEdit /></ProtectedRoute>} />

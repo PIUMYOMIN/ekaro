@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Tab } from "@headlessui/react";
 import {
@@ -11,6 +11,8 @@ import {
   TruckIcon,
   CogIcon,
   BuildingStorefrontIcon,
+  ExclamationTriangleIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
@@ -19,14 +21,14 @@ import ProductManagement from "../../components/seller/ProductManagement";
 import SalesReports from "../../components/seller/SalesReports";
 import Reviews from "../../components/seller/Reviews.jsx";
 import Customers from "./Customers";
-import ShippingSettings from "../../components/seller/ShippingSettings";
+import ShippingSettings from "../../components/seller/ShippingSettings.jsx";
 import StoreSettings from "../../components/seller/StoreSettings";
 import MyStore from "../../components/seller/MyStore";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryManagement from "../../components/seller/DeliveryManagement";
-import { useNavigate } from "react-router-dom";
+import DiscountManagement from "../../components/seller/DiscountManagement";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -37,6 +39,7 @@ const SellerDashboard = () => {
   const { state } = location;
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [selectedTab, setSelectedTab] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,124 +52,93 @@ const SellerDashboard = () => {
     pendingOrders: 0
   });
 
-  // Check onboarding status first
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!user) return;
+  const [showSetupNotification, setShowSetupNotification] = useState(false);
+  const [setupNotificationData, setSetupNotificationData] = useState({
+    title: "",
+    message: "",
+    requiredActions: [],
+    nextStep: ""
+  });
 
-      try {
-        // First, check if user is a seller
-        if (user.type !== 'seller' && !user.roles?.includes('seller')) {
-          // User is not a seller, redirect to appropriate page
-          navigate('/');
-          return;
-        }
-
-        // Check onboarding status
-        const response = await api.get('/seller/onboarding/status');
-        
-        if (response.data.success) {
-          const statusData = response.data.data;
-          setOnboardingStatus(statusData);
-
-          // If onboarding is not complete, redirect to onboarding
-          if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-            console.log('Onboarding incomplete, redirecting to:', statusData.current_step);
-            
-            // Determine where to redirect
-            let redirectPath = '/seller/onboarding/store-basic';
-            
-            if (statusData.current_step) {
-              redirectPath = `/seller/onboarding/${statusData.current_step}`;
-            }
-            
-            navigate(redirectPath, { replace: true });
-            return;
-          }
-
-          // If onboarding is complete, fetch store data
-          fetchStoreData();
-        }
-      } catch (error) {
-        console.error("Failed to check onboarding status:", error);
-        // If there's an error, assume onboarding needed
-        navigate('/seller/onboarding/store-basic');
-      }
-    };
-
-    checkOnboardingStatus();
-  }, [user, navigate]);
-
-  // Show success message if redirected from onboarding
-  useEffect(() => {
-    if (state?.success && state?.message) {
-      // You can show a toast notification here
-      console.log('🎉 Success:', state.message);
-      
-      // Clear the state to prevent showing the message again on refresh
-      window.history.replaceState({}, document.title);
-    }
-  }, [state]);
-
-  // Fetch store data and stats - only called if onboarding is complete
+  // Fetch store data and stats
   const fetchStoreData = useCallback(async () => {
     try {
-      const [storeResponse, statsResponse] = await Promise.all([
+      setLoading(true);
+      console.log("Fetching store data...");
+      
+      const [storeResponse, statsResponse] = await Promise.allSettled([
         api.get("/seller/my-store"),
         api.get("/seller/sales-summary")
       ]);
 
-      setStoreData(storeResponse.data.data);
+      console.log("Store response:", storeResponse);
+      console.log("Stats response:", statsResponse);
 
-      if (statsResponse.data.success) {
-        const salesData = statsResponse.data.data.sales || {};
+      if (storeResponse.status === 'fulfilled' && storeResponse.value.data.success) {
+        console.log("Store data received:", storeResponse.value.data.data);
+        setStoreData(storeResponse.value.data.data);
+      } else if (storeResponse.status === 'rejected') {
+        console.error("Failed to fetch store data:", storeResponse.reason);
+        if (storeResponse.reason.response?.status === 404) {
+          setShowSetupNotification(true);
+          setSetupNotificationData({
+            title: "Store Profile Required",
+            message: "You need to create your store profile to start selling.",
+            requiredActions: ["Create store profile"],
+            nextStep: "my-store"
+          });
+        }
+      }
+
+      if (statsResponse.status === 'fulfilled' && statsResponse.value.data.success) {
+        const salesData = statsResponse.value.data.data.sales || {};
         setStats({
-          totalProducts: statsResponse.data.data.products?.total || 0,
+          totalProducts: statsResponse.value.data.data.products?.total || 0,
           totalOrders: salesData.total_orders || 0,
           totalRevenue: salesData.total_revenue || 0,
-          pendingOrders: statsResponse.data.data.orders_by_status?.pending || 0
+          pendingOrders: statsResponse.value.data.data.orders_by_status?.pending || 0
         });
       }
     } catch (error) {
       console.error("Failed to fetch store data:", error);
       
-      // If store data fetch fails, check if profile exists
-      if (error.response?.status === 404) {
-        // Profile doesn't exist, redirect to onboarding
-        navigate('/seller/onboarding/store-basic');
+      if (error.response?.status === 403) {
+        navigate('/');
       }
     } finally {
       setLoading(false);
     }
   }, [navigate]);
 
-  // Refresh function that can be passed to child components
+  // Refresh function
   const refreshStoreData = useCallback(() => {
     fetchStoreData();
   }, [fetchStoreData]);
 
-  useEffect(() => {
-    if (user) {
-      fetchStoreData();
+  // Handle setup click - separate function to avoid circular dependency
+  const handleSetupClick = useCallback((step) => {
+    console.log("Setup click:", step);
+    // Direct navigation based on step
+    if (step === 'my-store') {
+      navigate('/seller/dashboard?tab=my-store&setup=true');
+    } else if (step === 'shipping') {
+      navigate('/seller/dashboard?tab=shipping');
+    } else if (step === 'settings') {
+      navigate('/seller/dashboard?tab=settings');
     }
-  }, [user, fetchStoreData]);
+  }, [navigate]);
 
-  // Set up polling for real-time updates (every 30 seconds)
-  useEffect(() => {
-    if (!user) return;
-
-    const interval = setInterval(() => {
-      fetchStoreData();
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [user, fetchStoreData]);
-
-  const navigation = [
+  // Create navigation array using useMemo
+  const navigation = useMemo(() => [
     {
       name: t("seller.dashboard"),
       icon: ChartBarIcon,
-      component: <DashboardSummary storeData={storeData} stats={stats} refreshData={refreshStoreData} />
+      component: <DashboardSummary
+        storeData={storeData}
+        stats={stats}
+        refreshData={refreshStoreData}
+        onSetupClick={handleSetupClick}
+      />
     },
     {
       name: t("seller.my_store"),
@@ -189,7 +161,12 @@ const SellerDashboard = () => {
       component: <ProductManagement refreshData={refreshStoreData} />
     },
     {
-      name: t("seller.sales"),
+      name: t("seller.discount.title"),
+      icon: CubeIcon,
+      component: <DiscountManagement refreshData={refreshStoreData} />
+    },
+    {
+      name: t("seller.sales.title"),
       icon: CurrencyDollarIcon,
       component: <SalesReports refreshData={refreshStoreData} />
     },
@@ -215,21 +192,214 @@ const SellerDashboard = () => {
         <StoreSettings storeData={storeData} setStoreData={setStoreData} refreshData={refreshStoreData} />
       )
     }
-  ];
+  ], [t, storeData, stats, refreshStoreData, handleSetupClick]);
 
-  if (loading || !onboardingStatus) {
+  // Handle URL parameters for tab selection
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const initialTab = searchParams.get('tab');
+    const setupParam = searchParams.get('setup');
+
+    console.log("URL params:", { initialTab, setupParam });
+
+    if (initialTab === 'my-store' || setupParam === 'true') {
+      const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
+      console.log("My store index:", myStoreIndex);
+      if (myStoreIndex !== -1) {
+        setSelectedTab(myStoreIndex);
+      }
+    }
+  }, [location.search, t, navigation]);
+
+  // Check seller access and onboarding status
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+
+      // Check if user is a seller
+      if (user.type !== 'seller' && !user.roles?.includes('seller')) {
+        navigate('/');
+        return;
+      }
+
+      try {
+        // First, check onboarding status
+        const response = await api.get('/seller/onboarding/status').catch(error => {
+          // If endpoint doesn't exist, continue
+          if (error.response?.status === 404) {
+            console.log("Onboarding endpoint not found, continuing...");
+            return null;
+          }
+          throw error;
+        });
+
+        if (response?.data?.success) {
+          const statusData = response.data.data || response.data;
+          setOnboardingStatus(statusData);
+
+          console.log("Onboarding status:", statusData);
+
+          // Redirect if onboarding is not complete
+          if (statusData.needs_onboarding || !statusData.onboarding_complete) {
+            console.log("Redirecting to onboarding...");
+            navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+            return;
+          }
+        }
+
+        // If we get here, onboarding is complete or not required, fetch store data
+        await fetchStoreData();
+        
+      } catch (error) {
+        console.error('Failed to verify seller status:', error);
+        
+        // Try to fetch store data anyway
+        try {
+          await fetchStoreData();
+        } catch (storeError) {
+          console.error("Failed to fetch store data:", storeError);
+          // If we can't fetch store data, go to onboarding
+          navigate('/seller/onboarding/store-basic');
+        }
+      }
+    };
+
+    if (user) {
+      checkAccess();
+    }
+  }, [user, navigate, fetchStoreData]);
+
+  // Check setup requirements when store data changes
+  useEffect(() => {
+    if (storeData) {
+      console.log("Checking setup requirements for:", storeData);
+      
+      const requirements = [];
+      
+      // Check if store is pending approval
+      if (storeData.status === "pending") {
+        setSetupNotificationData({
+          title: "Store Pending Approval",
+          message: "Your store is under review. You can add products and set up your store while waiting for approval.",
+          requiredActions: ["Complete store setup", "Add products", "Set up shipping"],
+          nextStep: "my-store"
+        });
+        setShowSetupNotification(true);
+        return;
+      }
+
+      // Check if store setup is incomplete
+      if (storeData.status === "setup_pending") {
+        setSetupNotificationData({
+          title: "Complete Store Setup",
+          message: "Your store setup is incomplete. Complete the setup to start selling.",
+          requiredActions: ["Add store logo", "Complete business details", "Set up payment methods"],
+          nextStep: "my-store"
+        });
+        setShowSetupNotification(true);
+        return;
+      }
+
+      // Check if verification is pending
+      if (storeData.verification_status === "pending" || storeData.verification_status === "under_review") {
+        setSetupNotificationData({
+          title: "Verification Required",
+          message: "Your account needs verification to access all seller features.",
+          requiredActions: ["Upload required documents", "Complete identity verification"],
+          nextStep: "my-store" // Will open documents tab
+        });
+        setShowSetupNotification(true);
+        return;
+      }
+
+      // Check for missing essential information
+      const missingInfo = [];
+      if (!storeData.store_logo) missingInfo.push("Store logo");
+      if (!storeData.store_banner) missingInfo.push("Store banner");
+      if (!storeData.description && !storeData.store_description) missingInfo.push("Store description");
+      if (!storeData.business_registration_number && storeData.business_type !== "individual") {
+        missingInfo.push("Business registration");
+      }
+
+      if (missingInfo.length > 0) {
+        setSetupNotificationData({
+          title: "Missing Information",
+          message: `Your store profile is incomplete. Please add: ${missingInfo.join(", ")}`,
+          requiredActions: missingInfo,
+          nextStep: "my-store"
+        });
+        setShowSetupNotification(true);
+        return;
+      }
+
+      // If all checks pass, hide notification
+      setShowSetupNotification(false);
+    }
+  }, [storeData]);
+
+  // Show success message if redirected from onboarding
+  useEffect(() => {
+    if (state?.success && state?.message) {
+      console.log('🎉 Success:', state.message);
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [state]);
+
+  // Handle setup completion
+  const handleStartSetup = () => {
+    console.log("Starting setup:", setupNotificationData.nextStep);
+    
+    if (setupNotificationData.nextStep === "my-store") {
+      // Find My Store tab index and switch to it
+      const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
+      if (myStoreIndex !== -1) {
+        setSelectedTab(myStoreIndex);
+      }
+      // Also update URL
+      navigate('/seller/dashboard?tab=my-store&setup=true', { replace: true });
+    } else if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
+      navigate(`/seller/onboarding/${setupNotificationData.nextStep || 'store-basic'}`);
+    } else if (setupNotificationData.nextStep === "verification") {
+      navigate('/seller/onboarding/documents');
+    } else {
+      navigate('/seller/onboarding/store-basic');
+    }
+  };
+
+  // Handle dismissing notification
+  const handleDismissNotification = () => {
+    setShowSetupNotification(false);
+    localStorage.setItem('seller_setup_notification_dismissed', 'true');
+  };
+
+  // Set up polling for real-time updates (only if user is logged in and has store)
+  useEffect(() => {
+    if (!user || !storeData) return;
+
+    const interval = setInterval(() => {
+      fetchStoreData();
+    }, 60000); // Update every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [user, storeData, fetchStoreData]);
+
+  if (loading) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking your seller status...</p>
+          <p className="text-gray-600">Loading your seller dashboard...</p>
         </div>
       </div>
     );
   }
 
   // Show onboarding prompt if somehow still here but needs onboarding
-  if (onboardingStatus.needs_onboarding || !onboardingStatus.onboarding_complete) {
+  if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -260,32 +430,8 @@ const SellerDashboard = () => {
   }
 
   return (
-    <Tab.Group>
+    <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
-        {/* Status Indicators */}
-        <div className="absolute top-4 left-4 md:left-auto md:right-4 z-10">
-          <div className="flex items-center space-x-2 text-sm">
-            {storeData?.status === "pending" && (
-              <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                <span>Pending Approval</span>
-              </div>
-            )}
-            {storeData?.status === "approved" && (
-              <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Store Active</span>
-              </div>
-            )}
-            {storeData?.status === "pending_setup" && (
-              <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span>Setup Required</span>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Mobile sidebar toggle */}
         <div className="md:hidden fixed top-4 left-4 z-20">
           <button
@@ -341,12 +487,24 @@ const SellerDashboard = () => {
                       src={storeData.store_logo}
                       alt={storeData.store_name}
                       className="w-12 h-12 rounded-2xl object-cover border-2 border-green-200 shadow-lg"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        const fallback = e.target.nextSibling;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
                   ) : (
                     <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <BuildingStorefrontIcon className="h-6 w-6 text-white" />
                     </div>
                   )}
+                  {/* Fallback logo */}
+                  <div 
+                    className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg hidden"
+                    style={{ display: 'none' }}
+                  >
+                    <BuildingStorefrontIcon className="h-6 w-6 text-white" />
+                  </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                 </div>
                 <div className="ml-4">
@@ -359,10 +517,36 @@ const SellerDashboard = () => {
                 </div>
               </div>
 
+              {/* Setup Notification in Sidebar */}
+              {showSetupNotification && (
+                <div className="mx-4 mb-4">
+                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+                    <div className="flex items-start">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-amber-800 mb-1">
+                          {setupNotificationData.title}
+                        </h4>
+                        <p className="text-xs text-amber-700 mb-2">
+                          {setupNotificationData.message}
+                        </p>
+                        <button
+                          onClick={handleStartSetup}
+                          className="w-full text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center"
+                        >
+                          Complete Setup
+                          <ArrowRightIcon className="h-3 w-3 ml-1" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Navigation */}
               <nav className="flex-1 px-4 space-y-2">
                 <Tab.List className="space-y-2">
-                  {navigation.map((item) => (
+                  {navigation.map((item, index) => (
                     <Tab
                       key={item.name}
                       className={({ selected }) =>
@@ -456,6 +640,61 @@ const SellerDashboard = () => {
               </div>
             </div>
           </div>
+
+          {/* Main Setup Notification Banner */}
+          {showSetupNotification && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-blue-500 mr-3" />
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-900">
+                        {setupNotificationData.title}
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        {setupNotificationData.message}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={handleStartSetup}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    >
+                      Complete Setup
+                      <ArrowRightIcon className="ml-2 -mr-1 h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={handleDismissNotification}
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Progress indicator for onboarding */}
+          {setupNotificationData.progress > 0 && (
+            <div className="bg-gray-50 border-b border-gray-200">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">
+                    Setup Progress: {setupNotificationData.progress}%
+                  </span>
+                  <div className="w-64 bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${setupNotificationData.progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Content Area */}
           <div className="flex-1 overflow-y-auto">

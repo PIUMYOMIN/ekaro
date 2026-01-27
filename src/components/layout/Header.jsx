@@ -5,7 +5,7 @@ import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon }
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
-import Logo from '../../assets/images/logo.jpg'
+import Logo from '../../assets/images/logo.png'
 
 const Header = () => {
   const { t, i18n } = useTranslation();
@@ -105,8 +105,8 @@ const Header = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <Link to="/" className="flex items-center">
-                    <img src={Logo} className='rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center'/>
-                    <span className="ml-2 text-lg sm:text-2xl font-light font-roboto text-green-800">
+                    <img src={Logo} className='rounded-lg sm:w-12 object-fit flex items-center justify-center'/>
+                    <span className="ml-2 text-lg sm:text-2xl font-torus font-semibold text-green-800">
                       {t('header.logo_text')}
                     </span>
                   </Link>

@@ -13,7 +13,7 @@
     "login": "Login",
     "sign_up": "Sign up",
     "new_user": "New user?",
-    "logo_text": "Mingalar Mall",
+    "logo_text": "Pyonea",
     "burmese": "MM"
   },
   "home": {
@@ -207,6 +207,7 @@
     "seller_center": "Seller Center",
     "view_profile": "View profile",
     "open_sidebar": "Open sidebar",
+    "back_to_sellers": "Back to Sellers",
     "dashboard": "Dashboard",
     "order":{
       "title": "Orders",

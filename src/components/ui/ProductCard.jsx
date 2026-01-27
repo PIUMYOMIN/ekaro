@@ -14,6 +14,27 @@ const ProductCard = ({ product }) => {
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
+  // Helper function to safely get and format average rating
+  const getAverageRating = () => {
+    const rating = product.average_rating;
+    if (rating === null || rating === undefined || rating === 0) {
+      return {
+        value: 0,
+        formatted: "0.0",
+        stars: 0
+      };
+    }
+    
+    const numRating = typeof rating === 'number' ? rating : parseFloat(rating);
+    return {
+      value: isNaN(numRating) ? 0 : numRating,
+      formatted: isNaN(numRating) ? "0.0" : numRating.toFixed(1),
+      stars: Math.floor(isNaN(numRating) ? 0 : numRating)
+    };
+  };
+
+  const ratingInfo = getAverageRating();
+
   // Helper function to get image URL
   const getImageUrl = (image) => {
     if (!image) return '/placeholder-product.jpg';
@@ -44,6 +65,25 @@ const ProductCard = ({ product }) => {
           returnTo: window.location.pathname 
         } 
       });
+      return;
+    }
+
+    // Check if product is active and in stock
+    if (!product.is_active) {
+      setMessage({
+        type: 'error',
+        message: 'This product is currently unavailable'
+      });
+      setTimeout(() => setMessage(null), 3000);
+      return;
+    }
+
+    if (product.quantity <= 0) {
+      setMessage({
+        type: 'error',
+        message: 'This product is out of stock'
+      });
+      setTimeout(() => setMessage(null), 3000);
       return;
     }
 
@@ -82,7 +122,7 @@ const ProductCard = ({ product }) => {
           <span>{message.message}</span>
           <button
             onClick={() => setMessage(null)}
-            className="ml-4"
+            className="ml-4 text-xl font-bold hover:opacity-70"
           >
             ×
           </button>
@@ -90,19 +130,19 @@ const ProductCard = ({ product }) => {
       )}
 
       <motion.div
-        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
         whileHover={{ y: -5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <div className="relative">
-          <Link to={`/products/${product.id}`}>
+        <div className="relative flex-shrink-0">
+          <Link to={`/products/${product.id}`} className="block">
             <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
               <LazyLoadImage
                 src={productImage}
-                alt={product.name}
+                alt={product.name_en || product.name}
                 effect="blur"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23e5e7eb'/%3E%3C/svg%3E"
                 onError={(e) => {
                   e.target.src = '/placeholder-product.jpg';
@@ -110,58 +150,112 @@ const ProductCard = ({ product }) => {
               />
             </div>
           </Link>
-          <div className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
-            {product.category?.name || "No category"}
-          </div>
+          
+          {/* Category Badge */}
+          {product.category?.name_en && (
+            <div className="absolute top-2 right-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
+              {product.category.name_en}
+            </div>
+          )}
+          
+          {/* Out of Stock Badge */}
+          {product.quantity <= 0 && (
+            <div className="absolute top-2 left-2 bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+              Out of Stock
+            </div>
+          )}
         </div>
-        <div className="p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <Link to={`/products/${product.id}`} className="block">
-                <h3 className="text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2">
-                  {product.name}
-                </h3>
-              </Link>
-              <div className="flex items-center mt-1">
-                {[0, 1, 2, 3, 4].map(rating =>
-                  <StarIcon
-                    key={rating}
-                    className={`h-4 w-4 ${rating < Math.floor(product.average_rating || 0)
-                      ? "text-yellow-400 fill-current"
-                      : "text-gray-300"}`}
-                  />
+        
+        <div className="p-4 flex flex-col flex-grow">
+          <div className="flex-grow">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <Link to={`/products/${product.id}`} className="block">
+                  <h3 className="text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 min-h-[56px]">
+                    {product.name_en || product.name || "Unnamed Product"}
+                  </h3>
+                </Link>
+                
+                {/* Rating */}
+                <div className="flex items-center mt-2">
+                  <div className="flex">
+                    {[0, 1, 2, 3, 4].map(rating => (
+                      <StarIcon
+                        key={rating}
+                        className={`h-4 w-4 ${rating < ratingInfo.stars
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-500">
+                    {ratingInfo.formatted}
+                  </span>
+                  {product.reviews_count > 0 && (
+                    <span className="ml-1 text-sm text-gray-500">
+                      ({product.reviews_count || 0})
+                    </span>
+                  )}
+                </div>
+                
+                {/* Short Description */}
+                {product.description_en && (
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                    {product.description_en}
+                  </p>
                 )}
-                <span className="ml-1 text-sm text-gray-500">
-                  ({product.average_rating?.toFixed(1) || '0.0'})
-                </span>
+              </div>
+              
+              <div className="text-right ml-2 flex-shrink-0">
+                <p className="text-lg font-bold text-green-700">
+                  {formatMMK(product.price || 0)}
+                </p>
+                {product.moq > 1 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    MOQ: {product.moq} {product.min_order_unit || 'units'}
+                  </p>
+                )}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-green-700">
-                {formatMMK(product.price)}
-              </p>
-              <p className="text-xs text-gray-500">per unit</p>
-            </div>
           </div>
-          <div className="mt-4">
+          
+          {/* Action Button */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={addingToCart || !product.is_active || product.quantity === 0}
-              className="w-full bg-green-600 border border-transparent rounded-md py-2 px-4 flex items-center justify-center text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={addingToCart || !product.is_active || product.quantity <= 0}
+              className={`w-full rounded-md py-2 px-4 flex items-center justify-center text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
+                !product.is_active || product.quantity <= 0
+                  ? 'bg-gray-400 hover:bg-gray-500'
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
               {addingToCart ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Adding...
                 </>
+              ) : !product.is_active ? (
+                'Unavailable'
+              ) : product.quantity <= 0 ? (
+                'Out of Stock'
               ) : (
-                'Add to cart'
+                'Add to Cart'
               )}
             </button>
-            {product.quantity === 0 && (
-              <p className="text-xs text-red-500 mt-1 text-center">Out of stock</p>
-            )}
+            
+            {/* Additional Info */}
+            <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+              <span>
+                {product.seller?.store_name || product.seller?.name || 'Seller'}
+              </span>
+              {product.is_on_sale && (
+                <span className="text-red-600 font-semibold">
+                  On Sale
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -171,11 +265,12 @@ const ProductCard = ({ product }) => {
 
 // Helper function to format MMK currency
 export const formatMMK = amount => {
+  const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
   return new Intl.NumberFormat("my-MM", {
     style: "currency",
     currency: "MMK",
     minimumFractionDigits: 0
-  }).format(amount);
+  }).format(numAmount);
 };
 
 export default ProductCard;

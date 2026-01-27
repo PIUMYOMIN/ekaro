@@ -1,62 +1,82 @@
 // components/StepGuard.jsx
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { LazyLoadComponent } from 'react-lazy-load-image-component';
-import Loading from './ui/Loading';
 
 const StepGuard = ({ children, step }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [loading, setLoading] = useState(true);
+  const [isValid, setIsValid] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
 
-    useEffect(() => {
-        checkStepAccess();
-    }, [step, location.pathname]);
+  useEffect(() => {
+    const validateStep = async () => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
 
-    const checkStepAccess = async () => {
-        setLoading(true);
-        try {
-            const response = await api.get('/seller/onboarding/status');
-            if (response.data.success) {
-                const { data } = response.data;
-                
-                // If user doesn't have a profile, start from beginning
-                if (!data.has_profile && step !== 'store-basic') {
-                    navigate('/seller/onboarding/store-basic');
-                    return;
-                }
+      // Check if user is a seller
+      if (user.type !== 'seller' && !user.roles?.includes('seller')) {
+        navigate('/');
+        return;
+      }
 
-                // If onboarding is already complete, go to dashboard
-                if (data.onboarding_complete) {
-                    navigate('/seller');
-                    return;
-                }
+      try {
+        const response = await api.get('/seller/onboarding/status');
+        
+        if (response.data.success) {
+          const statusData = response.data.data;
+          
+          // If onboarding is complete, redirect to dashboard
+          if (statusData.onboarding_complete && !statusData.needs_onboarding) {
+            navigate('/seller/dashboard');
+            return;
+          }
 
-                // Check step access based on current progress
-                const stepOrder = ['store-basic', 'business-details', 'address', 'documents', 'review'];
-                const currentIndex = stepOrder.indexOf(data.current_step);
-                const requestedIndex = stepOrder.indexOf(step);
+          // Check if user can access this step
+          const currentStep = statusData.current_step;
+          const stepOrder = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
+          
+          const currentIndex = stepOrder.indexOf(currentStep);
+          const requestedIndex = stepOrder.indexOf(step);
 
-                // If trying to skip ahead, redirect to current step
-                if (requestedIndex > currentIndex + 1) {
-                    navigate(`/seller/onboarding/${data.current_step}`);
-                }
-
-                // If trying to go back to completed step, allow it (for editing)
-                // This is fine, we allow editing previous steps
-            }
-        } catch (error) {
-            console.error('Step guard check failed:', error);
-            // On error, redirect to dashboard
-            navigate('/seller');
+          if (requestedIndex < 0) {
+            // Invalid step
+            navigate('/seller/onboarding/store-basic');
+          } else if (requestedIndex > currentIndex) {
+            // Trying to skip ahead - redirect to current step
+            navigate(`/seller/onboarding/${currentStep}`);
+          } else {
+            // Valid step
+            setIsValid(true);
+          }
         }
+      } catch (error) {
+        console.error('Step validation failed:', error);
+        navigate('/seller/onboarding/store-basic');
+      } finally {
         setLoading(false);
+      }
     };
 
-    if (loading) return <Loading />;
+    validateStep();
+  }, [user, navigate, step, location]);
 
-    return children;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Validating onboarding step...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return isValid ? children : null;
 };
 
 export default StepGuard;

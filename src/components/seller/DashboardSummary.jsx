@@ -1,4 +1,3 @@
-// src/components/seller/DashboardSummary.jsx
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { 
@@ -11,7 +10,7 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   StarIcon,
-  TruckIcon
+  TruckIcon,
 } from "@heroicons/react/24/solid";
 import { Bar, Doughnut } from "react-chartjs-2";
 import api from "../../utils/api";
@@ -36,7 +35,7 @@ ChartJS.register(
   ArcElement
 );
 
-const DashboardSummary = ({ storeData, stats, refreshData }) => {
+const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState({
     orders: {
@@ -64,6 +63,102 @@ const DashboardSummary = ({ storeData, stats, refreshData }) => {
     }
   });
   const [loading, setLoading] = useState(true);
+
+  // Setup Checklist Component
+  const SetupChecklist = ({ storeData, onSetupClick }) => {
+    const checklistItems = [
+      {
+        id: 1,
+        label: "Store Profile Complete",
+        completed: storeData?.store_name && storeData?.contact_email && storeData?.contact_phone,
+        action: "Complete profile",
+        step: "my-store"
+      },
+      {
+        id: 2,
+        label: "Store Logo Uploaded",
+        completed: !!storeData?.store_logo,
+        action: "Upload logo",
+        step: "my-store"
+      },
+      {
+        id: 3,
+        label: "Business Details",
+        completed: storeData?.business_registration_number || storeData?.business_type === "individual",
+        action: "Add details",
+        step: "my-store"
+      },
+      {
+        id: 4,
+        label: "Payment Method Set",
+        completed: !!storeData?.account_number,
+        action: "Set up payment",
+        step: "my-store"
+      },
+      {
+        id: 5,
+        label: "Shipping Configured",
+        completed: storeData?.shipping_enabled || false,
+        action: "Configure shipping",
+        step: "shipping"
+      }
+    ];
+
+    const completedCount = checklistItems.filter(item => item.completed).length;
+    const totalCount = checklistItems.length;
+    const progress = (completedCount / totalCount) * 100;
+
+    if (completedCount === totalCount) return null;
+
+    return (
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-semibold text-blue-900">Store Setup Checklist</h3>
+          <span className="text-sm text-blue-700">
+            {completedCount}/{totalCount} completed
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {checklistItems.map((item) => (
+            <div key={item.id} className="flex items-center justify-between">
+              <div className="flex items-center">
+                {item.completed ? (
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-blue-300 mr-2"></div>
+                )}
+                <span className={`text-sm ${item.completed ? 'text-gray-600' : 'text-gray-900'}`}>
+                  {item.label}
+                </span>
+              </div>
+              {!item.completed && (
+                <button
+                  onClick={() => onSetupClick && onSetupClick(item.step)}
+                  className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors"
+                >
+                  {item.action}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <div className="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Setup Progress</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch comprehensive dashboard data
   useEffect(() => {
@@ -331,6 +426,9 @@ const DashboardSummary = ({ storeData, stats, refreshData }) => {
           <span>Refresh Data</span>
         </button>
       </div>
+
+      {/* Setup Checklist */}
+      <SetupChecklist storeData={storeData} onSetupClick={onSetupClick} />
 
       {/* Store Status Banner */}
       {storeData && (

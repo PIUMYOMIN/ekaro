@@ -10,9 +10,15 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ArrowPathIcon,
-  CubeIcon
+  CubeIcon,
+  TagIcon,
+  XMarkIcon,
+  CalendarIcon,
+  CurrencyDollarIcon,
+  TicketIcon
 } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
+import ProductDiscountModal from "./ProductDiscountModal";
 
 const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) => {
   const { t } = useTranslation();
@@ -25,6 +31,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
   // Modal states
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
 
@@ -36,9 +43,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
     setLoading(true);
     setError("");
     try {
-      // Option 1: Use the existing route
       const response = await api.get("/products");
-
       console.log("Products response:", response.data);
 
       if (response.data.success) {
@@ -67,7 +72,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
     if (!selectedProduct) return;
     try {
       await api.delete(`/products/${selectedProduct.id}`);
-      await fetchProducts(); // Refresh the list
+      await fetchProducts();
       setDeleteModalOpen(false);
       setSelectedProduct(null);
     } catch (error) {
@@ -90,7 +95,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
       await api.put(`/products/${selectedProduct.id}`, {
         is_active: statusTarget
       });
-      await fetchProducts(); // Refresh the list
+      await fetchProducts();
       setStatusModalOpen(false);
       setSelectedProduct(null);
       setStatusTarget(null);
@@ -102,26 +107,32 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
     }
   };
 
+  // Open discount modal
+  const handleOpenDiscountModal = (product) => {
+    setSelectedProduct(product);
+    setDiscountModalOpen(true);
+  };
+
+  // Close discount modal
+  const handleCloseDiscountModal = () => {
+    setDiscountModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Handle discount success
+  const handleDiscountSuccess = () => {
+    fetchProducts(); // Refresh products to show updated discount
+    setDiscountModalOpen(false);
+  };
+
   // Complete the onEditProduct function
   const handleEditProduct = (product) => {
     console.log("Editing product:", product);
     
-    // If a prop function was provided, use it
     if (typeof propOnEditProduct === 'function') {
       propOnEditProduct(product);
     } else {
-      // Otherwise, navigate to the edit page
-      // Choose the appropriate route based on your needs:
-      
-      // Option 1: Seller-specific route (preferred for seller dashboard)
       navigate(`/seller/products/${product.id}/edit`);
-      
-      // Option 2: General edit route
-      // navigate(`/products/${product.id}/edit`);
-      
-      // Option 3: If you have access to the product creation page
-      // You could pass the product data to that page
-      // navigate(`/seller/products/create`, { state: { editProduct: product } });
     }
   };
 
@@ -137,14 +148,12 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
     if (!sortConfig.key) return products;
 
     return [...products].sort((a, b) => {
-      // Handle nested properties
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
 
-      // Handle category name sorting
       if (sortConfig.key === "category" && a.category && b.category) {
-        aValue = a.category.name;
-        bValue = b.category.name;
+        aValue = a.category.name_en;
+        bValue = b.category.name_en;
       }
 
       if (aValue < bValue) {
@@ -164,15 +173,16 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
 
   const getStatusText = (isActive) => (isActive ? "active" : "inactive");
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-US", {
+  const formatPrice = (price) => {
+    if (!price) return "$0.00";
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD"
     }).format(price);
+  };
 
   const getProductImage = (product) => {
     if (product.images && product.images.length > 0) {
-      // Handle different image formats
       const firstImage = product.images[0];
       if (typeof firstImage === "string") {
         return firstImage;
@@ -180,6 +190,36 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
       return firstImage.url || firstImage.path || "/placeholder-product.jpg";
     }
     return "/placeholder-product.jpg";
+  };
+
+  // Check if product is on sale
+  const isProductOnSale = (product) => {
+    return product.is_on_sale || product.discount_price || product.discount_percentage;
+  };
+
+  // Get sale badge
+  const getSaleBadge = (product) => {
+    if (product.discount_percentage) {
+      return `-${product.discount_percentage}%`;
+    } else if (product.discount_price) {
+      const discount = product.price - product.discount_price;
+      const discountPercent = Math.round((discount / product.price) * 100);
+      return `-${discountPercent}%`;
+    }
+    return "Sale";
+  };
+
+  // Get current price
+  const getCurrentPrice = (product) => {
+    if (isProductOnSale(product)) {
+      if (product.discount_price) {
+        return product.discount_price;
+      } else if (product.discount_percentage) {
+        const discount = product.price * (product.discount_percentage / 100);
+        return product.price - discount;
+      }
+    }
+    return product.price;
   };
 
   if (loading) {
@@ -270,6 +310,12 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
                 {products.filter((p) => p.is_active).length}
               </div>
               <div className="text-sm text-gray-500">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {products.filter((p) => isProductOnSale(p)).length}
+              </div>
+              <div className="text-sm text-gray-500">On Sale</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-400">
@@ -369,7 +415,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
+                        <div className="h-10 w-10 flex-shrink-0 relative">
                           <img
                             className="h-10 w-10 rounded-lg object-cover"
                             src={getProductImage(product)}
@@ -378,22 +424,51 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
                               e.target.src = "/placeholder-product.jpg";
                             }}
                           />
+                          {isProductOnSale(product) && (
+                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                              {getSaleBadge(product)}
+                            </div>
+                          )}
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {product.name}
                           </div>
-                          <div className="text-sm text-gray-500 line-clamp-1">
-                            {product.description}
+                          <div className="flex items-center space-x-2">
+                            {isProductOnSale(product) ? (
+                              <>
+                                <span className="text-sm font-bold text-red-600">
+                                  {formatPrice(getCurrentPrice(product))}
+                                </span>
+                                <span className="text-sm text-gray-400 line-through">
+                                  {formatPrice(product.price)}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-sm font-medium text-gray-900">
+                                {formatPrice(product.price)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {product.category?.name || "Uncategorized"}
+                      {product.category?.name_en || "Uncategorized"}
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
-                      {formatPrice(product.price)}
+                      {isProductOnSale(product) ? (
+                        <div className="space-y-1">
+                          <div className="text-red-600">
+                            {formatPrice(getCurrentPrice(product))}
+                          </div>
+                          <div className="text-xs text-gray-500 line-through">
+                            {formatPrice(product.price)}
+                          </div>
+                        </div>
+                      ) : (
+                        formatPrice(product.price)
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -426,6 +501,13 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
                           title="View Product"
                         >
                           <EyeIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleOpenDiscountModal(product)}
+                          className={`${isProductOnSale(product) ? 'text-yellow-600 hover:text-yellow-800' : 'text-blue-600 hover:text-blue-900'}`}
+                          title={isProductOnSale(product) ? "Edit Discount" : "Add Discount"}
+                        >
+                          <TagIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => handleEditProduct(product)}
@@ -511,6 +593,15 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
             </div>
           </div>
         </div>
+      )}
+
+      {/* Discount Modal */}
+      {discountModalOpen && selectedProduct && (
+        <ProductDiscountModal
+          product={selectedProduct}
+          onClose={handleCloseDiscountModal}
+          onSuccess={handleDiscountSuccess}
+        />
       )}
     </div>
   );

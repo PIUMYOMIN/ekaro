@@ -375,7 +375,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       let response;
       if (product) {
-        response = await api.put(`/products/${product.id}`, payload);
+        response = await api.put(`/seller/products/${product.id}`, payload);
         setSuccessMessage("Product updated successfully!");
       } else {
         response = await api.post("/products", payload);
@@ -606,14 +606,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                         {categories.map((parentCategory) => (
                           <optgroup
                             key={parentCategory.id}
-                            label={parentCategory.name}
+                            label={parentCategory.name_en}
                             className="font-semibold text-gray-900"
                           >
                             {/* Show child categories as selectable options */}
                             {parentCategory.children && parentCategory.children.length > 0 ? (
                               parentCategory.children.map((childCategory) => (
                                 <option key={childCategory.id} value={childCategory.id} className="pl-6 text-gray-700">
-                                  {childCategory.name}
+                                  {childCategory.name_en}
                                 </option>
                               ))
                             ) : (
