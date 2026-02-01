@@ -13,6 +13,7 @@ import {
   BuildingStorefrontIcon,
   ExclamationTriangleIcon,
   ArrowRightIcon,
+  PencilIcon
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
@@ -29,6 +30,7 @@ import api from "../../utils/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryManagement from "../../components/seller/DeliveryManagement";
 import DiscountManagement from "../../components/seller/DiscountManagement";
+import EditStore from "../../components/seller/EditStore";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -45,6 +47,7 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [onboardingStatus, setOnboardingStatus] = useState(null);
   const navigate = useNavigate();
+  const [isEditMode, setIsEditMode] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -65,7 +68,7 @@ const SellerDashboard = () => {
     try {
       setLoading(true);
       console.log("Fetching store data...");
-      
+
       const [storeResponse, statsResponse] = await Promise.allSettled([
         api.get("/seller/my-store"),
         api.get("/seller/sales-summary")
@@ -101,7 +104,7 @@ const SellerDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to fetch store data:", error);
-      
+
       if (error.response?.status === 403) {
         navigate('/');
       }
@@ -144,6 +147,11 @@ const SellerDashboard = () => {
       name: t("seller.my_store"),
       icon: BuildingStorefrontIcon,
       component: <MyStore storeData={storeData} stats={stats} refreshData={refreshStoreData} />
+    },
+    {
+      name: "Edit Store",
+      icon: PencilIcon,
+      component: <EditStore storeData={storeData} refreshData={refreshStoreData} />
     },
     {
       name: t("seller.order.title"),
@@ -189,7 +197,11 @@ const SellerDashboard = () => {
       name: t("seller.settings"),
       icon: CogIcon,
       component: (
-        <StoreSettings storeData={storeData} setStoreData={setStoreData} refreshData={refreshStoreData} />
+        <StoreSettings
+          storeData={storeData}
+          setStoreData={setStoreData}
+          refreshData={refreshStoreData}
+        />
       )
     }
   ], [t, storeData, stats, refreshStoreData, handleSetupClick]);
@@ -198,11 +210,19 @@ const SellerDashboard = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const initialTab = searchParams.get('tab');
+    const editMode = searchParams.get('edit');
     const setupParam = searchParams.get('setup');
 
-    console.log("URL params:", { initialTab, setupParam });
+    console.log("URL params:", { initialTab, editMode, setupParam });
 
-    if (initialTab === 'my-store' || setupParam === 'true') {
+    if (editMode === 'true' || initialTab === 'edit-store') {
+      // Navigate to edit store
+      const editStoreIndex = navigation.findIndex(item => item.name === "Edit Store");
+      console.log("Edit store index:", editStoreIndex);
+      if (editStoreIndex !== -1) {
+        setSelectedTab(editStoreIndex);
+      }
+    } else if (initialTab === 'my-store' || setupParam === 'true') {
       const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
       console.log("My store index:", myStoreIndex);
       if (myStoreIndex !== -1) {
@@ -252,10 +272,10 @@ const SellerDashboard = () => {
 
         // If we get here, onboarding is complete or not required, fetch store data
         await fetchStoreData();
-        
+
       } catch (error) {
         console.error('Failed to verify seller status:', error);
-        
+
         // Try to fetch store data anyway
         try {
           await fetchStoreData();
@@ -276,9 +296,9 @@ const SellerDashboard = () => {
   useEffect(() => {
     if (storeData) {
       console.log("Checking setup requirements for:", storeData);
-      
+
       const requirements = [];
-      
+
       // Check if store is pending approval
       if (storeData.status === "pending") {
         setSetupNotificationData({
@@ -352,7 +372,7 @@ const SellerDashboard = () => {
   // Handle setup completion
   const handleStartSetup = () => {
     console.log("Starting setup:", setupNotificationData.nextStep);
-    
+
     if (setupNotificationData.nextStep === "my-store") {
       // Find My Store tab index and switch to it
       const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
@@ -380,12 +400,18 @@ const SellerDashboard = () => {
   useEffect(() => {
     if (!user || !storeData) return;
 
+    // Check if current tab is edit store (index 2 in your navigation)
+    const isEditStoreTab = selectedTab === 2;
+
+    // Don't poll if we're in edit mode
+    if (isEditStoreTab) return;
+
     const interval = setInterval(() => {
       fetchStoreData();
     }, 60000); // Update every 60 seconds
 
     return () => clearInterval(interval);
-  }, [user, storeData, fetchStoreData]);
+  }, [user, storeData, fetchStoreData, selectedTab]); // Add selectedTab to dependencies
 
   if (loading) {
     return (
@@ -499,7 +525,7 @@ const SellerDashboard = () => {
                     </div>
                   )}
                   {/* Fallback logo */}
-                  <div 
+                  <div
                     className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg hidden"
                     style={{ display: 'none' }}
                   >

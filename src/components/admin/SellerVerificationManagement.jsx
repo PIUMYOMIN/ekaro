@@ -1,6 +1,5 @@
-// components/admin/SellerVerificationManagement.js
-import React, { useState } from "react";
-import { 
+import React, { useState,useEffect } from "react";
+import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   CheckCircleIcon,
@@ -14,7 +13,7 @@ import {
   CheckIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
-import { 
+import {
   StarIcon,
   BuildingStorefrontIcon,
   MapPinIcon,
@@ -44,19 +43,26 @@ const SellerVerificationManagement = ({
   // Handle verification approval
   const handleApprove = async (seller) => {
     if (!window.confirm(`Approve verification for ${seller.store_name}?`)) return;
-    
+
     try {
+      // Use the correct endpoint path
       await handleVerifySeller(seller.id, 'approve', {
         verification_level: verificationData.verification_level,
         badge_type: verificationData.badge_type,
         notes: verificationData.notes || `Seller approved by admin on ${new Date().toLocaleDateString()}`
       });
+
+      // Refresh data and close modal
+      refreshData();
       setSelectedSeller(null);
       setVerificationData({
         verification_level: 'verified',
         badge_type: 'verified',
         notes: ''
       });
+
+      // Show success message
+      alert(`Successfully approved ${seller.store_name}`);
     } catch (error) {
       console.error('Approval failed:', error);
       alert('Failed to approve seller: ' + error.message);
@@ -69,20 +75,37 @@ const SellerVerificationManagement = ({
       alert('Please provide a reason for rejection');
       return;
     }
-    
+
     if (!window.confirm(`Reject verification for ${seller.store_name}?`)) return;
-    
+
     try {
+      // Use the correct endpoint path
       await handleVerifySeller(seller.id, 'reject', {
         reason: rejectReason
       });
+
+      // Refresh data and close modal
+      refreshData();
       setSelectedSeller(null);
       setRejectReason('');
+
+      // Show success message
+      alert(`Successfully rejected ${seller.store_name}`);
     } catch (error) {
       console.error('Rejection failed:', error);
       alert('Failed to reject seller: ' + error.message);
     }
   };
+
+  useEffect(() => {
+    if (!selectedSeller) {
+      const interval = setInterval(() => {
+        refreshData();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [selectedSeller, refreshData]);
 
   // Get status badge color
   const getStatusBadgeColor = (status) => {
@@ -98,12 +121,12 @@ const SellerVerificationManagement = ({
   // Get document status
   const getDocumentStatus = (seller) => {
     const docs = [];
-    
+
     if (seller.identity_document_front) docs.push('ID Front ✓');
     if (seller.identity_document_back) docs.push('ID Back ✓');
     if (seller.business_registration_document) docs.push('Business Reg ✓');
     if (seller.tax_registration_document) docs.push('Tax Reg ✓');
-    
+
     return docs.length > 0 ? docs.join(', ') : 'No documents';
   };
 
@@ -242,32 +265,32 @@ const SellerVerificationManagement = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-2xl font-bold text-yellow-600">
-            {Array.isArray(pendingSellers?.data) 
-              ? pendingSellers.data.filter(s => s.verification_status === 'pending').length 
+            {Array.isArray(pendingSellers?.data)
+              ? pendingSellers.data.filter(s => s.verification_status === 'pending').length
               : 0}
           </div>
           <div className="text-sm text-gray-500">Pending Review</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-2xl font-bold text-blue-600">
-            {Array.isArray(pendingSellers?.data) 
-              ? pendingSellers.data.filter(s => s.verification_status === 'under_review').length 
+            {Array.isArray(pendingSellers?.data)
+              ? pendingSellers.data.filter(s => s.verification_status === 'under_review').length
               : 0}
           </div>
           <div className="text-sm text-gray-500">Under Review</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-2xl font-bold text-green-600">
-            {Array.isArray(pendingSellers?.data) 
-              ? pendingSellers.data.filter(s => s.verification_status === 'verified').length 
+            {Array.isArray(pendingSellers?.data)
+              ? pendingSellers.data.filter(s => s.verification_status === 'verified').length
               : 0}
           </div>
           <div className="text-sm text-gray-500">Verified</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-2xl font-bold text-red-600">
-            {Array.isArray(pendingSellers?.data) 
-              ? pendingSellers.data.filter(s => s.verification_status === 'rejected').length 
+            {Array.isArray(pendingSellers?.data)
+              ? pendingSellers.data.filter(s => s.verification_status === 'rejected').length
               : 0}
           </div>
           <div className="text-sm text-gray-500">Rejected</div>
@@ -313,8 +336,22 @@ const SellerVerificationManagement = ({
         )}
 
         {error && (
-          <div className="p-4 text-red-500 bg-red-50">
-            Error: {error.message || 'Failed to load verification queue'}
+          <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+              <div>
+                <h4 className="text-sm font-medium text-red-800">Error Loading Data</h4>
+                <p className="text-sm text-red-600 mt-1">
+                  {error.response?.data?.message || error.message || 'Failed to load verification queue'}
+                </p>
+                <button
+                  onClick={refreshData}
+                  className="mt-2 text-sm text-red-700 hover:text-red-900 underline"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -359,7 +396,7 @@ const SellerVerificationManagement = ({
                       <div className="text-sm text-gray-500">Owner</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center">
                     <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
@@ -367,7 +404,7 @@ const SellerVerificationManagement = ({
                       <div className="text-sm text-gray-500">Contact Email</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center">
                     <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
@@ -375,7 +412,7 @@ const SellerVerificationManagement = ({
                       <div className="text-sm text-gray-500">Contact Phone</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center">
                     <BuildingStorefrontIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
@@ -383,7 +420,7 @@ const SellerVerificationManagement = ({
                       <div className="text-sm text-gray-500">Business Type</div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center">
                     <MapPinIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
@@ -404,7 +441,7 @@ const SellerVerificationManagement = ({
                     </label>
                     <select
                       value={verificationData.verification_level}
-                      onChange={(e) => setVerificationData({...verificationData, verification_level: e.target.value})}
+                      onChange={(e) => setVerificationData({ ...verificationData, verification_level: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
                     >
                       <option value="basic">Basic</option>
@@ -412,14 +449,14 @@ const SellerVerificationManagement = ({
                       <option value="premium">Premium</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Badge Type
                     </label>
                     <select
                       value={verificationData.badge_type}
-                      onChange={(e) => setVerificationData({...verificationData, badge_type: e.target.value})}
+                      onChange={(e) => setVerificationData({ ...verificationData, badge_type: e.target.value })}
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
                     >
                       <option value="verified">Verified</option>
@@ -428,14 +465,14 @@ const SellerVerificationManagement = ({
                       <option value="top_rated">Top Rated</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notes (Optional)
                     </label>
                     <textarea
                       value={verificationData.notes}
-                      onChange={(e) => setVerificationData({...verificationData, notes: e.target.value})}
+                      onChange={(e) => setVerificationData({ ...verificationData, notes: e.target.value })}
                       rows={2}
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
                       placeholder="Add verification notes..."
@@ -445,7 +482,7 @@ const SellerVerificationManagement = ({
 
                 {/* Rejection Section */}
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-2 text-red-600">Rejection Details</h4>
+                  <h4 className="font-medium mb-2 text-red-600">Rejection Details</h4>
                   <textarea
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
@@ -463,8 +500,8 @@ const SellerVerificationManagement = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {selectedSeller.identity_document_front && (
                   <a
-                    href={selectedSeller.identity_document_front.startsWith('http') 
-                      ? selectedSeller.identity_document_front 
+                    href={selectedSeller.identity_document_front.startsWith('http')
+                      ? selectedSeller.identity_document_front
                       : `/storage/${selectedSeller.identity_document_front}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -476,8 +513,8 @@ const SellerVerificationManagement = ({
                 )}
                 {selectedSeller.identity_document_back && (
                   <a
-                    href={selectedSeller.identity_document_back.startsWith('http') 
-                      ? selectedSeller.identity_document_back 
+                    href={selectedSeller.identity_document_back.startsWith('http')
+                      ? selectedSeller.identity_document_back
                       : `/storage/${selectedSeller.identity_document_back}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -489,8 +526,8 @@ const SellerVerificationManagement = ({
                 )}
                 {selectedSeller.business_registration_document && (
                   <a
-                    href={selectedSeller.business_registration_document.startsWith('http') 
-                      ? selectedSeller.business_registration_document 
+                    href={selectedSeller.business_registration_document.startsWith('http')
+                      ? selectedSeller.business_registration_document
                       : `/storage/${selectedSeller.business_registration_document}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -502,8 +539,8 @@ const SellerVerificationManagement = ({
                 )}
                 {selectedSeller.tax_registration_document && (
                   <a
-                    href={selectedSeller.tax_registration_document.startsWith('http') 
-                      ? selectedSeller.tax_registration_document 
+                    href={selectedSeller.tax_registration_document.startsWith('http')
+                      ? selectedSeller.tax_registration_document
                       : `/storage/${selectedSeller.tax_registration_document}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -534,7 +571,7 @@ const SellerVerificationManagement = ({
                   All Documents
                 </button>
               </div>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleReject(selectedSeller)}

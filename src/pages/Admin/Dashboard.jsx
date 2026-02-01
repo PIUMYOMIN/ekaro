@@ -105,86 +105,77 @@ const AdminDashboard = () => {
   const [categoriesError, setCategoriesError] = useState(null);
   const [sellersError, setSellersError] = useState(null);
 
-  // In AdminDashboard.js
-  const handleVerifySeller = async (sellerId, action, data = {}) => {
+  // Separate function for verification actions
+  const handleSellerVerification = async (sellerId, action, data = {}) => {
     try {
       let endpoint = '';
       let method = 'POST';
+      let requestData = {};
 
       if (action === 'approve') {
         endpoint = `/admin/seller/${sellerId}/verify`;
         method = 'POST';
-
-        const response = await api({
-          method,
-          url: endpoint,
-          data: {
-            verification_level: data.verification_level || 'verified',
-            badge_type: data.badge_type || 'verified',
-            notes: data.notes || 'Approved by admin',
-          }
-        });
-
-        if (response.data.success) {
-          alert('Seller verified successfully');
-          fetchPendingSellers();
-          fetchSellers(); // Refresh sellers list
-          return response.data;
-        }
+        requestData = {
+          verification_level: data.verification_level || 'verified',
+          badge_type: data.badge_type || 'verified',
+          notes: data.notes || `Approved by admin on ${new Date().toLocaleDateString()}`,
+        };
       } else if (action === 'reject') {
         endpoint = `/admin/seller/${sellerId}/reject`;
         method = 'POST';
-
-        const response = await api({
-          method,
-          url: endpoint,
-          data: { reason: data.reason || 'Rejected by administrator' }
-        });
-
-        if (response.data.success) {
-          alert('Seller verification rejected');
-          fetchPendingSellers();
-          return response.data;
-        }
-      }
-    } catch (error) {
-      console.error(`Error ${action}ing seller:`, error);
-      const errorMessage = error.response?.data?.message || error.message || `Failed to ${action} seller`;
-      alert(errorMessage);
-      throw error;
-    }
-  };
-
-  // Separate function for verification actions
-  const handleSellerVerification = async (sellerId, action, data = {}) => {
-    try {
-      let endpoint, method;
-
-      if (action === 'approve') {
-        endpoint = `/${sellerId}/verify`;
-        method = 'POST';
-      } else if (action === 'reject') {
-        endpoint = `/admin/seller/${sellerId}/reject`;
-        method = 'POST';
+        requestData = {
+          reason: data.reason || 'Rejected by administrator'
+        };
       } else if (action === 'update_status') {
         endpoint = `/admin/seller/${sellerId}/verification-status`;
         method = 'PUT';
+        requestData = {
+          verification_status: data.status || 'pending',
+          notes: data.notes || ''
+        };
       }
 
       const response = await api({
         method,
         url: endpoint,
-        data
+        data: requestData
       });
 
       if (response.data.success) {
-        alert(`Seller ${action}ed successfully`);
-        fetchPendingSellers(); // Refresh verification queue
-        return response.data;
+        // Refresh all seller-related data
+        await Promise.all([
+          fetchPendingSellers(),
+          fetchSellers()
+        ]);
+
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message || `Seller ${action}ed successfully`
+        };
       }
     } catch (error) {
-      console.error('Error in seller verification:', error);
-      throw error;
+      console.error(`Error in seller verification (${action}):`, error);
+      const errorMessage = error.response?.data?.message || error.message || `Failed to ${action} seller`;
+      throw new Error(errorMessage);
+    }
+  };
+
+  //Refresh verification data
+  const refreshVerificationData = async () => {
+    try {
+      setIsVerificationLoading(true);
+      await fetchPendingSellers();
+
+      // Also refresh sellers list to get updated status
+      const response = await api.get("/admin/sellers");
+      if (response.data.data && response.data.data.data) {
+        setSellers(response.data.data.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing verification data:', error);
+    } finally {
+      setIsVerificationLoading(false);
     }
   };
 
@@ -899,10 +890,10 @@ const AdminDashboard = () => {
           pendingSellers={pendingSellers}
           loading={isVerificationLoading}
           error={verificationError}
-          handleVerifySeller={handleVerifySeller}
+          handleVerifySeller={handleSellerVerification}
           searchTerm={verificationSearchTerm}
           onSearchChange={setVerificationSearchTerm}
-          refreshData={fetchPendingSellers}
+          refreshData={refreshVerificationData}
         />
       )
     },

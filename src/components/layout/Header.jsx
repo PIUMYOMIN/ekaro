@@ -105,7 +105,13 @@ const Header = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 flex items-center">
                   <Link to="/" className="flex items-center">
-                    <img src={Logo} className='rounded-lg sm:w-12 object-fit flex items-center justify-center'/>
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                      <img
+                        src={Logo}
+                        className="rounded-lg absolute inset-0 w-full h-full object-contain"
+                        alt="Logo"
+                      />
+                    </div>
                     <span className="ml-2 text-lg sm:text-2xl font-torus font-semibold text-green-800">
                       {t('header.logo_text')}
                     </span>

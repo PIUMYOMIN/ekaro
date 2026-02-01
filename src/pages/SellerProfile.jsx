@@ -448,7 +448,7 @@ const SellerProfile = () => {
               </div>
 
               <p className="text-gray-700 mb-4 leading-relaxed">
-                {seller.description || "No description available."}
+                {seller.store_description || "No description available."}
               </p>
 
               {/* Categories and Business Type */}
