@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { LazyLoadImage } from "react-lazy-load-image-component";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,11 +10,57 @@ import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
 import CategoryCard from "../components/ui/CategoryCard";
 
+// Skeleton components for better loading states
+const ProductCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
+    <div className="w-full h-48 bg-gray-300"></div>
+    <div className="p-4 flex flex-col flex-grow">
+      <div className="flex-grow space-y-2">
+        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+        <div className="h-3 bg-gray-300 rounded w-full"></div>
+        <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+      </div>
+      <div className="pt-4">
+        <div className="h-8 bg-gray-300 rounded"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const CategoryCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
+    <div className="flex items-center space-x-3">
+      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+      <div className="flex-1">
+        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="mt-1 h-3 bg-gray-300 rounded w-1/2"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const SellerCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
+    <div className="flex items-center space-x-3">
+      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+      <div className="flex-1">
+        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="mt-1 h-3 bg-gray-300 rounded w-1/2"></div>
+        <div className="mt-2 flex space-x-2">
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+          <div className="h-4 bg-gray-300 rounded w-16"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const Home = () => {
   const { t } = useTranslation();
   const { user, isAuthenticated, isSeller, isBuyer, isAdmin } = useAuth();
   const navigate = useNavigate();
-  
+
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
@@ -25,30 +71,11 @@ const Home = () => {
     sellers: true
   });
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading({ categories: true, products: true, sellers: true });
-      
-      try {
-        await Promise.all([
-          fetchCategories(),
-          fetchTopSellers(),
-          fetchProducts()
-        ]);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading({ categories: false, products: false, sellers: false });
-      }
-    };
-
-    fetchAllData();
-  }, [t]);
-
-  const fetchCategories = async () => {
+  // Memoize fetch functions to prevent unnecessary re-renders
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await api.get("/categories");
-      
+
       // Handle different response structures
       let categoriesData = [];
       if (res.data.success && res.data.data) {
@@ -59,44 +86,29 @@ const Home = () => {
         categoriesData = [];
       }
 
-      // Process categories to get root categories and add product counts
+      // Process categories to get root categories
       const rootCategories = categoriesData.filter(cat => !cat.parent_id || cat.parent_id === null);
-      
-      // For each root category, get all descendant categories
-      const processedCategories = await Promise.all(
-        rootCategories.map(async (category) => {
-          try {
-            // Fetch products for this category and its descendants
-            const productsRes = await api.get(`/products?category=${category.id}&per_page=1`);
-            const productCount = productsRes.data.meta?.total || 0;
-            
-            return {
-              ...category,
-              productCount: productCount,
-              // Count children
-              childrenCount: category.children ? category.children.length : 0
-            };
-          } catch (error) {
-            console.error(`Error fetching products for category ${category.id}:`, error);
-            return {
-              ...category,
-              productCount: 0,
-              childrenCount: category.children ? category.children.length : 0
-            };
-          }
-        })
-      );
+
+      // Optimize: Don't fetch product counts for all categories in home page
+      // Just show categories with their children count
+      const processedCategories = rootCategories.map((category) => ({
+        ...category,
+        productCount: category.products_count || 0, // Use pre-calculated count if available
+        childrenCount: category.children ? category.children.length : 0
+      }));
 
       setCategories(processedCategories.slice(0, 6)); // Show only first 6
     } catch (err) {
       console.error("Failed to fetch categories:", err);
       setCategories([]);
+    } finally {
+      setLoading(prev => ({ ...prev, categories: false }));
     }
-  };
+  }, []);
 
-  const fetchTopSellers = async () => {
+  const fetchTopSellers = useCallback(async () => {
     try {
-      const res = await api.get("/sellers?top=true");
+      const res = await api.get("/sellers?top=true&limit=4"); // Add limit to reduce data
       const sellersData = res.data.data || res.data || [];
       setTopSellers(sellersData);
 
@@ -115,34 +127,55 @@ const Home = () => {
     } catch (err) {
       console.error("Failed to fetch top sellers:", err);
       setTransformedSellers([]);
+    } finally {
+      setLoading(prev => ({ ...prev, sellers: false }));
     }
-  };
+  }, [t]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/products?featured=true&per_page=8");
+      const res = await api.get("/products?featured=true&per_page=8&fields=id,name_en,name_mm,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale"); // Specify fields to reduce payload
       setProducts(res.data.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch featured products:", err);
       setProducts([]);
+    } finally {
+      setLoading(prev => ({ ...prev, products: false }));
     }
-  };
+  }, []);
 
-  const handleCTAClick = () => {
-    if (!isAuthenticated) {
-      navigate('/register');
-    } else if (isSeller()) {
-      navigate('/seller/dashboard');
-    } else if (isBuyer()) {
-      navigate('/products');
-    } else if (isAdmin()) {
-      navigate('/admin/dashboard');
-    } else {
-      navigate('/register');
-    }
-  };
+  useEffect(() => {
+    let isMounted = true;
 
-  const getCTAButtonText = () => {
+    const fetchAllData = async () => {
+      if (!isMounted) return;
+
+      setLoading({ categories: true, products: true, sellers: true });
+
+      try {
+        await Promise.all([
+          fetchCategories(),
+          fetchTopSellers(),
+          fetchProducts()
+        ]);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        if (isMounted) {
+          setLoading({ categories: false, products: false, sellers: false });
+        }
+      }
+    };
+
+    fetchAllData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [t]);
+
+  // Memoize derived values as functions
+  const getCTAButtonText = useCallback(() => {
     if (!isAuthenticated) {
       return t("home.become_seller");
     } else if (isSeller()) {
@@ -154,9 +187,9 @@ const Home = () => {
     } else {
       return t("home.get_started");
     }
-  };
+  }, [isAuthenticated, isSeller, isBuyer, isAdmin, t]);
 
-  const getCTAButtonLink = () => {
+  const getCTAButtonLink = useCallback(() => {
     if (!isAuthenticated) {
       return "/register";
     } else if (isSeller()) {
@@ -168,54 +201,194 @@ const Home = () => {
     } else {
       return "/register";
     }
-  };
+  }, [isAuthenticated, isSeller, isBuyer, isAdmin]);
 
-  // If loading, show skeleton
-  if (loading.categories && loading.products && loading.sellers) {
-    return (
-      <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="animate-pulse space-y-8">
-            {/* Hero skeleton */}
-            <div className="h-64 bg-gray-300 rounded-lg"></div>
-            
-            {/* Categories skeleton */}
-            <div>
-              <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-40 bg-gray-300 rounded-lg"></div>
-                ))}
-              </div>
+  // Optimize re-renders by memoizing sections
+  const renderHeroSection = useMemo(() => (
+    <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gray-900 opacity-40" />
+      </div>
+      <div className="relative max-w-7xl mx-auto py-16 sm:py-24 md:py-32 px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+            {t("home.hero_title")}
+          </h1>
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-green-100 max-w-3xl mx-auto px-4">
+            {t("home.hero_subtitle")}
+          </p>
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4">
+            <div className="rounded-md shadow">
+              <Link
+                to={getCTAButtonLink()}
+                className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                {getCTAButtonText()}
+              </Link>
             </div>
-            
-            {/* Products skeleton */}
-            <div>
-              <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-64 bg-gray-300 rounded-lg"></div>
-                ))}
-              </div>
+            <div className="rounded-md shadow">
+              <Link
+                to="/products"
+                className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-white bg-green-900 bg-opacity-60 hover:bg-opacity-70 transition-colors"
+              >
+                {t("home.browse_products")}
+              </Link>
             </div>
           </div>
+          {isAuthenticated && isBuyer() && (
+            <div className="mt-4">
+              <Link
+                to="/register-seller"
+                className="inline-block text-white hover:text-green-200 font-medium text-sm md:text-base transition-colors"
+              >
+                {t("home.become_seller_link")} →
+              </Link>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  ), [getCTAButtonLink, getCTAButtonText, isAuthenticated, isBuyer, t]);
+
+  const renderCategoriesSection = useMemo(() => (
+    <section className="py-10 sm:py-12 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {t("home.popular_categories")}
+          </h2>
+          <Link
+            to="/categories"
+            className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+          >
+            {t("home.browse_all_categories")} →
+          </Link>
+        </div>
+
+        {loading.categories ? (
+          <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <CategoryCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : categories.length > 0 ? (
+          <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.id}
+                category={category}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 sm:mt-10 text-center py-10 sm:py-12">
+            <p className="text-gray-500 text-base sm:text-lg">{t("home.no_categories_found")}</p>
+            <Link
+              to="/categories"
+              className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+            >
+              {t("home.browse_categories")}
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  ), [loading.categories, categories, t]);
+
+  const renderProductsSection = useMemo(() => (
+    <section className="py-10 sm:py-12 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {t("home.featured_products")}
+            </h2>
+          </div>
+          <Link
+            to="/products"
+            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+          >
+            {t("home.view_all")} →
+          </Link>
+        </div>
+        <div className="mt-6 sm:mt-6 grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+          {loading.products ? (
+            [...Array(4)].map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))
+          ) : products.length > 0 ? (
+            products.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10 sm:py-12">
+              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
+            </div>
+          )}
         </div>
       </div>
-    );
-  }
+    </section>
+  ), [loading.products, products, t]);
+
+  const renderSellersSection = useMemo(() => (
+    <section className="py-10 sm:py-12 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {t("home.top_sellers")}
+            </h2>
+          </div>
+          <Link
+            to="/sellers"
+            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+          >
+            {t("home.view_all")} →
+          </Link>
+        </div>
+        <div className="mt-6 sm:mt-6 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {loading.sellers ? (
+            [...Array(4)].map((_, i) => (
+              <SellerCardSkeleton key={i} />
+            ))
+          ) : transformedSellers.length > 0 ? (
+            transformedSellers.map(seller => (
+              <SellerCard key={seller.id} seller={seller} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10 sm:py-12">
+              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_top_sellers")}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  ), [loading.sellers, transformedSellers, t]);
 
   return (
     <div className="bg-gray-50">
+      {renderHeroSection}
+      {renderCategoriesSection}
+      {renderProductsSection}
+      {renderSellersSection}
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gray-900 opacity-40" />
         </div>
         <div className="relative max-w-7xl mx-auto py-16 sm:py-24 md:py-32 px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
             className="text-center"
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
@@ -226,16 +399,16 @@ const Home = () => {
             </p>
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4">
               <div className="rounded-md shadow">
-                <Link 
-                  to={getCTAButtonLink()} 
+                <Link
+                  to={getCTAButtonLink()}
                   className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 transition-colors"
                 >
                   {getCTAButtonText()}
                 </Link>
               </div>
               <div className="rounded-md shadow">
-                <Link 
-                  to="/products" 
+                <Link
+                  to="/products"
                   className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-white bg-green-900 bg-opacity-60 hover:bg-opacity-70 transition-colors"
                 >
                   {t("home.browse_products")}
@@ -244,8 +417,8 @@ const Home = () => {
             </div>
             {isAuthenticated && isBuyer() && (
               <div className="mt-4">
-                <Link 
-                  to="/register-seller" 
+                <Link
+                  to="/register-seller"
                   className="inline-block text-white hover:text-green-200 font-medium text-sm md:text-base transition-colors"
                 >
                   {t("home.become_seller_link")} →
@@ -263,32 +436,32 @@ const Home = () => {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {t("home.popular_categories")}
             </h2>
-            <Link 
-              to="/categories" 
+            <Link
+              to="/categories"
               className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
             >
               {t("home.browse_all_categories")} →
             </Link>
           </div>
-          
+
           {categories.length > 0 ? (
             <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {categories.map((category) => (
-                <CategoryCard 
-                  key={category.id} 
+                <CategoryCard
+                  key={category.id}
                   category={{
                     ...category,
                     count: category.productCount || 0,
                     children: category.children || []
-                  }} 
+                  }}
                 />
               ))}
             </div>
           ) : (
             <div className="mt-8 sm:mt-10 text-center py-10 sm:py-12">
               <p className="text-gray-500 text-base sm:text-lg">{t("home.no_categories_found")}</p>
-              <Link 
-                to="/categories" 
+              <Link
+                to="/categories"
                 className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
               >
                 {t("home.browse_categories")}
@@ -307,8 +480,8 @@ const Home = () => {
                 {t("home.featured_products")}
               </h2>
             </div>
-            <Link 
-              to="/products" 
+            <Link
+              to="/products"
               className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
             >
               {t("home.view_all")} →
@@ -341,8 +514,8 @@ const Home = () => {
                 {t("home.top_sellers")}
               </h2>
             </div>
-            <Link 
-              to="/sellers" 
+            <Link
+              to="/sellers"
               className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
             >
               {t("home.view_all")} →
@@ -469,8 +642,8 @@ const Home = () => {
               </div>
               <div className="mt-6 sm:mt-8 lg:mt-0 lg:ml-8">
                 <div className="inline-flex rounded-md shadow">
-                  <Link 
-                    to={getCTAButtonLink()} 
+                  <Link
+                    to={getCTAButtonLink()}
                     className="inline-flex items-center justify-center px-5 py-3 text-sm sm:text-base font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 transition-colors"
                   >
                     {getCTAButtonText()}
@@ -478,8 +651,8 @@ const Home = () => {
                 </div>
                 {isAuthenticated && isBuyer() && (
                   <div className="mt-3 text-center">
-                    <Link 
-                      to="/register-seller" 
+                    <Link
+                      to="/register-seller"
                       className="inline-block text-green-100 hover:text-white text-xs sm:text-sm font-medium transition-colors"
                     >
                       {t("home.become_seller_link")} →

@@ -20,6 +20,16 @@ const STORAGE_KEYS = {
   IMAGE_PREVIEWS: 'product_image_previews'
 };
 
+// Helper function to get full image URL (defined outside component)
+const getImageUrl = (path) => {
+  if (!path) return '/placeholder-product.jpg';
+  if (path.startsWith('http')) return path;
+  // Assuming your backend serves images from /storage
+  // Adjust this based on your actual backend URL
+  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  return `${baseUrl}/storage/${path.replace('public/', '')}`;
+};
+
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -63,7 +73,42 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   const [formData, setFormData] = useState(() => {
     if (product) {
-      return { ...defaultFormData, ...product };
+      // Map product data to form fields
+      return {
+        ...defaultFormData,
+        name: product.name_en || product.name || "",
+        name_mm: product.name_mm || "",
+        description: product.description_en || product.description || "",
+        description_mm: product.description_mm || "",
+        price: product.price || "",
+        quantity: product.quantity || 0,
+        category_id: product.category_id || "",
+        specifications: product.specifications || {},
+        moq: product.moq || 1,
+        min_order_unit: product.min_order_unit || "piece",
+        lead_time: product.lead_time || "",
+        condition: product.condition || "new",
+        is_active: product.is_active ?? true,
+        brand: product.brand || "",
+        model: product.model || "",
+        color: product.color || "",
+        material: product.material || "",
+        origin: product.origin || "",
+        weight_kg: product.weight_kg || "",
+        warranty: product.warranty || "",
+        warranty_type: product.warranty_type || "",
+        warranty_period: product.warranty_period || "",
+        return_policy: product.return_policy || "",
+        shipping_cost: product.shipping_cost || "",
+        shipping_time: product.shipping_time || "",
+        packaging_details: product.packaging_details || "",
+        additional_info: product.additional_info || "",
+        is_featured: product.is_featured || false,
+        is_new: product.is_new ?? true,
+        discount_price: product.discount_price || "",
+        discount_start: product.discount_start || "",
+        discount_end: product.discount_end || ""
+      };
     }
 
     const savedDraft = localStorage.getItem(STORAGE_KEYS.PRODUCT_DRAFT);
@@ -78,12 +123,41 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     return defaultFormData;
   });
 
+  const [imagePreviews, setImagePreviews] = useState(() => {
+    if (product && product.images) {
+      // Handle both string and object image formats
+      let images = product.images;
+      if (typeof images === 'string') {
+        try {
+          images = JSON.parse(images);
+        } catch (e) {
+          images = [images];
+        }
+      }
+
+      return images.map((img, index) => {
+        const isImageObj = typeof img === 'object';
+        const path = isImageObj ? (img.path || img.url) : img;
+        const url = isImageObj ? (img.url || getImageUrl(img.path || img.url)) : getImageUrl(img);
+
+        return {
+          path: path,
+          url: url,
+          angle: isImageObj ? (img.angle || 'default') : 'default',
+          is_primary: isImageObj ? (img.is_primary || index === 0) : index === 0,
+          isExisting: true
+        };
+      });
+    }
+    return [];
+  });
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [error, setError] = useState("");
   const [specInput, setSpecInput] = useState({ key: "", value: "" });
-  const [imagePreviews, setImagePreviews] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
@@ -122,26 +196,55 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { id: 4, title: "Shipping & More", description: "Delivery and details" }
   ];
 
+  // Save draft to localStorage (debounced)
   useEffect(() => {
-    if (!product) {
-      const draftToSave = { ...formData };
-      delete draftToSave.seller_id;
-      localStorage.setItem(STORAGE_KEYS.PRODUCT_DRAFT, JSON.stringify(draftToSave));
-    }
+    const saveDraft = () => {
+      if (!product) {
+        const draftToSave = { ...formData };
+        delete draftToSave.seller_id;
+        localStorage.setItem(STORAGE_KEYS.PRODUCT_DRAFT, JSON.stringify(draftToSave));
+      }
+    };
+
+    const timeoutId = setTimeout(saveDraft, 500);
+    return () => clearTimeout(timeoutId);
   }, [formData, product]);
 
+  // Save image previews to localStorage
   useEffect(() => {
-    if (!product) {
-      const previewsToSave = imagePreviews.map(preview => ({
-        url: preview.url,
-        is_primary: preview.is_primary,
-        angle: preview.angle,
-        isExisting: preview.isExisting
-      }));
-      localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
-    }
+    const savePreviews = () => {
+      if (!product) {
+        const previewsToSave = imagePreviews.map(preview => ({
+          path: preview.path,
+          url: preview.url,
+          angle: preview.angle,
+          is_primary: preview.is_primary,
+          isExisting: preview.isExisting
+        }));
+        localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
+      }
+    };
+
+    const timeoutId = setTimeout(savePreviews, 500);
+    return () => clearTimeout(timeoutId);
   }, [imagePreviews, product]);
 
+  // Load saved previews on mount
+  useEffect(() => {
+    if (!product) {
+      const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
+      if (savedPreviews) {
+        try {
+          const parsedPreviews = JSON.parse(savedPreviews);
+          setImagePreviews(parsedPreviews);
+        } catch (error) {
+          console.error('Error loading image previews:', error);
+        }
+      }
+    }
+  }, [product]);
+
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
@@ -157,29 +260,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }
     };
 
-    if (product && product.images) {
-      const previews = product.images.map((img) => ({
-        url: typeof img === "string" ? img : img.url,
-        is_primary: img.is_primary || false,
-        angle: img.angle || "default",
-        isExisting: true
-      }));
-      setImagePreviews(previews);
-    } else if (!product) {
-      const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
-      if (savedPreviews) {
-        try {
-          const parsedPreviews = JSON.parse(savedPreviews);
-          setImagePreviews(parsedPreviews);
-        } catch (error) {
-          console.error('Error loading image previews:', error);
-        }
-      }
-    }
-
     fetchCategories();
-  }, [product]);
+  }, []);
 
+  // Cleanup blob URLs on unmount
   useEffect(() => {
     return () => {
       imagePreviews.forEach((preview) => {
@@ -190,6 +274,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     };
   }, [imagePreviews]);
 
+  // Handle success popup
   useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
@@ -245,30 +330,61 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     });
   };
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    const newPreviews = files.map((file, index) => ({
-      url: URL.createObjectURL(file),
-      file: file,
-      is_primary: imagePreviews.length === 0 && index === 0,
-      angle: "default",
-      isExisting: false
-    }));
+    setUploadingImages(true);
 
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
-    e.target.value = "";
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await api.post('/products/upload-image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        if (response.data.success) {
+          const imageData = response.data.data;
+
+          setImagePreviews(prev => [...prev, {
+            path: imageData.path,
+            url: imageData.url,
+            angle: imageData.angle,
+            is_primary: prev.length === 0, // Set as primary if first image
+            isExisting: false
+          }]);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      setError('Failed to upload images. Please try again.');
+    } finally {
+      setUploadingImages(false);
+      e.target.value = ""; // Clear file input
+    }
   };
 
-  const removeImage = (index) => {
-    const previewToRemove = imagePreviews[index];
+  const removeImage = async (index) => {
+    const imageToRemove = imagePreviews[index];
 
-    if (previewToRemove.url.startsWith("blob:")) {
-      URL.revokeObjectURL(previewToRemove.url);
+    // If it's a newly uploaded image (not existing from product), we can delete from server
+    if (imageToRemove.path && !imageToRemove.isExisting) {
+      try {
+        // Delete temporary image from server
+        await api.delete(`/products/${product?.id || 'temp'}/images/${index}`, {
+          data: { path: imageToRemove.path }
+        });
+      } catch (error) {
+        console.error('Error deleting image from server:', error);
+        // Continue with local removal even if server delete fails
+      }
     }
 
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const setPrimaryImage = (index) => {
@@ -321,41 +437,17 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      console.log("Starting final product submission...");
+      console.log("Starting product submission...");
 
-      const uploadedImages = [];
+      // Prepare images array for submission
+      const imagesForSubmission = imagePreviews.map(preview => ({
+        path: preview.path,
+        url: preview.url,
+        angle: preview.angle,
+        is_primary: preview.is_primary
+      }));
 
-      for (const preview of imagePreviews) {
-        if (preview.file) {
-          console.log("Uploading image:", preview.file.name);
-          const uploadFormData = new FormData();
-          uploadFormData.append("image", preview.file);
-
-          const uploadResponse = await api.post("/products/upload-image", uploadFormData, {
-            headers: {
-              "Content-Type": "multipart/form-data"
-            }
-          });
-
-          console.log("Image upload response:", uploadResponse.data);
-
-          if (uploadResponse.data.success) {
-            uploadedImages.push({
-              url: uploadResponse.data.data.url,
-              angle: preview.angle,
-              is_primary: preview.is_primary
-            });
-          }
-        } else if (preview.isExisting) {
-          uploadedImages.push({
-            url: preview.url,
-            angle: preview.angle,
-            is_primary: preview.is_primary
-          });
-        }
-      }
-
-      console.log("All images uploaded:", uploadedImages);
+      console.log("Images for submission:", imagesForSubmission);
 
       const payload = {
         ...formData,
@@ -363,18 +455,30 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         quantity: parseInt(formData.quantity),
         moq: parseInt(formData.moq),
         category_id: parseInt(formData.category_id),
-        specifications: formData.specifications,
-        images: uploadedImages,
+        specifications: formData.specifications || {},
+        images: imagesForSubmission,
         discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
-        // Ensure Myanmar fields are empty strings if not provided
+        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+        shipping_cost: formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
+        // Handle Myanmar fields
         name_mm: formData.name_mm || "",
         description_mm: formData.description_mm || ""
       };
 
-      console.log("Sending final product payload:", payload);
+      // Clean up payload for update
+      if (product) {
+        Object.keys(payload).forEach(key => {
+          if (payload[key] === undefined) {
+            delete payload[key];
+          }
+        });
+      }
+
+      console.log("Sending product payload:", payload);
 
       let response;
       if (product) {
+        // Use seller route for update
         response = await api.put(`/seller/products/${product.id}`, payload);
         setSuccessMessage("Product updated successfully!");
       } else {
@@ -384,16 +488,25 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       console.log("Product API response:", response.data);
 
+      // Clear local storage on success
+      if (!product) {
+        localStorage.removeItem(STORAGE_KEYS.PRODUCT_DRAFT);
+        localStorage.removeItem(STORAGE_KEYS.IMAGE_PREVIEWS);
+      }
+
       setShowSuccessPopup(true);
 
     } catch (err) {
       console.error("Product submission error:", err);
+      console.error("Error details:", err.response?.data);
 
       if (err.response?.data?.errors) {
         const errorMessages = Object.values(err.response.data.errors).flat();
         setError(errorMessages.join(", "));
       } else if (err.response?.data?.message) {
         setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -893,9 +1006,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-4">
                     Product Images *
+                    {uploadingImages && (
+                      <span className="ml-2 text-sm text-blue-600">
+                        Uploading...
+                      </span>
+                    )}
                   </label>
 
-                  <label className="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 transition-all duration-200 cursor-pointer bg-gray-50 hover:bg-green-50">
+                  <label className="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 transition-all duration-200 cursor-pointer bg-gray-50 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <div className="flex flex-col items-center justify-center h-full">
                       <PhotoIcon className="h-10 w-10 text-gray-400 mb-2" />
                       <span className="text-base font-medium text-gray-600">
@@ -911,6 +1029,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       accept="image/*"
                       onChange={handleImageSelect}
                       className="hidden"
+                      disabled={uploadingImages}
                     />
                   </label>
 
@@ -926,6 +1045,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                               src={image.url}
                               alt={`Product preview ${index + 1}`}
                               className="w-full h-20 object-cover rounded-lg border-2 border-gray-200 group-hover:border-green-500 transition-all duration-200"
+                              onError={(e) => {
+                                e.target.src = '/placeholder-product.jpg';
+                              }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
                               <div className="flex space-x-1">
@@ -1259,7 +1381,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    disabled={loading}
+                    disabled={loading || uploadingImages}
                     className="flex items-center space-x-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (

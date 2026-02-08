@@ -1,5 +1,4 @@
-// src/pages/ProductList.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
@@ -7,6 +6,24 @@ import api from "../utils/api";
 import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
+
+// Skeleton components
+const ProductCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
+    <div className="w-full h-48 bg-gray-300"></div>
+    <div className="p-4 flex flex-col flex-grow">
+      <div className="flex-grow space-y-2">
+        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+        <div className="h-3 bg-gray-300 rounded w-full"></div>
+        <div className="h-3 bg-gray-300 rounded w-2/3"></div>
+      </div>
+      <div className="pt-4">
+        <div className="h-8 bg-gray-300 rounded"></div>
+      </div>
+    </div>
+  </div>
+);
 
 const ProductList = () => {
   const { t } = useTranslation();
@@ -24,72 +41,144 @@ const ProductList = () => {
     sortBy: "created_at",
     sortOrder: "desc"
   });
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Get query parameters from URL
   const queryParams = new URLSearchParams(location.search);
   const searchQuery = queryParams.get("search") || "";
   const categoryQuery = queryParams.get("category") || "";
 
+  // Debounced search
+  const debouncedSearch = useMemo(() => {
+    let timeout;
+    return (value) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        const params = new URLSearchParams();
+        
+        if (value.trim()) {
+          params.append("search", encodeURIComponent(value.trim()));
+        }
+        
+        if (categoryQuery) {
+          params.append("category", categoryQuery);
+        }
+        
+        navigate(`/products?${params.toString()}`);
+      }, 500); // 500ms debounce
+    };
+  }, [navigate, categoryQuery]);
+
   useEffect(() => {
     setSearchInput(searchQuery);
     if (categoryQuery) {
       setSelectedCategory(categoryQuery);
     }
+    setPage(1);
+    setHasMore(true);
   }, [searchQuery, categoryQuery]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      setError(null);
+  // Memoize fetch function
+  const fetchProducts = useCallback(async (reset = false) => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const params = new URLSearchParams();
+    try {
+      const params = new URLSearchParams();
+      params.append("per_page", "12");
+      params.append("page", reset ? "1" : page.toString());
 
-        if (searchQuery) {
-          params.append("search", searchQuery);
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+
+      if (selectedCategory) {
+        params.append("category_id", selectedCategory);
+      }
+
+      // Add fields to reduce payload
+      params.append("fields", "id,name_en,name_mm,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
+
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          params.append(key, filters[key]);
         }
+      });
 
-        if (selectedCategory) {
-          params.append("category_id", selectedCategory);
-        }
-
-        Object.keys(filters).forEach(key => {
-          if (filters[key]) {
-            params.append(key, filters[key]);
-          }
-        });
-
-        const response = await api.get("/products", { params });
-        const productsData = response.data.data || response.data || [];
+      const response = await api.get("/products", { params });
+      const productsData = response.data.data || response.data || [];
+      
+      if (reset) {
         setProducts(Array.isArray(productsData) ? productsData : []);
+      } else {
+        setProducts(prev => [...prev, ...(Array.isArray(productsData) ? productsData : [])]);
+      }
 
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-        setError(t('products.fetch_error'));
+      // Check if there are more products
+      if (productsData.length < 12) {
+        setHasMore(false);
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      setError(t('products.fetch_error'));
+      if (reset) {
         setProducts([]);
-      } finally {
-        setLoading(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedCategory, filters, page, t]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await api.get("/categories?fields=id,name_en,parent_id,children");
+      const categoriesData = response.data.data || response.data || [];
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    const loadData = async () => {
+      await fetchCategories();
+      await fetchProducts(true);
+    };
+    
+    loadData();
+  }, [fetchCategories, fetchProducts]);
+
+  // Handle infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 500 &&
+        !loading &&
+        hasMore
+      ) {
+        setPage(prev => prev + 1);
       }
     };
 
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get("/categories");
-        const categoriesData = response.data.data || response.data || [];
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, hasMore]);
 
-    fetchProducts();
-    fetchCategories();
-  }, [searchQuery, selectedCategory, filters, t]);
+  // Load more when page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchProducts(false);
+    }
+  }, [page, fetchProducts]);
 
-  const getCategoryName = (categoryId) => {
+  const getCategoryName = useCallback((categoryId) => {
     const findCategory = (categories, id) => {
       for (const category of categories) {
-        if (category.id == categoryId) return category.name;
+        if (category.id == categoryId) return category.name_en || category.name;
         if (category.children) {
           const found = findCategory(category.children, id);
           if (found) return found;
@@ -99,30 +188,24 @@ const ProductList = () => {
     };
     
     return findCategory(categories, categoryId) || t('products.category_id', { id: categoryId });
-  };
+  }, [categories, t]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    
-    if (searchInput.trim()) {
-      params.append("search", encodeURIComponent(searchInput.trim()));
-    }
-    
-    if (selectedCategory) {
-      params.append("category", selectedCategory);
-    }
-    
-    navigate(`/products?${params.toString()}`);
+    debouncedSearch(searchInput);
   };
 
-  const handleFilterChange = newFilters => {
-    setFilters({ ...filters, ...newFilters });
-  };
+  const handleFilterChange = useCallback(newFilters => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+    setPage(1);
+    setHasMore(true);
+  }, []);
 
-  const handleCategoryChange = categoryId => {
+  const handleCategoryChange = useCallback(categoryId => {
     const newCategoryId = categoryId === selectedCategory ? null : categoryId;
     setSelectedCategory(newCategoryId);
+    setPage(1);
+    setHasMore(true);
     
     const params = new URLSearchParams();
     
@@ -135,9 +218,9 @@ const ProductList = () => {
     }
     
     navigate(`/products?${params.toString()}`);
-  };
+  }, [selectedCategory, searchQuery, navigate]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilters({
       minPrice: "",
       maxPrice: "",
@@ -146,10 +229,12 @@ const ProductList = () => {
     });
     setSelectedCategory(null);
     setSearchInput("");
+    setPage(1);
+    setHasMore(true);
     navigate('/products');
-  };
+  }, [navigate]);
 
-  const getPageTitle = () => {
+  const getPageTitle = useMemo(() => {
     if (searchQuery && selectedCategory) {
       return t('products.search_results_category', {
         query: searchQuery,
@@ -162,7 +247,7 @@ const ProductList = () => {
     } else {
       return t('products.all_products');
     }
-  };
+  }, [searchQuery, selectedCategory, getCategoryName, t]);
 
   // Sort options for dropdown
   const sortOptions = [
@@ -186,7 +271,10 @@ const ProductList = () => {
             <input
               type="text"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                debouncedSearch(e.target.value);
+              }}
               placeholder={t('products.search_placeholder')}
               className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-lg"
             />
@@ -283,12 +371,13 @@ const ProductList = () => {
         <div className="md:w-3/4">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">
-              {getPageTitle()}
+              {getPageTitle}
             </h1>
             
             {products.length > 0 && (
               <div className="text-sm text-gray-600">
                 {t('products.showing_count', { count: products.length })}
+                {hasMore && ' + more'}
               </div>
             )}
           </div>
@@ -308,57 +397,57 @@ const ProductList = () => {
             </div>
           )}
 
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
-            </div>
-          ) : products.length > 0 ? (
-            <>
-              {/* Sorting options */}
-              <div className="mb-6 flex items-center space-x-4">
-                <label className="text-sm font-medium text-gray-700">
-                  {t('products.sort_by')}:
-                </label>
-                <select
-                  value={`${filters.sortBy}_${filters.sortOrder}`}
-                  onChange={(e) => {
-                    const [sortBy, sortOrder] = e.target.value.split('_');
-                    handleFilterChange({ sortBy, sortOrder });
-                  }}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading && products.length === 0 ? (
+              [...Array(6)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))
+            ) : products.length > 0 ? (
+              <>
                 {products.map(product => (
                   <ProductCard
-                    key={product.id}
+                    key={`${product.id}-${product.updated_at || ''}`}
                     product={product}
                     onClick={() => navigate(`/products/${product.id}`)}
                   />
                 ))}
+                
+                {/* Show skeletons for loading more */}
+                {loading && page > 1 && (
+                  [...Array(3)].map((_, i) => (
+                    <ProductCardSkeleton key={`skeleton-${i}`} />
+                  ))
+                )}
+              </>
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <h3 className="text-xl font-medium text-gray-900">
+                  {t('products.no_products_found')}
+                </h3>
+                <p className="mt-1 text-gray-500">
+                  {t('products.try_adjusting_search')}
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                >
+                  {t('products.clear_filters')}
+                </button>
               </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-xl font-medium text-gray-900">
-                {t('products.no_products_found')}
-              </h3>
-              <p className="mt-1 text-gray-500">
-                {t('products.try_adjusting_search')}
-              </p>
-              <button
-                onClick={clearFilters}
-                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-              >
-                {t('products.clear_filters')}
-              </button>
+            )}
+          </div>
+
+          {/* Loading indicator at bottom */}
+          {loading && (
+            <div className="flex justify-center items-center h-20 mt-6">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
+            </div>
+          )}
+
+          {/* No more products */}
+          {!hasMore && products.length > 0 && (
+            <div className="text-center py-6 text-gray-500">
+              {t('products.no_more_products')}
             </div>
           )}
         </div>

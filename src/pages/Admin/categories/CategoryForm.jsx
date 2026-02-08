@@ -1,430 +1,531 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  PhotoIcon,
-  CloudArrowUpIcon,
-  XMarkIcon,
-  ArrowLeftIcon,
-  TrashIcon
-} from '@heroicons/react/24/outline';
-import api from '../../../utils/api';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeftIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import api from "../../../utils/api";
 
-const CategoryForm = ({ category = null }) => {
+const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuccess }) => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: category?.name || '',
-    name_mm: category?.name_mm || '',
-    image: category?.image || '',
-    description: category?.description || '',
-    commission_rate: category?.commission_rate || '',
-    parent_id: category?.parent_id || ''
-  });
-  const [categories, setCategories] = useState([]);
+
   const [loading, setLoading] = useState(false);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [dragActive, setDragActive] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [categoriesFetched, setCategoriesFetched] = useState(false);
 
-  // Fetch categories for parent selection
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoadingCategories(true);
-      try {
-        const response = await api.get('/categories');
-        setCategories(response.data.data || []);
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-      } finally {
-        setLoadingCategories(false);
+  // Initialize form state
+  const [formData, setFormData] = useState({
+    name_en: "",
+    name_mm: "",
+    description_en: "",
+    description_mm: "",
+    commission_rate: 0, // Store as percentage for display
+    parent_id: "",
+    is_active: true,
+    image: null
+  });
+
+  // Fetch parent categories for dropdown - memoized with useCallback
+  const fetchCategories = useCallback(async () => {
+    if (categoriesFetched) return; // Prevent multiple fetches
+
+    try {
+      setLoading(true);
+      const response = await api.get("/categories");
+      if (response.data.success) {
+        setCategories(response.data.data);
+        setCategoriesFetched(true);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [categoriesFetched]);
 
+  // Initialize form from initialCategory prop - memoized with useCallback
+  const initializeForm = useCallback(() => {
+    if (mode === "edit" && initialCategory) {
+      // Convert commission rate from decimal to percentage for display
+      const commissionRate = initialCategory.commission_rate ?
+        parseFloat(initialCategory.commission_rate) * 100 : 0;
+
+      const newFormData = {
+        name_en: initialCategory.name_en || "",
+        name_mm: initialCategory.name_mm || "",
+        description_en: initialCategory.description_en || "",
+        description_mm: initialCategory.description_mm || "",
+        commission_rate: commissionRate,
+        parent_id: initialCategory.parent_id || "",
+        is_active: initialCategory.is_active !== false,
+        image: initialCategory.image || null
+      };
+
+      setFormData(newFormData);
+
+      // Set image preview if image exists
+      if (initialCategory.image) {
+        const imageUrl = initialCategory.image.startsWith('http')
+          ? initialCategory.image
+          : `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${initialCategory.image.replace('public/', '')}`;
+        setImagePreview(imageUrl);
+      }
+    }
+  }, [mode, initialCategory]);
+
+  // Run initialization once
+  useEffect(() => {
     fetchCategories();
-  }, []);
+    initializeForm();
+  }, [fetchCategories, initializeForm]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'commission_rate' ? value.replace(/[^0-9.]/g, '') : value
+      [name]: type === "checkbox" ? checked : value
     }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type and size
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file (JPEG, PNG, GIF, SVG)');
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        setErrors(prev => ({ ...prev, image: "Please upload a valid image file (JPEG, PNG, GIF, WebP)" }));
         return;
       }
-      
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit (matches Laravel validation)
-        setError('Image size must be less than 2MB');
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, image: "Image size should be less than 2MB" }));
         return;
       }
-      
-      setError('');
-      setImageFile(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          image: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
+
+      setFormData(prev => ({ ...prev, image: file }));
+      setImagePreview(URL.createObjectURL(file));
+      setErrors(prev => ({ ...prev, image: null }));
     }
   };
 
-  const removeImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      image: ''
-    }));
-    setImageFile(null);
-  };
+  const validateForm = () => {
+    const newErrors = {};
 
-  // Drag and drop handlers
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleImageChange({ target: { files: e.dataTransfer.files } });
+    if (!formData.name_en.trim()) {
+      newErrors.name_en = "English name is required";
     }
+
+    const commissionRate = parseFloat(formData.commission_rate);
+    if (isNaN(commissionRate) || commissionRate < 0 || commissionRate > 100) {
+      newErrors.commission_rate = "Commission rate must be between 0 and 100";
+    }
+
+    return newErrors;
   };
 
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
 
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
+
+    setSaving(true);
     try {
-      // Create FormData for file upload
-      const formDataToSend = new FormData();
-      
-      // Append all form fields
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('name_mm', formData.name_mm);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('commission_rate', parseFloat(formData.commission_rate) || 0);
-      formDataToSend.append('parent_id', formData.parent_id || '');
-      
-      // Append image file if selected
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      } else if (formData.image && formData.image.startsWith('data:image')) {
-        // If it's a base64 image from editing, send it as a string
-        formDataToSend.append('image', formData.image);
-      } else if (!formData.image) {
-        // If image was removed, send empty string
-        formDataToSend.append('image', '');
+      const submitData = new FormData();
+
+      // Append all fields with correct types
+      submitData.append("name_en", formData.name_en);
+      if (formData.name_mm) submitData.append("name_mm", formData.name_mm);
+      if (formData.description_en) submitData.append("description_en", formData.description_en);
+      if (formData.description_mm) submitData.append("description_mm", formData.description_mm);
+
+      // Convert percentage to decimal for API (e.g., 10% -> 0.10)
+      const commissionRate = parseFloat(formData.commission_rate) / 100;
+      submitData.append("commission_rate", commissionRate);
+
+      if (formData.parent_id) {
+        submitData.append("parent_id", formData.parent_id);
       }
 
-      let response;
-      if (category) {
-        // Update existing category - use multipart form data
-        response = await api.put(`/categories/${category.id}`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        setSuccess('Category updated successfully!');
-      } else {
-        // Create new category - use multipart form data
-        response = await api.post('/categories', formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        setSuccess('Category created successfully!');
+      submitData.append("is_active", formData.is_active ? 1 : 0);
+
+      // Handle image upload
+      if (formData.image && typeof formData.image === "object") {
+        // New image file uploaded
+        submitData.append("image", formData.image);
+      } else if (mode === "edit" && !formData.image && initialCategory?.image) {
+        // In edit mode, no new image selected, keep existing image
+        // Don't append anything for image - backend will keep existing
+      } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
+        // Image was removed - send empty string to delete image
+        submitData.append("image", "");
+      } else if (mode === "create" && !formData.image) {
+        // In create mode, no image selected
+        // Don't append image field
       }
-      
-      // Redirect after a short delay to show success message
-      setTimeout(() => {
-        navigate('/admin');
-      }, 1500);
-    } catch (err) {
-      console.error('API Error:', err);
-      
-      // Handle validation errors from backend
-      if (err.response?.data?.errors) {
-        const errorMessages = Object.values(err.response.data.errors).flat();
-        setError(errorMessages.join(', '));
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
+
+      console.log("Submitting form data:");
+      for (let [key, value] of submitData.entries()) {
+        console.log(key, value, value instanceof File ? `[File: ${value.name}]` : '');
+      }
+
+      if (mode === "edit") {
+        await api.put(`/categories/${id}`, submitData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
       } else {
-        setError('Something went wrong. Please try again.');
+        await api.post("/categories", submitData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
+
+      console.log("Image state:", {
+        formDataImage: formData.image,
+        initialCategoryImage: initialCategory?.image,
+        mode,
+        hasNewImage: formData.image && typeof formData.image === "object",
+        hasExistingImage: initialCategory?.image,
+        imageType: formData.image ? typeof formData.image : 'null'
+      });
+
+      // Also check the FormData
+      console.log("FormData entries:");
+      for (let [key, value] of submitData.entries()) {
+        console.log(`  ${key}:`, value, value instanceof File ? `[File: ${value.name}, ${value.size} bytes]` : '');
+      }
+
+      console.log("Full request details:");
+      console.log("Method:", mode === "edit" ? "PUT" : "POST");
+      console.log("URL:", mode === "edit" ? `/categories/${id}` : "/categories");
+      console.log("Headers:", { "Content-Type": "multipart/form-data" });
+      console.log("FormData size:", submitData);
+
+      // Count entries
+      let entryCount = 0;
+      for (let entry of submitData.entries()) {
+        entryCount++;
+      }
+      console.log("Total FormData entries:", entryCount);
+
+      // Call success callback if provided
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Default navigation
+        navigate("/admin");
+      }
+    } catch (error) {
+      console.error("Failed to save category:", error);
+
+      if (error.response?.data?.errors) {
+        // Handle Laravel validation errors
+        const validationErrors = {};
+        Object.keys(error.response.data.errors).forEach(key => {
+          validationErrors[key] = error.response.data.errors[key][0];
+        });
+        setErrors(validationErrors);
+      } else {
+        alert(error.response?.data?.message || "Failed to save category");
       }
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // Function to render hierarchical category options
-  const renderCategoryOptions = (categories, level = 0) => {
-    return categories.map((cat) => (
-      <React.Fragment key={cat.id}>
-        <option 
-          value={cat.id} 
-          disabled={category && (cat.id === category.id || isDescendant(cat, category.id))}
-          style={{ paddingLeft: `${level * 20}px` }}
-        >
-          {level > 0 ? '↳ ' : ''}{cat.name}
-        </option>
-        {cat.children && renderCategoryOptions(cat.children, level + 1)}
-      </React.Fragment>
-    ));
-  };
-
-  // Check if a category is a descendant of another
-  const isDescendant = (category, targetId) => {
-    if (!category.children) return false;
-    if (category.children.some(child => child.id === targetId)) return true;
-    return category.children.some(child => isDescendant(child, targetId));
+  // Update the handleRemoveImage function
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center mb-6">
+      <div className="mb-8">
         <button
-          onClick={() => navigate('/admin')}
-          className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
+          onClick={() => navigate("/admin")}
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
-          <ArrowLeftIcon className="h-5 w-5 mr-1" />
-          Back
+          <ArrowLeftIcon className="h-4 w-4 mr-1" />
+          Back to Categories
         </button>
-        <h2 className="text-2xl font-bold text-gray-900">
-          {category ? 'Edit Category' : 'Create New Category'}
-        </h2>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {mode === "edit" ? "Edit Category" : "Create New Category"}
+        </h1>
+        <p className="mt-1 text-sm text-gray-600">
+          {mode === "edit"
+            ? "Update category details and settings"
+            : "Add a new product category to your store"
+          }
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-            <div className="flex items-center">
-              <XMarkIcon className="h-5 w-5 mr-2" />
-              <span>{error}</span>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{success}</span>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Category Name (English) *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="e.g. Electronics"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="name_mm" className="block text-sm font-medium text-gray-700 mb-2">
-                Category Name (Myanmar)
-              </label>
-              <input
-                type="text"
-                id="name_mm"
-                name="name_mm"
-                value={formData.name_mm}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="e.g. အီလက်ထရောနစ်"
-              />
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows="3"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              placeholder="Describe this category..."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label htmlFor="commission_rate" className="block text-sm font-medium text-gray-700 mb-2">
-                Commission Rate (%) *
-              </label>
-              <div className="relative">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Basic Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="name_en" className="block text-sm font-medium text-gray-700 mb-1">
+                  Category Name (English) *
+                </label>
                 <input
-                  type="number"
-                  id="commission_rate"
-                  name="commission_rate"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  required
-                  value={formData.commission_rate}
+                  type="text"
+                  id="name_en"
+                  name="name_en"
+                  value={formData.name_en}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="e.g. 12.5"
+                  className={`block w-full rounded-md border ${errors.name_en ? 'border-red-300' : 'border-gray-300'
+                    } px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                  placeholder="e.g., Electronics"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <span className="text-gray-500">%</span>
+                {errors.name_en && (
+                  <p className="mt-1 text-sm text-red-600">{errors.name_en}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="name_mm" className="block text-sm font-medium text-gray-700 mb-1">
+                  Category Name (Myanmar)
+                </label>
+                <input
+                  type="text"
+                  id="name_mm"
+                  name="name_mm"
+                  value={formData.name_mm}
+                  onChange={handleChange}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                  placeholder="e.g., လျှပ်စစ်ပစ္စည်းများ"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Descriptions */}
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="description_en" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (English)
+                </label>
+                <textarea
+                  id="description_en"
+                  name="description_en"
+                  value={formData.description_en}
+                  onChange={handleChange}
+                  rows={3}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                  placeholder="Brief description of the category"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="description_mm" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description (Myanmar)
+                </label>
+                <textarea
+                  id="description_mm"
+                  name="description_mm"
+                  value={formData.description_mm}
+                  onChange={handleChange}
+                  rows={3}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                  placeholder="အမျိုးအစားအကြောင်း အတိုချုပ်"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Category Image
+            </h3>
+            <div className="flex items-start space-x-6">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Category preview"
+                        className="h-32 w-32 rounded-lg object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        title="Remove image"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="h-32 w-32 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <PhotoIcon className="h-12 w-12 text-gray-400" />
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              <div className="flex-1">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {imagePreview ? "Replace Image" : "Upload Image"}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    PNG, JPG, GIF, WebP up to 2MB
+                  </p>
+                  {errors.image && (
+                    <p className="mt-1 text-sm text-red-600">{errors.image}</p>
+                  )}
+                </div>
+
+                {mode === "edit" && formData.image && typeof formData.image === "string" && (
+                  <p className="text-sm text-gray-500">
+                    Current image: {formData.image.split('/').pop()}
+                    <br />
+                    <span className="text-xs">Leave unchanged to keep current image</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Settings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="parent_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  Parent Category
+                </label>
+                <select
+                  id="parent_id"
+                  name="parent_id"
+                  value={formData.parent_id}
+                  onChange={handleChange}
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                  disabled={loading}
+                >
+                  <option value="">None (Root Category)</option>
+                  {categories
+                    .filter(cat => mode === "edit" ? cat.id !== parseInt(id) : true)
+                    .map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name_en}
+                      </option>
+                    ))
+                  }
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Select parent category to create a subcategory
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="commission_rate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Commission Rate (%) *
+                </label>
+                <div className="relative rounded-md shadow-sm">
+                  <input
+                    type="number"
+                    id="commission_rate"
+                    name="commission_rate"
+                    value={formData.commission_rate}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className={`block w-full rounded-md border ${errors.commission_rate ? 'border-red-300' : 'border-gray-300'
+                      } px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                    placeholder="e.g., 10"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-gray-500 sm:text-sm">%</span>
+                  </div>
+                </div>
+                {errors.commission_rate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.commission_rate}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Platform commission percentage for this category (0-100%)
+                </p>
               </div>
             </div>
 
-            <div>
-              <label htmlFor="parent_id" className="block text-sm font-medium text-gray-700 mb-2">
-                Parent Category
-              </label>
-              <select
-                id="parent_id"
-                name="parent_id"
-                value={formData.parent_id}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">Select Parent Category (Optional)</option>
-                {loadingCategories ? (
-                  <option disabled>Loading categories...</option>
-                ) : (
-                  renderCategoryOptions(categories)
-                )}
-              </select>
-              <p className="mt-2 text-sm text-gray-500">
-                Leave empty to create a main category
+            <div className="mt-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor="is_active" className="ml-2 block text-sm text-gray-700">
+                  Category is active
+                </label>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Inactive categories won't be visible to users
               </p>
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category Image
-            </label>
-            <div
-              className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                dragActive 
-                  ? 'border-green-500 bg-green-50' 
-                  : formData.image 
-                    ? 'border-gray-300' 
-                    : 'border-gray-300 hover:border-gray-400'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              {formData.image ? (
-                <>
-                  <div className="relative inline-block">
-                    <img
-                      src={formData.image}
-                      alt="Category preview"
-                      className="h-40 w-40 object-cover rounded-lg mx-auto"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Click the image to change or drag a new one
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col items-center justify-center">
-                    <CloudArrowUpIcon className="h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium text-green-600">Upload an image</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      PNG, JPG, GIF up to 2MB
-                    </p>
-                  </div>
-                </>
-              )}
-              
-              <input
-                type="file"
-                id="image-input"
-                name="image"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
+          {/* Form Actions */}
+          <div className="pt-6 border-t border-gray-200">
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => navigate("/admin")}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {mode === "edit" ? "Saving..." : "Creating..."}
+                  </>
+                ) : (
+                  mode === "edit" ? "Update Category" : "Create Category"
+                )}
+              </button>
             </div>
           </div>
-
-          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 flex items-center justify-center"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {category ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                category ? 'Update Category' : 'Create Category'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 };

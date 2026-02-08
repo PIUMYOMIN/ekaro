@@ -16,7 +16,7 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    const baseUrl = "https://db.pyonea.com";
+    const baseUrl = "http://localhost:8000"; // Adjust based on your backend config
     if (imagePath.startsWith('http')) return imagePath;
     return `${baseUrl}/storage/${imagePath}`;
   };

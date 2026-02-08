@@ -26,7 +26,7 @@ const EditStore = ({ storeData, refreshData }) => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
 
-    let baseUrl = "https://db.pyonea.com";
+    let baseUrl = "http://localhost:8000"; // Default base URL
     if (typeof window !== 'undefined') {
       if (window._env_ && window._env_.REACT_APP_API_URL) {
         baseUrl = window._env_.REACT_APP_API_URL;

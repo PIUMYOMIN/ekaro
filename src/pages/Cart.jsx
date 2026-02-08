@@ -8,6 +8,7 @@ const Cart = () => {
   const { t } = useTranslation();
   const {
     cartItems,
+    cartSummary,
     removeFromCart,
     updateQuantity,
     subtotal,
@@ -17,11 +18,6 @@ const Cart = () => {
   } = useCart();
   const navigate = useNavigate();
   const [clearingCart, setClearingCart] = useState(false);
-
-  const shippingFee = 5000;
-  const taxRate = 0.05;
-  const tax = subtotal * taxRate;
-  const total = subtotal + shippingFee + tax;
 
   const formatMMK = amount => {
     return new Intl.NumberFormat("my-MM", {
@@ -235,7 +231,7 @@ const Cart = () => {
                     {t("cart.subtotal")} ({totalItems} {totalItems === 1 ? "item" : "items"})
                   </dt>
                   <dd className="text-sm font-medium text-gray-900">
-                    {formatMMK(subtotal)}
+                    {formatMMK(cartSummary?.subtotal || subtotal)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -243,15 +239,15 @@ const Cart = () => {
                     {t("cart.shipping")}
                   </dt>
                   <dd className="text-sm font-medium text-gray-900">
-                    {formatMMK(shippingFee)}
+                    {formatMMK(cartSummary?.shipping_fee || 0)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                   <dt className="text-sm text-gray-600">
-                    {t("cart.tax")} (5%)
+                    {t("cart.tax")} ({cartSummary?.tax_rate ? `${(cartSummary.tax_rate * 100).toFixed(1)}%` : '5%'})
                   </dt>
                   <dd className="text-sm font-medium text-gray-900">
-                    {formatMMK(tax)}
+                    {formatMMK(cartSummary?.tax || 0)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-4">
@@ -259,7 +255,7 @@ const Cart = () => {
                     {t("cart.total")}
                   </dt>
                   <dd className="text-lg font-bold text-gray-900">
-                    {formatMMK(total)}
+                    {formatMMK(cartSummary?.total || 0)}
                   </dd>
                 </div>
               </dl>

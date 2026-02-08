@@ -52,6 +52,24 @@
     "products": "products",
     "subcategories": "subcategories"
   },
+  "categories": {
+    "all_categories": "All Categories",
+    "browse_categories": "Browse Categories",
+    "browse_subcategories": "Browse Subcategories",
+    "browse_root_categories": "Browse Root Categories",
+    "showing_categories": "Showing {count} categories",
+    "view_subcategories": "View Subcategories",
+    "view_products": "View Products",
+    "subcategories": "Subcategories",
+    "no_categories": "No categories found",
+    "no_subcategories": "No subcategories found",
+    "no_categories_message": "There are no categories available at the moment.",
+    "no_subcategories_message": "This category doesn't have any subcategories.",
+    "no_root_categories": "No root categories found",
+    "back_to_parent": "Back to Parent",
+    "click_to_view_subcategories": "Click to view subcategories",
+    "click_to_view_products": "Click to view products"
+  },
   "sidebar": {
     "platform_name": "Myanmar B2B",
     "seller_portal": "Seller Portal",
