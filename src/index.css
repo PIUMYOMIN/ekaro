@@ -7,15 +7,6 @@
 }
 
 @font-face {
-  font-family: 'Noto Sans Myanmar';
-  src: local('Noto Sans Myanmar Bold'),
-    url('./fonts/NotoSansMyanmar/NotoSansMyanmar-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-}
-
-
-@font-face {
   font-family: 'Ubuntu';
   src: local('Ubuntu'),
     url('./fonts/Ubuntu/Ubuntu-Regular.ttf') format('truetype');
@@ -24,26 +15,17 @@
 }
 
 @font-face {
-  font-family: 'Ubuntu';
-  src: local('Ubuntu Bold'),
-    url('./fonts/Ubuntu/Ubuntu-Bold.ttf') format('truetype');
+  font-family: 'Roboto';
+  src: local('Roboto Bold'),
+    url('./fonts/Roboto/Roboto-Bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }
 
-
 @font-face {
-  font-family: 'Roboto';
-  src: local('Roboto'),
-    url('./fonts/Roboto/Roboto-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Roboto';
-  src: local('Roboto Bold'),
-    url('./fonts/Roboto/Roboto-Bold.ttf') format('truetype');
+  font-family: 'Torus';
+  src: local('Torus Bold'),
+    url('./fonts/Torus/Torus-SemiBold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
 }

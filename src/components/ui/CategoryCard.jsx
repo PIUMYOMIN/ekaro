@@ -18,10 +18,10 @@ const CategoryCard = ({ category }) => {
               {category.name_en}
             </h3>
             <p className="text-sm text-white/90">
-              {category.count} {t("category.products")}
+              {category.products_count} {t("category.products")}
             </p>
             <p className="text-white/90">
-              ({category.children.length})
+              ({category.children_count}) {t("category.subcategories")}
             </p>
           </div>
         </div>
