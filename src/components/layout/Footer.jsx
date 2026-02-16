@@ -189,7 +189,7 @@ const Footer = () => {
                 {t("footer.phone")}
               </p>
               <p className="text-gray-300">
-                {t("footer.email")}
+                <a href="mailto:info.pyonea@gmail.com">{t("footer.email")}</a>
               </p>
             </div>
             <div>
@@ -198,25 +198,25 @@ const Footer = () => {
               </h4>
               <div className="flex space-x-4">
                 <a
-                  href="#"
+                  href="https://facebook.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.facebook")}
                 </a>
                 <a
-                  href="#"
+                  href="https://twitter.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.twitter")}
                 </a>
                 <a
-                  href="#"
+                  href="https://linkedin.com/company/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.linkedin")}
                 </a>
                 <a
-                  href="#"
+                  href="https://instagram.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.instagram")}

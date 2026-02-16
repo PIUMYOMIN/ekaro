@@ -137,7 +137,7 @@ const CategoryManagement = () => {
             <img 
               src={category.image.startsWith('http') 
                 ? category.image 
-                : `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${category.image.replace('public/', '')}`
+                : `${process.env.REACT_APP_API_URL || 'https://api.pyonea.com/api/v1'}/storage/${category.image.replace('public/', '')}`
               }
               alt={category.name_en}
               className="w-8 h-8 rounded-full object-cover mr-3"

@@ -379,55 +379,6 @@ const Home = () => {
       {renderCategoriesSection}
       {renderProductsSection}
       {renderSellersSection}
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gray-900 opacity-40" />
-        </div>
-        <div className="relative max-w-7xl mx-auto py-16 sm:py-24 md:py-32 px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
-              {t("home.hero_title")}
-            </h1>
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-green-100 max-w-3xl mx-auto px-4">
-              {t("home.hero_subtitle")}
-            </p>
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4">
-              <div className="rounded-md shadow">
-                <Link
-                  to={getCTAButtonLink()}
-                  className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-green-700 bg-white hover:bg-gray-50 transition-colors"
-                >
-                  {getCTAButtonText()}
-                </Link>
-              </div>
-              <div className="rounded-md shadow">
-                <Link
-                  to="/products"
-                  className="w-full flex items-center justify-center px-6 py-3 sm:px-8 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-medium rounded-md text-white bg-green-900 bg-opacity-60 hover:bg-opacity-70 transition-colors"
-                >
-                  {t("home.browse_products")}
-                </Link>
-              </div>
-            </div>
-            {isAuthenticated && isBuyer() && (
-              <div className="mt-4">
-                <Link
-                  to="/register-seller"
-                  className="inline-block text-white hover:text-green-200 font-medium text-sm md:text-base transition-colors"
-                >
-                  {t("home.become_seller_link")} →
-                </Link>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
 
       {/* Value Proposition */}
       <section className="py-12 sm:py-16 bg-gradient-to-r from-green-50 to-emerald-100">

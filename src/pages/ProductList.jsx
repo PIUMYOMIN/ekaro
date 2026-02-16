@@ -7,7 +7,7 @@ import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
 
-// Skeleton components
+// Skeleton components (unchanged)
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
     <div className="w-full h-48 bg-gray-300"></div>
@@ -29,12 +29,18 @@ const ProductList = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Get query parameters from URL – use "category" (not "category_id")
+  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchQuery = queryParams.get("search") || "";
+  const categoryQuery = queryParams.get("category") || "";
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [searchInput, setSearchInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(categoryQuery || null);
+  const [searchInput, setSearchInput] = useState(searchQuery);
   const [filters, setFilters] = useState({
     minPrice: "",
     maxPrice: "",
@@ -44,42 +50,39 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Get query parameters from URL
-  const queryParams = new URLSearchParams(location.search);
-  const searchQuery = queryParams.get("search") || "";
-  const categoryQuery = queryParams.get("category") || "";
-
-  // Debounced search
+  // Debounced search – waits 500ms after user stops typing
   const debouncedSearch = useMemo(() => {
     let timeout;
     return (value) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         const params = new URLSearchParams();
-        
         if (value.trim()) {
           params.append("search", encodeURIComponent(value.trim()));
         }
-        
-        if (categoryQuery) {
-          params.append("category", categoryQuery);
+        if (selectedCategory) {
+          params.append("category", selectedCategory);
         }
-        
         navigate(`/products?${params.toString()}`);
-      }, 500); // 500ms debounce
+      }, 500);
     };
-  }, [navigate, categoryQuery]);
+  }, [navigate, selectedCategory]);
 
+  // Sync state with URL parameters when they change (e.g., back/forward navigation)
   useEffect(() => {
     setSearchInput(searchQuery);
-    if (categoryQuery) {
-      setSelectedCategory(categoryQuery);
-    }
+    setSelectedCategory(categoryQuery || null);
     setPage(1);
     setHasMore(true);
   }, [searchQuery, categoryQuery]);
 
-  // Memoize fetch function
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPage(1);
+    setHasMore(true);
+  }, [searchQuery, selectedCategory, filters]);
+
+  // Fetch products (main function)
   const fetchProducts = useCallback(async (reset = false) => {
     setLoading(true);
     setError(null);
@@ -93,13 +96,15 @@ const ProductList = () => {
         params.append("search", searchQuery);
       }
 
+      // Send the selected category ID – backend will include descendants automatically
       if (selectedCategory) {
-        params.append("category_id", selectedCategory);
+        params.append("category", selectedCategory); // 👈 use "category" parameter
       }
 
-      // Add fields to reduce payload
+      // Add selected fields to reduce payload
       params.append("fields", "id,name_en,name_mm,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
 
+      // Add filter parameters
       Object.keys(filters).forEach(key => {
         if (filters[key]) {
           params.append(key, filters[key]);
@@ -108,7 +113,7 @@ const ProductList = () => {
 
       const response = await api.get("/products", { params });
       const productsData = response.data.data || response.data || [];
-      
+
       if (reset) {
         setProducts(Array.isArray(productsData) ? productsData : []);
       } else {
@@ -119,7 +124,6 @@ const ProductList = () => {
       if (productsData.length < 12) {
         setHasMore(false);
       }
-
     } catch (error) {
       console.error("Failed to fetch products:", error);
       setError(t('products.fetch_error'));
@@ -131,6 +135,7 @@ const ProductList = () => {
     }
   }, [searchQuery, selectedCategory, filters, page, t]);
 
+  // Fetch categories for sidebar filter
   const fetchCategories = useCallback(async () => {
     try {
       const response = await api.get("/categories?fields=id,name_en,parent_id,children");
@@ -141,17 +146,17 @@ const ProductList = () => {
     }
   }, []);
 
-  // Initial load
+  // Initial load: get categories and products
   useEffect(() => {
-    const loadData = async () => {
-      await fetchCategories();
-      await fetchProducts(true);
-    };
-    
-    loadData();
-  }, [fetchCategories, fetchProducts]);
+    fetchCategories();
+  }, [fetchCategories]);
 
-  // Handle infinite scroll
+  // Trigger product fetch when dependencies change
+  useEffect(() => {
+    fetchProducts(true);
+  }, [fetchProducts]);
+
+  // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -175,50 +180,48 @@ const ProductList = () => {
     }
   }, [page, fetchProducts]);
 
+  // Helper to find category name from ID
   const getCategoryName = useCallback((categoryId) => {
-    const findCategory = (categories, id) => {
-      for (const category of categories) {
-        if (category.id == categoryId) return category.name_en || category.name;
-        if (category.children) {
-          const found = findCategory(category.children, id);
+    const findCategory = (cats, id) => {
+      for (const cat of cats) {
+        if (cat.id == id) return cat.name_en || cat.name;
+        if (cat.children) {
+          const found = findCategory(cat.children, id);
           if (found) return found;
         }
       }
       return null;
     };
-    
     return findCategory(categories, categoryId) || t('products.category_id', { id: categoryId });
   }, [categories, t]);
 
+  // Handlers
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     debouncedSearch(searchInput);
   };
 
-  const handleFilterChange = useCallback(newFilters => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     setPage(1);
     setHasMore(true);
   }, []);
 
-  const handleCategoryChange = useCallback(categoryId => {
+  const handleCategoryChange = useCallback((categoryId) => {
     const newCategoryId = categoryId === selectedCategory ? null : categoryId;
     setSelectedCategory(newCategoryId);
     setPage(1);
     setHasMore(true);
-    
+
     const params = new URLSearchParams();
-    
-    if (searchQuery) {
-      params.append("search", searchQuery);
+    if (searchInput) {
+      params.append("search", encodeURIComponent(searchInput.trim()));
     }
-    
     if (newCategoryId) {
       params.append("category", newCategoryId);
     }
-    
     navigate(`/products?${params.toString()}`);
-  }, [selectedCategory, searchQuery, navigate]);
+  }, [selectedCategory, searchInput, navigate]);
 
   const clearFilters = useCallback(() => {
     setFilters({
@@ -234,6 +237,7 @@ const ProductList = () => {
     navigate('/products');
   }, [navigate]);
 
+  // Page title based on current filters
   const getPageTitle = useMemo(() => {
     if (searchQuery && selectedCategory) {
       return t('products.search_results_category', {
@@ -248,16 +252,6 @@ const ProductList = () => {
       return t('products.all_products');
     }
   }, [searchQuery, selectedCategory, getCategoryName, t]);
-
-  // Sort options for dropdown
-  const sortOptions = [
-    { value: "created_at_desc", label: t('products.sort.newest') },
-    { value: "created_at_asc", label: t('products.sort.oldest') },
-    { value: "price_asc", label: t('products.sort.price_low_high') },
-    { value: "price_desc", label: t('products.sort.price_high_low') },
-    { value: "name_asc", label: t('products.sort.name_a_z') },
-    { value: "name_desc", label: t('products.sort.name_z_a') },
-  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -297,14 +291,16 @@ const ProductList = () => {
             <span className="text-sm font-medium text-blue-800">
               {t('products.active_filters')}:
             </span>
-            
+
             {searchQuery && (
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {t('products.search_filter', { query: searchQuery })}
                 <button
                   onClick={() => {
                     setSearchInput("");
-                    navigate(`/products?category=${selectedCategory || ''}`);
+                    const params = new URLSearchParams();
+                    if (selectedCategory) params.append("category", selectedCategory);
+                    navigate(`/products?${params.toString()}`);
                   }}
                   className="ml-2 text-blue-600 hover:text-blue-800"
                 >
@@ -312,14 +308,16 @@ const ProductList = () => {
                 </button>
               </span>
             )}
-            
+
             {selectedCategory && (
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 {t('products.category_filter', { category: getCategoryName(selectedCategory) })}
                 <button
                   onClick={() => {
                     setSelectedCategory(null);
-                    navigate(`/products?search=${searchQuery || ''}`);
+                    const params = new URLSearchParams();
+                    if (searchQuery) params.append("search", searchQuery);
+                    navigate(`/products?${params.toString()}`);
                   }}
                   className="ml-2 text-green-600 hover:text-green-800"
                 >
@@ -327,7 +325,7 @@ const ProductList = () => {
                 </button>
               </span>
             )}
-            
+
             <button
               onClick={clearFilters}
               className="text-sm text-blue-600 hover:text-blue-800 ml-auto"
@@ -353,12 +351,12 @@ const ProductList = () => {
                 {t('products.clear_all')}
               </button>
             </div>
-            
+
             <SearchFilters
               filters={filters}
               onFilterChange={handleFilterChange}
             />
-            
+
             <CategorySelector
               categories={categories}
               selectedCategory={selectedCategory}
@@ -373,7 +371,6 @@ const ProductList = () => {
             <h1 className="text-3xl font-bold text-gray-900">
               {getPageTitle}
             </h1>
-            
             {products.length > 0 && (
               <div className="text-sm text-gray-600">
                 {t('products.showing_count', { count: products.length })}
@@ -411,7 +408,7 @@ const ProductList = () => {
                     onClick={() => navigate(`/products/${product.id}`)}
                   />
                 ))}
-                
+
                 {/* Show skeletons for loading more */}
                 {loading && page > 1 && (
                   [...Array(3)].map((_, i) => (

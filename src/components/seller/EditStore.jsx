@@ -14,6 +14,7 @@ import {
   LinkIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config"; // <-- import config
 
 const EditStore = ({ storeData, refreshData }) => {
   const { t } = useTranslation();
@@ -22,32 +23,25 @@ const EditStore = ({ storeData, refreshData }) => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [businessTypes, setBusinessTypes] = useState([]);
 
-  // Helper function to get full image URL
+  // Helper function to get full image URL (simplified)
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
+    if (!imagePath) return DEFAULT_PLACEHOLDER;
 
-    let baseUrl = "http://localhost:8000"; // Default base URL
-    if (typeof window !== 'undefined') {
-      if (window._env_ && window._env_.REACT_APP_API_URL) {
-        baseUrl = window._env_.REACT_APP_API_URL;
-      } else if (window.REACT_APP_API_URL) {
-        baseUrl = window.REACT_APP_API_URL;
-      }
-    }
-
+    // If it's already a full URL, return as is
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
 
-    if (imagePath.includes('storage/')) {
-      return `${baseUrl}/${imagePath}`;
+    // Remove 'public/' prefix if present
+    const cleanPath = imagePath.replace('public/', '');
+
+    // If the path already includes 'storage/', avoid duplication
+    if (cleanPath.startsWith('storage/')) {
+      return `${IMAGE_BASE_URL}/${cleanPath.replace('storage/', '')}`;
     }
 
-    if (imagePath.includes('stores/') || imagePath.includes('store_profile/') || imagePath.includes('products/')) {
-      return `${baseUrl}/storage/${imagePath}`;
-    }
-
-    return `${baseUrl}/storage/${imagePath}`;
+    // Default: prepend IMAGE_BASE_URL
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
   };
 
   const [formData, setFormData] = useState({
@@ -122,16 +116,12 @@ const EditStore = ({ storeData, refreshData }) => {
         account_number: storeData.account_number || ""
       });
 
-      // Use getImageUrl to get full URLs for previews
+      // Set image previews using getImageUrl
       if (storeData.store_logo) {
-        const logoUrl = getImageUrl(storeData.store_logo);
-        console.log("Logo URL:", logoUrl);
-        setLogoPreview(logoUrl);
+        setLogoPreview(getImageUrl(storeData.store_logo));
       }
       if (storeData.store_banner) {
-        const bannerUrl = getImageUrl(storeData.store_banner);
-        console.log("Banner URL:", bannerUrl);
-        setBannerPreview(bannerUrl);
+        setBannerPreview(getImageUrl(storeData.store_banner));
       }
     }
   }, [storeData]);
@@ -178,7 +168,7 @@ const EditStore = ({ storeData, refreshData }) => {
         }
       });
 
-      // Append files if they exist - use the actual file objects
+      // Append files if they exist
       if (logoFile) {
         console.log("Appending logo file:", logoFile);
         submitFormData.append('store_logo', logoFile);
@@ -191,11 +181,10 @@ const EditStore = ({ storeData, refreshData }) => {
         console.log("Appending banner file:", bannerFile);
         submitFormData.append('store_banner', bannerFile);
       } else if (bannerPreview && !bannerPreview.startsWith('blob:')) {
-        // If bannerPreview is a URL (not a blob) and no new file, keep existing
         submitFormData.append('store_banner', bannerPreview);
       }
 
-      // Debug: Log what's being sent
+      // Debug log
       console.log("=== FORM DATA DEBUG ===");
       for (let [key, value] of submitFormData.entries()) {
         if (value instanceof File) {
@@ -205,7 +194,6 @@ const EditStore = ({ storeData, refreshData }) => {
         }
       }
 
-      // Make the API call - Use the correct endpoint
       const response = await api.put('/sellers/my-store/update', submitFormData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -218,14 +206,12 @@ const EditStore = ({ storeData, refreshData }) => {
           text: "Store profile updated successfully!"
         });
         
-        // Clear file states and refresh data
         setLogoFile(null);
         setBannerFile(null);
         if (refreshData) {
           await refreshData();
         }
 
-        // Navigate back to store view
         setTimeout(() => {
           navigate('/seller/dashboard?tab=my-store');
         }, 1500);
@@ -237,9 +223,7 @@ const EditStore = ({ storeData, refreshData }) => {
       let errorMessage = "Failed to update store profile";
 
       if (error.response?.data?.errors) {
-        // Handle validation errors
         const errors = error.response.data.errors;
-        console.log("Validation errors:", errors);
         errorMessage = Object.values(errors).flat().join(', ');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

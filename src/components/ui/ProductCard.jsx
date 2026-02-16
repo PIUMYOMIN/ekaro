@@ -6,6 +6,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config"; // <-- import config
 
 // Helper function to format MMK currency
 export const formatMMK = amount => {
@@ -17,18 +18,18 @@ export const formatMMK = amount => {
   }).format(numAmount);
 };
 
-// Memoized helper functions
+// Memoized helper function to build image URL
 const getImageUrl = (image) => {
-  if (!image) return '/placeholder-product.jpg';
+  if (!image) return DEFAULT_PLACEHOLDER;
   
   // Handle different image formats
   if (typeof image === 'string') {
     if (image.startsWith('http')) {
-      return image;
+      return image; // already a full URL
     }
-    // It's a storage path, convert to URL
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    return `${baseUrl}/storage/${image.replace('public/', '')}`;
+    // It's a storage path, convert to URL using IMAGE_BASE_URL
+    const cleanPath = image.replace('public/', '');
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
   }
   
   if (typeof image === 'object') {
@@ -37,26 +38,24 @@ const getImageUrl = (image) => {
       if (image.url.startsWith('http')) {
         return image.url;
       }
-      // Convert storage path to URL
-      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      return `${baseUrl}/storage/${image.url.replace('public/', '')}`;
+      const cleanPath = image.url.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
     }
     
     // Try path if no url
     if (image.path) {
-      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      return `${baseUrl}/storage/${image.path.replace('public/', '')}`;
+      const cleanPath = image.path.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
     }
   }
   
-  return '/placeholder-product.jpg';
+  return DEFAULT_PLACEHOLDER;
 };
 
 // Helper function to get category name
 const getCategoryName = (product) => {
   if (!product) return '';
   
-  // Try category name from category object
   if (product.category) {
     if (typeof product.category === 'object') {
       return product.category.name_en || product.category.name || '';
@@ -64,7 +63,6 @@ const getCategoryName = (product) => {
     return product.category;
   }
   
-  // Try category name from direct fields
   if (product.category_name) {
     return product.category_name;
   }
@@ -130,27 +128,23 @@ const ProductCard = memo(({ product, onClick }) => {
 
   // Get the primary or first image for display
   const getProductImage = useCallback(() => {
-    if (!product || !product.images) return '/placeholder-product.jpg';
+    if (!product || !product.images) return DEFAULT_PLACEHOLDER;
     
-    // Handle images field (could be string, array, or null)
     let images = product.images;
     
     if (typeof images === 'string') {
       try {
         images = JSON.parse(images);
       } catch (e) {
-        // If it's not valid JSON, treat it as a single image URL/path
         return getImageUrl(images);
       }
     }
     
-    // If images is an array
     if (Array.isArray(images)) {
       if (images.length === 0) {
-        return '/placeholder-product.jpg';
+        return DEFAULT_PLACEHOLDER;
       }
       
-      // Try to find primary image first
       const primaryImage = images.find(img => {
         if (typeof img === 'object') {
           return img.is_primary;
@@ -158,12 +152,11 @@ const ProductCard = memo(({ product, onClick }) => {
         return false;
       });
       
-      // Use primary image if found, otherwise first image
       const imageToUse = primaryImage || images[0];
       return getImageUrl(imageToUse);
     }
     
-    return '/placeholder-product.jpg';
+    return DEFAULT_PLACEHOLDER;
   }, [product]);
 
   const productImage = getProductImage();
@@ -234,7 +227,6 @@ const ProductCard = memo(({ product, onClick }) => {
     }
   }, [user, product.id, isActive, inStock, navigate, addToCart]);
 
-  // Clear message after timeout
   React.useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(null), 3000);
@@ -242,14 +234,12 @@ const ProductCard = memo(({ product, onClick }) => {
     }
   }, [message]);
 
-  // Reset image error when product changes
   React.useEffect(() => {
     setImageError(false);
   }, [product]);
 
   return (
     <>
-      {/* Message Popup */}
       {message && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
           message.type === 'success' 
@@ -277,10 +267,10 @@ const ProductCard = memo(({ product, onClick }) => {
           <Link to={`/products/${product.id}`} className="block" onClick={(e) => e.stopPropagation()}>
             <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
               <LazyLoadImage
-                src={imageError ? '/placeholder-product.jpg' : productImage}
+                src={imageError ? DEFAULT_PLACEHOLDER : productImage}
                 alt={productName}
                 effect="blur"
-                threshold={100} // Start loading when within 100px of viewport
+                threshold={100}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E"
                 onError={() => setImageError(true)}
@@ -289,7 +279,6 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           </Link>
           
-          {/* Category Badge */}
           {categoryName && (
             <Link 
               to={categoryLink} 
@@ -301,28 +290,24 @@ const ProductCard = memo(({ product, onClick }) => {
             </Link>
           )}
           
-          {/* Sale Badge */}
           {isOnSale && (
             <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1.5 rounded">
               SALE
             </div>
           )}
           
-          {/* Out of Stock Badge */}
           {!inStock && (
             <div className="absolute top-10 right-2 bg-gray-700 text-white text-xs font-semibold px-2 py-1.5 rounded">
               Out of Stock
             </div>
           )}
           
-          {/* Inactive Badge */}
           {!isActive && (
             <div className="absolute top-10 right-2 bg-yellow-500 text-white text-xs font-semibold px-2 py-1.5 rounded">
               Inactive
             </div>
           )}
           
-          {/* Seller Badge (bottom) */}
           {sellerName && (
             <div className="absolute bottom-2 left-2">
               <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1.5 rounded-lg">
@@ -347,7 +332,6 @@ const ProductCard = memo(({ product, onClick }) => {
                   </h3>
                 </Link>
                 
-                {/* Rating and Category Info */}
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center">
                     <div className="flex">
@@ -370,7 +354,6 @@ const ProductCard = memo(({ product, onClick }) => {
                     )}
                   </div>
                   
-                  {/* Quick category link for mobile */}
                   {categoryName && (
                     <Link 
                       to={categoryLink}
@@ -382,7 +365,6 @@ const ProductCard = memo(({ product, onClick }) => {
                   )}
                 </div>
                 
-                {/* Short description if available */}
                 {product.description_en && (
                   <p className="mt-2 text-sm text-gray-600 line-clamp-2">
                     {product.description_en}
@@ -410,10 +392,8 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           </div>
           
-          {/* Action Button and Additional Info */}
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between mb-3">
-              {/* Category tag for desktop */}
               {categoryName && (
                 <Link 
                   to={categoryLink}
@@ -425,7 +405,6 @@ const ProductCard = memo(({ product, onClick }) => {
                 </Link>
               )}
               
-              {/* Stock status */}
               <div className={`text-xs font-medium px-2 py-1 rounded-full ${
                 !isActive ? 'bg-yellow-100 text-yellow-800' :
                 !inStock ? 'bg-red-100 text-red-800' :
