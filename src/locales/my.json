@@ -13,7 +13,7 @@
     "login": "အကောင့်ဝင်ရန်",
     "sign_up": "အကောင့်ဖွင့်ရန်",
     "new_user": "အကောင့်အသစ်လား?",
-    "logo_text": "မြန်မာ့B2B",
+    "logo_text": "Pyonea",
     "burmese": "မြန်မာ"
   },
   "home": {
@@ -51,6 +51,22 @@
   "category": {
     "products": "ကုန်ပစ္စည်းများ",
     "subcategories": "ခွဲစဉ်များ"
+  },
+  "categories": {
+    "all_categories": "အမျိုးအစားအားလုံး"
+  },
+  "filter": {
+    "price_range": "စျေးနှုန်းအကွာအဝေး",
+    "under_10000": "၁၀,၀၀၀ ကျပ်အောက်",
+    "10000_to_50000": "၁၀,၀၀၀ ကျပ် မှ ၅၀,၀၀၀ ကျပ်",
+    "50000_to_100000": "၅၀,၀၀၀ ကျပ် မှ ၁၀၀,၀၀၀ ကျပ်",
+    "over_100000": "၁၀၀,၀၀၀ ကျပ်အထက်",
+    "sort_by": "စီစဉ်ရန်",
+    "newest": "နောက်ဆုံးထုတ်ကုန်များ",
+    "price_low_to_high": "စျေးနှုန်း နည်းမှ များသို့",
+    "price_high_to_low": "စျေးနှုန်း များမှ နည်းသို့",
+    "top_rated": "အဆင့်သတ်မှတ်ချက် အမြင့်ဆုံး",
+    "most_reviewed": "သုံးသပ်ချက် အများဆုံး"
   },
   "sidebar": {
     "platform_name": "မြန်မာ့B2B",
@@ -195,6 +211,7 @@
     "search_filter": "ရှာဖွေမှု: \"{{query}}\"",
     "category_filter": "အမျိုးအစား: {{category}}",
     "all_products": "ကုန်ပစ္စည်းအားလုံး",
+    "no_more_products": "ထပ်မံဖွင့်ရန် ကုန်ပစ္စည်းများ မရှိတော့ပါ",
     "category_products": "{{category}} ကုန်ပစ္စည်းများ",
     "search_results": "\"{{query}}\" အတွက် ရှာဖွေမှုရလဒ်များ",
     "search_results_category": "{{category}} တွင် \"{{query}}\" အတွက် ရှာဖွေမှုရလဒ်များ",

@@ -70,6 +70,19 @@
     "click_to_view_subcategories": "Click to view subcategories",
     "click_to_view_products": "Click to view products"
   },
+  "filter": {
+    "price_range": "Price Range",
+    "under_10000": "Under 10,000 MMK",
+    "10000_to_50000": "10,000 – 50,000 MMK",
+    "50000_to_100000": "50,000 – 100,000 MMK",
+    "over_100000": "Over 100,000 MMK",
+    "sort_by": "Sort By",
+    "newest": "Newest",
+    "price_low_to_high": "Price: Low to High",
+    "price_high_to_low": "Price: High to Low",
+    "top_rated": "Top Rated",
+    "most_reviewed": "Most Reviewed"
+  },
   "sidebar": {
     "platform_name": "Myanmar B2B",
     "seller_portal": "Seller Portal",
@@ -201,6 +214,7 @@
     "search_filter": "Search: \"{{query}}\"",
     "category_filter": "Category: {{category}}",
     "all_products": "All Products",
+    "no_more_products": "No more products to load",
     "category_products": "{{category}} Products",
     "search_results": "Search results for \"{{query}}\"",
     "search_results_category": "Search results for \"{{query}}\" in {{category}}",

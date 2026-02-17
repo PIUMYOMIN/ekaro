@@ -1,26 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Disclosure, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
-import Logo from '../../assets/images/logo.png'
+import Logo from '../../assets/images/logo.png';
 
 const Header = () => {
   const { t, i18n } = useTranslation();
   const { user, logout, hasRole } = useAuth();
-  const { cartItems, totalItems } = useCart();
+  const { totalItems } = useCart();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+  const location = useLocation();
+
+  // Get current search query from URL (works for any page, not just product list)
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const urlSearchQuery = searchParams.get('search') || '';
+
+  const [searchTerm, setSearchTerm] = useState(urlSearchQuery);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
+  // Ref to track if the current change came from URL sync to avoid loops
+  const isSyncingFromUrl = useRef(false);
+
+  // Sync local search term when URL changes (e.g., back/forward navigation)
+  useEffect(() => {
+    isSyncingFromUrl.current = true;
+    setSearchTerm(urlSearchQuery);
+    // Reset flag after state update
+    setTimeout(() => {
+      isSyncingFromUrl.current = false;
+    }, 0);
+  }, [urlSearchQuery]);
+
+  // Debounced navigation – only updates URL after user stops typing
+  const debouncedNavigate = useCallback(
+    (() => {
+      let timeout;
+      return (value) => {
+        if (isSyncingFromUrl.current) return; // skip if sync from URL
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          const params = new URLSearchParams(location.search);
+          if (value.trim()) {
+            params.set('search', encodeURIComponent(value.trim()));
+          } else {
+            params.delete('search');
+          }
+          // Preserve other params (like category) if any
+          const newSearch = params.toString();
+          navigate(`${location.pathname}?${newSearch}`, { replace: true });
+        }, 500);
+      };
+    })(),
+    [location.pathname, location.search, navigate]
+  );
+
+  // Update URL when searchTerm changes (via typing)
+  useEffect(() => {
+    debouncedNavigate(searchTerm);
+  }, [searchTerm, debouncedNavigate]);
+
+  // Immediate search on form submit (no debounce)
   const handleSearch = (e) => {
     e.preventDefault();
+    const params = new URLSearchParams(location.search);
     if (searchTerm.trim()) {
-      navigate(`/products?search=${searchTerm}`);
-      setShowMobileSearch(false);
+      params.set('search', encodeURIComponent(searchTerm.trim()));
+    } else {
+      params.delete('search');
     }
+    navigate(`/products?${params.toString()}`);
+    setShowMobileSearch(false);
   };
 
   const changeLanguage = (lng) => {
@@ -29,7 +81,6 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    // Use navigate for client-side routing instead of full page reload
     navigate('/login', { replace: true });
   };
 
@@ -48,34 +99,27 @@ const Header = () => {
     }
   };
 
-
-  // Safer helper function to get display role
   const getDisplayRole = () => {
     if (!user) return '';
 
     let displayRoles = [];
 
-    // Try roles array first
     if (user.roles && Array.isArray(user.roles)) {
       displayRoles = user.roles.map(role => {
         if (typeof role === 'string') {
           return t(`roles.${role}`, role);
         } else if (typeof role === 'object' && role !== null) {
-          // Extract role name from object
           const roleName = role.name || role.role || role.title;
           return roleName ? t(`roles.${roleName}`, roleName) : JSON.stringify(role);
         }
         return String(role);
       });
-    }
-    // Fallback to type or role field
-    else if (user.type) {
+    } else if (user.type) {
       displayRoles = [t(`roles.${user.type}`, user.type)];
     } else if (user.role) {
       displayRoles = [t(`roles.${user.role}`, user.role)];
     }
 
-    // If still no roles, use default
     if (displayRoles.length === 0) {
       displayRoles = [t('roles.buyer', 'Buyer')];
     }
@@ -181,7 +225,7 @@ const Header = () => {
                     </button>
                   </div>
 
-                  {/* Cart - Show count from CartContext */}
+                  {/* Cart */}
                   <Link to="/cart" className="relative p-1 text-gray-700 hover:text-green-600">
                     <ShoppingCartIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     {totalItems > 0 && (
@@ -191,7 +235,7 @@ const Header = () => {
                     )}
                   </Link>
 
-                  {/* User profile with click menu */}
+                  {/* User profile */}
                   {user ? (
                     <Menu as="div" className="ml-1 relative">
                       <Menu.Button className="flex items-center space-x-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-full p-1">
@@ -208,7 +252,6 @@ const Header = () => {
                         </div>
                       </Menu.Button>
 
-                      {/* Dropdown menu */}
                       <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 focus:outline-none">
                         <div className="py-1">
                           {userNavigation.map((item) => (
@@ -216,8 +259,7 @@ const Header = () => {
                               {({ active }) => (
                                 <button
                                   onClick={item.onClick}
-                                  className={`${active ? 'bg-gray-100' : ''
-                                    } block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                                  className={`${active ? 'bg-gray-100' : ''} block w-full text-left px-4 py-2 text-sm text-gray-700`}
                                 >
                                   {item.name}
                                 </button>
@@ -253,10 +295,7 @@ const Header = () => {
           {showMobileSearch && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-start justify-center md:hidden pt-16">
               <div className="bg-white w-full p-3 shadow-lg flex items-center">
-                <form
-                  onSubmit={handleSearch}
-                  className="flex-1 flex items-center"
-                >
+                <form onSubmit={handleSearch} className="flex-1 flex items-center">
                   <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
