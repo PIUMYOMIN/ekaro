@@ -17,8 +17,17 @@ import {
   UserIcon,
   XMarkIcon,
   CheckBadgeIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ShareIcon
 } from "@heroicons/react/24/outline";
+import { 
+  FacebookShareButton, 
+  TwitterShareButton, 
+  LinkedinShareButton,
+  FacebookIcon,
+  TwitterIcon,
+  LinkedinIcon
+} from "react-share";
 
 import ProductCard from "../components/ui/ProductCard";
 import ReviewCard from "../components/ui/ReviewCard";
@@ -38,7 +47,6 @@ const SellerProfile = () => {
   const [stats, setStats] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewsPerPage] = useState(5);
-  const [activeTab, setActiveTab] = useState("products");
   const [loading, setLoading] = useState({
     seller: true,
     products: true,
@@ -61,8 +69,10 @@ const SellerProfile = () => {
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("success");
 
-  const [logoError, setLogoError] = useState(false);
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
 
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const fetchSellerData = async () => {
@@ -193,6 +203,47 @@ const SellerProfile = () => {
     }
   };
 
+  // Handle share action
+  const handleShare = async () => {
+    const slugOrId = seller.store_slug || seller.id;
+    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    const shareTitle = seller.store_name;
+    const shareText = seller.store_description || `Check out ${seller.store_name} on our marketplace`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        showNotification('Shared successfully!', 'success');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Share failed:', err);
+          setShowShareModal(true); // fallback to modal
+        }
+      }
+    } else {
+      // Web Share not supported, open modal
+      setShowShareModal(true);
+    }
+  };
+
+  // Copy link to clipboard (for modal)
+  const handleCopyLink = async () => {
+    const slugOrId = seller.store_slug || seller.id;
+    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showNotification('Store link copied to clipboard!', 'success');
+      setShowShareModal(false);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      showNotification('Failed to copy link', 'error');
+    }
+  };
+
   // Safely get current reviews for pagination
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
@@ -201,7 +252,7 @@ const SellerProfile = () => {
   // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
 
-  // Render star ratings
+  // Render star ratings (unchanged)
   const renderStars = (rating, size = "h-5 w-5") => {
     if (!rating) {
       return (
@@ -232,7 +283,7 @@ const SellerProfile = () => {
     return stars;
   };
 
-  // Render interactive stars for review form
+  // Render interactive stars for review form (unchanged)
   const renderInteractiveStars = () => {
     return (
       <div className="flex space-x-1">
@@ -244,8 +295,7 @@ const SellerProfile = () => {
             className="focus:outline-none transition-transform hover:scale-110"
           >
             <StarIcon
-              className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"
-                }`}
+              className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"}`}
               fill={star <= reviewRating ? "currentColor" : "none"}
             />
           </button>
@@ -254,7 +304,7 @@ const SellerProfile = () => {
     );
   };
 
-  // Popup notification component
+  // Popup notification component (unchanged)
   const PopupNotification = () => (
     <AnimatePresence>
       {showPopup && (
@@ -262,12 +312,13 @@ const SellerProfile = () => {
           initial={{ opacity: 0, y: -50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
-          className="fixed top-4 mx-auto z-50 max-w-sm w-full"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full px-4"
         >
-          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success"
-            ? "bg-green-50 border-green-500"
-            : "bg-red-50 border-red-500"
-            }`}>
+          <div className={`rounded-lg shadow-lg border-l-4 ${
+            popupType === "success"
+              ? "bg-green-50 border-green-500"
+              : "bg-red-50 border-red-500"
+          }`}>
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -278,18 +329,20 @@ const SellerProfile = () => {
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1">
-                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"
-                    }`}>
+                  <p className={`text-sm font-medium ${
+                    popupType === "success" ? "text-green-800" : "text-red-800"
+                  }`}>
                     {popupMessage}
                   </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
                     onClick={() => setShowPopup(false)}
-                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success"
-                      ? "focus:ring-green-500 text-green-400 hover:text-green-500"
-                      : "focus:ring-red-500 text-red-400 hover:text-red-500"
-                      }`}
+                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      popupType === "success"
+                        ? "focus:ring-green-500 text-green-400 hover:text-green-500"
+                        : "focus:ring-red-500 text-red-400 hover:text-red-500"
+                    }`}
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
@@ -301,6 +354,78 @@ const SellerProfile = () => {
       )}
     </AnimatePresence>
   );
+
+  // Share Modal Component
+  const ShareModal = () => {
+    const slugOrId = seller.store_slug || seller.id;
+    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    const shareTitle = seller.store_name;
+
+    return (
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white rounded-2xl max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Share this store</h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <FacebookShareButton url={shareUrl} quote={shareTitle}>
+                  <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <FacebookIcon size={40} round />
+                    <span className="text-xs mt-1 font-medium">Facebook</span>
+                  </div>
+                </FacebookShareButton>
+
+                <TwitterShareButton url={shareUrl} title={shareTitle}>
+                  <div className="flex flex-col items-center p-3 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors">
+                    <TwitterIcon size={40} round />
+                    <span className="text-xs mt-1 font-medium">Twitter</span>
+                  </div>
+                </TwitterShareButton>
+
+                <LinkedinShareButton url={shareUrl} title={shareTitle}>
+                  <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <LinkedinIcon size={40} round />
+                    <span className="text-xs mt-1 font-medium">LinkedIn</span>
+                  </div>
+                </LinkedinShareButton>
+              </div>
+
+              <button
+                onClick={handleCopyLink}
+                className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
+              >
+                <ShareIcon className="h-5 w-5 mr-2" />
+                Copy Link
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  // ... (loading and error states remain unchanged)
 
   if (loading.seller && !seller) {
     return (
@@ -365,12 +490,12 @@ const SellerProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Popup Notification */}
       <PopupNotification />
+      <ShareModal />
 
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Link to="/sellers" className="flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
+        <Link to="/sellers" className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
           <ChevronLeftIcon className="h-5 w-5 mr-1" />
           {t("seller.back_to_sellers") || "Back to Sellers"}
         </Link>
@@ -380,7 +505,7 @@ const SellerProfile = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 mb-6 md:mb-0">
+            <div className="md:w-1/4 mb-6 md:mb-0 flex justify-center md:justify-start">
               {!logoError && seller.store_logo ? (
                 <img
                   src={seller.store_logo}
@@ -398,10 +523,10 @@ const SellerProfile = () => {
             </div>
 
             <div className="md:w-3/4">
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div>
-                  <div className="flex items-center mb-2">
-                    <h1 className="text-2xl font-bold mr-2">
+                  <div className="flex items-center mb-2 flex-wrap gap-2">
+                    <h1 className="text-2xl font-bold">
                       {seller.store_name}
                     </h1>
                     {(seller.status === "approved" || seller.status === "active") && (
@@ -409,8 +534,8 @@ const SellerProfile = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center mb-4">
-                    <div className="flex text-yellow-400 mr-2">
+                  <div className="flex items-center mb-4 flex-wrap gap-2">
+                    <div className="flex text-yellow-400">
                       {renderStars(rating, "h-5 w-5")}
                     </div>
                     <span className="text-gray-600">
@@ -419,18 +544,24 @@ const SellerProfile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
-                    <div className="text-xs text-gray-500">Followers</div>
-                  </div>
+                <div className="flex items-center gap-2">
+                  {/* Share button */}
+                  <button
+                    onClick={handleShare}
+                    className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
+                    title="Share store"
+                  >
+                    <ShareIcon className="h-5 w-5" />
+                  </button>
+                  {/* Follow button */}
                   <button
                     onClick={handleFollowToggle}
                     disabled={!seller.user_id}
-                    className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium ${isFollowing
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
-                      : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
-                      } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
+                      isFollowing
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                        : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                    } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {isFollowing ? (
                       <div className="flex items-center space-x-2">
@@ -444,6 +575,10 @@ const SellerProfile = () => {
                       </div>
                     )}
                   </button>
+                  <div className="text-center hidden sm:block">
+                    <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
+                    <div className="text-xs text-gray-500">Followers</div>
+                  </div>
                 </div>
               </div>
 
@@ -468,43 +603,35 @@ const SellerProfile = () => {
                 </div>
               )}
 
-              {/* Products, Rating, Sales, Since Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              {/* Products, Rating, Sales, Since Stats - responsive grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">
-                    {productCount}
-                  </div>
+                  <div className="font-bold text-lg text-gray-900">{productCount}</div>
                   <div className="text-gray-600 text-sm">Products</div>
                 </div>
                 <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">
-                    {rating.toFixed(1)}
-                  </div>
+                  <div className="font-bold text-lg text-gray-900">{rating.toFixed(1)}</div>
                   <div className="text-gray-600 text-sm">Rating</div>
                 </div>
                 <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">
-                    {stats.total_sales || 0}
-                  </div>
+                  <div className="font-bold text-lg text-gray-900">{stats.total_sales || 0}</div>
                   <div className="text-gray-600 text-sm">Sales</div>
                 </div>
-                {/* <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">
-                    {followersCount}
-                  </div>
+                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                  <div className="font-bold text-lg text-gray-900">{followersCount}</div>
                   <div className="text-gray-600 text-sm">Followers</div>
-                </div> */}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content (Tabs) – responsive, unchanged */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <Tab.Group>
-          <div className="border-b border-gray-200">
-            <Tab.List className="-mb-px flex space-x-8">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
               <Tab
                 className={({ selected }) =>
                   classNames(
@@ -545,7 +672,7 @@ const SellerProfile = () => {
           </div>
 
           <Tab.Panels className="mt-6">
-            {/* Products Tab */}
+            {/* Products Tab – unchanged */}
             <Tab.Panel>
               {loading.products ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -570,7 +697,7 @@ const SellerProfile = () => {
               )}
             </Tab.Panel>
 
-            {/* Reviews Tab */}
+            {/* Reviews Tab – unchanged */}
             <Tab.Panel>
               <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="p-6">
@@ -642,7 +769,7 @@ const SellerProfile = () => {
                           >
                             {submittingReview ? (
                               <>
-                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></div>
                                 {t("seller.submitting") || "Submitting..."}
                               </>
                             ) : (
@@ -699,7 +826,7 @@ const SellerProfile = () => {
               </div>
             </Tab.Panel>
 
-            {/* About Tab */}
+            {/* About Tab – unchanged */}
             <Tab.Panel>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
@@ -771,7 +898,7 @@ const SellerProfile = () => {
                               href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200"
+                              className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200 break-all"
                             >
                               {seller.website}
                             </a>
@@ -792,7 +919,7 @@ const SellerProfile = () => {
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
-      </div>
+        </div>
     </div>
   );
 };

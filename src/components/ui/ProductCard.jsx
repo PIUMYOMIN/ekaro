@@ -1,4 +1,4 @@
-// ProductCard.jsx (updated responsive version)
+// ProductCard.jsx (updated – uses slug_en for links)
 import React, { useState, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { StarIcon, TagIcon } from "@heroicons/react/24/outline";
@@ -9,7 +9,6 @@ import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
-// Helper functions (same as before)
 export const formatMMK = amount => {
   const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
   return new Intl.NumberFormat("my-MM", {
@@ -116,6 +115,7 @@ const ProductCard = memo(({ product, onClick }) => {
   const categoryName = getCategoryName(product);
   const categoryLink = getCategoryLink(product);
   const sellerName = product?.seller?.store_name || product?.seller?.name || product?.seller_name || 'Seller';
+  const productSlug = product?.slug_en; // ✅ use slug_en only – no fallback to id
 
   const handleAddToCart = useCallback(async (e) => {
     e?.preventDefault();
@@ -180,9 +180,8 @@ const ProductCard = memo(({ product, onClick }) => {
         animate={{ opacity: 1 }}
         onClick={onClick}
       >
-        {/* Image section – responsive height */}
         <div className="relative flex-shrink-0">
-          <Link to={`/products/${product.id}`} className="block" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/products/${productSlug}`} className="block" onClick={(e) => e.stopPropagation()}>
             <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 overflow-hidden">
               <LazyLoadImage
                 src={imageError ? DEFAULT_PLACEHOLDER : productImage}
@@ -197,7 +196,6 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           </Link>
           
-          {/* Category tag – hidden on mobile, visible sm and up */}
           {categoryName && (
             <Link 
               to={categoryLink} 
@@ -227,9 +225,12 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           )}
           
-          {/* Seller info – hidden on mobile and sm, visible md and up */}
           {sellerName && (
-            <div className="absolute bottom-2 left-2 hidden md:block">
+            <Link
+              to={`/sellers/${product?.seller?.store_slug || product?.seller_id}`}
+              className="absolute bottom-2 left-2 hidden md:block"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1.5 rounded-lg">
                 <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-700">
@@ -238,22 +239,20 @@ const ProductCard = memo(({ product, onClick }) => {
                 </div>
                 <span className="truncate max-w-[100px]">{sellerName}</span>
               </div>
-            </div>
+            </Link>
           )}
         </div>
         
-        {/* Content section – responsive padding and text sizes */}
         <div className="p-2 sm:p-3 md:p-4 flex flex-col flex-grow">
           <div className="flex-grow">
             <div className="sm:flex justify-between items-start gap-1">
               <div className="flex-1 min-w-0">
-                <Link to={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
+                <Link to={`/products/${productSlug}`} onClick={(e) => e.stopPropagation()}>
                   <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 leading-tight">
                     {productName}
                   </h3>
                 </Link>
                 
-                {/* Rating – hide on mobile, show sm and up */}
                 <div className="hidden sm:flex items-center mt-1">
                   <div className="flex">
                     {[0, 1, 2, 3, 4].map(rating => (
@@ -274,7 +273,6 @@ const ProductCard = memo(({ product, onClick }) => {
                 </div>
               </div>
               
-              {/* Price – always visible, but smaller on mobile */}
               <div className="sm:text-right flex-shrink-0">
                 <p className="text-sm sm:text-base md:text-lg font-bold text-green-700 whitespace-nowrap">
                   {formatMMK(productPrice)}
@@ -287,14 +285,12 @@ const ProductCard = memo(({ product, onClick }) => {
               </div>
             </div>
 
-            {/* MOQ – hide on mobile, show sm and up */}
             {productMOQ > 1 && (
               <p className="hidden sm:block text-xs text-gray-500 mt-1">
                 MOQ: {productMOQ} {productUnit}
               </p>
             )}
 
-            {/* Short description – hide on mobile and sm, show md and up */}
             {product.description_en && (
               <p className="hidden md:block mt-2 text-sm text-gray-600 line-clamp-2">
                 {product.description_en}
@@ -302,7 +298,6 @@ const ProductCard = memo(({ product, onClick }) => {
             )}
           </div>
           
-          {/* Add to cart section – always visible, smaller on mobile */}
           <div className="sm:mt-2 sm:pt-2 border-t border-gray-100">
             <button
               type="button"

@@ -300,44 +300,42 @@ const Home = () => {
   ), [loading.categories, categories, t]);
 
   const renderProductsSection = useMemo(() => (
-    <section className="py-10 sm:py-12 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {t("home.featured_products")}
-            </h2>
-          </div>
-          <Link
-            to="/products"
-            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
-          >
-            {t("home.view_all")} →
-          </Link>
+  <section className="py-10 sm:py-12 bg-gray-50">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            {t("home.featured_products")}
+          </h2>
         </div>
-
-        {/* Responsive grid: 3 columns on mobile, 2 on tablet, 4 on large screens */}
-        <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {loading.products ? (
-            [...Array(8)].map((_, i) => ( // Show 8 skeletons (or use products.length if known)
-              <ProductCardSkeleton key={i} />
-            ))
-          ) : products.length > 0 ? (
-            products.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-10 sm:py-12">
-              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
-            </div>
-          )}
-        </div>
+        <Link
+          to="/products"
+          className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+        >
+          {t("home.view_all")} →
+        </Link>
       </div>
-    </section>
-  ), [loading.products, products, t]);
+
+      <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {loading.products ? (
+          [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
+        ) : products.length > 0 ? (
+          products.map(product => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onClick={() => navigate(`/products/${product.slug_en}`)} // ✅ uses slug_en
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10 sm:py-12">
+            <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+), [loading.products, products, t, navigate]);
 
 
   const renderSellersSection = useMemo(() => (

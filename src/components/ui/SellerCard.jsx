@@ -4,11 +4,10 @@ import { StarIcon, CheckBadgeIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 
 const SellerCard = ({ seller }) => {
-  // Use the actual API data structure
   const apiSeller = seller.originalData || seller;
   
-  // Map API properties to component expectations
   const storeName = apiSeller.store_name || 'Unknown Seller';
+  const storeSlug = apiSeller.store_slug || 'unknown-seller'; // fallback slug
   const displayRating = Number(apiSeller.reviews_avg_rating) || 0;
   const reviewsCount = apiSeller.reviews_count || 0;
   const productsCount = apiSeller.products_count || 0;
@@ -17,7 +16,6 @@ const SellerCard = ({ seller }) => {
   const businessType = apiSeller.business_type || "General Merchant";
   const isVerified = apiSeller.status === 'approved' || apiSeller.status === 'active';
   
-  // Render star ratings
   const renderStars = (rating) => {
     if (!rating || rating === 0) {
       return (
@@ -66,21 +64,14 @@ const SellerCard = ({ seller }) => {
                   alt={storeName}
                   className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                   onError={(e) => {
-                    // If image fails to load, hide it and show fallback
                     e.target.style.display = 'none';
                     const fallback = e.target.parentElement?.nextElementSibling;
                     if (fallback) fallback.style.display = 'flex';
                   }}
                 />
-                {/* {isVerified && (
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
-                    <CheckBadgeIcon className="h-4 w-4 text-green-500" />
-                  </div>
-                )} */}
               </div>
             ) : null}
             
-            {/* Fallback when no logo or image fails to load */}
             <div 
               className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 rounded-full w-16 h-16 items-center justify-center`}
             >
@@ -97,7 +88,8 @@ const SellerCard = ({ seller }) => {
           
           {/* Seller Info */}
           <div className="flex-1 min-w-0">
-            <Link to={`/sellers/${apiSeller.id}`}>
+            {/* ✅ Use storeSlug for the link */}
+            <Link to={`/sellers/${storeSlug}`} className="block">
               <h3 className="text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
                 {storeName}
               </h3>
@@ -114,7 +106,6 @@ const SellerCard = ({ seller }) => {
               )}
             </div>
             
-            {/* Rating and Reviews */}
             <div className="flex items-center mt-2">
               <div className="flex items-center">
                 {renderStars(displayRating)}
@@ -148,9 +139,9 @@ const SellerCard = ({ seller }) => {
           </div>
         </div>
 
-        {/* View Profile Button */}
+        {/* ✅ View Store Button – also uses slug */}
         <Link
-          to={`/sellers/${apiSeller.id}`}
+          to={`/sellers/${storeSlug}`}
           className="mt-4 w-full block text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
         >
           View Store

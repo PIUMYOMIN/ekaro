@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -362,8 +362,8 @@ const ProductDetail = () => {
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
               {product.name}
             </h1>
-            {product.name_mm && (
-              <p className="text-lg text-gray-600 mt-1">{product.name_mm}</p>
+            {product.name_en && (
+              <p className="text-lg text-gray-600 mt-1">{product.name_en}</p>
             )}
           </div>
 
@@ -501,22 +501,27 @@ const ProductDetail = () => {
           )}
 
           {/* Seller Info */}
-          <div className="pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold mb-3">Seller Information</h3>
-            <div className="flex items-center">
-              <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">Shop</span>
-              </div>
-              <div className="ml-4">
-                <p className="font-medium">
-                  {product.seller?.name || product.seller}
-                </p>
-                <p className="text-gray-600 text-sm">
-                  {product.seller?.rating || 4.7} ★ (120 ratings)
-                </p>
-              </div>
+          {product.seller && (
+            <div className="pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-semibold mb-3">Seller Information</h3>
+              <Link
+                to={`/sellers/${product.seller.seller_profile.store_slug}`}
+                className="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
+                <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
+                  <span className="text-gray-500 text-sm">Shop</span>
+                </div>
+                <div className="ml-4">
+                  <p className="font-medium text-green-600 hover:text-green-700">
+                    {product.seller.seller_profile?.store_name || product.seller?.name || product.seller}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    {product.seller?.rating || 4.7} ★ (120 ratings)
+                  </p>
+                </div>
+              </Link>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

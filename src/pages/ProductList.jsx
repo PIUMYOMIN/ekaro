@@ -441,7 +441,7 @@ const ProductList = () => {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onClick={() => navigate(`/products/${product.id}`)}
+                    onClick={() => navigate(`/products/${slug_en}`)}
                   />
                 ))
               : !loading && (
