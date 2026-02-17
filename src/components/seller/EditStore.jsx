@@ -11,10 +11,11 @@ import {
   XMarkIcon,
   BuildingStorefrontIcon,
   DocumentTextIcon,
-  LinkIcon
+  LinkIcon,
+  ExclamationCircleIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
-import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config"; // <-- import config
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
 const EditStore = ({ storeData, refreshData }) => {
   const { t } = useTranslation();
@@ -22,25 +23,17 @@ const EditStore = ({ storeData, refreshData }) => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [businessTypes, setBusinessTypes] = useState([]);
+  const [loadingBusinessTypes, setLoadingBusinessTypes] = useState(true);
+  const [businessTypesError, setBusinessTypesError] = useState("");
 
-  // Helper function to get full image URL (simplified)
+  // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return DEFAULT_PLACEHOLDER;
-
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-
-    // Remove 'public/' prefix if present
+    if (imagePath.startsWith('http')) return imagePath;
     const cleanPath = imagePath.replace('public/', '');
-
-    // If the path already includes 'storage/', avoid duplication
     if (cleanPath.startsWith('storage/')) {
       return `${IMAGE_BASE_URL}/${cleanPath.replace('storage/', '')}`;
     }
-
-    // Default: prepend IMAGE_BASE_URL
     return `${IMAGE_BASE_URL}/${cleanPath}`;
   };
 
@@ -70,31 +63,31 @@ const EditStore = ({ storeData, refreshData }) => {
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
 
-  // Fetch business types
+  // Fetch business types from API (no fallback)
   useEffect(() => {
     const fetchBusinessTypes = async () => {
       try {
+        setLoadingBusinessTypes(true);
+        setBusinessTypesError("");
         const response = await api.get("/business-types");
-        setBusinessTypes(response.data.data);
+        if (response.data.success) {
+          setBusinessTypes(response.data.data);
+        } else {
+          throw new Error("Invalid response format");
+        }
       } catch (error) {
-        console.log("Using default business types");
-        setBusinessTypes([
-          { value: "individual", label: "Individual/Sole Proprietorship", name_en: "Individual" },
-          { value: "partnership", label: "Partnership", name_en: "Partnership" },
-          { value: "private_limited", label: "Private Limited Company", name_en: "Private Limited" },
-          { value: "public_limited", label: "Public Limited Company", name_en: "Public Limited" },
-          { value: "cooperative", label: "Cooperative", name_en: "Cooperative" },
-        ]);
+        console.error("Failed to fetch business types:", error);
+        setBusinessTypesError("Could not load business types. Please refresh the page.");
+      } finally {
+        setLoadingBusinessTypes(false);
       }
     };
-
     fetchBusinessTypes();
   }, []);
 
   // Initialize form data when storeData is available
   useEffect(() => {
     if (storeData) {
-      console.log("Store data loaded:", storeData);
       setFormData({
         store_name: storeData.store_name || "",
         description: storeData.description || storeData.store_description || "",
@@ -116,7 +109,6 @@ const EditStore = ({ storeData, refreshData }) => {
         account_number: storeData.account_number || ""
       });
 
-      // Set image previews using getImageUrl
       if (storeData.store_logo) {
         setLogoPreview(getImageUrl(storeData.store_logo));
       }
@@ -157,82 +149,57 @@ const EditStore = ({ storeData, refreshData }) => {
     setSaving(true);
     setMessage({ type: "", text: "" });
 
+    // Ensure business type is selected
+    if (!formData.business_type) {
+      setMessage({ type: "error", text: "Please select a business type." });
+      setSaving(false);
+      return;
+    }
+
     try {
       const submitFormData = new FormData();
 
-      // Append all form fields EXCEPT store_logo and store_banner
+      // Append all form fields
       Object.keys(formData).forEach(key => {
-        if (key !== 'store_logo' && key !== 'store_banner' &&
-          formData[key] !== null && formData[key] !== undefined) {
+        if (formData[key] !== null && formData[key] !== undefined) {
           submitFormData.append(key, formData[key]);
         }
       });
 
       // Append files if they exist
       if (logoFile) {
-        console.log("Appending logo file:", logoFile);
         submitFormData.append('store_logo', logoFile);
       } else if (logoPreview && !logoPreview.startsWith('blob:')) {
-        // If logoPreview is a URL (not a blob) and no new file, keep existing
+        // keep existing logo path as string
         submitFormData.append('store_logo', logoPreview);
       }
 
       if (bannerFile) {
-        console.log("Appending banner file:", bannerFile);
         submitFormData.append('store_banner', bannerFile);
       } else if (bannerPreview && !bannerPreview.startsWith('blob:')) {
         submitFormData.append('store_banner', bannerPreview);
       }
 
-      // Debug log
-      console.log("=== FORM DATA DEBUG ===");
-      for (let [key, value] of submitFormData.entries()) {
-        if (value instanceof File) {
-          console.log(`${key}: File - ${value.name} (${value.size} bytes, ${value.type})`);
-        } else {
-          console.log(`${key}: ${value}`);
-        }
-      }
-
       const response = await api.put('/sellers/my-store/update', submitFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.success) {
-        setMessage({
-          type: "success",
-          text: "Store profile updated successfully!"
-        });
-        
+        setMessage({ type: "success", text: "Store profile updated successfully!" });
         setLogoFile(null);
         setBannerFile(null);
-        if (refreshData) {
-          await refreshData();
-        }
-
-        setTimeout(() => {
-          navigate('/seller/dashboard?tab=my-store');
-        }, 1500);
+        if (refreshData) await refreshData();
+        setTimeout(() => navigate('/seller/dashboard?tab=my-store'), 1500);
       }
     } catch (error) {
       console.error("Failed to update store:", error);
-      console.error("Error response:", error.response);
-
       let errorMessage = "Failed to update store profile";
-
       if (error.response?.data?.errors) {
-        const errors = error.response.data.errors;
-        errorMessage = Object.values(errors).flat().join(', ');
+        errorMessage = Object.values(error.response.data.errors).flat().join(', ');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-
-      setMessage({
-        type: "error",
-        text: errorMessage
-      });
+      setMessage({ type: "error", text: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -255,15 +222,11 @@ const EditStore = ({ storeData, refreshData }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Edit Store Profile
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Update your store information and media
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900">Edit Store Profile</h2>
+          <p className="mt-1 text-sm text-gray-500">Update your store information and media</p>
         </div>
         <button
           onClick={cancelEdit}
@@ -276,30 +239,38 @@ const EditStore = ({ storeData, refreshData }) => {
 
       {/* Status Message */}
       {message.text && (
-        <div
-          className={`p-4 rounded-xl flex items-center space-x-3 ${message.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-700"
-              : "bg-red-50 border border-red-200 text-red-700"
-            }`}
-        >
+        <div className={`p-4 rounded-xl flex items-center space-x-3 ${message.type === "success"
+            ? "bg-green-50 border border-green-200 text-green-700"
+            : "bg-red-50 border border-red-200 text-red-700"
+          }`}>
           {message.type === "success" ? (
             <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
           ) : (
             <XMarkIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
           )}
           <span className="flex-1">{message.text}</span>
-          <button
-            onClick={() => setMessage({ type: "", text: "" })}
-            className="text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={() => setMessage({ type: "", text: "" })} className="text-gray-400 hover:text-gray-600">
             <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Edit Form */}
+      {/* Business Types Error */}
+      {businessTypesError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-3">
+          <ExclamationCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <span className="text-red-700">{businessTypesError}</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="ml-auto px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Store Media Section */}
+        {/* Store Media Section (unchanged) */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <CameraIcon className="h-5 w-5 mr-2 text-green-600" />
@@ -308,17 +279,11 @@ const EditStore = ({ storeData, refreshData }) => {
 
           {/* Logo Upload */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Store Logo
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Store Logo</label>
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
               <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
                 {logoPreview ? (
-                  <img
-                    src={logoPreview}
-                    alt="Store logo preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={logoPreview} alt="Store logo preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center">
                     <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -336,26 +301,18 @@ const EditStore = ({ storeData, refreshData }) => {
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
-                  Recommended: 400x400px, JPG/PNG format, Max 2MB
-                </p>
+                <p className="text-xs text-gray-500 mt-2">Recommended: 400x400px, JPG/PNG format, Max 2MB</p>
               </div>
             </div>
           </div>
 
           {/* Banner Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Store Banner
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Store Banner</label>
             <div className="space-y-3">
               <div className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
                 {bannerPreview ? (
-                  <img
-                    src={bannerPreview}
-                    alt="Store banner preview"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={bannerPreview} alt="Store banner preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center">
                     <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -373,9 +330,7 @@ const EditStore = ({ storeData, refreshData }) => {
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                   />
                 </label>
-                <p className="text-xs text-gray-500 mt-2">
-                  Recommended: 1200x300px, JPG/PNG format, Max 5MB
-                </p>
+                <p className="text-xs text-gray-500 mt-2">Recommended: 1200x300px, JPG/PNG format, Max 5MB</p>
               </div>
             </div>
           </div>
@@ -391,64 +346,65 @@ const EditStore = ({ storeData, refreshData }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Store Name */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Store Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Store Name *</label>
               <input
                 type="text"
                 name="store_name"
                 value={formData.store_name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter your store name"
               />
             </div>
 
             {/* Description */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Store Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Store Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Describe your store and what you offer..."
               />
-              <p className="text-xs text-gray-500 mt-2">
-                This description will appear on your store page
-              </p>
             </div>
 
             {/* Business Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Business Type *
-              </label>
-              <select
-                name="business_type"
-                value={formData.business_type}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
-              >
-                <option value="">Select business type</option>
-                {businessTypes.map((type) => (
-                  <option key={type.value || type.slug_en} value={type.value || type.slug_en}>
-                    {type.name_en || type.label}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Business Type *</label>
+              {loadingBusinessTypes ? (
+                <div className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500">
+                  Loading business types...
+                </div>
+              ) : businessTypesError ? (
+                <div className="w-full px-4 py-3 border border-red-300 rounded-xl bg-red-50 text-red-700">
+                  Unable to load business types
+                </div>
+              ) : (
+                <select
+                  name="business_type"
+                  value={formData.business_type}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                >
+                  <option value="">Select business type</option>
+                  {businessTypes.map((type) => (
+                    <option key={type.slug_en} value={type.slug_en}>
+                      {type.name_en}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Contact Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Contact Email *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email *</label>
               <div className="relative">
                 <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -457,7 +413,8 @@ const EditStore = ({ storeData, refreshData }) => {
                   value={formData.contact_email}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="store@example.com"
                 />
               </div>
@@ -465,9 +422,7 @@ const EditStore = ({ storeData, refreshData }) => {
 
             {/* Contact Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Contact Phone *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone *</label>
               <div className="relative">
                 <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -476,7 +431,8 @@ const EditStore = ({ storeData, refreshData }) => {
                   value={formData.contact_phone}
                   onChange={handleInputChange}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="09xxxxxxxxx"
                 />
               </div>
@@ -484,9 +440,7 @@ const EditStore = ({ storeData, refreshData }) => {
 
             {/* Website */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Website
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
               <div className="relative">
                 <GlobeAltIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -494,7 +448,8 @@ const EditStore = ({ storeData, refreshData }) => {
                   name="website"
                   value={formData.website}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="https://example.com"
                 />
               </div>
@@ -510,164 +465,144 @@ const EditStore = ({ storeData, refreshData }) => {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Business Registration Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Business Registration Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Business Registration Number</label>
               <input
                 type="text"
                 name="business_registration_number"
                 value={formData.business_registration_number}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter registration number"
               />
             </div>
 
-            {/* Tax ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tax ID
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tax ID</label>
               <input
                 type="text"
                 name="tax_id"
                 value={formData.tax_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter tax identification number"
               />
             </div>
 
-            {/* Account Number */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bank Account Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bank Account Number</label>
               <input
                 type="text"
                 name="account_number"
                 value={formData.account_number}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter your bank account number"
               />
-              <p className="text-xs text-gray-500 mt-2">
-                For receiving payments from sales
-              </p>
             </div>
           </div>
         </div>
 
-        {/* Address Information */}
+        {/* Address Information (unchanged) */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <MapPinIcon className="h-5 w-5 mr-2 text-green-600" />
             Address Information
           </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Address */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
               <input
                 type="text"
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Street address, building, floor"
               />
             </div>
-
-            {/* City */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                City *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
               <input
                 type="text"
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter city"
               />
             </div>
-
-            {/* State/Region */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                State/Region *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">State/Region *</label>
               <input
                 type="text"
                 name="state"
                 value={formData.state}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter state or region"
               />
             </div>
-
-            {/* Country */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Country *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
               <select
                 name="country"
                 value={formData.country}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
+                <option value="">Select Country</option>
                 <option value="Myanmar">Myanmar</option>
                 <option value="Thailand">Thailand</option>
+                <option value="China">China</option>
+                <option value="India">India</option>
+                <option value="Bangladesh">Bangladesh</option>
+                <option value="Laos">Laos</option>
+                <option value="Cambodia">Cambodia</option>
+                <option value="Vietnam">Vietnam</option>
                 <option value="Singapore">Singapore</option>
                 <option value="Malaysia">Malaysia</option>
                 <option value="Indonesia">Indonesia</option>
-                <option value="Vietnam">Vietnam</option>
-                <option value="Other">Other</option>
+                <option value="Philippines">Philippines</option>
+                <option value="Japan">Japan</option>
+                <option value="South Korea">South Korea</option>
               </select>
             </div>
-
-            {/* Postal Code */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Postal Code
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
               <input
                 type="text"
                 name="postal_code"
                 value={formData.postal_code}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                disabled={loadingBusinessTypes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter postal code"
               />
             </div>
           </div>
         </div>
 
-        {/* Social Media Links */}
+        {/* Social Media Links (unchanged) */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <LinkIcon className="h-5 w-5 mr-2 text-green-600" />
             Social Media Links
           </h3>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Facebook */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Facebook
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500">fb.com/</span>
@@ -677,17 +612,14 @@ const EditStore = ({ storeData, refreshData }) => {
                   name="social_facebook"
                   value={formData.social_facebook}
                   onChange={handleInputChange}
-                  className="w-full pl-20 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-20 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="username"
                 />
               </div>
             </div>
-
-            {/* Instagram */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Instagram
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500">instagram.com/</span>
@@ -697,17 +629,14 @@ const EditStore = ({ storeData, refreshData }) => {
                   name="social_instagram"
                   value={formData.social_instagram}
                   onChange={handleInputChange}
-                  className="w-full pl-28 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-28 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="username"
                 />
               </div>
             </div>
-
-            {/* Twitter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Twitter (X)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Twitter (X)</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500">twitter.com/</span>
@@ -717,17 +646,14 @@ const EditStore = ({ storeData, refreshData }) => {
                   name="social_twitter"
                   value={formData.social_twitter}
                   onChange={handleInputChange}
-                  className="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-24 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="username"
                 />
               </div>
             </div>
-
-            {/* LinkedIn */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                LinkedIn
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <span className="text-gray-500">linkedin.com/</span>
@@ -737,7 +663,8 @@ const EditStore = ({ storeData, refreshData }) => {
                   name="social_linkedin"
                   value={formData.social_linkedin}
                   onChange={handleInputChange}
-                  className="w-full pl-26 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                  disabled={loadingBusinessTypes}
+                  className="w-full pl-26 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="username"
                 />
               </div>
@@ -750,36 +677,35 @@ const EditStore = ({ storeData, refreshData }) => {
           <button
             type="button"
             onClick={cancelEdit}
-            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+            disabled={saving || loadingBusinessTypes}
+            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium disabled:opacity-50"
           >
             Cancel
           </button>
-          <div className="flex space-x-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {saving ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="h-5 w-5 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={saving || loadingBusinessTypes || !!businessTypesError}
+            className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {saving ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckIcon className="h-5 w-5 mr-2" />
+                Save Changes
+              </>
+            )}
+          </button>
         </div>
       </form>
     </div>
   );
-}
+};
 
 export default EditStore;

@@ -667,5 +667,64 @@
     "buyer": "Buyer",
     "seller": "Seller", 
     "admin": "Administrator"
+  },
+  "store_basic": {
+    "title": "Store Basic Information",
+    "description": "Let's start by setting up your store's basic information",
+    "continue_business": "Continue to Business Details",
+
+    "store_logo": "Store Logo",
+    "upload_logo": "Upload Logo",
+    "uploading": "Uploading...",
+    "remove": "Remove",
+    "logo_recommended": "Recommended: 400x400px, Max 2MB (JPG, PNG, SVG)",
+
+    "store_banner": "Store Banner (Optional)",
+    "upload_banner": "Upload Banner",
+    "banner_recommended": "Recommended: 1200x300px, Max 5MB (JPG, PNG)",
+
+    "store_name": "Store Name",
+    "enter_store_name": "Enter your store name",
+    "store_name_required": "Store name is required",
+    "store_name_min": "Store name must be at least 2 characters",
+    "store_name_hint": "This will appear as your store's public name",
+
+    "business_type": "Business Type",
+    "select_business_type": "Select business type",
+    "business_type_required": "Business type is required",
+
+    "contact_email": "Contact Email",
+    "email_required": "Contact email is required",
+    "invalid_email": "Invalid email address",
+    "email_hint": "This email will be used for store-related communications",
+
+    "contact_phone": "Contact Phone",
+    "phone_required": "Contact phone is required",
+    "invalid_phone": "Invalid phone number",
+    "phone_hint": "Include country code (e.g., +95 for Myanmar)",
+
+    "store_description": "Store Description (Optional)",
+    "description_placeholder": "Describe your store and what you offer...",
+    "description_limit": "Description must be less than 2000 characters",
+    "description_hint": "This will be displayed on your store page. Max 2000 characters.",
+
+    "document_requirements": "Document Requirements",
+    "required": "Required",
+    "optional": "Optional",
+    "no_documents": "No specific document requirements",
+
+    "form_status": "Form Status",
+    "logo_uploaded": "Uploaded",
+    "logo_required": "Required",
+    "banner_uploaded": "Uploaded",
+    "banner_optional": "Optional",
+    "required_mark": "Required fields are marked with *",
+
+    "error_store_name": "Store name is required",
+    "error_business_type": "Please select a business type",
+    "error_email": "Contact email is required",
+    "error_phone": "Contact phone is required",
+    "error_save": "Failed to save store information",
+    "error_load_business": "Failed to load business types"
   }
 }

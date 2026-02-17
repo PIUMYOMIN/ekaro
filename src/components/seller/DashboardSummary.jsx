@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  ArrowUpIcon, 
+import {
+  ArrowUpIcon,
   ArrowDownIcon,
   ShoppingBagIcon,
   CheckCircleIcon,
@@ -38,33 +38,17 @@ ChartJS.register(
 const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState({
-    orders: {
-      total: 0,
-      byStatus: {},
-      recent: []
-    },
-    sales: {
-      totalRevenue: 0,
-      monthlyTrend: [],
-      averageOrderValue: 0
-    },
-    products: {
-      total: 0,
-      active: 0,
-      lowStock: 0
-    },
-    customers: {
-      total: 0,
-      repeatCustomers: 0
-    },
-    deliveries: {
-      total: 0,
-      byStatus: {}
-    }
+    orders: { total: 0, byStatus: {}, recent: [] },
+    sales: { totalRevenue: 0, monthlyTrend: [], averageOrderValue: 0 },
+    products: { total: 0, active: 0, lowStock: 0 },
+    customers: { total: 0, repeatCustomers: 0 },
+    deliveries: { total: 0, byStatus: {} }
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const initialFetchDone = useRef(false);
 
-  // Setup Checklist Component
+  // Setup Checklist Component (unchanged)
   const SetupChecklist = ({ storeData, onSetupClick }) => {
     const checklistItems = [
       {
@@ -133,12 +117,16 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                 </span>
               </div>
               {!item.completed && (
-                <button
-                  onClick={() => onSetupClick && onSetupClick(item.step)}
-                  className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors"
-                >
-                  {item.action}
-                </button>
+                item.id === 5 ? (
+                  <span className="text-xs text-gray-500 italic">Turn on Shipping in the Shipping tab</span>
+                ) : (
+                  <button
+                    onClick={() => onSetupClick && onSetupClick(item.step)}
+                    className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors"
+                  >
+                    {item.action}
+                  </button>
+                )
               )}
             </div>
           ))}
@@ -160,92 +148,93 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     );
   };
 
-  // Fetch comprehensive dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [
-          salesSummaryResponse, 
-          recentOrdersResponse,
-          productsResponse,
-          deliveriesResponse
-        ] = await Promise.all([
-          api.get("/seller/sales-summary"),
-          api.get("/seller/recent-orders?limit=8"),
-          api.get("/seller/products/my-products?stats=true"),
-          api.get("/deliveries?stats=true")
-        ]);
+  // Fetch dashboard data – only once on mount and when refreshData is called
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [salesSummaryResponse, recentOrdersResponse, deliveriesResponse] = await Promise.all([
+        api.get("/seller/sales-summary").catch(err => ({ data: { success: false, data: {} } })),
+        api.get("/seller/recent-orders?limit=8").catch(err => ({ data: { success: false, data: [] } })),
+        api.get("/deliveries?stats=true").catch(err => ({ data: { success: false, data: {} } }))
+      ]);
 
-        // Process sales summary
-        if (salesSummaryResponse.data.success) {
-          const salesData = salesSummaryResponse.data.data;
-          setDashboardData(prev => ({
-            ...prev,
-            orders: {
-              total: salesData.sales?.total_orders || 0,
-              byStatus: salesData.orders_by_status || {},
-              recent: recentOrdersResponse.data.data || []
-            },
-            sales: {
-              totalRevenue: salesData.sales?.total_revenue || 0,
-              monthlyTrend: salesData.recent_trend || [],
-              averageOrderValue: salesData.sales?.average_order_value || 0
-            },
-            products: {
-              total: salesData.products?.total || 0,
-              active: salesData.products?.active || 0,
-              lowStock: salesData.products?.low_stock || 0
-            }
-          }));
-        }
-
-        // Process delivery stats
-        if (deliveriesResponse.data.success) {
-          const deliveryStats = deliveriesResponse.data.data.delivery_stats || {};
-          setDashboardData(prev => ({
-            ...prev,
-            deliveries: {
-              total: deliveryStats.total || 0,
-              byStatus: deliveryStats.by_status || {}
-            }
-          }));
-        }
-
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
+      // Process sales summary
+      if (salesSummaryResponse.data?.success) {
+        const salesData = salesSummaryResponse.data.data || {};
+        setDashboardData(prev => ({
+          ...prev,
+          orders: {
+            total: salesData.sales?.total_orders || 0,
+            byStatus: salesData.orders_by_status || {},
+            recent: recentOrdersResponse.data?.data || []
+          },
+          sales: {
+            totalRevenue: salesData.sales?.total_revenue || 0,
+            monthlyTrend: salesData.recent_trend || [],
+            averageOrderValue: salesData.sales?.average_order_value || 0
+          },
+          products: {
+            total: salesData.products?.total || 0,
+            active: salesData.products?.active || 0,
+            lowStock: salesData.products?.low_stock || 0
+          }
+        }));
       }
-    };
 
-    fetchDashboardData();
-  }, [stats.totalOrders]);
+      // Process delivery stats
+      if (deliveriesResponse.data?.success) {
+        const deliveryStats = deliveriesResponse.data.data?.delivery_stats || {};
+        setDashboardData(prev => ({
+          ...prev,
+          deliveries: {
+            total: deliveryStats.total || 0,
+            byStatus: deliveryStats.by_status || {}
+          }
+        }));
+      }
 
-  // Calculate key metrics
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch (with Strict Mode guard)
+  useEffect(() => {
+    if (!initialFetchDone.current) {
+      initialFetchDone.current = true;
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData]);
+
+  // Allow parent to refresh data (e.g., after an update)
+  useEffect(() => {
+    if (refreshData) {
+      fetchDashboardData();
+    }
+  }, [refreshData, fetchDashboardData]);
+
+  // Calculate metrics (with fallbacks)
   const calculateMetrics = () => {
-    const orders = dashboardData.orders.byStatus;
-    const deliveries = dashboardData.deliveries.byStatus;
+    const orders = dashboardData.orders.byStatus || {};
+    const deliveries = dashboardData.deliveries.byStatus || {};
 
     return {
-      // Order metrics
       successOrders: orders.delivered || 0,
       pendingOrders: orders.pending || 0,
       processingOrders: (orders.confirmed || 0) + (orders.processing || 0),
       cancelledOrders: orders.cancelled || 0,
-
-      // Delivery metrics
       deliveredOrders: deliveries.delivered || 0,
       inTransitOrders: (deliveries.in_transit || 0) + (deliveries.out_for_delivery || 0),
       pendingDelivery: deliveries.pending || deliveries.awaiting_pickup || 0,
-
-      // Financial metrics
       totalRevenue: dashboardData.sales.totalRevenue,
       averageOrderValue: dashboardData.sales.averageOrderValue,
-      conversionRate: dashboardData.orders.total > 0 ? 
-        ((orders.delivered || 0) / dashboardData.orders.total * 100).toFixed(1) : 0,
-
-      // Product metrics
+      conversionRate: dashboardData.orders.total > 0
+        ? ((orders.delivered || 0) / dashboardData.orders.total * 100).toFixed(1)
+        : 0,
       totalProducts: dashboardData.products.total,
       activeProducts: dashboardData.products.active,
       lowStockProducts: dashboardData.products.lowStock || 0
@@ -254,14 +243,14 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
   const metrics = calculateMetrics();
 
-  // Stats cards data
+  // Stats cards (use actual metrics)
   const statsCards = [
     {
       id: 1,
       name: "Total Revenue",
-      value: `${metrics.totalRevenue?.toLocaleString()} MMK`,
+      value: `${metrics.totalRevenue?.toLocaleString() || 0} MMK`,
       icon: CurrencyDollarIcon,
-      change: "+12.5%",
+      change: "+12.5%", // This could be dynamic later
       changeType: "positive",
       description: "Total sales revenue"
     },
@@ -312,7 +301,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     }
   ];
 
-  // Order status distribution for chart
+  // Chart data
   const orderStatusData = {
     labels: ['Delivered', 'Pending', 'Processing', 'Cancelled'],
     datasets: [
@@ -340,16 +329,16 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     ]
   };
 
-  // Sales trend data
   const salesTrendData = {
     labels: dashboardData.sales.monthlyTrend.map(item => {
+      if (!item?.date) return '';
       const date = new Date(item.date);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }),
     datasets: [
       {
         label: 'Daily Revenue (MMK)',
-        data: dashboardData.sales.monthlyTrend.map(item => item.revenue || 0),
+        data: dashboardData.sales.monthlyTrend.map(item => item?.revenue || 0),
         backgroundColor: 'rgba(5, 150, 105, 0.8)',
         borderColor: 'rgb(5, 150, 105)',
         borderWidth: 2,
@@ -357,7 +346,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       },
       {
         label: 'Orders Count',
-        data: dashboardData.sales.monthlyTrend.map(item => item.orders_count || 0),
+        data: dashboardData.sales.monthlyTrend.map(item => item?.orders_count || 0),
         backgroundColor: 'rgba(16, 185, 129, 0.6)',
         borderColor: 'rgb(16, 185, 129)',
         borderWidth: 2,
@@ -369,40 +358,40 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Sales Performance'
-      }
+      legend: { position: 'top' },
+      title: { display: true, text: 'Sales Performance' }
     },
-    scales: {
-      y: {
-        beginAtZero: true
-      }
-    }
+    scales: { y: { beginAtZero: true } }
   };
 
   const doughnutOptions = {
     responsive: true,
     plugins: {
-      legend: {
-        position: 'bottom',
-      },
-      title: {
-        display: true,
-        text: 'Order Status Distribution'
-      }
+      legend: { position: 'bottom' },
+      title: { display: true, text: 'Order Status Distribution' }
     }
   };
 
-  if (loading) {
+  if (loading && !dashboardData.orders.total) {
     return (
       <div className="space-y-6">
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <p className="text-red-700 mb-4">{error}</p>
+        <button
+          onClick={fetchDashboardData}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -420,7 +409,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
           </p>
         </div>
         <button
-          onClick={refreshData}
+          onClick={fetchDashboardData}
           className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
         >
           <span>Refresh Data</span>
@@ -432,36 +421,34 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* Store Status Banner */}
       {storeData && (
-        <div className={`p-4 rounded-lg ${
-          storeData.status === "approved" 
-            ? "bg-green-50 border border-green-200" 
+        <div className={`p-4 rounded-lg ${storeData.status === "approved"
+            ? "bg-green-50 border border-green-200"
             : storeData.status === "pending"
-            ? "bg-yellow-50 border border-yellow-200"
-            : "bg-blue-50 border border-blue-200"
-        }`}>
+              ? "bg-yellow-50 border border-yellow-200"
+              : "bg-blue-50 border border-blue-200"
+          }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-3 ${
-                storeData.status === "approved" 
-                  ? "bg-green-500" 
+              <div className={`w-3 h-3 rounded-full mr-3 ${storeData.status === "approved"
+                  ? "bg-green-500"
                   : storeData.status === "pending"
-                  ? "bg-yellow-500 animate-pulse"
-                  : "bg-blue-500"
-              }`}></div>
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-blue-500"
+                }`}></div>
               <div>
                 <h3 className="font-semibold">
-                  {storeData.status === "approved" 
-                    ? "Store Active" 
+                  {storeData.status === "approved"
+                    ? "Store Active"
                     : storeData.status === "pending"
-                    ? "Pending Approval"
-                    : "Setup Required"}
+                      ? "Pending Approval"
+                      : "Setup Required"}
                 </h3>
                 <p className="text-sm opacity-75">
-                  {storeData.status === "approved" 
-                    ? "Your store is live and accepting orders" 
+                  {storeData.status === "approved"
+                    ? "Your store is live and accepting orders"
                     : storeData.status === "pending"
-                    ? "Your store is under review by our team"
-                    : "Please complete your store setup"}
+                      ? "Your store is under review by our team"
+                      : "Please complete your store setup"}
                 </p>
               </div>
             </div>
@@ -481,11 +468,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <div className={`p-3 rounded-lg ${
-                      stat.changeType === "positive" 
+                    <div className={`p-3 rounded-lg ${stat.changeType === "positive"
                         ? "bg-green-100 text-green-600"
                         : "bg-red-100 text-red-600"
-                    }`}>
+                      }`}>
                       <IconComponent className="h-6 w-6" />
                     </div>
                   </div>
@@ -498,11 +484,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                         {stat.value}
                       </p>
                       <div
-                        className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.changeType === "positive"
+                        className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === "positive"
                             ? "text-green-600"
                             : "text-red-600"
-                        }`}
+                          }`}
                       >
                         {stat.changeType === "positive" ? (
                           <ArrowUpIcon className="h-4 w-4 text-green-500" />
@@ -533,7 +518,13 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Sales Trend (Last 7 Days)
           </h3>
-          <Bar data={salesTrendData} options={chartOptions} height={300} />
+          {dashboardData.sales.monthlyTrend.length > 0 ? (
+            <Bar data={salesTrendData} options={chartOptions} height={300} />
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-400">
+              No sales data available
+            </div>
+          )}
         </div>
 
         {/* Order Distribution Chart */}
@@ -542,7 +533,11 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
             Order Status Distribution
           </h3>
           <div className="h-64 flex items-center justify-center">
-            <Doughnut data={orderStatusData} options={doughnutOptions} />
+            {dashboardData.orders.total > 0 ? (
+              <Doughnut data={orderStatusData} options={doughnutOptions} />
+            ) : (
+              <p className="text-gray-400">No orders yet</p>
+            )}
           </div>
         </div>
       </div>
@@ -559,11 +554,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               dashboardData.orders.recent.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
                   <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      order.status === 'delivered' ? 'bg-green-500' :
-                      order.status === 'pending' ? 'bg-yellow-500' :
-                      order.status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'
-                    }`}></div>
+                    <div className={`w-3 h-3 rounded-full ${order.status === 'delivered' ? 'bg-green-500' :
+                        order.status === 'pending' ? 'bg-yellow-500' :
+                          order.status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'
+                      }`}></div>
                     <div>
                       <p className="font-medium text-gray-900">
                         #{order.order_number}
@@ -619,7 +613,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Delivery Success Rate</span>
               <span className="font-semibold text-green-600">
-                {metrics.deliveredOrders > 0 ? 
+                {metrics.deliveredOrders > 0 ?
                   Math.round((metrics.deliveredOrders / dashboardData.deliveries.total) * 100) : 0
                 }%
               </span>

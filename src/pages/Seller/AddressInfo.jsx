@@ -34,9 +34,7 @@ const AddressInfo = () => {
     });
 
     const countries = [
-        'Myanmar', 'Thailand', 'China', 'India', 'Bangladesh',
-        'Laos', 'Cambodia', 'Vietnam', 'Singapore', 'Malaysia',
-        'Indonesia', 'Philippines', 'Japan', 'South Korea'
+        'Myanmar'
     ];
 
     const myanmarStates = [

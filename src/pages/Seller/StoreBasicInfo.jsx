@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import {
     BuildingStorefrontIcon,
     PhotoIcon,
@@ -18,6 +19,7 @@ import { useOnboardingState } from '../../hooks/useOnboardingState';
 import api from '../../utils/api';
 
 const StoreBasicInfo = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { formData, saveStep, isLoading, businessTypeInfo } = useOnboardingState();
     const [businessTypes, setBusinessTypes] = useState([]);
@@ -179,22 +181,22 @@ const StoreBasicInfo = () => {
         
         // Validate required fields
         if (!data.store_name?.trim()) {
-            setError('Store name is required');
+            setError(t('Store name is required'));
             return;
         }
 
         if (!data.business_type_slug) {
-            setError('Please select a business type');
+            setError(t('Please select a business type'));
             return;
         }
 
         if (!data.contact_email?.trim()) {
-            setError('Contact email is required');
+            setError(t('Contact email is required'));
             return;
         }
 
         if (!data.contact_phone?.trim()) {
-            setError('Contact phone is required');
+            setError(t('Contact phone is required'));
             return;
         }
 
@@ -242,11 +244,11 @@ const StoreBasicInfo = () => {
 
     return (
         <OnboardingLayout
-            title="Store Basic Information"
-            description="Let's start by setting up your store's basic information"
+            title={t("Store Basic Information")}
+            description={t("Let's start by setting up your store's basic information")}
             onBack={() => navigate('/seller')}
             onNext={handleContinue}
-            nextLabel="Continue to Business Details"
+            nextLabel={t("Continue to Business Details")}
             nextDisabled={isLoading || uploadingLogo || uploadingBanner}
             loading={isLoading}
         >
@@ -329,7 +331,7 @@ const StoreBasicInfo = () => {
                         {/* Banner Upload */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Store Banner (Optional)
+                                {t("Store Banner")} {t("(Optional)")}
                             </label>
                             <div className="space-y-3">
                                 <div className="relative">
@@ -397,7 +399,7 @@ const StoreBasicInfo = () => {
                     {/* Store Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
-                            Store Name *
+                            {t("Store Name")} *
                         </label>
                         <input
                             type="text"
@@ -418,14 +420,14 @@ const StoreBasicInfo = () => {
                             <p className="mt-1 text-sm text-red-600">{errors.store_name.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500">
-                            This will appear as your store's public name
+                            {t("This will appear as your store's public name")}
                         </p>
                     </div>
 
                     {/* Business Type */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
-                            Business Type *
+                            {t("Business Type *")}
                         </label>
                         <div className="mt-1 relative">
                             <select

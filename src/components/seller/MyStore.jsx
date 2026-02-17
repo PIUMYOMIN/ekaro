@@ -9,51 +9,28 @@ import {
   EnvelopeIcon,
   StarIcon,
   CalendarIcon,
-  UsersIcon,
   ShoppingBagIcon,
   CurrencyDollarIcon,
   ClockIcon
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import { IMAGE_BASE_URL } from "../../config";
 
 const MyStore = ({ storeData, stats, refreshData }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Helper function to get full image URL
+  // Helper function to get full image URL using IMAGE_BASE_URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
 
-    // Try to get REACT_APP_API_URL from window._env_ (for frontend env injection)
-    let baseUrl = "https://db.pyonea.com";
-    if (typeof window !== 'undefined') {
-      if (window._env_ && window._env_.REACT_APP_API_URL) {
-        baseUrl = window._env_.REACT_APP_API_URL;
-      } else if (window.REACT_APP_API_URL) {
-        baseUrl = window.REACT_APP_API_URL;
-      }
-    }
-
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-
-    // Handle different path formats
-    if (imagePath.includes('storage/')) {
-      return `${baseUrl}/${imagePath}`;
-    }
-
-    if (imagePath.includes('stores/') || imagePath.includes('store_profile/') || imagePath.includes('products/')) {
-      return `${baseUrl}/storage/${imagePath}`;
-    }
-
-    // Default case - assume it's a storage path
-    return `${baseUrl}/storage/${imagePath}`;
+    // Remove any 'public/' prefix if present
+    const cleanPath = imagePath.replace(/^public\//, '');
+    // Ensure no double slashes
+    return `${IMAGE_BASE_URL}/${cleanPath}`.replace(/([^:]\/)\/+/g, '$1');
   };
 
-  // Get full URLs for display
-  const displayLogoUrl = getImageUrl(storeData?.store_logo);
-  const displayBannerUrl = getImageUrl(storeData?.store_banner);
 
   if (!storeData) {
     return (
@@ -66,7 +43,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     );
   }
 
-  // Calculate rating statistics
+  const displayLogoUrl = getImageUrl(storeData?.store_logo);
+  const displayBannerUrl = getImageUrl(storeData?.store_banner);
   const rating = storeData.reviews_avg_rating || 0;
   const totalReviews = storeData.reviews_count || 0;
   const memberSince = new Date(storeData.created_at).toLocaleDateString('en-US', {
@@ -79,12 +57,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       {/* Header with Edit Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {t("seller.my_store")}
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {t("seller.my_store_summary")}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900">{t("seller.my_store")}</h2>
+          <p className="mt-1 text-sm text-gray-500">{t("seller.my_store_summary")}</p>
         </div>
         <button
           onClick={() => navigate('/seller/dashboard?tab=my-store&edit=true')}
@@ -95,50 +69,40 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         </button>
       </div>
 
-      {/* Store Header with Stats */}
+      {/* Store Header with Banner */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        {/* Store Banner */}
         {displayBannerUrl && (
           <div className="h-48 bg-gradient-to-r from-green-500 to-emerald-600 relative">
             <img
               src={displayBannerUrl}
               alt="Store banner"
               className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
+              onError={(e) => (e.target.style.display = 'none')}
             />
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
           </div>
         )}
 
         {/* Store Info Section */}
-        <div className={`p-6 ${!displayBannerUrl ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : ''}`}>
+         <div className={`p-6 ${!displayBannerUrl ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : ''}`}>
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* Store Logo */}
-            {displayLogoUrl ? (
-              <img
-                src={displayLogoUrl}
-                alt={storeData.store_name}
-                className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  // Show fallback icon
-                  const fallback = e.target.parentNode.querySelector('.logo-fallback');
-                  if (fallback) fallback.style.display = 'flex';
-                }}
-              />
-            ) : (
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback">
+            {/* Logo */}
+            <div className="relative">
+              {displayLogoUrl ? (
+                <img
+                  src={displayLogoUrl}
+                  alt={storeData.store_name}
+                  className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = e.target.parentNode?.querySelector('.logo-fallback');
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback hidden">
                 <BuildingStorefrontIcon className="h-10 w-10 text-white" />
               </div>
-            )}
-
-            {/* Fallback if image fails to load */}
-            <div
-              className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback hidden"
-            >
-              <BuildingStorefrontIcon className="h-10 w-10 text-white" />
             </div>
 
             <div className="flex-1">
@@ -147,18 +111,20 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                 {storeData.description || storeData.store_description || "No description provided"}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${storeData.status === 'approved' || storeData.status === 'active'
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  storeData.status === 'approved' || storeData.status === 'active'
                     ? 'bg-green-400 text-white'
                     : storeData.status === 'pending'
-                      ? 'bg-yellow-400 text-white'
-                      : 'bg-blue-400 text-white'
-                  }`}>
+                    ? 'bg-yellow-400 text-white'
+                    : 'bg-blue-400 text-white'
+                }`}>
                   {storeData.status?.charAt(0).toUpperCase() + storeData.status?.slice(1)}
                 </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${storeData.verification_status === 'verified'
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  storeData.verification_status === 'verified'
                     ? 'bg-blue-400 text-white'
                     : 'bg-gray-400 text-white'
-                  }`}>
+                }`}>
                   {storeData.verification_status?.charAt(0).toUpperCase() + storeData.verification_status?.slice(1)}
                 </span>
                 <span className={`text-sm ${displayBannerUrl ? 'text-gray-600' : 'text-green-100'}`}>
