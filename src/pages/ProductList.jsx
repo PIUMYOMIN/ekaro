@@ -403,7 +403,7 @@ const ProductList = () => {
               <>
                 {products.map(product => (
                   <ProductCard
-                    key={`${product.id}-${product.updated_at || ''}`}
+                    key={`${product.id} || ''}`}
                     product={product}
                     onClick={() => navigate(`/products/${product.id}`)}
                   />

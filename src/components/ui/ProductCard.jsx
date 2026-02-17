@@ -1,3 +1,4 @@
+// ProductCard.jsx (updated responsive version)
 import React, { useState, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { StarIcon, TagIcon } from "@heroicons/react/24/outline";
@@ -6,9 +7,9 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
-import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config"; // <-- import config
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
-// Helper function to format MMK currency
+// Helper functions (same as before)
 export const formatMMK = amount => {
   const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
   return new Intl.NumberFormat("my-MM", {
@@ -18,74 +19,46 @@ export const formatMMK = amount => {
   }).format(numAmount);
 };
 
-// Memoized helper function to build image URL
 const getImageUrl = (image) => {
   if (!image) return DEFAULT_PLACEHOLDER;
-  
-  // Handle different image formats
   if (typeof image === 'string') {
-    if (image.startsWith('http')) {
-      return image; // already a full URL
-    }
-    // It's a storage path, convert to URL using IMAGE_BASE_URL
+    if (image.startsWith('http')) return image;
     const cleanPath = image.replace('public/', '');
     return `${IMAGE_BASE_URL}/${cleanPath}`;
   }
-  
   if (typeof image === 'object') {
-    // Try url first
     if (image.url) {
-      if (image.url.startsWith('http')) {
-        return image.url;
-      }
+      if (image.url.startsWith('http')) return image.url;
       const cleanPath = image.url.replace('public/', '');
       return `${IMAGE_BASE_URL}/${cleanPath}`;
     }
-    
-    // Try path if no url
     if (image.path) {
       const cleanPath = image.path.replace('public/', '');
       return `${IMAGE_BASE_URL}/${cleanPath}`;
     }
   }
-  
   return DEFAULT_PLACEHOLDER;
 };
 
-// Helper function to get category name
 const getCategoryName = (product) => {
   if (!product) return '';
-  
   if (product.category) {
     if (typeof product.category === 'object') {
       return product.category.name_en || product.category.name || '';
     }
     return product.category;
   }
-  
-  if (product.category_name) {
-    return product.category_name;
-  }
-  
-  if (product.category_en) {
-    return product.category_en;
-  }
-  
+  if (product.category_name) return product.category_name;
+  if (product.category_en) return product.category_en;
   return '';
 };
 
-// Helper function to get category link
 const getCategoryLink = (product) => {
   if (!product) return '#';
-  
-  if (product.category_id) {
-    return `/products?category=${product.category_id}`;
-  }
-  
+  if (product.category_id) return `/products?category=${product.category_id}`;
   if (product.category && typeof product.category === 'object' && product.category.id) {
     return `/products?category=${product.category.id}`;
   }
-  
   return '/products';
 };
 
@@ -97,25 +70,12 @@ const ProductCard = memo(({ product, onClick }) => {
   const [imageError, setImageError] = useState(false);
   const navigate = useNavigate();
 
-  // Memoized helper function to safely get and format average rating
   const getAverageRating = useCallback(() => {
-    if (!product) {
-      return {
-        value: 0,
-        formatted: "0.0",
-        stars: 0
-      };
-    }
-    
+    if (!product) return { value: 0, formatted: "0.0", stars: 0 };
     const rating = product.average_rating;
     if (rating === null || rating === undefined || rating === 0) {
-      return {
-        value: 0,
-        formatted: "0.0",
-        stars: 0
-      };
+      return { value: 0, formatted: "0.0", stars: 0 };
     }
-    
     const numRating = typeof rating === 'number' ? rating : parseFloat(rating);
     return {
       value: isNaN(numRating) ? 0 : numRating,
@@ -126,12 +86,9 @@ const ProductCard = memo(({ product, onClick }) => {
 
   const ratingInfo = getAverageRating();
 
-  // Get the primary or first image for display
   const getProductImage = useCallback(() => {
     if (!product || !product.images) return DEFAULT_PLACEHOLDER;
-    
     let images = product.images;
-    
     if (typeof images === 'string') {
       try {
         images = JSON.parse(images);
@@ -139,23 +96,12 @@ const ProductCard = memo(({ product, onClick }) => {
         return getImageUrl(images);
       }
     }
-    
     if (Array.isArray(images)) {
-      if (images.length === 0) {
-        return DEFAULT_PLACEHOLDER;
-      }
-      
-      const primaryImage = images.find(img => {
-        if (typeof img === 'object') {
-          return img.is_primary;
-        }
-        return false;
-      });
-      
+      if (images.length === 0) return DEFAULT_PLACEHOLDER;
+      const primaryImage = images.find(img => img.is_primary);
       const imageToUse = primaryImage || images[0];
       return getImageUrl(imageToUse);
     }
-    
     return DEFAULT_PLACEHOLDER;
   }, [product]);
 
@@ -174,53 +120,29 @@ const ProductCard = memo(({ product, onClick }) => {
   const handleAddToCart = useCallback(async (e) => {
     e?.preventDefault();
     e?.stopPropagation();
-    
     if (!user) {
       navigate('/login', { 
-        state: { 
-          from: 'cart-add',
-          productId: product.id,
-          returnTo: window.location.pathname 
-        } 
+        state: { from: 'cart-add', productId: product.id, returnTo: window.location.pathname } 
       });
       return;
     }
-
     if (!isActive) {
-      setMessage({
-        type: 'error',
-        message: 'This product is currently unavailable'
-      });
+      setMessage({ type: 'error', message: 'This product is currently unavailable' });
       setTimeout(() => setMessage(null), 3000);
       return;
     }
-
     if (!inStock) {
-      setMessage({
-        type: 'error',
-        message: 'This product is out of stock'
-      });
+      setMessage({ type: 'error', message: 'This product is out of stock' });
       setTimeout(() => setMessage(null), 3000);
       return;
     }
-
     setAddingToCart(true);
     try {
-      const result = await addToCart({
-        id: product.id,
-        quantity: 1
-      });
-
-      setMessage({
-        type: 'success',
-        message: result.message || 'Product added to cart!'
-      });
+      const result = await addToCart({ id: product.id, quantity: 1 });
+      setMessage({ type: 'success', message: result.message || 'Product added to cart!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (error) {
-      setMessage({
-        type: 'error',
-        message: error.message || 'Failed to add product to cart'
-      });
+      setMessage({ type: 'error', message: error.message || 'Failed to add product to cart' });
       setTimeout(() => setMessage(null), 3000);
     } finally {
       setAddingToCart(false);
@@ -247,12 +169,7 @@ const ProductCard = memo(({ product, onClick }) => {
             : 'bg-red-100 border border-red-400 text-red-700'
         }`}>
           <span>{message.message}</span>
-          <button
-            onClick={() => setMessage(null)}
-            className="ml-4 text-xl font-bold hover:opacity-70"
-          >
-            ×
-          </button>
+          <button onClick={() => setMessage(null)} className="ml-4 text-xl font-bold hover:opacity-70">×</button>
         </div>
       )}
 
@@ -263,9 +180,10 @@ const ProductCard = memo(({ product, onClick }) => {
         animate={{ opacity: 1 }}
         onClick={onClick}
       >
+        {/* Image section – responsive height */}
         <div className="relative flex-shrink-0">
           <Link to={`/products/${product.id}`} className="block" onClick={(e) => e.stopPropagation()}>
-            <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+            <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 overflow-hidden">
               <LazyLoadImage
                 src={imageError ? DEFAULT_PLACEHOLDER : productImage}
                 alt={productName}
@@ -279,11 +197,12 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           </Link>
           
+          {/* Category tag – hidden on mobile, visible sm and up */}
           {categoryName && (
             <Link 
               to={categoryLink} 
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-2 left-2 inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-white hover:shadow-sm transition-all"
+              className="absolute top-2 left-2 hidden sm:inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-medium px-2 py-1.5 rounded-lg hover:bg-white hover:shadow-sm transition-all"
             >
               <TagIcon className="h-3 w-3" />
               <span className="truncate max-w-[80px]">{categoryName}</span>
@@ -308,8 +227,9 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           )}
           
+          {/* Seller info – hidden on mobile and sm, visible md and up */}
           {sellerName && (
-            <div className="absolute bottom-2 left-2">
+            <div className="absolute bottom-2 left-2 hidden md:block">
               <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1.5 rounded-lg">
                 <div className="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-700">
@@ -322,103 +242,73 @@ const ProductCard = memo(({ product, onClick }) => {
           )}
         </div>
         
-        <div className="p-4 flex flex-col flex-grow">
+        {/* Content section – responsive padding and text sizes */}
+        <div className="p-2 sm:p-3 md:p-4 flex flex-col flex-grow">
           <div className="flex-grow">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
+            <div className="sm:flex justify-between items-start gap-1">
+              <div className="flex-1 min-w-0">
                 <Link to={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 min-h-[56px]">
+                  <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 leading-tight">
                     {productName}
                   </h3>
                 </Link>
                 
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center">
-                    <div className="flex">
-                      {[0, 1, 2, 3, 4].map(rating => (
-                        <StarIcon
-                          key={rating}
-                          className={`h-4 w-4 ${rating < ratingInfo.stars
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-gray-500">
-                      {ratingInfo.formatted}
-                    </span>
-                    {product.reviews_count > 0 && (
-                      <span className="ml-1 text-sm text-gray-500">
-                        ({product.reviews_count || 0})
-                      </span>
-                    )}
+                {/* Rating – hide on mobile, show sm and up */}
+                <div className="hidden sm:flex items-center mt-1">
+                  <div className="flex">
+                    {[0, 1, 2, 3, 4].map(rating => (
+                      <StarIcon
+                        key={rating}
+                        className={`h-3 w-3 sm:h-4 sm:w-4 ${rating < ratingInfo.stars ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                      />
+                    ))}
                   </div>
-                  
-                  {categoryName && (
-                    <Link 
-                      to={categoryLink}
-                      onClick={(e) => e.stopPropagation()}
-                      className="md:hidden text-xs text-green-600 hover:text-green-800 font-medium"
-                    >
-                      {categoryName}
-                    </Link>
+                  <span className="ml-1 text-xs sm:text-sm text-gray-500">
+                    {ratingInfo.formatted}
+                  </span>
+                  {product.reviews_count > 0 && (
+                    <span className="ml-1 text-xs sm:text-sm text-gray-500">
+                      ({product.reviews_count})
+                    </span>
                   )}
                 </div>
-                
-                {product.description_en && (
-                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-                    {product.description_en}
+              </div>
+              
+              {/* Price – always visible, but smaller on mobile */}
+              <div className="sm:text-right flex-shrink-0">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-green-700 whitespace-nowrap">
+                  {formatMMK(productPrice)}
+                </p>
+                {product.discount_price && product.discount_price < productPrice && (
+                  <p className="text-xs text-gray-400 line-through">
+                    {formatMMK(product.discount_price)}
                   </p>
                 )}
               </div>
-              
-              <div className="text-right ml-2 flex-shrink-0">
-                <div className="flex flex-col items-end">
-                  <p className="text-lg font-bold text-green-700">
-                    {formatMMK(productPrice)}
-                  </p>
-                  {product.discount_price && product.discount_price < productPrice && (
-                    <p className="text-sm text-gray-400 line-through">
-                      {formatMMK(product.discount_price)}
-                    </p>
-                  )}
-                  {productMOQ > 1 && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      MOQ: {productMOQ} {productUnit}
-                    </p>
-                  )}
-                </div>
-              </div>
             </div>
+
+            {/* MOQ – hide on mobile, show sm and up */}
+            {productMOQ > 1 && (
+              <p className="hidden sm:block text-xs text-gray-500 mt-1">
+                MOQ: {productMOQ} {productUnit}
+              </p>
+            )}
+
+            {/* Short description – hide on mobile and sm, show md and up */}
+            {product.description_en && (
+              <p className="hidden md:block mt-2 text-sm text-gray-600 line-clamp-2">
+                {product.description_en}
+              </p>
+            )}
           </div>
           
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              {categoryName && (
-                <Link 
-                  to={categoryLink}
-                  onClick={(e) => e.stopPropagation()}
-                  className="hidden md:flex items-center gap-1 text-xs text-gray-600 hover:text-green-700 font-medium"
-                >
-                  <TagIcon className="h-3 w-3" />
-                  <span className="truncate max-w-[120px]">{categoryName}</span>
-                </Link>
-              )}
-              
-              <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                !isActive ? 'bg-yellow-100 text-yellow-800' :
-                !inStock ? 'bg-red-100 text-red-800' :
-                'bg-green-100 text-green-800'
-              }`}>
-                {!isActive ? 'Unavailable' : !inStock ? 'Out of Stock' : 'In Stock'}
-              </div>
-            </div>
-            
+          {/* Add to cart section – always visible, smaller on mobile */}
+          <div className="sm:mt-2 sm:pt-2 border-t border-gray-100">
             <button
               type="button"
               onClick={handleAddToCart}
               disabled={addingToCart || !isActive || !inStock}
-              className={`w-full rounded-md py-2.5 px-4 flex items-center justify-center text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
+              className={`w-full rounded-md py-1.5 sm:py-2 px-2 sm:px-3 text-xs sm:text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
                 !isActive || !inStock
                   ? 'bg-gray-400 hover:bg-gray-500'
                   : 'bg-green-600 hover:bg-green-700 hover:shadow-md'
@@ -426,8 +316,8 @@ const ProductCard = memo(({ product, onClick }) => {
             >
               {addingToCart ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
+                  <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white mr-1 inline-block"></div>
+                  <span className="inline">Adding...</span>
                 </>
               ) : !isActive ? (
                 'Unavailable'

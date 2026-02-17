@@ -12,17 +12,15 @@ import CategoryCard from "../components/ui/CategoryCard";
 
 // Skeleton components for better loading states
 const ProductCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
-    <div className="w-full h-48 bg-gray-300"></div>
-    <div className="p-4 flex flex-col flex-grow">
+  <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col h-full animate-pulse">
+    <div className="w-full aspect-square bg-gray-300"></div>
+    <div className="p-2 sm:p-3 flex flex-col flex-grow">
       <div className="flex-grow space-y-2">
-        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        <div className="h-3 sm:h-4 bg-gray-300 rounded w-3/4"></div>
         <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-        <div className="h-3 bg-gray-300 rounded w-full"></div>
-        <div className="h-3 bg-gray-300 rounded w-2/3"></div>
       </div>
-      <div className="pt-4">
-        <div className="h-8 bg-gray-300 rounded"></div>
+      <div className="mt-2 pt-2 border-t border-gray-100">
+        <div className="h-6 sm:h-8 bg-gray-300 rounded"></div>
       </div>
     </div>
   </div>
@@ -55,6 +53,7 @@ const SellerCardSkeleton = () => (
     </div>
   </div>
 );
+
 
 const Home = () => {
   const { t } = useTranslation();
@@ -316,9 +315,11 @@ const Home = () => {
             {t("home.view_all")} →
           </Link>
         </div>
-        <div className="mt-6 sm:mt-6 grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+
+        {/* Responsive grid: 3 columns on mobile, 2 on tablet, 4 on large screens */}
+        <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {loading.products ? (
-            [...Array(4)].map((_, i) => (
+            [...Array(8)].map((_, i) => ( // Show 8 skeletons (or use products.length if known)
               <ProductCardSkeleton key={i} />
             ))
           ) : products.length > 0 ? (
@@ -337,6 +338,7 @@ const Home = () => {
       </div>
     </section>
   ), [loading.products, products, t]);
+
 
   const renderSellersSection = useMemo(() => (
     <section className="py-10 sm:py-12 bg-white">
