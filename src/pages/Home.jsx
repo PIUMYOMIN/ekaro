@@ -1,4 +1,4 @@
-
+// Home.jsx (fixed)
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -53,7 +53,6 @@ const SellerCardSkeleton = () => (
     </div>
   </div>
 );
-
 
 const Home = () => {
   const { t } = useTranslation();
@@ -133,7 +132,7 @@ const Home = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/products?featured=true&per_page=8&fields=id,name_en,name_mm,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale"); // Specify fields to reduce payload
+      const res = await api.get("/products?featured=true&per_page=8&fields=id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
       setProducts(res.data.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch featured products:", err);
@@ -300,43 +299,41 @@ const Home = () => {
   ), [loading.categories, categories, t]);
 
   const renderProductsSection = useMemo(() => (
-  <section className="py-10 sm:py-12 bg-gray-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            {t("home.featured_products")}
-          </h2>
-        </div>
-        <Link
-          to="/products"
-          className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
-        >
-          {t("home.view_all")} →
-        </Link>
-      </div>
-
-      <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {loading.products ? (
-          [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
-        ) : products.length > 0 ? (
-          products.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onClick={() => navigate(`/products/${product.slug_en}`)}
-            />
-          ))
-        ) : (
-          <div className="col-span-full text-center py-10 sm:py-12">
-            <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
+    <section className="py-10 sm:py-12 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {t("home.featured_products")}
+            </h2>
           </div>
-        )}
-      </div>
-    </div>
-  </section>
-), [loading.products, products, t, navigate]);
+          <Link
+            to="/products"
+            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+          >
+            {t("home.view_all")} →
+          </Link>
+        </div>
 
+        <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {loading.products ? (
+            [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
+          ) : products.length > 0 ? (
+            products.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10 sm:py-12">
+              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  ), [loading.products, products, t]);
 
   const renderSellersSection = useMemo(() => (
     <section className="py-10 sm:py-12 bg-white">

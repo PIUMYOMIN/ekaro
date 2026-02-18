@@ -2,7 +2,6 @@
 import React, { useState, useCallback, memo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { StarIcon, TagIcon, HeartIcon } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
@@ -119,7 +118,7 @@ const ProductCard = memo(({ product, onClick }) => {
   const categoryName = getCategoryName(product);
   const categoryLink = getCategoryLink(product);
   const sellerName = product?.seller?.store_name || product?.seller?.name || product?.seller_name || 'Seller';
-  const productSlug = product?.slug_en;
+  const slug = product?.slug_en || product?.slug || product?.id || '';
 
   // Check wishlist status when user is a buyer
   useEffect(() => {
@@ -235,7 +234,7 @@ const ProductCard = memo(({ product, onClick }) => {
       >
         {/* Image section */}
         <div className="relative flex-shrink-0">
-          <Link to={`/products/${productSlug}`} className="block" onClick={(e) => e.stopPropagation()}>
+          <Link to={`/products/${slug}`} className="block" onClick={(e) => e.stopPropagation()}>
             <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 overflow-hidden">
               <LazyLoadImage
                 src={imageError ? DEFAULT_PLACEHOLDER : productImage}
@@ -304,7 +303,7 @@ const ProductCard = memo(({ product, onClick }) => {
           <div className="flex-grow">
             <div className="sm:flex justify-between items-start gap-1">
               <div className="flex-1 min-w-0">
-                <Link to={`/products/${productSlug}`} onClick={(e) => e.stopPropagation()}>
+                <Link to={`/products/${slug}`} onClick={(e) => e.stopPropagation()}>
                   <h3 className="text-sm sm:text-base md:text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 leading-tight">
                     {productName}
                   </h3>

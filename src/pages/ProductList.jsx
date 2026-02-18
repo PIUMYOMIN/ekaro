@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
@@ -26,6 +26,7 @@ const ProductCardSkeleton = () => (
 
 const ProductList = () => {
   const { t } = useTranslation();
+  const { slug_en } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -108,11 +109,12 @@ const ProductList = () => {
         params.append("sort_order", filters.sortOrder);
         params.append(
           "fields",
-          "id,name_en,name_mm,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale"
+          "id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale"
         );
 
         const response = await api.get("/products", { params });
         const productsData = response.data.data || response.data || [];
+        console.log("Fetched products:", productsData);
 
         if (reset) {
           setProducts(Array.isArray(productsData) ? productsData : []);
@@ -160,7 +162,7 @@ const ProductList = () => {
     const handleScroll = () => {
       if (
         window.innerHeight + document.documentElement.scrollTop >=
-          document.documentElement.offsetHeight - 500 &&
+        document.documentElement.offsetHeight - 500 &&
         !loading &&
         hasMore &&
         !isFetching.current
@@ -355,8 +357,8 @@ const ProductList = () => {
                 {filters.minPrice && filters.maxPrice
                   ? `${t("products.price_range")}: ${filters.minPrice} - ${filters.maxPrice} MMK`
                   : filters.minPrice
-                  ? `${t("products.from")} ${filters.minPrice} MMK`
-                  : `${t("products.under")} ${filters.maxPrice} MMK`}
+                    ? `${t("products.from")} ${filters.minPrice} MMK`
+                    : `${t("products.under")} ${filters.maxPrice} MMK`}
                 <button
                   onClick={() => {
                     const params = new URLSearchParams(location.search);
@@ -437,14 +439,13 @@ const ProductList = () => {
             {loading && products.length === 0
               ? [...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)
               : products.length > 0
-              ? products.map((product) => (
+                ? products.map((product) => (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onClick={() => navigate(`/products/${slug_en}`)}
                   />
                 ))
-              : !loading && (
+                : !loading && (
                   <div className="col-span-full text-center py-12">
                     <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
                     <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>

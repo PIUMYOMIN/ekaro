@@ -11,6 +11,29 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../config"; // if you have this helper
+
+// Optional helper – can also import from ProductCard if you prefer
+const getImageUrl = (image) => {
+  if (!image) return DEFAULT_PLACEHOLDER;
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    const cleanPath = image.replace('public/', '');
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
+  }
+  if (typeof image === 'object') {
+    if (image.url) {
+      if (image.url.startsWith('http')) return image.url;
+      const cleanPath = image.url.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
+    }
+    if (image.path) {
+      const cleanPath = image.path.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
+    }
+  }
+  return DEFAULT_PLACEHOLDER;
+};
 
 const ProductDetail = () => {
   const { t } = useTranslation();
@@ -39,12 +62,11 @@ const ProductDetail = () => {
       setError(null);
 
       try {
-        // Fetch product details from public endpoint
         const productResponse = await api.get(`/products/${slug}`);
         console.log("Product API Response:", productResponse);
         const productData = productResponse.data.data.product;
 
-        // Parse images if they're stored as JSON string or use the provided array
+        // Parse images
         let formattedImages = [];
         if (productData.images) {
           if (Array.isArray(productData.images)) {
@@ -61,7 +83,7 @@ const ProductDetail = () => {
           }
         }
 
-        // Parse specifications if they're stored as JSON string
+        // Parse specifications
         let formattedSpecifications = {};
         if (productData.specifications) {
           if (typeof productData.specifications === "string") {
@@ -80,14 +102,13 @@ const ProductDetail = () => {
           ...productData,
           images: formattedImages,
           specifications: formattedSpecifications,
-          average_rating: productData.average_rating || 0,
-          review_count: productResponse.data.data.reviews?.length || 0
+          // Use the review_count from product data, not from reviews length
+          review_count: productData.review_count || 0,
         });
 
-        // Set reviews from the API response
         setReviews(productResponse.data.data.reviews || []);
 
-        // Check if product is in wishlist (only if user is a buyer)
+        // Wishlist check (only for buyers)
         if (user && user.role === "buyer") {
           try {
             const wishlistResponse = await api.get("/wishlist");
@@ -96,7 +117,6 @@ const ProductDetail = () => {
               wishlist.some((item) => item.id === productData.id)
             );
           } catch (wishlistError) {
-            // Only log error if it's not a 403 (Forbidden) for non-buyers
             if (wishlistError.response?.status !== 403) {
               console.warn("Could not fetch wishlist:", wishlistError);
             }
@@ -112,6 +132,8 @@ const ProductDetail = () => {
 
     fetchProductData();
   }, [slug, user]);
+
+  // ... (keep all handlers unchanged: handleAddToCart, handleBuyNow, handleAddToWishlist, handleReviewAction, handleSubmitReview, closeSuccessMessage)
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -189,7 +211,6 @@ const ProductDetail = () => {
       return;
     }
 
-    // Check if user is admin or seller
     if (user.role === "admin" || user.role === "seller") {
       alert("Admins and sellers cannot write reviews");
       return;
@@ -236,7 +257,6 @@ const ProductDetail = () => {
         review_count: prev.review_count + 1
       }));
 
-      // Show success message from backend or default message
       setSuccessMessage(
         response.data.message || "Review submitted successfully!"
       );
@@ -314,16 +334,15 @@ const ProductDetail = () => {
         <div className="space-y-4">
           <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
             <img
-              src={
+              src={getImageUrl(
                 typeof product.images[activeImage] === "string"
                   ? product.images[activeImage]
-                  : product.images[activeImage]?.url ||
-                  "/placeholder-product.jpg"
-              }
-              alt={product.name}
+                  : product.images[activeImage]?.url
+              )}
+              alt={product.name_en || product.name_mm || "Product"}
               className="max-h-full max-w-full object-contain"
               onError={(e) => {
-                e.target.src = "/placeholder-product.jpg";
+                e.target.src = DEFAULT_PLACEHOLDER;
               }}
             />
           </div>
@@ -334,21 +353,16 @@ const ProductDetail = () => {
                 <button
                   key={index}
                   onClick={() => setActiveImage(index)}
-                  className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index
-                    ? "border-green-500"
-                    : "border-transparent"
-                    }`}
+                  className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${
+                    activeImage === index ? "border-green-500" : "border-transparent"
+                  }`}
                 >
                   <img
-                    src={
-                      typeof img === "string"
-                        ? img
-                        : img.url || "/placeholder-product.jpg"
-                    }
+                    src={getImageUrl(typeof img === "string" ? img : img.url)}
                     alt={`View ${index + 1}`}
                     className="max-h-full max-w-full object-contain"
                     onError={(e) => {
-                      e.target.src = "/placeholder-product.jpg";
+                      e.target.src = DEFAULT_PLACEHOLDER;
                     }}
                   />
                 </button>
@@ -361,9 +375,9 @@ const ProductDetail = () => {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-              {product.name}
+              {product.name_en || product.name_mm || "Product"}
             </h1>
-            {product.name_en && (
+            {product.name_en && product.name_mm && (
               <p className="text-lg text-gray-600 mt-1">{product.name_en}</p>
             )}
           </div>
@@ -374,10 +388,11 @@ const ProductDetail = () => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <StarIcon
                   key={star}
-                  className={`h-5 w-5 ${star <= Math.round(product.average_rating || 0)
-                    ? "text-yellow-400"
-                    : "text-gray-300"
-                    }`}
+                  className={`h-5 w-5 ${
+                    star <= Math.round(product.average_rating || 0)
+                      ? "text-yellow-400"
+                      : "text-gray-300"
+                  }`}
                 />
               ))}
             </div>
@@ -399,7 +414,7 @@ const ProductDetail = () => {
           <div>
             <h3 className="text-lg font-semibold mb-2">Description</h3>
             <p className="text-gray-700 leading-relaxed">
-              {product.description}
+              {product.description_en || product.description_mm || "No description"}
             </p>
           </div>
 
@@ -409,17 +424,15 @@ const ProductDetail = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Specifications</h3>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {Object.entries(product.specifications).map(
-                    ([key, value]) => (
-                      <div key={key} className="border-t border-gray-200 pt-2">
-                        <dt className="font-medium text-gray-900 text-sm">
-                          {key.charAt(0).toUpperCase() +
-                            key.slice(1).replace(/([A-Z])/g, " $1")}
-                        </dt>
-                        <dd className="text-gray-700 text-sm">{value}</dd>
-                      </div>
-                    )
-                  )}
+                  {Object.entries(product.specifications).map(([key, value]) => (
+                    <div key={key} className="border-t border-gray-200 pt-2">
+                      <dt className="font-medium text-gray-900 text-sm">
+                        {key.charAt(0).toUpperCase() +
+                          key.slice(1).replace(/([A-Z])/g, " $1")}
+                      </dt>
+                      <dd className="text-gray-700 text-sm">{value}</dd>
+                    </div>
+                  ))}
                 </dl>
               </div>
             )}
@@ -488,8 +501,9 @@ const ProductDetail = () => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
               ) : (
                 <HeartIcon
-                  className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""
-                    }`}
+                  className={`h-6 w-6 ${
+                    isInWishlist ? "text-red-500 fill-current" : ""
+                  }`}
                 />
               )}
             </button>
@@ -506,7 +520,7 @@ const ProductDetail = () => {
             <div className="pt-6 border-t border-gray-200">
               <h3 className="text-lg font-semibold mb-3">Seller Information</h3>
               <Link
-                to={`/sellers/${product.seller.seller_profile.store_slug}`}
+                to={`/sellers/${product.seller.seller_profile?.store_slug || product.seller.id}`}
                 className="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
                 <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
@@ -514,7 +528,7 @@ const ProductDetail = () => {
                 </div>
                 <div className="ml-4">
                   <p className="font-medium text-green-600 hover:text-green-700">
-                    {product.seller.seller_profile?.store_name || product.seller?.name || product.seller}
+                    {product.seller.seller_profile?.store_name || product.seller?.name}
                   </p>
                   <p className="text-gray-600 text-sm">
                     {product.seller?.rating || 4.7} ★ (120 ratings)
@@ -556,8 +570,9 @@ const ProductDetail = () => {
                       className="focus:outline-none mr-1"
                     >
                       <StarIcon
-                        className={`h-8 w-8 ${star <= rating ? "text-yellow-400" : "text-gray-300"
-                          }`}
+                        className={`h-8 w-8 ${
+                          star <= rating ? "text-yellow-400" : "text-gray-300"
+                        }`}
                       />
                     </button>
                   ))}
@@ -632,10 +647,9 @@ const ProductDetail = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <StarIcon
                             key={star}
-                            className={`h-4 w-4 ${star <= review.rating
-                              ? "text-yellow-400"
-                              : "text-gray-300"
-                              }`}
+                            className={`h-4 w-4 ${
+                              star <= review.rating ? "text-yellow-400" : "text-gray-300"
+                            }`}
                           />
                         ))}
                       </div>
