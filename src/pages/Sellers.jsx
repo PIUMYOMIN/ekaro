@@ -39,19 +39,21 @@ const Sellers = () => {
         }
         
         if (sellersData && Array.isArray(sellersData) && sellersData.length > 0) {
-          const transformedSellers = sellersData.map(seller => ({
-            id: seller.id,
-            name: seller.store_name || seller.user?.name || t('sellers.unknown_seller'),
-            category: seller.business_type || t('sellers.uncategorized'),
-            rating: parseFloat(seller.reviews_avg_rating) || 0,
-            reviewCount: seller.reviews_count || 0,
-            joined: seller.created_at,
-            products: seller.products_count || 0,
-            verified: seller.status === 'active' || seller.status === 'approved',
-            originalData: seller
-          }));
-          
-          console.log('Transformed sellers:', transformedSellers);
+          const transformedSellers = sellersData
+            .map(seller => ({
+              id: seller.id,
+              name: seller.store_name || seller.user?.name || t('sellers.unknown_seller'),
+              category: seller.business_type || t('sellers.uncategorized'),
+              rating: parseFloat(seller.reviews_avg_rating) || 0,
+              reviewCount: seller.reviews_count || 0,
+              joined: seller.created_at,
+              products: seller.products_count || 0,
+              verified: seller.status === 'active' || seller.status === 'approved',
+              originalData: seller
+            }))
+            .filter(seller => seller.products > 0);
+
+          console.log('Transformed sellers (with products):', transformedSellers);
           setSellers(transformedSellers);
           setFilteredSellers(transformedSellers);
         } else {

@@ -1,3 +1,4 @@
+// SellerDashboard.jsx (updated)
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Tab } from "@headlessui/react";
@@ -47,7 +48,6 @@ const SellerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [onboardingStatus, setOnboardingStatus] = useState(null);
   const navigate = useNavigate();
-  const [isEditMode, setIsEditMode] = useState(false);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
@@ -63,22 +63,16 @@ const SellerDashboard = () => {
     nextStep: ""
   });
 
-  // Fetch store data and stats
-  const fetchStoreData = useCallback(async () => {
+  // ---------- Fetch global store data (store info & summary stats) ----------
+  const fetchGlobalData = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("Fetching store data...");
-
       const [storeResponse, statsResponse] = await Promise.allSettled([
         api.get("/seller/my-store"),
         api.get("/seller/sales-summary")
       ]);
 
-      console.log("Store response:", storeResponse);
-      console.log("Stats response:", statsResponse);
-
       if (storeResponse.status === 'fulfilled' && storeResponse.value.data.success) {
-        console.log("Store data received:", storeResponse.value.data.data);
         setStoreData(storeResponse.value.data.data);
       } else if (storeResponse.status === 'rejected') {
         console.error("Failed to fetch store data:", storeResponse.reason);
@@ -103,8 +97,7 @@ const SellerDashboard = () => {
         });
       }
     } catch (error) {
-      console.error("Failed to fetch store data:", error);
-
+      console.error("Failed to fetch global data:", error);
       if (error.response?.status === 403) {
         navigate('/');
       }
@@ -113,15 +106,9 @@ const SellerDashboard = () => {
     }
   }, [navigate]);
 
-  // Refresh function
-  const refreshStoreData = useCallback(() => {
-    fetchStoreData();
-  }, [fetchStoreData]);
-
-  // Handle setup click - separate function to avoid circular dependency
+  // ---------- Handle setup click (only for navigation) ----------
   const handleSetupClick = useCallback((step) => {
     console.log("Setup click:", step);
-    // Direct navigation based on step
     if (step === 'my-store') {
       navigate('/seller/dashboard?tab=my-store&setup=true');
     } else if (step === 'shipping') {
@@ -131,52 +118,47 @@ const SellerDashboard = () => {
     }
   }, [navigate]);
 
-  // Create navigation array using useMemo
+  // ---------- Navigation tabs – note: refreshData is NOT passed ----------
   const navigation = useMemo(() => [
     {
       name: t("seller.dashboard"),
       icon: ChartBarIcon,
-      component: <DashboardSummary
-        storeData={storeData}
-        stats={stats}
-        refreshData={refreshStoreData}
-        onSetupClick={handleSetupClick}
-      />
+      component: <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />
     },
     {
       name: t("seller.my_store"),
       icon: BuildingStorefrontIcon,
-      component: <MyStore storeData={storeData} stats={stats} refreshData={refreshStoreData} />
+      component: <MyStore storeData={storeData} stats={stats} />
     },
     {
       name: "Edit Store",
       icon: PencilIcon,
-      component: <EditStore storeData={storeData} refreshData={refreshStoreData} />
+      component: <EditStore storeData={storeData} />
     },
     {
       name: t("seller.order.title"),
       icon: ShoppingBagIcon,
-      component: <OrderManagement refreshData={refreshStoreData} />
+      component: <OrderManagement />  
     },
     {
       name: t("seller.delivery.title"),
       icon: TruckIcon,
-      component: <DeliveryManagement refreshData={refreshStoreData} />
+      component: <DeliveryManagement />
     },
     {
       name: t("seller.product.title"),
       icon: CubeIcon,
-      component: <ProductManagement refreshData={refreshStoreData} />
+      component: <ProductManagement /> 
     },
     {
       name: t("seller.discount.title"),
       icon: CubeIcon,
-      component: <DiscountManagement refreshData={refreshStoreData} />
+      component: <DiscountManagement />
     },
     {
       name: t("seller.sales.title"),
       icon: CurrencyDollarIcon,
-      component: <SalesReports refreshData={refreshStoreData} />
+      component: <SalesReports />
     },
     {
       name: t("seller.reviews.title"),
@@ -196,42 +178,27 @@ const SellerDashboard = () => {
     {
       name: t("seller.settings"),
       icon: CogIcon,
-      component: (
-        <StoreSettings
-          storeData={storeData}
-          setStoreData={setStoreData}
-          refreshData={refreshStoreData}
-        />
-      )
+      component: <StoreSettings storeData={storeData} setStoreData={setStoreData} />
     }
-  ], [t, storeData, stats, refreshStoreData, handleSetupClick]);
+  ], [t, storeData, stats, handleSetupClick]);
 
-  // Handle URL parameters for tab selection
+  // ---------- Handle URL parameters (tab selection) ----------
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const initialTab = searchParams.get('tab');
     const editMode = searchParams.get('edit');
     const setupParam = searchParams.get('setup');
 
-    console.log("URL params:", { initialTab, editMode, setupParam });
-
     if (editMode === 'true' || initialTab === 'edit-store') {
-      // Navigate to edit store
       const editStoreIndex = navigation.findIndex(item => item.name === "Edit Store");
-      console.log("Edit store index:", editStoreIndex);
-      if (editStoreIndex !== -1) {
-        setSelectedTab(editStoreIndex);
-      }
+      if (editStoreIndex !== -1) setSelectedTab(editStoreIndex);
     } else if (initialTab === 'my-store' || setupParam === 'true') {
       const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
-      console.log("My store index:", myStoreIndex);
-      if (myStoreIndex !== -1) {
-        setSelectedTab(myStoreIndex);
-      }
+      if (myStoreIndex !== -1) setSelectedTab(myStoreIndex);
     }
   }, [location.search, t, navigation]);
 
-  // Check seller access and onboarding status
+  // ---------- Check seller access and onboarding ----------
   useEffect(() => {
     const checkAccess = async () => {
       if (!user) {
@@ -239,20 +206,14 @@ const SellerDashboard = () => {
         return;
       }
 
-      // Check if user is a seller
       if (user.type !== 'seller' && !user.roles?.includes('seller')) {
         navigate('/');
         return;
       }
 
       try {
-        // First, check onboarding status
         const response = await api.get('/seller/onboarding/status').catch(error => {
-          // If endpoint doesn't exist, continue
-          if (error.response?.status === 404) {
-            console.log("Onboarding endpoint not found, continuing...");
-            return null;
-          }
+          if (error.response?.status === 404) return null;
           throw error;
         });
 
@@ -260,126 +221,99 @@ const SellerDashboard = () => {
           const statusData = response.data.data || response.data;
           setOnboardingStatus(statusData);
 
-          console.log("Onboarding status:", statusData);
-
-          // Redirect if onboarding is not complete
           if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-            console.log("Redirecting to onboarding...");
             navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
             return;
           }
         }
 
-        // If we get here, onboarding is complete or not required, fetch store data
-        await fetchStoreData();
+        await fetchGlobalData();
 
       } catch (error) {
         console.error('Failed to verify seller status:', error);
-
-        // Try to fetch store data anyway
         try {
-          await fetchStoreData();
+          await fetchGlobalData();
         } catch (storeError) {
-          console.error("Failed to fetch store data:", storeError);
-          // If we can't fetch store data, go to onboarding
           navigate('/seller/onboarding/store-basic');
         }
       }
     };
 
-    if (user) {
-      checkAccess();
-    }
-  }, [user, navigate, fetchStoreData]);
+    if (user) checkAccess();
+  }, [user, navigate, fetchGlobalData]);
 
-  // Check setup requirements when store data changes
+  // ---------- Setup notification based on storeData ----------
   useEffect(() => {
-    if (storeData) {
-      console.log("Checking setup requirements for:", storeData);
+    if (!storeData) return;
 
-      const requirements = [];
+    const requirements = [];
 
-      // Check if store is pending approval
-      if (storeData.status === "pending") {
-        setSetupNotificationData({
-          title: "Store Pending Approval",
-          message: "Your store is under review. You can add products and set up your store while waiting for approval.",
-          requiredActions: ["Complete store setup", "Add products", "Set up shipping"],
-          nextStep: "my-store"
-        });
-        setShowSetupNotification(true);
-        return;
-      }
-
-      // Check if store setup is incomplete
-      if (storeData.status === "setup_pending") {
-        setSetupNotificationData({
-          title: "Complete Store Setup",
-          message: "Your store setup is incomplete. Complete the setup to start selling.",
-          requiredActions: ["Add store logo", "Complete business details", "Set up payment methods"],
-          nextStep: "my-store"
-        });
-        setShowSetupNotification(true);
-        return;
-      }
-
-      // Check if verification is pending
-      if (storeData.verification_status === "pending" || storeData.verification_status === "under_review") {
-        setSetupNotificationData({
-          title: "Verification Required",
-          message: "Your account needs verification to access all seller features.",
-          requiredActions: ["Upload required documents", "Complete identity verification"],
-          nextStep: "my-store" // Will open documents tab
-        });
-        setShowSetupNotification(true);
-        return;
-      }
-
-      // Check for missing essential information
-      const missingInfo = [];
-      if (!storeData.store_logo) missingInfo.push("Store logo");
-      if (!storeData.store_banner) missingInfo.push("Store banner");
-      if (!storeData.description && !storeData.store_description) missingInfo.push("Store description");
-      if (!storeData.business_registration_number && storeData.business_type !== "individual") {
-        missingInfo.push("Business registration");
-      }
-
-      if (missingInfo.length > 0) {
-        setSetupNotificationData({
-          title: "Missing Information",
-          message: `Your store profile is incomplete. Please add: ${missingInfo.join(", ")}`,
-          requiredActions: missingInfo,
-          nextStep: "my-store"
-        });
-        setShowSetupNotification(true);
-        return;
-      }
-
-      // If all checks pass, hide notification
-      setShowSetupNotification(false);
+    if (storeData.status === "pending") {
+      setSetupNotificationData({
+        title: "Store Pending Approval",
+        message: "Your store is under review. You can add products and set up your store while waiting for approval.",
+        requiredActions: ["Complete store setup", "Add products", "Set up shipping"],
+        nextStep: "my-store"
+      });
+      setShowSetupNotification(true);
+      return;
     }
+
+    if (storeData.status === "setup_pending") {
+      setSetupNotificationData({
+        title: "Complete Store Setup",
+        message: "Your store setup is incomplete. Complete the setup to start selling.",
+        requiredActions: ["Add store logo", "Complete business details", "Set up payment methods"],
+        nextStep: "my-store"
+      });
+      setShowSetupNotification(true);
+      return;
+    }
+
+    if (storeData.verification_status === "pending" || storeData.verification_status === "under_review") {
+      setSetupNotificationData({
+        title: "Verification Required",
+        message: "Your account needs verification to access all seller features.",
+        requiredActions: ["Upload required documents", "Complete identity verification"],
+        nextStep: "my-store"
+      });
+      setShowSetupNotification(true);
+      return;
+    }
+
+    const missingInfo = [];
+    if (!storeData.store_logo) missingInfo.push("Store logo");
+    if (!storeData.store_banner) missingInfo.push("Store banner");
+    if (!storeData.description && !storeData.store_description) missingInfo.push("Store description");
+    if (!storeData.business_registration_number && storeData.business_type !== "individual") {
+      missingInfo.push("Business registration");
+    }
+
+    if (missingInfo.length > 0) {
+      setSetupNotificationData({
+        title: "Missing Information",
+        message: `Your store profile is incomplete. Please add: ${missingInfo.join(", ")}`,
+        requiredActions: missingInfo,
+        nextStep: "my-store"
+      });
+      setShowSetupNotification(true);
+      return;
+    }
+
+    setShowSetupNotification(false);
   }, [storeData]);
 
-  // Show success message if redirected from onboarding
-  useEffect(() => {
-    if (state?.success && state?.message) {
-      console.log('🎉 Success:', state.message);
-      // Clear the state
-      window.history.replaceState({}, document.title);
-    }
-  }, [state]);
+  // ---------- Dismiss notification ----------
+  const handleDismissNotification = () => {
+    setShowSetupNotification(false);
+    localStorage.setItem('seller_setup_notification_dismissed', 'true');
+  };
 
-  // Handle setup completion
+  // ---------- Start setup ----------
   const handleStartSetup = () => {
-    console.log("Starting setup:", setupNotificationData.nextStep);
-
     if (setupNotificationData.nextStep === "my-store") {
-      // Find My Store tab index and switch to it
       const myStoreIndex = navigation.findIndex(item => item.name === t("seller.my_store"));
-      if (myStoreIndex !== -1) {
-        setSelectedTab(myStoreIndex);
-      }
-      // Also update URL
+      if (myStoreIndex !== -1) setSelectedTab(myStoreIndex);
       navigate('/seller/dashboard?tab=my-store&setup=true', { replace: true });
     } else if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
       navigate(`/seller/onboarding/${setupNotificationData.nextStep || 'store-basic'}`);
@@ -390,28 +324,12 @@ const SellerDashboard = () => {
     }
   };
 
-  // Handle dismissing notification
-  const handleDismissNotification = () => {
-    setShowSetupNotification(false);
-    localStorage.setItem('seller_setup_notification_dismissed', 'true');
-  };
-
-  // Set up polling for real-time updates (only if user is logged in and has store)
+  // ---------- Polling for global data (optional, 60s) ----------
   useEffect(() => {
     if (!user || !storeData) return;
-
-    // Check if current tab is edit store (index 2 in your navigation)
-    const isEditStoreTab = selectedTab === 2;
-
-    // Don't poll if we're in edit mode
-    if (isEditStoreTab) return;
-
-    const interval = setInterval(() => {
-      fetchStoreData();
-    }, 60000); // Update every 60 seconds
-
+    const interval = setInterval(fetchGlobalData, 6000000);
     return () => clearInterval(interval);
-  }, [user, storeData, fetchStoreData, selectedTab]); // Add selectedTab to dependencies
+  }, [user, storeData, fetchGlobalData]);
 
   if (loading) {
     return (
@@ -424,7 +342,7 @@ const SellerDashboard = () => {
     );
   }
 
-  // Show onboarding prompt if somehow still here but needs onboarding
+  // Onboarding incomplete screen (unchanged)
   if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center p-4">
@@ -458,7 +376,7 @@ const SellerDashboard = () => {
   return (
     <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
-        {/* Mobile sidebar toggle */}
+        {/* Mobile sidebar toggle – unchanged */}
         <div className="md:hidden fixed top-4 left-4 z-20">
           <button
             type="button"
@@ -466,102 +384,55 @@ const SellerDashboard = () => {
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <span className="sr-only">{t("seller.open_sidebar")}</span>
-            <svg
-              className="h-6 w-6"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
-        {/* Sidebar - Mobile */}
         {sidebarOpen && (
-          <div
-            className="md:hidden fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <div
-              className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl transform transition-transform"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Sidebar
-                navigation={navigation}
-                onClose={() => setSidebarOpen(false)}
-              />
+          <div className="md:hidden fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity" onClick={() => setSidebarOpen(false)}>
+            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl transform transition-transform" onClick={(e) => e.stopPropagation()}>
+              <Sidebar navigation={navigation} onClose={() => setSidebarOpen(false)} />
             </div>
           </div>
         )}
 
-        {/* Sidebar - Desktop */}
+        {/* Desktop sidebar – unchanged */}
         <div className="hidden md:flex md:flex-shrink-0">
           <div className="flex flex-col w-80 bg-white/80 backdrop-blur-lg border-r border-gray-200/60 shadow-xl">
             <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
-              {/* Store Header */}
+              {/* Store Header – unchanged */}
               <div className="flex items-center px-6 mb-8">
                 <div className="relative">
                   {storeData?.store_logo ? (
-                    <img
-                      src={storeData.store_logo}
-                      alt={storeData.store_name}
-                      className="w-12 h-12 rounded-2xl object-cover border-2 border-green-200 shadow-lg"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const fallback = e.target.nextSibling;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
+                    <img src={storeData.store_logo} alt={storeData.store_name} className="w-12 h-12 rounded-2xl object-cover border-2 border-green-200 shadow-lg" />
                   ) : (
                     <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
                       <BuildingStorefrontIcon className="h-6 w-6 text-white" />
                     </div>
                   )}
-                  {/* Fallback logo */}
-                  <div
-                    className="w-12 h-12 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg hidden"
-                    style={{ display: 'none' }}
-                  >
-                    <BuildingStorefrontIcon className="h-6 w-6 text-white" />
-                  </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                 </div>
                 <div className="ml-4">
                   <h1 className="text-lg font-bold text-gray-900 truncate max-w-[180px]">
                     {storeData?.store_name || t("seller.seller_center")}
                   </h1>
-                  <p className="text-sm text-green-600 font-medium">
-                    Seller Account
-                  </p>
+                  <p className="text-sm text-green-600 font-medium">Seller Account</p>
                 </div>
               </div>
 
-              {/* Setup Notification in Sidebar */}
+              {/* Setup Notification – unchanged */}
               {showSetupNotification && (
                 <div className="mx-4 mb-4">
                   <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
                     <div className="flex items-start">
                       <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-amber-800 mb-1">
-                          {setupNotificationData.title}
-                        </h4>
-                        <p className="text-xs text-amber-700 mb-2">
-                          {setupNotificationData.message}
-                        </p>
-                        <button
-                          onClick={handleStartSetup}
-                          className="w-full text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center"
-                        >
-                          Complete Setup
-                          <ArrowRightIcon className="h-3 w-3 ml-1" />
+                        <h4 className="text-sm font-medium text-amber-800 mb-1">{setupNotificationData.title}</h4>
+                        <p className="text-xs text-amber-700 mb-2">{setupNotificationData.message}</p>
+                        <button onClick={handleStartSetup} className="w-full text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center">
+                          Complete Setup <ArrowRightIcon className="h-3 w-3 ml-1" />
                         </button>
                       </div>
                     </div>
@@ -569,7 +440,7 @@ const SellerDashboard = () => {
                 </div>
               )}
 
-              {/* Navigation */}
+              {/* Navigation – tabs still use the same list, but components are independent */}
               <nav className="flex-1 px-4 space-y-2">
                 <Tab.List className="space-y-2">
                   {navigation.map((item, index) => (
@@ -584,13 +455,7 @@ const SellerDashboard = () => {
                         )
                       }
                     >
-                      <item.icon
-                        className={classNames(
-                          "mr-3 h-5 w-5 transition-all duration-200",
-                          "group-[:not([class*='bg-gradient'])]:text-gray-400",
-                          "group-hover:scale-110"
-                        )}
-                      />
+                      <item.icon className={classNames("mr-3 h-5 w-5 transition-all duration-200", "group-[:not([class*='bg-gradient'])]:text-gray-400", "group-hover:scale-110")} />
                       {item.name}
                     </Tab>
                   ))}
@@ -598,46 +463,30 @@ const SellerDashboard = () => {
               </nav>
             </div>
 
-            {/* User Profile Footer */}
+            {/* User Profile Footer – unchanged */}
             <div className="flex-shrink-0 border-t border-gray-200/60 p-6 bg-white/50">
               <div className="flex items-center">
                 <div className="relative">
                   {user?.profile_photo ? (
-                    <img
-                      src={user.profile_photo}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-xl object-cover border-2 border-green-200"
-                    />
+                    <img src={user.profile_photo} alt={user.name} className="w-10 h-10 rounded-xl object-cover border-2 border-green-200" />
                   ) : (
                     <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">
-                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
+                      <span className="text-sm font-medium text-white">{user?.name?.charAt(0)?.toUpperCase() || "U"}</span>
                     </div>
                   )}
                 </div>
                 <div className="ml-3 min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {user?.email}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                 </div>
               </div>
-
-              {/* Quick Stats */}
               <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
                 <div className="text-center p-2 bg-green-50 rounded-lg">
-                  <div className="font-bold text-green-700">
-                    {stats.totalProducts}
-                  </div>
+                  <div className="font-bold text-green-700">{stats.totalProducts}</div>
                   <div className="text-gray-600">Products</div>
                 </div>
                 <div className="text-center p-2 bg-blue-50 rounded-lg">
-                  <div className="font-bold text-blue-700">
-                    {stats.totalOrders}
-                  </div>
+                  <div className="font-bold text-blue-700">{stats.totalOrders}</div>
                   <div className="text-gray-600">Orders</div>
                 </div>
               </div>
@@ -645,18 +494,13 @@ const SellerDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content – unchanged */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header Bar */}
           <div className="flex-shrink-0 bg-white/80 backdrop-blur-lg border-b border-gray-200/60">
             <div className="flex items-center justify-between px-6 py-4">
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                  Seller Center
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Manage your store and grow your business
-                </p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Seller Center</h1>
+                <p className="text-sm text-gray-600 mt-1">Manage your store and grow your business</p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
@@ -667,29 +511,21 @@ const SellerDashboard = () => {
             </div>
           </div>
 
-          {/* Progress indicator for onboarding */}
           {setupNotificationData.progress > 0 && (
             <div className="bg-gray-50 border-b border-gray-200">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">
-                    Setup Progress: {setupNotificationData.progress}%
-                  </span>
+                  <span className="text-xs text-gray-600">Setup Progress: {setupNotificationData.progress}%</span>
                   <div className="w-64 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${setupNotificationData.progress}%` }}
-                    ></div>
+                    <div className="bg-green-500 h-2 rounded-full transition-all duration-300" style={{ width: `${setupNotificationData.progress}%` }}></div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Content Area */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 sm:p-6">
-              {/* Mobile Tabs */}
               <div className="md:hidden mb-6">
                 <Tab.List className="flex space-x-2 rounded-2xl bg-white/80 backdrop-blur-lg p-2 shadow-lg overflow-x-auto">
                   {navigation.map((item) => (
@@ -714,7 +550,6 @@ const SellerDashboard = () => {
                 </Tab.List>
               </div>
 
-              {/* Tab Content */}
               <Tab.Panels className="mt-2">
                 {navigation.map((item, idx) => (
                   <Tab.Panel key={idx} className="focus:outline-none">

@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  CheckIcon,
-  XMarkIcon,
   CalendarIcon,
   TagIcon,
   CurrencyDollarIcon,
   TicketIcon
 } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
+import { useAuth } from "../../context/AuthContext"; // ✅ import auth
 
 const DiscountManagement = () => {
   const { t } = useTranslation();
+  const { user } = useAuth(); // ✅ get current user
+  const isAdmin = user?.role === "admin";
+
   const [discounts, setDiscounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -22,21 +24,36 @@ const DiscountManagement = () => {
   const [editingDiscount, setEditingDiscount] = useState(null);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // ✅ Compute a set of category IDs that actually have products from this seller
+  const sellerCategoryIds = useMemo(() => {
+    const ids = new Set();
+    products.forEach(product => {
+      if (product.category_id) ids.add(product.category_id);
+    });
+    return ids;
+  }, [products]);
+
+  // ✅ Filter categories to only those that appear in seller's products
+  const relevantCategories = useMemo(() => {
+    return categories.filter(cat => sellerCategoryIds.has(cat.id));
+  }, [categories, sellerCategoryIds]);
 
   const [formData, setFormData] = useState({
     name: "",
     code: "",
-    type: "percentage",
+    type: "",
     value: "",
-    min_order_amount: "",
-    max_uses: "",
+    min_order: "",
+    max_uses_total: "",
+    max_uses_per_customer: "",
     starts_at: "",
     expires_at: "",
-    applicable_to: "all_products",
+    applicable_to: isAdmin ? "all_products" : "specific_products", // default for seller
     applicable_product_ids: [],
     applicable_category_ids: [],
     applicable_seller_ids: [],
-    max_uses_per_user: "",
     is_one_time_use: false,
     is_active: true
   });
@@ -50,9 +67,10 @@ const DiscountManagement = () => {
   const fetchDiscounts = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/discounts");
+      const response = await api.get("/seller/discounts");
       if (response.data.success) {
-        setDiscounts(response.data.data);
+        const discountsArray = response.data.data?.data || [];
+        setDiscounts(discountsArray);
       }
     } catch (err) {
       setError("Failed to fetch discounts");
@@ -63,7 +81,7 @@ const DiscountManagement = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get("/products");
+      const response = await api.get("/seller/products/my-products");
       if (response.data.success) {
         setProducts(response.data.data || []);
       }
@@ -115,13 +133,41 @@ const DiscountManagement = () => {
     e.preventDefault();
     setError("");
 
+    if (!formData.type) {
+      setError("Please select a discount type");
+      return;
+    }
+
+    if (formData.type !== "free_shipping" && !formData.value) {
+      setError("Discount value is required");
+      return;
+    }
+
     try {
+      const submitData = {
+        name: formData.name,
+        code: formData.code || null,
+        type: formData.type,
+        value: formData.type === "free_shipping" ? null : formData.value,
+        min_order: formData.min_order || null,
+        max_uses_total: formData.max_uses_total || null,
+        max_uses_per_customer: formData.max_uses_per_customer || null,
+        starts_at: formData.starts_at ? formData.starts_at + " 00:00:00" : null,
+        expires_at: formData.expires_at ? formData.expires_at + " 23:59:59" : null,
+        applicable_to: formData.applicable_to,
+        applicable_product_ids: formData.applicable_product_ids,
+        applicable_category_ids: formData.applicable_category_ids,
+        applicable_seller_ids: formData.applicable_seller_ids,
+        is_one_time_use: formData.is_one_time_use,
+        is_active: formData.is_active
+      };
+
       const url = editingDiscount
-        ? `/discounts/${editingDiscount.id}`
-        : "/discounts";
+        ? `/seller/discounts/${editingDiscount.id}`
+        : "/seller/discounts";
       const method = editingDiscount ? "put" : "post";
 
-      const response = await api[method](url, formData);
+      const response = await api[method](url, submitData);
 
       if (response.data.success) {
         await fetchDiscounts();
@@ -137,17 +183,17 @@ const DiscountManagement = () => {
     setFormData({
       name: "",
       code: "",
-      type: "percentage",
+      type: "",
       value: "",
-      min_order_amount: "",
-      max_uses: "",
+      min_order: "",
+      max_uses_total: "",
+      max_uses_per_customer: "",
       starts_at: "",
       expires_at: "",
-      applicable_to: "all_products",
+      applicable_to: isAdmin ? "all_products" : "specific_products",
       applicable_product_ids: [],
       applicable_category_ids: [],
       applicable_seller_ids: [],
-      max_uses_per_user: "",
       is_one_time_use: false,
       is_active: true
     });
@@ -156,21 +202,24 @@ const DiscountManagement = () => {
 
   const editDiscount = (discount) => {
     setEditingDiscount(discount);
+    const startsDate = discount.starts_at ? discount.starts_at.split(" ")[0] : "";
+    const expiresDate = discount.expires_at ? discount.expires_at.split(" ")[0] : "";
+
     setFormData({
       name: discount.name,
-      code: discount.code,
+      code: discount.code || "",
       type: discount.type,
-      value: discount.value,
-      min_order_amount: discount.min_order_amount || "",
-      max_uses: discount.max_uses || "",
-      starts_at: discount.starts_at.split(" ")[0],
-      expires_at: discount.expires_at.split(" ")[0],
+      value: discount.value || "",
+      min_order: discount.min_order || "",
+      max_uses_total: discount.max_uses_total || "",
+      max_uses_per_customer: discount.max_uses_per_customer || "",
+      starts_at: startsDate,
+      expires_at: expiresDate,
       applicable_to: discount.applicable_to,
       applicable_product_ids: discount.applicable_product_ids || [],
       applicable_category_ids: discount.applicable_category_ids || [],
       applicable_seller_ids: discount.applicable_seller_ids || [],
-      max_uses_per_user: discount.max_uses_per_user || "",
-      is_one_time_use: discount.is_one_time_use,
+      is_one_time_use: discount.is_one_time_use || false,
       is_active: discount.is_active
     });
     setShowForm(true);
@@ -179,7 +228,7 @@ const DiscountManagement = () => {
   const deleteDiscount = async (id) => {
     if (window.confirm("Are you sure you want to delete this discount?")) {
       try {
-        await api.delete(`/discounts/${id}`);
+        await api.delete(`/seller/discounts/${id}`);
         await fetchDiscounts();
       } catch (err) {
         setError("Failed to delete discount");
@@ -189,7 +238,7 @@ const DiscountManagement = () => {
 
   const toggleStatus = async (discount) => {
     try {
-      await api.put(`/discounts/${discount.id}/toggle-status`);
+      await api.put(`/seller/discounts/${discount.id}/toggle-status`);
       await fetchDiscounts();
     } catch (err) {
       setError("Failed to update discount status");
@@ -255,7 +304,7 @@ const DiscountManagement = () => {
           <h3 className="text-lg font-semibold mb-4">
             {editingDiscount ? "Edit Discount" : "Create New Discount"}
           </h3>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -300,8 +349,10 @@ const DiscountManagement = () => {
                   name="type"
                   value={formData.type}
                   onChange={handleChange}
+                  required
                   className="w-full border rounded-lg px-3 py-2"
                 >
+                  <option value="" disabled>Select discount type</option>
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount</option>
                   <option value="free_shipping">Free Shipping</option>
@@ -310,18 +361,29 @@ const DiscountManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.type === "percentage" ? "Percentage Value *" : "Fixed Amount *"}
+                  {formData.type === "percentage"
+                    ? "Percentage Value"
+                    : formData.type === "fixed"
+                    ? "Fixed Amount"
+                    : "Discount Value"}
                 </label>
                 <input
                   type="number"
                   name="value"
                   value={formData.value}
                   onChange={handleChange}
-                  required={formData.type !== "free_shipping"}
+                  required={formData.type && formData.type !== "free_shipping"}
+                  disabled={!formData.type || formData.type === "free_shipping"}
                   min="0"
                   step="0.01"
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder={formData.type === "percentage" ? "e.g., 20" : "e.g., 5000"}
+                  placeholder={
+                    formData.type === "percentage"
+                      ? "e.g., 20"
+                      : formData.type === "fixed"
+                      ? "e.g., 5000"
+                      : "Not required"
+                  }
                 />
               </div>
 
@@ -331,8 +393,8 @@ const DiscountManagement = () => {
                 </label>
                 <input
                   type="number"
-                  name="min_order_amount"
-                  value={formData.min_order_amount}
+                  name="min_order"
+                  value={formData.min_order}
                   onChange={handleChange}
                   min="0"
                   step="0.01"
@@ -382,10 +444,21 @@ const DiscountManagement = () => {
                 onChange={handleChange}
                 className="w-full border rounded-lg px-3 py-2"
               >
-                <option value="all_products">All Products</option>
-                <option value="specific_products">Specific Products</option>
-                <option value="specific_categories">Specific Categories</option>
-                <option value="specific_sellers">Specific Sellers</option>
+                {isAdmin ? (
+                  // Admin sees all options
+                  <>
+                    <option value="all_products">All Products</option>
+                    <option value="specific_products">Specific Products</option>
+                    <option value="specific_categories">Specific Categories</option>
+                    <option value="specific_sellers">Specific Sellers</option>
+                  </>
+                ) : (
+                  // Seller sees only their own options
+                  <>
+                    <option value="specific_products">Specific Products</option>
+                    <option value="specific_categories">Specific Categories</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -396,20 +469,24 @@ const DiscountManagement = () => {
                   Select Products
                 </label>
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
-                  {products.map((product) => (
-                    <div key={product.id} className="flex items-center mb-2">
-                      <input
-                        type="checkbox"
-                        id={`product-${product.id}`}
-                        checked={formData.applicable_product_ids.includes(product.id)}
-                        onChange={() => handleProductSelect(product.id)}
-                        className="h-4 w-4 text-green-600"
-                      />
-                      <label htmlFor={`product-${product.id}`} className="ml-2 text-sm">
-                        {product.name} - {product.price} MMK
-                      </label>
-                    </div>
-                  ))}
+                  {products.length === 0 ? (
+                    <p className="text-gray-500 text-sm">You have no products yet.</p>
+                  ) : (
+                    products.map((product) => (
+                      <div key={product.id} className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id={`product-${product.id}`}
+                          checked={formData.applicable_product_ids.includes(product.id)}
+                          onChange={() => handleProductSelect(product.id)}
+                          className="h-4 w-4 text-green-600"
+                        />
+                        <label htmlFor={`product-${product.id}`} className="ml-2 text-sm">
+                          {product.name_en} - {product.price} MMK
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
                   Selected: {formData.applicable_product_ids.length} products
@@ -424,20 +501,26 @@ const DiscountManagement = () => {
                   Select Categories
                 </label>
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center mb-2">
-                      <input
-                        type="checkbox"
-                        id={`category-${category.id}`}
-                        checked={formData.applicable_category_ids.includes(category.id)}
-                        onChange={() => handleCategorySelect(category.id)}
-                        className="h-4 w-4 text-green-600"
-                      />
-                      <label htmlFor={`category-${category.id}`} className="ml-2 text-sm">
-                        {category.name}
-                      </label>
-                    </div>
-                  ))}
+                  {relevantCategories.length === 0 ? (
+                    <p className="text-gray-500 text-sm">
+                      No categories with products found. Create products first.
+                    </p>
+                  ) : (
+                    relevantCategories.map((category) => (
+                      <div key={category.id} className="flex items-center mb-2">
+                        <input
+                          type="checkbox"
+                          id={`category-${category.id}`}
+                          checked={formData.applicable_category_ids.includes(category.id)}
+                          onChange={() => handleCategorySelect(category.id)}
+                          className="h-4 w-4 text-green-600"
+                        />
+                        <label htmlFor={`category-${category.id}`} className="ml-2 text-sm">
+                          {category.name_en}
+                        </label>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
                   Selected: {formData.applicable_category_ids.length} categories
@@ -448,12 +531,12 @@ const DiscountManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Maximum Uses
+                  Maximum Total Uses
                 </label>
                 <input
                   type="number"
-                  name="max_uses"
-                  value={formData.max_uses}
+                  name="max_uses_total"
+                  value={formData.max_uses_total}
                   onChange={handleChange}
                   min="1"
                   className="w-full border rounded-lg px-3 py-2"
@@ -463,12 +546,12 @@ const DiscountManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Uses Per User
+                  Max Uses Per Customer
                 </label>
                 <input
                   type="number"
-                  name="max_uses_per_user"
-                  value={formData.max_uses_per_user}
+                  name="max_uses_per_customer"
+                  value={formData.max_uses_per_customer}
                   onChange={handleChange}
                   min="1"
                   className="w-full border rounded-lg px-3 py-2"
@@ -504,9 +587,10 @@ const DiscountManagement = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                disabled={submitting}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {editingDiscount ? "Update Discount" : "Create Discount"}
+                {submitting ? "Creating..." : editingDiscount ? "Update Discount" : "Create Discount"}
               </button>
             </div>
           </form>
@@ -525,7 +609,7 @@ const DiscountManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Applicable To
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -570,13 +654,15 @@ const DiscountManagement = () => {
                         )}
                         <div>
                           <div className="font-medium">
-                            {discount.type === "percentage" ? `${discount.value}%` :
-                             discount.type === "fixed" ? `${discount.value} MMK` :
-                             "Free Shipping"}
+                            {discount.type === "percentage"
+                              ? `${discount.value}%`
+                              : discount.type === "fixed"
+                              ? `${discount.value} MMK`
+                              : "Free Shipping"}
                           </div>
-                          {discount.min_order_amount && (
+                          {discount.min_order && (
                             <div className="text-sm text-gray-500">
-                              Min: {discount.min_order_amount} MMK
+                              Min: {discount.min_order} MMK
                             </div>
                           )}
                         </div>
@@ -584,9 +670,9 @@ const DiscountManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm">{getApplicableText(discount)}</div>
-                      {discount.max_uses && (
+                      {discount.max_uses_total && (
                         <div className="text-xs text-gray-500">
-                          Used: {discount.used_count}/{discount.max_uses}
+                          Used: {discount.used_count || 0}/{discount.max_uses_total}
                         </div>
                       )}
                     </td>

@@ -9,7 +9,8 @@ import {
   XCircleIcon,
   ClockIcon,
   FunnelIcon,
-  ArrowsUpDownIcon
+  ArrowsUpDownIcon,
+  SparklesIcon  // added
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
@@ -274,6 +275,48 @@ const ProductManagement = () => {
     }
   };
 
+  // Helper: check if product is on sale
+  const isProductOnSale = (product) => {
+    return product.is_on_sale || product.discount_price || product.discount_percentage;
+  };
+
+  // Helper: get sale badge text
+  const getSaleBadge = (product) => {
+    if (product.discount_percentage) return `-${product.discount_percentage}%`;
+    if (product.discount_price) {
+      const discount = product.price - product.discount_price;
+      const percent = Math.round((discount / product.price) * 100);
+      return `-${percent}%`;
+    }
+    return "Sale";
+  };
+
+  // Helper: get discount details for display
+  const getDiscountInfo = (product) => {
+    if (!isProductOnSale(product)) {
+      return { display: <span className="text-gray-400 text-xs">—</span>, badge: null };
+    }
+    const badge = getSaleBadge(product);
+    let details = "";
+    if (product.discount_percentage) {
+      details = `${product.discount_percentage}% off`;
+    } else if (product.discount_price) {
+      details = `${formatMMK(product.discount_price)} (fixed)`;
+    }
+    return {
+      display: (
+        <div className="flex flex-col">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 w-fit">
+            <SparklesIcon className="h-3 w-3 mr-1" />
+            {badge}
+          </span>
+          {details && <span className="text-xs text-gray-600 mt-1">{details}</span>}
+        </div>
+      ),
+      badge
+    };
+  };
+
   // DataTable columns
   const columns = [
     { 
@@ -352,6 +395,11 @@ const ProductManagement = () => {
       ), 
       accessor: "stock" 
     },
+    { 
+      header: "Discount", 
+      accessor: "discount", 
+      width: "120px" 
+    },
     { header: "MOQ", accessor: "min_order" },
     { 
       header: (
@@ -402,6 +450,7 @@ const ProductManagement = () => {
   const productData = filteredProducts.map((product) => {
     const approvalBadge = getApprovalBadge(product.status);
     const ApprovalIcon = approvalBadge.icon;
+    const discountInfo = getDiscountInfo(product);
 
     return {
       ...product,
@@ -454,6 +503,7 @@ const ProductManagement = () => {
           )}
         </div>
       ),
+      discount: discountInfo.display,   // ✅ new discount column
       min_order: (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           {product.min_order || product.moq || 1}

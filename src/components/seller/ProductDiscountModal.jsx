@@ -28,11 +28,11 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
     sale_quantity: ""
   });
 
-  // Fetch current discount stats
+  // Fetch current discount stats (coupons that apply to this product)
   useEffect(() => {
     const fetchDiscountStats = async () => {
       try {
-        const response = await api.get(`/products/${product.id}/discounts`);
+        const response = await api.get(`/seller/products/${product.id}/discounts`);
         if (response.data.success) {
           setDiscountStats(response.data.data);
         }
@@ -41,7 +41,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
       }
     };
 
-    // Set form data from product
+    // Populate form with existing product discount data
     setFormData({
       is_on_sale: product.is_on_sale || false,
       discount_type: product.discount_price ? "fixed" : 
@@ -77,7 +77,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
         discount_value: formData.discount_type !== "none" ? parseFloat(formData.discount_value) : 0
       };
 
-      const response = await api.post(`/products/${product.id}/apply-discount`, payload);
+      const response = await api.post(`/seller/products/${product.id}/apply-discount`, payload);
       
       if (response.data.success) {
         setSuccessMessage("Discount applied successfully!");
@@ -97,7 +97,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      const response = await api.post(`/products/${product.id}/remove-discount`);
+      const response = await api.post(`/seller/products/${product.id}/remove-discount`);
       if (response.data.success) {
         setSuccessMessage("Discount removed successfully!");
         setTimeout(() => {
@@ -144,7 +144,6 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
 
   const discountInfo = calculateDiscount();
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString('en-US', {
