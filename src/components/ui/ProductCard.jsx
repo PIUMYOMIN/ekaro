@@ -118,7 +118,7 @@ const ProductCard = memo(({ product, onClick }) => {
   const categoryName = getCategoryName(product);
   const categoryLink = getCategoryLink(product);
   const sellerName = product?.seller?.store_name || product?.seller?.name || product?.seller_name || 'Seller';
-  const slug = product?.slug_en || product?.slug || product?.id || '';
+  const slug = product?.slug_en;
 
   // Check wishlist status when user is a buyer
   useEffect(() => {

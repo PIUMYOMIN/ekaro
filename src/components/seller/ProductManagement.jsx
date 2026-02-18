@@ -61,7 +61,7 @@ const ProductManagement = ({ onAddProduct, onEditProduct: propOnEditProduct }) =
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/products");
+      const response = await api.get("/seller/products/my-products");
       console.log("Products response:", response.data);
 
       if (response.data.success) {
