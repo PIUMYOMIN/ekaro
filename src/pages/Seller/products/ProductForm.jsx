@@ -594,13 +594,371 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                {/* ... unchanged JSX ... */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Basic Information</h2>
+                  <p className="text-gray-600">Tell us about your product (English fields are required)</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Name (English) *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Enter product name in English"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Name (Myanmar)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name_mm"
+                      value={formData.name_mm}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Enter product name in Myanmar"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (English) *
+                    </label>
+                    <textarea
+                      name="description"
+                      rows="4"
+                      required
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Describe your product in detail in English..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description (Myanmar)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <textarea
+                      name="description_mm"
+                      rows="4"
+                      value={formData.description_mm}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Describe your product in detail in Myanmar..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category *
+                    </label>
+                    {loadingCategories ? (
+                      <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
+                        <span className="ml-2 text-gray-600">Loading categories...</span>
+                      </div>
+                    ) : categories.length > 0 ? (
+                      <select
+                        name="category_id"
+                        required
+                        value={formData.category_id}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map((parentCategory) => (
+                          <optgroup
+                            key={parentCategory.id}
+                            label={parentCategory.name_en}
+                            className="font-semibold text-gray-900"
+                          >
+                            {/* Show child categories as selectable options */}
+                            {parentCategory.children && parentCategory.children.length > 0 ? (
+                              parentCategory.children.map((childCategory) => (
+                                <option key={childCategory.id} value={childCategory.id} className="pl-6 text-gray-700">
+                                  {childCategory.name_en}
+                                </option>
+                              ))
+                            ) : (
+                              <option disabled className="pl-6 text-gray-500">
+                                No sub-categories available
+                              </option>
+                            )}
+                          </optgroup>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="text-center py-4 bg-gray-50 rounded-lg border border-gray-300">
+                        <p className="text-gray-600">No categories available</p>
+                        <p className="text-sm text-gray-500 mt-1">Please create categories first</p>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-500 mt-1">
+                      Parent categories are shown as section headers. Select a sub-category for your product.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Condition *
+                    </label>
+                    <select
+                      name="condition"
+                      required
+                      value={formData.condition}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                    >
+                      {productConditions.map((condition) => (
+                        <option key={condition.value} value={condition.value}>
+                          {condition.label}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.condition && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {productConditions.find(c => c.value === formData.condition)?.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Brand
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Product brand"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Model
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="model"
+                      value={formData.model}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Model number/name"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Color
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="color"
+                      value={formData.color}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Product color"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Material
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="material"
+                      value={formData.material}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Primary material"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Origin
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="origin"
+                      value={formData.origin}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Country of origin"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Step 2: Pricing & Inventory */}
             {currentStep === 2 && (
-              <div className="space-y-6">{/* unchanged */}</div>
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Pricing & Inventory</h2>
+                  <p className="text-gray-600">Set your pricing and stock information</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price (MMK) *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                        K
+                      </span>
+                      <input
+                        type="number"
+                        name="price"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={formData.price}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount Price (MMK)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                        K
+                      </span>
+                      <input
+                        type="number"
+                        name="discount_price"
+                        step="0.01"
+                        min="0"
+                        value={formData.discount_price}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stock Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="0"
+                      required
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Available quantity"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      MOQ (Minimum Order) *
+                    </label>
+                    <input
+                      type="number"
+                      name="moq"
+                      min="1"
+                      required
+                      value={formData.moq}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Minimum order quantity"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Order Unit *
+                    </label>
+                    <select
+                      name="min_order_unit"
+                      required
+                      value={formData.min_order_unit}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                    >
+                      {minOrderUnits.map((unit) => (
+                        <option key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Lead Time
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lead_time"
+                      value={formData.lead_time}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="e.g., 3-5 days, 1 week"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Weight (kg)
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="weight_kg"
+                      value={formData.weight_kg}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Product weight in kilograms"
+                    />
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Step 3: Media & Specifications */}
@@ -751,7 +1109,200 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             {/* Step 4: Shipping & More */}
             {currentStep === 4 && (
-              <div className="space-y-6">{/* unchanged */}</div>
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">Shipping & More</h2>
+                  <p className="text-gray-600">Set shipping details, warranty, and other information</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Shipping Cost (MMK)
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="shipping_cost"
+                        value={formData.shipping_cost}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="Shipping cost"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Shipping Time
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="shipping_time"
+                        value={formData.shipping_time}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 3-5 business days"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Type
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <select
+                        name="warranty_type"
+                        value={formData.warranty_type}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      >
+                        <option value="">Select warranty type</option>
+                        {warrantyTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Period
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="warranty_period"
+                        value={formData.warranty_period}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 12 months, 2 years"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Warranty Details
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="warranty"
+                        value={formData.warranty}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="Warranty coverage details"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Return Policy
+                        <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="return_policy"
+                        value={formData.return_policy}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                        placeholder="e.g., 30 days return policy"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Packaging Details
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <textarea
+                      name="packaging_details"
+                      rows="3"
+                      value={formData.packaging_details}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Describe how the product is packaged..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Additional Information
+                      <span className="ml-1 text-xs text-gray-500">(Optional)</span>
+                    </label>
+                    <textarea
+                      name="additional_info"
+                      rows="3"
+                      value={formData.additional_info}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
+                      placeholder="Any additional information about the product..."
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <input
+                        id="is_featured"
+                        name="is_featured"
+                        type="checkbox"
+                        checked={formData.is_featured}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_featured"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Feature this product on homepage
+                      </label>
+                    </div>
+
+                    <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <input
+                        id="is_active"
+                        name="is_active"
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_active"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Make this product active and visible to customers
+                      </label>
+                    </div>
+
+                    <div className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <input
+                        id="is_new"
+                        name="is_new"
+                        type="checkbox"
+                        checked={formData.is_new}
+                        onChange={handleChange}
+                        className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="is_new"
+                        className="text-sm font-medium text-gray-900"
+                      >
+                        Mark as new product (recommended for condition: New)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Navigation Buttons */}
