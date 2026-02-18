@@ -29,7 +29,6 @@ const Sellers = () => {
         setLoading(true);
         setError(null);
         const res = await api.get('/sellers?per_page=50');
-        console.log('API Response:', res);
         
         let sellersData = [];
         
@@ -38,8 +37,6 @@ const Sellers = () => {
         } else {
           sellersData = res.data?.data || res.data || [];
         }
-        
-        console.log('Extracted sellers data:', sellersData);
         
         if (sellersData && Array.isArray(sellersData) && sellersData.length > 0) {
           const transformedSellers = sellersData.map(seller => ({

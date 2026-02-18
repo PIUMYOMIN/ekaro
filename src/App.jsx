@@ -80,10 +80,10 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<ProductList />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
+                <Route path="/products/:slug" element={<ProductDetail />} />
                 <Route path="/categories" element={<CategoryBrowser />} />
                 <Route path="/sellers" element={<Sellers />} />
-                <Route path="/sellers/:id" element={<SellerProfile />} />
+                <Route path="/sellers/:slug" element={<SellerProfile />} />
                 <Route path="/product-comparison" element={<ProductComparison />} />
                 <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
                 <Route path="/order-tracking" element={<OrderTracking />} />

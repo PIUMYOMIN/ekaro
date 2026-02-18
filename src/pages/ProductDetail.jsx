@@ -14,7 +14,7 @@ import api from "../utils/api";
 
 const ProductDetail = () => {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -40,7 +40,8 @@ const ProductDetail = () => {
 
       try {
         // Fetch product details from public endpoint
-        const productResponse = await api.get(`/products/${id}`);
+        const productResponse = await api.get(`/products/${slug}`);
+        console.log("Product API Response:", productResponse);
         const productData = productResponse.data.data.product;
 
         // Parse images if they're stored as JSON string or use the provided array
@@ -110,7 +111,7 @@ const ProductDetail = () => {
     };
 
     fetchProductData();
-  }, [id, user]);
+  }, [slug, user]);
 
   const handleAddToCart = async () => {
     if (!user) {

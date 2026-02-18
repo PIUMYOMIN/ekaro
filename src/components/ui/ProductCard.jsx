@@ -1,13 +1,15 @@
-// ProductCard.jsx (updated – uses slug_en for links)
-import React, { useState, useCallback, memo } from "react";
+// ProductCard.jsx (with wishlist restored)
+import React, { useState, useCallback, memo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { StarIcon, TagIcon } from "@heroicons/react/24/outline";
+import { StarIcon, TagIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
+import api from "../../utils/api";
 
 export const formatMMK = amount => {
   const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
@@ -67,6 +69,8 @@ const ProductCard = memo(({ product, onClick }) => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [message, setMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   const navigate = useNavigate();
 
   const getAverageRating = useCallback(() => {
@@ -115,7 +119,25 @@ const ProductCard = memo(({ product, onClick }) => {
   const categoryName = getCategoryName(product);
   const categoryLink = getCategoryLink(product);
   const sellerName = product?.seller?.store_name || product?.seller?.name || product?.seller_name || 'Seller';
-  const productSlug = product?.slug_en; // ✅ use slug_en only – no fallback to id
+  const productSlug = product?.slug_en;
+
+  // Check wishlist status when user is a buyer
+  useEffect(() => {
+    if (user && user.role === 'buyer') {
+      const checkWishlist = async () => {
+        try {
+          const response = await api.get('/wishlist');
+          const wishlist = response.data.data || [];
+          setIsInWishlist(wishlist.some(item => item.id === product.id));
+        } catch (err) {
+          if (err.response?.status !== 403) {
+            console.warn('Failed to fetch wishlist', err);
+          }
+        }
+      };
+      checkWishlist();
+    }
+  }, [user, product.id]);
 
   const handleAddToCart = useCallback(async (e) => {
     e?.preventDefault();
@@ -149,6 +171,37 @@ const ProductCard = memo(({ product, onClick }) => {
     }
   }, [user, product.id, isActive, inStock, navigate, addToCart]);
 
+  const handleAddToWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setWishlistLoading(true);
+    try {
+      if (isInWishlist) {
+        await api.delete(`/wishlist/${product.id}`);
+        setIsInWishlist(false);
+        setMessage({ type: 'success', message: 'Removed from wishlist' });
+      } else {
+        await api.post('/wishlist', { product_id: product.id });
+        setIsInWishlist(true);
+        setMessage({ type: 'success', message: 'Added to wishlist' });
+      }
+    } catch (error) {
+      console.error('Failed to update wishlist:', error);
+      setMessage({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to update wishlist'
+      });
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     if (message) {
       const timer = setTimeout(() => setMessage(null), 3000);
@@ -163,7 +216,7 @@ const ProductCard = memo(({ product, onClick }) => {
   return (
     <>
       {message && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
+        <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
           message.type === 'success' 
             ? 'bg-green-100 border border-green-400 text-green-700'
             : 'bg-red-100 border border-red-400 text-red-700'
@@ -180,6 +233,7 @@ const ProductCard = memo(({ product, onClick }) => {
         animate={{ opacity: 1 }}
         onClick={onClick}
       >
+        {/* Image section */}
         <div className="relative flex-shrink-0">
           <Link to={`/products/${productSlug}`} className="block" onClick={(e) => e.stopPropagation()}>
             <div className="w-full h-32 sm:h-40 md:h-48 bg-gray-200 overflow-hidden">
@@ -196,6 +250,7 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           </Link>
           
+          {/* Category tag – hidden on mobile */}
           {categoryName && (
             <Link 
               to={categoryLink} 
@@ -225,6 +280,7 @@ const ProductCard = memo(({ product, onClick }) => {
             </div>
           )}
           
+          {/* Seller info – hidden on mobile and sm, visible md and up */}
           {sellerName && (
             <Link
               to={`/sellers/${product?.seller?.store_slug || product?.seller_id}`}
@@ -243,6 +299,7 @@ const ProductCard = memo(({ product, onClick }) => {
           )}
         </div>
         
+        {/* Content section */}
         <div className="p-2 sm:p-3 md:p-4 flex flex-col flex-grow">
           <div className="flex-grow">
             <div className="sm:flex justify-between items-start gap-1">
@@ -253,6 +310,7 @@ const ProductCard = memo(({ product, onClick }) => {
                   </h3>
                 </Link>
                 
+                {/* Rating – hide on mobile, show sm and up */}
                 <div className="hidden sm:flex items-center mt-1">
                   <div className="flex">
                     {[0, 1, 2, 3, 4].map(rating => (
@@ -273,7 +331,8 @@ const ProductCard = memo(({ product, onClick }) => {
                 </div>
               </div>
               
-              <div className="sm:text-right flex-shrink-0">
+              {/* Price and wishlist */}
+              <div className="sm:text-right flex-shrink-0 flex items-center gap-2">
                 <p className="text-sm sm:text-base md:text-lg font-bold text-green-700 whitespace-nowrap">
                   {formatMMK(productPrice)}
                 </p>
@@ -282,6 +341,20 @@ const ProductCard = memo(({ product, onClick }) => {
                     {formatMMK(product.discount_price)}
                   </p>
                 )}
+                <button
+                  onClick={handleAddToWishlist}
+                  disabled={wishlistLoading}
+                  className="p-1.5 rounded-full hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  {wishlistLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                  ) : (
+                    <HeartIcon
+                      className={`h-5 w-5 ${isInWishlist ? 'text-red-500 fill-current' : 'text-gray-400'}`}
+                    />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -298,6 +371,7 @@ const ProductCard = memo(({ product, onClick }) => {
             )}
           </div>
           
+          {/* Add to cart button */}
           <div className="sm:mt-2 sm:pt-2 border-t border-gray-100">
             <button
               type="button"

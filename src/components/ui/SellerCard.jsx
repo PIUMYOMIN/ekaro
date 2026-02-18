@@ -7,7 +7,7 @@ const SellerCard = ({ seller }) => {
   const apiSeller = seller.originalData || seller;
   
   const storeName = apiSeller.store_name || 'Unknown Seller';
-  const storeSlug = apiSeller.store_slug || 'unknown-seller'; // fallback slug
+  const slug = apiSeller.store_slug;
   const displayRating = Number(apiSeller.reviews_avg_rating) || 0;
   const reviewsCount = apiSeller.reviews_count || 0;
   const productsCount = apiSeller.products_count || 0;
@@ -89,7 +89,7 @@ const SellerCard = ({ seller }) => {
           {/* Seller Info */}
           <div className="flex-1 min-w-0">
             {/* ✅ Use storeSlug for the link */}
-            <Link to={`/sellers/${storeSlug}`} className="block">
+            <Link to={`/sellers/${slug}`} className="block">
               <h3 className="text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
                 {storeName}
               </h3>
@@ -141,7 +141,7 @@ const SellerCard = ({ seller }) => {
 
         {/* ✅ View Store Button – also uses slug */}
         <Link
-          to={`/sellers/${storeSlug}`}
+          to={`/sellers/${slug}`}
           className="mt-4 w-full block text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
         >
           View Store

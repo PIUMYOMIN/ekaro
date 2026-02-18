@@ -40,7 +40,7 @@ function classNames(...classes) {
 
 const SellerProfile = () => {
   const { t } = useTranslation();
-  const { id } = useParams();
+  const { slug } = useParams();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -82,8 +82,7 @@ const SellerProfile = () => {
 
         // Fetch seller details
         try {
-          const sellerRes = await api.get(`/sellers/${id}`);
-          console.log("Fetched seller data:", sellerRes.data);
+          const sellerRes = await api.get(`/sellers/${slug}`);
           if (sellerRes.data.success && sellerRes.data.data) {
             const sellerData = sellerRes.data.data.seller;
             setSeller(sellerData);
@@ -123,7 +122,7 @@ const SellerProfile = () => {
     };
 
     fetchSellerData();
-  }, [id]);
+  }, [slug]);
 
   // Handle follow toggle
   const handleFollowToggle = async () => {
@@ -205,7 +204,7 @@ const SellerProfile = () => {
 
   // Handle share action
   const handleShare = async () => {
-    const slugOrId = seller.store_slug || seller.id;
+    const slugOrId = seller.store_slug;
     const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
     const shareTitle = seller.store_name;
     const shareText = seller.store_description || `Check out ${seller.store_name} on our marketplace`;
@@ -221,7 +220,7 @@ const SellerProfile = () => {
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('Share failed:', err);
-          setShowShareModal(true); // fallback to modal
+          setShowShareModal(true);
         }
       }
     } else {
@@ -232,7 +231,7 @@ const SellerProfile = () => {
 
   // Copy link to clipboard (for modal)
   const handleCopyLink = async () => {
-    const slugOrId = seller.store_slug || seller.id;
+    const slugOrId = seller.store_slug;
     const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -357,7 +356,7 @@ const SellerProfile = () => {
 
   // Share Modal Component
   const ShareModal = () => {
-    const slugOrId = seller.store_slug || seller.id;
+    const slugOrId = seller.store_slug;
     const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
     const shareTitle = seller.store_name;
 

@@ -214,6 +214,7 @@
     "search_filter": "Search: \"{{query}}\"",
     "category_filter": "Category: {{category}}",
     "all_products": "All Products",
+    "price_range": "Price Range",
     "no_more_products": "No more products to load",
     "category_products": "{{category}} Products",
     "search_results": "Search results for \"{{query}}\"",

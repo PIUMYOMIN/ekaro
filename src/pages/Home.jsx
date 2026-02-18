@@ -92,7 +92,7 @@ const Home = () => {
       // Just show categories with their children count
       const processedCategories = rootCategories.map((category) => ({
         ...category,
-        productCount: category.products_count || 0, // Use pre-calculated count if available
+        productCount: category.products_count || 0,
         childrenCount: category.children ? category.children.length : 0
       }));
 
@@ -324,7 +324,7 @@ const Home = () => {
             <ProductCard
               key={product.id}
               product={product}
-              onClick={() => navigate(`/products/${product.slug_en}`)} // ✅ uses slug_en
+              onClick={() => navigate(`/products/${product.slug_en}`)}
             />
           ))
         ) : (

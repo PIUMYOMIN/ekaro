@@ -211,6 +211,7 @@
     "search_filter": "ရှာဖွေမှု: \"{{query}}\"",
     "category_filter": "အမျိုးအစား: {{category}}",
     "all_products": "ကုန်ပစ္စည်းအားလုံး",
+    "price_range": "စျေးနှုန်း",
     "no_more_products": "ထပ်မံဖွင့်ရန် ကုန်ပစ္စည်းများ မရှိတော့ပါ",
     "category_products": "{{category}} ကုန်ပစ္စည်းများ",
     "search_results": "\"{{query}}\" အတွက် ရှာဖွေမှုရလဒ်များ",
