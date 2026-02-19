@@ -242,7 +242,7 @@
     "open_sidebar": "Open sidebar",
     "back_to_sellers": "Back to Sellers",
     "dashboard": "Dashboard",
-    "order":{
+    "order": {
       "title": "Orders",
       "subtitle": "Manage and process your orders",
       "no_orders": "No orders found",
@@ -267,7 +267,7 @@
       "manage_your_orders": "Manage and process your orders",
       "showing": "Showing"
     },
-    "product":{
+    "product": {
       "title": "products",
       "subtitle": "Manage and update your product listings",
       "all_products": "All Products",
@@ -277,7 +277,7 @@
       "manage_your_products": "Manage and update your product listings",
       "product_management": "Product Management"
     },
-    "delivery":{
+    "delivery": {
       "title": "delivery",
       "subtitle": "Manage and update your delivery"
     },
@@ -287,7 +287,7 @@
     "sales": "Sales",
     "customers_reviews": "Customers Reviews",
     "write_review": "Write a review",
-    "reviews":{
+    "reviews": {
       "title": "Reviews",
       "subtitle": "Read and manage customer reviews",
       "all_reviews": "All Reviews",
@@ -386,7 +386,57 @@
     "active": "Active",
     "out_of_stock": "Out of Stock",
     "draft": "Draft",
-    "archived": "Archived"
+    "archived": "Archived",
+    "discount": {
+      "title": "Discounts",
+      "subtitle": "Create and manage discount coupons for your products",
+      "management": "Discount Management",
+      "description": "Create and manage discount coupons for your products",
+      "create": "Create Discount",
+      "create_new": "Create New Discount",
+      "edit": "Edit Discount",
+      "cancel": "Cancel",
+      "name": "Discount Name",
+      "code": "Discount Code",
+      "type": "Discount Type",
+      "percentage": "Percentage (%)",
+      "fixed": "Fixed Amount",
+      "free_shipping": "Free Shipping",
+      "value": "Discount Value",
+      "percentage_value": "Percentage Value",
+      "fixed_amount": "Fixed Amount",
+      "min_order": "Minimum Order Amount",
+      "starts_at": "Starts At",
+      "expires_at": "Expires At",
+      "applicable_to": "Applicable To",
+      "all_products": "All Products",
+      "specific_products": "Specific Products",
+      "specific_categories": "Specific Categories",
+      "specific_sellers": "Specific Sellers",
+      "select_products": "Select Products",
+      "select_categories": "Select Categories",
+      "no_products": "You have no products yet.",
+      "no_categories": "No categories with products found. Create products first.",
+      "selected_products": "Selected Products",
+      "selected_categories": "Selected Categories",
+      "max_total_uses": "Maximum Total Uses",
+      "max_per_customer": "Max Uses Per Customer",
+      "one_time_use": "One-time use per customer",
+      "create_btn": "Create",
+      "update_btn": "Update",
+      "creating": "Creating...",
+      "discount": "Discount",
+      "applicable": "Applicable To",
+      "validity": "Validity",
+      "status": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actions": "Actions",
+      "delete_confirm": "Are you sure you want to delete this discount?",
+      "no_discounts": "No discounts found. Create your first discount!",
+      "used": "Used",
+      "free_shipping_text": "Free Shipping"
+    }
   },
   "sellers": {
     "title": "Our Sellers",
@@ -546,181 +596,171 @@
     "profile_updated": "Profile updated successfully",
     "password_changed": "Password changed successfully"
   },
-  "seller_onboarding":{
-    "storeBasicInfo":{
-        "title":"Store Basic Information",
-        "subtitle":"Provide basic details about your store",
-        "store":{
-          "logo":"Store Logo",
-          "banner":"Store Banner",
-          "label":"Store Name",
-          "name":"Store Name",
-          "placeholder":"Enter your store name",
-          "error":"Store name is required"
-        },
-        "businessType":{
-          "label":"Business Type",
-          "selectBusinessType":"Select business type",
-          "individual":"Individual",
-          "company":"Company",
-          "error":"Business type is required"
-        },
-        "contactEmail":{
-          "label":"Contact Email",
-          "placeholder":"Enter your contact email (optional)",
-          "error":"Please enter a valid email address"
-        },
-        "contactPhone":{
-          "label":"Contact Phone",
-          "placeholder":"Enter your contact phone number",
-          "error":"Please enter a valid Myanmar phone number"
-        },
-        "description":{
-          "label":"Store Description",
-          "placeholder":"Briefly describe your store (optional)",
-          "error":"Store description is required"
-        },
-        "storeCategory":{
-          "label":"Store Category",
-          "placeholder":"Select a category",
-          "error":"Store category is required"
-        },
-        "next":"Next",
-        "saving":"Saving..."
+  "seller_onboarding": {
+    "storeBasicInfo": {
+      "title": "Store Basic Information",
+      "subtitle": "Provide basic details about your store",
+      "store": {
+        "logo": "Store Logo",
+        "banner": "Store Banner",
+        "label": "Store Name",
+        "name": "Store Name",
+        "placeholder": "Enter your store name",
+        "error": "Store name is required"
       },
-      "businessDetails":{
-        "title":"Business Information",
-        "subtitle":"Provide your business details",
-        "businessType":{
-          "label":"Business Type",
-          "individual":"Individual",
-          "company":"Company",
-          "error":"Business type is required"
-        },
-        "registrationNumber":{
-          "label":"Registration Number",
-          "placeholder":"Enter your business registration number",
-          "error":"Registration number is required for companies"
-        },
-        "taxId":{
-          "label":"Tax ID",
-          "placeholder":"Enter your tax identification number",
-          "error":"Tax ID is required for companies"
-        },
-        "website":{
-          "label":"Website (optional)",
-          "placeholder":"Enter your business website URL",
-          "error":"Please enter a valid URL"
-        },
-        "accountNumber":{
-          "label":"Bank Account Number",
-          "placeholder":"Enter your bank account number",
-          "error":"Bank account number is required"
-        }
+      "businessType": {
+        "label": "Business Type",
+        "selectBusinessType": "Select business type",
+        "individual": "Individual",
+        "company": "Company",
+        "error": "Business type is required"
       },
-      "addressInfo":{
-        "title":"Store Address",
-        "subtitle":"Provide your store's address",
-        "address":{
-          "label":"Street Address",
-          "placeholder":"Enter your street address",
-          "error":"Street address is required"
-        },
-        "addressLine1":{
-          "label":"Address Line 1",
-          "placeholder":"Enter your street address",
-          "error":"Address Line 1 is required"
-        },
-        "addressLine2":{
-          "label":"Address Line 2",
-          "placeholder":"Apartment, suite, unit, building, floor, etc. (optional)"
-        },
-        "city":{
-          "label":"City",
-          "placeholder":"Enter your city",
-          "error":"City is required"
-        },
-        "stateRegion":{
-          "label":"State/Region",
-          "placeholder":"Enter your state or region",
-          "error":"State/Region is required"
-        },
-        "postalCode":{
-          "label":"Postal Code",
-          "placeholder":"Enter your postal code",
-          "error":"Postal code is required"
-        },
-        "country":{
-          "label":"Country",
-          "placeholder":"Select your country",
-          "error":"Country is required"
-        },
-        "next":"Next",
-        "back":"Back",
-        "saving":"Saving..."
+      "contactEmail": {
+        "label": "Contact Email",
+        "placeholder": "Enter your contact email (optional)",
+        "error": "Please enter a valid email address"
       },
-      "next":"Next",
-      "back":"Back",
-      "saving":"Saving...",
-      "continue":"Continue"
+      "contactPhone": {
+        "label": "Contact Phone",
+        "placeholder": "Enter your contact phone number",
+        "error": "Please enter a valid Myanmar phone number"
+      },
+      "description": {
+        "label": "Store Description",
+        "placeholder": "Briefly describe your store (optional)",
+        "error": "Store description is required"
+      },
+      "storeCategory": {
+        "label": "Store Category",
+        "placeholder": "Select a category",
+        "error": "Store category is required"
+      },
+      "next": "Next",
+      "saving": "Saving..."
+    },
+    "businessDetails": {
+      "title": "Business Information",
+      "subtitle": "Provide your business details",
+      "businessType": {
+        "label": "Business Type",
+        "individual": "Individual",
+        "company": "Company",
+        "error": "Business type is required"
+      },
+      "registrationNumber": {
+        "label": "Registration Number",
+        "placeholder": "Enter your business registration number",
+        "error": "Registration number is required for companies"
+      },
+      "taxId": {
+        "label": "Tax ID",
+        "placeholder": "Enter your tax identification number",
+        "error": "Tax ID is required for companies"
+      },
+      "website": {
+        "label": "Website (optional)",
+        "placeholder": "Enter your business website URL",
+        "error": "Please enter a valid URL"
+      },
+      "accountNumber": {
+        "label": "Bank Account Number",
+        "placeholder": "Enter your bank account number",
+        "error": "Bank account number is required"
+      }
+    },
+    "addressInfo": {
+      "title": "Store Address",
+      "subtitle": "Provide your store's address",
+      "address": {
+        "label": "Street Address",
+        "placeholder": "Enter your street address",
+        "error": "Street address is required"
+      },
+      "addressLine1": {
+        "label": "Address Line 1",
+        "placeholder": "Enter your street address",
+        "error": "Address Line 1 is required"
+      },
+      "addressLine2": {
+        "label": "Address Line 2",
+        "placeholder": "Apartment, suite, unit, building, floor, etc. (optional)"
+      },
+      "city": {
+        "label": "City",
+        "placeholder": "Enter your city",
+        "error": "City is required"
+      },
+      "stateRegion": {
+        "label": "State/Region",
+        "placeholder": "Enter your state or region",
+        "error": "State/Region is required"
+      },
+      "postalCode": {
+        "label": "Postal Code",
+        "placeholder": "Enter your postal code",
+        "error": "Postal code is required"
+      },
+      "country": {
+        "label": "Country",
+        "placeholder": "Select your country",
+        "error": "Country is required"
+      },
+      "next": "Next",
+      "back": "Back",
+      "saving": "Saving..."
+    },
+    "next": "Next",
+    "back": "Back",
+    "saving": "Saving...",
+    "continue": "Continue"
   },
   "roles": {
     "buyer": "Buyer",
-    "seller": "Seller", 
+    "seller": "Seller",
     "admin": "Administrator"
   },
   "store_basic": {
     "title": "Store Basic Information",
     "description": "Let's start by setting up your store's basic information",
     "continue_business": "Continue to Business Details",
-
     "store_logo": "Store Logo",
     "upload_logo": "Upload Logo",
     "uploading": "Uploading...",
     "remove": "Remove",
     "logo_recommended": "Recommended: 400x400px, Max 2MB (JPG, PNG, SVG)",
-
     "store_banner": "Store Banner (Optional)",
     "upload_banner": "Upload Banner",
     "banner_recommended": "Recommended: 1200x300px, Max 5MB (JPG, PNG)",
-
     "store_name": "Store Name",
     "enter_store_name": "Enter your store name",
     "store_name_required": "Store name is required",
     "store_name_min": "Store name must be at least 2 characters",
     "store_name_hint": "This will appear as your store's public name",
-
     "business_type": "Business Type",
     "select_business_type": "Select business type",
     "business_type_required": "Business type is required",
-
     "contact_email": "Contact Email",
     "email_required": "Contact email is required",
     "invalid_email": "Invalid email address",
     "email_hint": "This email will be used for store-related communications",
-
     "contact_phone": "Contact Phone",
     "phone_required": "Contact phone is required",
     "invalid_phone": "Invalid phone number",
     "phone_hint": "Include country code (e.g., +95 for Myanmar)",
-
     "store_description": "Store Description (Optional)",
     "description_placeholder": "Describe your store and what you offer...",
     "description_limit": "Description must be less than 2000 characters",
     "description_hint": "This will be displayed on your store page. Max 2000 characters.",
-
     "document_requirements": "Document Requirements",
     "required": "Required",
     "optional": "Optional",
     "no_documents": "No specific document requirements",
-
     "form_status": "Form Status",
     "logo_uploaded": "Uploaded",
     "logo_required": "Required",
     "banner_uploaded": "Uploaded",
     "banner_optional": "Optional",
     "required_mark": "Required fields are marked with *",
-
     "error_store_name": "Store name is required",
     "error_business_type": "Please select a business type",
     "error_email": "Contact email is required",

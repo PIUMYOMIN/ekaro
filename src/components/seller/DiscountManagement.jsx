@@ -14,7 +14,7 @@ import { useAuth } from "../../context/AuthContext"; // ✅ import auth
 
 const DiscountManagement = () => {
   const { t } = useTranslation();
-  const { user } = useAuth(); // ✅ get current user
+  const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
   const [discounts, setDiscounts] = useState([]);
@@ -277,8 +277,8 @@ const DiscountManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Discount Management</h2>
-          <p className="text-gray-600">Create and manage discount coupons for your products</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('seller.discount.title')}</h2>
+          <p className="text-gray-600">{t('seller.discount.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -288,13 +288,13 @@ const DiscountManagement = () => {
           className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
         >
           <PlusIcon className="h-5 w-5" />
-          <span>{showForm ? "Cancel" : "Create Discount"}</span>
+          <span>{showForm ? t('common.cancel') : t('seller.discount.create')}</span>
         </button>
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
+          {t('common.error')}: {error}
         </div>
       )}
 
@@ -302,14 +302,14 @@ const DiscountManagement = () => {
       {showForm && (
         <div className="bg-white rounded-lg shadow border p-6">
           <h3 className="text-lg font-semibold mb-4">
-            {editingDiscount ? "Edit Discount" : "Create New Discount"}
+            {editingDiscount ? t('seller.discount.edit') : t('seller.discount.createNew')}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Discount Name *
+                  {t('seller.discount.name')} *
                 </label>
                 <input
                   type="text"
@@ -318,13 +318,13 @@ const DiscountManagement = () => {
                   onChange={handleChange}
                   required
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="e.g., Summer Sale 2024"
+                  placeholder={t('seller.discount.namePlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Discount Code (Optional)
+                  {t('seller.discount.code')}
                 </label>
                 <input
                   type="text"
@@ -332,10 +332,10 @@ const DiscountManagement = () => {
                   value={formData.code}
                   onChange={handleChange}
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="e.g., SUMMER24"
+                  placeholder={t('seller.discount.codePlaceholder')}
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Leave empty to auto-generate
+                  {t('seller.discount.codeHint')}
                 </p>
               </div>
             </div>
@@ -343,7 +343,7 @@ const DiscountManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Discount Type *
+                  {t('seller.discount.type')} *
                 </label>
                 <select
                   name="type"
@@ -352,20 +352,20 @@ const DiscountManagement = () => {
                   required
                   className="w-full border rounded-lg px-3 py-2"
                 >
-                  <option value="" disabled>Select discount type</option>
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount</option>
-                  <option value="free_shipping">Free Shipping</option>
+                  <option value="" disabled>{t('seller.discount.selectType')}</option>
+                  <option value="percentage">{t('seller.discount.percentage')}</option>
+                  <option value="fixed">{t('seller.discount.fixed')}</option>
+                  <option value="free_shipping">{t('seller.discount.freeShipping')}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {formData.type === "percentage"
-                    ? "Percentage Value"
+                    ? t('seller.discount.percentageValue')
                     : formData.type === "fixed"
-                    ? "Fixed Amount"
-                    : "Discount Value"}
+                    ? t('seller.discount.fixedAmount')
+                    : t('seller.discount.value')}
                 </label>
                 <input
                   type="number"
@@ -379,17 +379,17 @@ const DiscountManagement = () => {
                   className="w-full border rounded-lg px-3 py-2"
                   placeholder={
                     formData.type === "percentage"
-                      ? "e.g., 20"
+                      ? t('seller.discount.percentagePlaceholder')
                       : formData.type === "fixed"
-                      ? "e.g., 5000"
-                      : "Not required"
+                      ? t('seller.discount.fixedPlaceholder')
+                      : t('seller.discount.notRequired')
                   }
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Order Amount
+                  {t('seller.discount.minOrder')}
                 </label>
                 <input
                   type="number"
@@ -399,7 +399,7 @@ const DiscountManagement = () => {
                   min="0"
                   step="0.01"
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="e.g., 10000"
+                  placeholder={t('seller.discount.minOrderPlaceholder')}
                 />
               </div>
             </div>
@@ -407,7 +407,7 @@ const DiscountManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Starts At *
+                  {t('seller.discount.startsAt')} *
                 </label>
                 <input
                   type="date"
@@ -421,7 +421,7 @@ const DiscountManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expires At *
+                  {t('seller.discount.expiresAt')} *
                 </label>
                 <input
                   type="date"
@@ -436,7 +436,7 @@ const DiscountManagement = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Applicable To *
+                {t('seller.discount.applicableTo')} *
               </label>
               <select
                 name="applicable_to"
@@ -447,16 +447,16 @@ const DiscountManagement = () => {
                 {isAdmin ? (
                   // Admin sees all options
                   <>
-                    <option value="all_products">All Products</option>
-                    <option value="specific_products">Specific Products</option>
-                    <option value="specific_categories">Specific Categories</option>
-                    <option value="specific_sellers">Specific Sellers</option>
+                    <option value="all_products">{t('seller.discount.allProducts')}</option>
+                    <option value="specific_products">{t('seller.discount.specificProducts')}</option>
+                    <option value="specific_categories">{t('seller.discount.specificCategories')}</option>
+                    <option value="specific_sellers">{t('seller.discount.specificSellers')}</option>
                   </>
                 ) : (
                   // Seller sees only their own options
                   <>
-                    <option value="specific_products">Specific Products</option>
-                    <option value="specific_categories">Specific Categories</option>
+                    <option value="specific_products">{t('seller.discount.specificProducts')}</option>
+                    <option value="specific_categories">{t('seller.discount.specificCategories')}</option>
                   </>
                 )}
               </select>
@@ -466,11 +466,11 @@ const DiscountManagement = () => {
             {formData.applicable_to === "specific_products" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Products
+                  {t('seller.discount.selectProducts')}
                 </label>
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
                   {products.length === 0 ? (
-                    <p className="text-gray-500 text-sm">You have no products yet.</p>
+                    <p className="text-gray-500 text-sm">{t('seller.discount.noProducts')}</p>
                   ) : (
                     products.map((product) => (
                       <div key={product.id} className="flex items-center mb-2">
@@ -489,7 +489,7 @@ const DiscountManagement = () => {
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  Selected: {formData.applicable_product_ids.length} products
+                  {t('seller.discount.selected')}: {formData.applicable_product_ids.length} {t('seller.discount.products')}
                 </p>
               </div>
             )}
@@ -498,12 +498,12 @@ const DiscountManagement = () => {
             {formData.applicable_to === "specific_categories" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Categories
+                  {t('seller.discount.selectCategories')}
                 </label>
                 <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
                   {relevantCategories.length === 0 ? (
                     <p className="text-gray-500 text-sm">
-                      No categories with products found. Create products first.
+                      {t('seller.discount.noCategories')}
                     </p>
                   ) : (
                     relevantCategories.map((category) => (
@@ -523,7 +523,7 @@ const DiscountManagement = () => {
                   )}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                  Selected: {formData.applicable_category_ids.length} categories
+                  {t('seller.discount.selected')}: {formData.applicable_category_ids.length} {t('seller.discount.categories')}
                 </p>
               </div>
             )}
@@ -531,7 +531,7 @@ const DiscountManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Maximum Total Uses
+                  {t('seller.discount.maxTotalUses')}
                 </label>
                 <input
                   type="number"
@@ -540,13 +540,13 @@ const DiscountManagement = () => {
                   onChange={handleChange}
                   min="1"
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="Leave empty for unlimited"
+                  placeholder={t('seller.discount.leaveEmpty')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Uses Per Customer
+                  {t('seller.discount.maxPerCustomer')}
                 </label>
                 <input
                   type="number"
@@ -555,7 +555,7 @@ const DiscountManagement = () => {
                   onChange={handleChange}
                   min="1"
                   className="w-full border rounded-lg px-3 py-2"
-                  placeholder="Leave empty for unlimited"
+                  placeholder={t('seller.discount.leaveEmpty')}
                 />
               </div>
             </div>
@@ -570,7 +570,7 @@ const DiscountManagement = () => {
                 className="h-4 w-4 text-green-600"
               />
               <label htmlFor="is_one_time_use" className="text-sm">
-                One-time use per customer
+                {t('seller.discount.oneTimeUse')}
               </label>
             </div>
 
@@ -583,14 +583,14 @@ const DiscountManagement = () => {
                 }}
                 className="px-4 py-2 border rounded-lg"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Creating..." : editingDiscount ? "Update Discount" : "Create Discount"}
+                {submitting ? t('seller.discount.creating') : editingDiscount ? t('seller.discount.update') : t('seller.discount.create')}
               </button>
             </div>
           </form>
@@ -604,22 +604,22 @@ const DiscountManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Discount
+                  {t('seller.discount.discount')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Type
+                  {t('seller.discount.type')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Applicable To
+                  {t('seller.discount.applicable')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Validity
+                  {t('seller.discount.validity')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
+                  {t('seller.discount.status')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -627,7 +627,7 @@ const DiscountManagement = () => {
               {discounts.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                    No discounts found. Create your first discount!
+                    {t('seller.discount.no_discounts')}
                   </td>
                 </tr>
               ) : (
@@ -637,7 +637,7 @@ const DiscountManagement = () => {
                       <div>
                         <div className="font-medium text-gray-900">{discount.name}</div>
                         {discount.code && (
-                          <div className="text-sm text-gray-500">Code: {discount.code}</div>
+                          <div className="text-sm text-gray-500">{t('seller.discount.code')}: {discount.code}</div>
                         )}
                       </div>
                     </td>
@@ -662,7 +662,7 @@ const DiscountManagement = () => {
                           </div>
                           {discount.min_order && (
                             <div className="text-sm text-gray-500">
-                              Min: {discount.min_order} MMK
+                              {t('seller.discount.min')}: {discount.min_order} MMK
                             </div>
                           )}
                         </div>
@@ -672,7 +672,7 @@ const DiscountManagement = () => {
                       <div className="text-sm">{getApplicableText(discount)}</div>
                       {discount.max_uses_total && (
                         <div className="text-xs text-gray-500">
-                          Used: {discount.used_count || 0}/{discount.max_uses_total}
+                          {t('seller.discount.used')}: {discount.used_count || 0}/{discount.max_uses_total}
                         </div>
                       )}
                     </td>
@@ -697,7 +697,7 @@ const DiscountManagement = () => {
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {discount.is_active ? "Active" : "Inactive"}
+                        {discount.is_active ? t('seller.discount.active') : t('seller.discount.inactive')}
                       </button>
                     </td>
                     <td className="px-6 py-4">
