@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
+import { WishlistProvider } from "./context/WishlistContext";
 
 // Layout
 import Header from "./components/layout/Header";
@@ -72,7 +73,8 @@ function App() {
   return <I18nextProvider i18n={i18n}>
     <AuthProvider>
       <CartProvider>
-        <Router>
+        <WishlistProvider>
+          <Router>
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow">
@@ -208,6 +210,7 @@ function App() {
             <Footer />
           </div>
         </Router>
+        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   </I18nextProvider>;
