@@ -3,86 +3,74 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <link rel="icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0F9D58" />
+  <meta name="theme-color" content="#16a34a" />
 
   <!-- Primary SEO -->
-  <title>Pyonea | Smart Digital Marketplace & Technology Solutions</title>
-
+  <title>Pyonea | Smart Digital Marketplace</title>
   <meta name="description"
-    content="Pyonea is a modern digital marketplace providing secure online trading, smart business solutions, and innovative technology services to help individuals and businesses grow." />
-
-  <meta name="keywords"
-    content="Pyonea, digital marketplace, Myanmar marketplace, online trading platform, e-commerce, business solutions, technology platform" />
-
+    content="Pyonea is a smart digital marketplace connecting buyers and sellers. Explore quality products, grow your business, and shop securely online." />
+  <meta name="keywords" content="Pyonea, Myanmar marketplace, online shopping, digital marketplace, B2B platform" />
   <meta name="author" content="Pyonea" />
   <meta name="robots" content="index, follow" />
+<!-- Canonical -->
   <link rel="canonical" href="https://pyonea.com/" />
 
-  <!-- Open Graph (Facebook / LinkedIn) -->
+  <!-- Open Graph (Facebook, Messenger, LinkedIn) -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Pyonea | Smart Digital Marketplace" />
   <meta property="og:description"
-    content="Connecting people and businesses through secure digital solutions and modern online trading." />
-  <meta property="og:image" content="https://pyonea.com/logo.png" />
+    content="Explore products, connect with sellers, and grow your business with Pyonea." />
   <meta property="og:url" content="https://pyonea.com/" />
   <meta property="og:site_name" content="Pyonea" />
+  <meta property="og:image" content="https://pyonea.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Pyonea | Smart Digital Marketplace" />
-  <meta name="twitter:description" content="Secure, smart, and simple digital marketplace for modern business." />
-  <meta name="twitter:image" content="https://pyonea.com/logo.png" />
+  <meta name="twitter:description" content="Smart digital marketplace connecting buyers and sellers." />
+  <meta name="twitter:image" content="https://pyonea.com/og-image.png" />
 
-  <!-- Favicon & PWA -->
-  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.png" />
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <!-- Apple -->
+  <link rel="apple-touch-icon" href="/logo192.png" />
 
-  <!-- Multi-language (prepare for future) -->
-  <link rel="alternate" hreflang="en" href="https://pyonea.com/" />
-  <link rel="alternate" hreflang="my" href="https://pyonea.com/my/" />
-  <link rel="alternate" hreflang="x-default" href="https://pyonea.com/" />
+  <!-- Manifest (PWA) -->
+  <link rel="manifest" href="/manifest.json" />
   
-  <!-- Structured Data (Schema.org for Google SEO) -->
+  <!-- Google Analytics (Replace G-XXXXXXXXXX) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+  <!-- Structured Data -->
   <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "Pyonea",
-          "url": "https://pyonea.com",
-          "logo": "https://pyonea.com/logo.png",
-          "description": "Pyonea is a modern digital marketplace providing secure online trading and technology-driven business solutions.",
-          "sameAs": [
-            "https://www.facebook.com/pyoneaofficial",
-            "https://www.instagram.com/pyoneaofficial",
-            "https://www.youtube.com/@PyoneaOfficial",
-            "https://twitter.com/PyoneaOfficial"
-          ]
-        }
-      </script>
-  
-  <!-- Google Analytics (Replace G-XXXXXXXXXX with your ID) -->
-  <!--
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-      <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
-      </script>
-      -->
-
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Pyonea",
+      "url": "https://pyonea.com",
+      "logo": "https://pyonea.com/logo.png",
+      "sameAs": [
+        "https://www.facebook.com/pyoneaofficial",
+        "https://www.instagram.com/pyoneaofficial",
+        "https://www.tiktok.com/@pyoneaofficial",
+        "https://twitter.com/PyoneaOfficial",
+        "https://www.youtube.com/@PyoneaOfficial"
+      ]
+    }
+    </script>
 </head>
 
 <body>
-  <noscript>
-    Pyonea requires JavaScript to run. Please enable JavaScript in your browser.
-  </noscript>
-
+  <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
-
 </body>
 
 </html>
