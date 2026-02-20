@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+// src/context/CartContext.jsx
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { useAuth } from './AuthContext';
 
@@ -13,49 +14,64 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
+  const [subtotal, setSubtotal] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [cartSummary, setCartSummary] = useState({
+    shipping_fee: 0,
+    tax_rate: 0,
+    tax: 0,
+    total: 0
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
 
   // Fetch cart items from backend
-  const fetchCartItems = async () => {
-  if (!user) {
-    setCartItems([]);
-    setSubtotal(0);
-    setTotalItems(0);
-    return;
-  }
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await api.get('/cart');
-    console.log('Cart API response:', response.data); // debug
+  const fetchCartItems = useCallback(async () => {
+    if (!user) {
+      setCartItems([]);
+      setSubtotal(0);
+      setTotalItems(0);
+      setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+      return;
+    }
 
-    // Extract data from new structure
-    const cartData = response.data.data;
-    const items = cartData?.cart_items || [];
-    const subtotal = cartData?.subtotal || 0;
-    const totalItems = cartData?.total_items || 0;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/cart');
+      console.log('Cart API response:', response.data);
 
-    setCartItems(items);
-    setSubtotal(subtotal);
-    setTotalItems(totalItems);
-    // Also update summary if you use it
-    setCartSummary(cartData?.summary);
-  } catch (error) {
-    console.error('Failed to fetch cart items:', error);
-    setError(error.response?.data?.message || 'Failed to fetch cart items');
-    setCartItems([]);
-    setSubtotal(0);
-    setTotalItems(0);
-  } finally {
-    setLoading(false);
-  }
-};
+      const cartData = response.data.data || {};
+      const items = cartData.cart_items || [];
+      const subtotalValue = cartData.subtotal || 0;
+      const totalItemsValue = cartData.total_items || 0;
+      const summary = cartData.summary || {
+        shipping_fee: 0,
+        tax_rate: 0,
+        tax: 0,
+        total: 0
+      };
+
+      setCartItems(items);
+      setSubtotal(subtotalValue);
+      setTotalItems(totalItemsValue);
+      setCartSummary(summary);
+    } catch (err) {
+      console.error('Failed to fetch cart items:', err);
+      setError(err.response?.data?.message || 'Failed to fetch cart items');
+      setCartItems([]);
+      setSubtotal(0);
+      setTotalItems(0);
+      setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   // Add item to cart
-  const addToCart = async (product) => {
+  const addToCart = async (productId, quantity = 1) => {
     if (!user) {
       throw new Error('Please login to add items to cart');
     }
@@ -63,28 +79,20 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      await api.post('/cart', { product_id: productId, quantity });
-    await fetchCartItems(); // ✅ refresh cart
-    return { success: true };
+      const response = await api.post('/cart', {
+        product_id: productId,
+        quantity
+      });
 
-      // Refresh cart items
+      // Refresh cart after successful add
       await fetchCartItems();
 
       return {
         success: true,
         message: response.data.message || 'Product added to cart successfully'
       };
-    } catch (error) {
-      let errorMessage = 'Failed to add product to cart';
-
-      if (error.response?.status === 403) {
-        errorMessage = 'Cart functionality not available for your account type';
-      } else if (error.response?.status === 400) {
-        errorMessage = error.response.data.message || errorMessage;
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Server error while adding to cart';
-      }
-
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to add product to cart';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -93,7 +101,7 @@ export const CartProvider = ({ children }) => {
   };
 
   // Update quantity
-  const updateQuantity = async (cartItemId, quantity) => {
+  const updateQuantity = async (cartItemId, newQuantity) => {
     if (!user) {
       throw new Error('Please login to update cart');
     }
@@ -101,12 +109,10 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      await api.put(`/cart/${cartItemId}`, { quantity });
-
-      // Refresh cart items
-      await fetchCartItems();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to update quantity';
+      await api.put(`/cart/${cartItemId}`, { quantity: newQuantity });
+      await fetchCartItems(); // refresh
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to update quantity';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -114,7 +120,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Remove from cart
+  // Remove item from cart
   const removeFromCart = async (cartItemId) => {
     if (!user) {
       throw new Error('Please login to modify cart');
@@ -124,11 +130,9 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await api.delete(`/cart/${cartItemId}`);
-
-      // Refresh cart items
-      await fetchCartItems();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to remove item from cart';
+      await fetchCartItems(); // refresh
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to remove item from cart';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -136,7 +140,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Clear cart
+  // Clear entire cart
   const clearCart = async () => {
     if (!user) {
       throw new Error('Please login to clear cart');
@@ -146,11 +150,9 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await api.post('/cart/clear');
-
-      // Refresh cart items
-      await fetchCartItems();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to clear cart';
+      await fetchCartItems(); // refresh
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to clear cart';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -158,35 +160,22 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((total, item) => {
-    return total + (Number(item.price) * Number(item.quantity));
-  }, 0);
-
-  const totalItems = cartItems.reduce((total, item) => {
-    return total + Number(item.quantity);
-  }, 0);
-
-  // Initialize cart when user changes
+  // Initial fetch when user changes
   useEffect(() => {
-    if (user) {
-      fetchCartItems();
-    } else {
-      setCartItems([]);
-    }
-  }, [user]);
+    fetchCartItems();
+  }, [fetchCartItems]);
 
   const value = {
     cartItems,
-    loading,
-    error,
+    cartSummary,
     subtotal,
     totalItems,
+    loading,
+    error,
     addToCart,
     updateQuantity,
     removeFromCart,
     clearCart,
-    fetchCartItems,
     refetchCart: fetchCartItems
   };
 
