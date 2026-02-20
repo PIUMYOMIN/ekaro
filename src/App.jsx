@@ -77,7 +77,8 @@ function App() {
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow">
-              <Routes>
+              <WishlistProvider>
+                <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<ProductList />} />
@@ -205,6 +206,7 @@ function App() {
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<Error />} />
               </Routes>
+              </WishlistProvider>
             </main>
             <Footer />
           </div>

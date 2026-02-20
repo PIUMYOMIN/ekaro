@@ -20,34 +20,39 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart items from backend
   const fetchCartItems = async () => {
-    // Don't fetch cart if user is not logged in
-    if (!user) {
-      setCartItems([]);
-      return;
-    }
+  if (!user) {
+    setCartItems([]);
+    setSubtotal(0);
+    setTotalItems(0);
+    return;
+  }
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await api.get('/cart');
+    console.log('Cart API response:', response.data); // debug
 
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get('/cart');
-      setCartItems(response.data.data.cart_items || []);
-    } catch (error) {
-      // Handle 403 (Forbidden) gracefully - should not happen now but keep for safety
-      if (error.response?.status === 403) {
-        console.log('Cart access not available');
-        setCartItems([]);
-      } else if (error.response?.status === 500) {
-        console.error('Server error fetching cart:', error);
-        setError('Server error while loading cart');
-      } else {
-        console.error('Failed to fetch cart items:', error);
-        setError(error.response?.data?.message || 'Failed to fetch cart items');
-      }
-      setCartItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Extract data from new structure
+    const cartData = response.data.data;
+    const items = cartData?.cart_items || [];
+    const subtotal = cartData?.subtotal || 0;
+    const totalItems = cartData?.total_items || 0;
+
+    setCartItems(items);
+    setSubtotal(subtotal);
+    setTotalItems(totalItems);
+    // Also update summary if you use it
+    setCartSummary(cartData?.summary);
+  } catch (error) {
+    console.error('Failed to fetch cart items:', error);
+    setError(error.response?.data?.message || 'Failed to fetch cart items');
+    setCartItems([]);
+    setSubtotal(0);
+    setTotalItems(0);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Add item to cart
   const addToCart = async (product) => {
@@ -58,10 +63,9 @@ export const CartProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post('/cart', {
-        product_id: product.id,
-        quantity: product.quantity || 1
-      });
+      await api.post('/cart', { product_id: productId, quantity });
+    await fetchCartItems(); // ✅ refresh cart
+    return { success: true };
 
       // Refresh cart items
       await fetchCartItems();
@@ -72,7 +76,7 @@ export const CartProvider = ({ children }) => {
       };
     } catch (error) {
       let errorMessage = 'Failed to add product to cart';
-      
+
       if (error.response?.status === 403) {
         errorMessage = 'Cart functionality not available for your account type';
       } else if (error.response?.status === 400) {
@@ -80,7 +84,7 @@ export const CartProvider = ({ children }) => {
       } else if (error.response?.status === 500) {
         errorMessage = 'Server error while adding to cart';
       }
-      
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -98,7 +102,7 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await api.put(`/cart/${cartItemId}`, { quantity });
-      
+
       // Refresh cart items
       await fetchCartItems();
     } catch (error) {
@@ -120,7 +124,7 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await api.delete(`/cart/${cartItemId}`);
-      
+
       // Refresh cart items
       await fetchCartItems();
     } catch (error) {
@@ -142,7 +146,7 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await api.post('/cart/clear');
-      
+
       // Refresh cart items
       await fetchCartItems();
     } catch (error) {
@@ -158,7 +162,7 @@ export const CartProvider = ({ children }) => {
   const subtotal = cartItems.reduce((total, item) => {
     return total + (Number(item.price) * Number(item.quantity));
   }, 0);
-  
+
   const totalItems = cartItems.reduce((total, item) => {
     return total + Number(item.quantity);
   }, 0);

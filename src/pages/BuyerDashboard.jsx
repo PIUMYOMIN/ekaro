@@ -20,7 +20,11 @@ import {
   ChartBarIcon,
   HomeIcon,
   DocumentTextIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 
@@ -43,313 +47,7 @@ function formatDate(dateString) {
   });
 }
 
-// Enhanced Order Tracking Component
-const EnhancedOrderTracking = ({ order }) => {
-  const [delivery, setDelivery] = useState(null);
-  const [trackingUpdates, setTrackingUpdates] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchDeliveryInfo();
-  }, [order]);
-
-  const fetchDeliveryInfo = async () => {
-    try {
-      setLoading(true);
-      // Fetch delivery information for this order
-      const response = await api.get(`/dashboard/deliveries?order_id=${order.id}`);
-      const deliveries = response.data.data?.data || response.data.data || [];
-      
-      if (deliveries.length > 0) {
-        const orderDelivery = deliveries.find(d => d.order_id === order.id) || deliveries[0];
-        setDelivery(orderDelivery);
-        
-        // Fetch tracking updates if available
-        if (orderDelivery.id) {
-          try {
-            const trackingResponse = await api.get(`/dashboard/deliveries/${orderDelivery.id}/tracking`);
-            setTrackingUpdates(trackingResponse.data.data?.updates || []);
-          } catch (error) {
-            console.error("Failed to fetch tracking updates:", error);
-            setTrackingUpdates([]);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch delivery info:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getDeliveryProgressSteps = (status) => {
-    const steps = [
-      { 
-        key: 'order_placed', 
-        label: 'Order Placed', 
-        completed: true,
-        description: 'Your order has been confirmed',
-        icon: CheckCircleIcon
-      },
-      { 
-        key: 'awaiting_pickup', 
-        label: 'Awaiting Pickup', 
-        completed: ['awaiting_pickup', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered'].includes(status),
-        description: 'Seller is preparing your order',
-        icon: ClockIcon
-      },
-      { 
-        key: 'picked_up', 
-        label: 'Picked Up', 
-        completed: ['picked_up', 'in_transit', 'out_for_delivery', 'delivered'].includes(status),
-        description: 'Package picked up from seller',
-        icon: TruckIcon
-      },
-      { 
-        key: 'in_transit', 
-        label: 'In Transit', 
-        completed: ['in_transit', 'out_for_delivery', 'delivered'].includes(status),
-        description: 'Package is on the way',
-        icon: TruckIcon
-      },
-      { 
-        key: 'out_for_delivery', 
-        label: 'Out for Delivery', 
-        completed: ['out_for_delivery', 'delivered'].includes(status),
-        description: 'Package is out for delivery today',
-        icon: TruckIcon
-      },
-      { 
-        key: 'delivered', 
-        label: 'Delivered', 
-        completed: status === 'delivered',
-        description: 'Package delivered successfully',
-        icon: CheckCircleIcon
-      }
-    ];
-    return steps;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
-
-  if (!delivery) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-        <ClockIcon className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-yellow-800 mb-2">
-          Tracking Information Pending
-        </h3>
-        <p className="text-yellow-700">
-          The seller is preparing your order. Tracking information will be available soon.
-        </p>
-      </div>
-    );
-  }
-
-  const progressSteps = getDeliveryProgressSteps(delivery.status);
-  const currentStepIndex = progressSteps.findIndex(step => 
-    step.key === delivery.status || 
-    (delivery.status === 'pending' && step.key === 'order_placed') ||
-    (delivery.status === 'confirmed' && step.key === 'awaiting_pickup') ||
-    (delivery.status === 'processing' && step.key === 'awaiting_pickup')
-  );
-
-  return (
-    <div className="space-y-6">
-      {/* Current Status */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              delivery.status === 'delivered' ? 'bg-green-100' : 
-              delivery.status === 'out_for_delivery' ? 'bg-orange-100' :
-              delivery.status === 'in_transit' ? 'bg-purple-100' :
-              'bg-blue-100'
-            }`}>
-              <TruckIcon className={`h-6 w-6 ${
-                delivery.status === 'delivered' ? 'text-green-600' : 
-                delivery.status === 'out_for_delivery' ? 'text-orange-600' :
-                delivery.status === 'in_transit' ? 'text-purple-600' :
-                'text-blue-600'
-              }`} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {delivery.delivery_method === 'platform' ? 'Platform Logistics' : 'Seller Delivery'}
-              </h3>
-              <p className="text-gray-600">
-                {delivery.tracking_number ? `Tracking #: ${delivery.tracking_number}` : 'Tracking number will be assigned soon'}
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Current Status</p>
-            <p className="text-lg font-semibold text-green-600 capitalize">
-              {delivery.status.replace('_', ' ')}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Visualization */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-6">Delivery Progress</h4>
-        <div className="flex items-center justify-between relative">
-          {/* Progress Line */}
-          <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 -z-10">
-            <div 
-              className="h-1 bg-green-500 transition-all duration-500"
-              style={{ 
-                width: `${(currentStepIndex / (progressSteps.length - 1)) * 100}%` 
-              }}
-            ></div>
-          </div>
-          
-          {progressSteps.map((step, index) => {
-            const StepIcon = step.icon;
-            const isCompleted = step.completed;
-            const isCurrent = index === currentStepIndex;
-            
-            return (
-              <div key={step.key} className="flex flex-col items-center flex-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                  isCompleted 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : isCurrent
-                    ? 'bg-white border-green-500 text-green-500'
-                    : 'bg-white border-gray-300 text-gray-400'
-                }`}>
-                  <StepIcon className="h-5 w-5" />
-                </div>
-                <div className="mt-3 text-center">
-                  <p className={`text-sm font-medium ${
-                    isCompleted ? 'text-green-700' : 
-                    isCurrent ? 'text-green-600' : 'text-gray-500'
-                  }`}>
-                    {step.label}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1 max-w-[100px]">{step.description}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Tracking Updates */}
-      {trackingUpdates.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-4">Tracking History</h4>
-          <div className="space-y-4">
-            {trackingUpdates.map((update, index) => (
-              <div key={update.id || index} className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <DocumentTextIcon className="h-4 w-4 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 capitalize">
-                      {update.status?.replace('_', ' ') || 'Status Update'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {update.created_at ? new Date(update.created_at).toLocaleString() : 'Recent'}
-                    </p>
-                  </div>
-                  {update.notes && (
-                    <p className="text-sm text-gray-600 mt-1">{update.notes}</p>
-                  )}
-                  {update.location && (
-                    <div className="flex items-center mt-1 text-xs text-gray-500">
-                      <MapPinIcon className="h-3 w-3 mr-1" />
-                      {update.location}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Delivery Information */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h5 className="text-sm font-medium text-gray-700 mb-2">Delivery Method</h5>
-            <div className="flex items-center space-x-2">
-              {delivery.delivery_method === 'platform' ? (
-                <>
-                  <BuildingStorefrontIcon className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-gray-900">Platform Logistics</span>
-                </>
-              ) : (
-                <>
-                  <TruckIcon className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-900">Seller Delivery</span>
-                </>
-              )}
-            </div>
-          </div>
-          
-          <div>
-            <h5 className="text-sm font-medium text-gray-700 mb-2">Estimated Delivery</h5>
-            <p className="text-sm text-gray-900">
-              {delivery.estimated_delivery_date 
-                ? new Date(delivery.estimated_delivery_date).toLocaleDateString()
-                : 'To be confirmed'
-              }
-            </p>
-          </div>
-
-          {delivery.assigned_driver_name && (
-            <div className="md:col-span-2">
-              <h5 className="text-sm font-medium text-gray-700 mb-2">Assigned Driver</h5>
-              <p className="text-sm text-gray-900">{delivery.assigned_driver_name}</p>
-              {delivery.assigned_driver_phone && (
-                <p className="text-xs text-gray-500">{delivery.assigned_driver_phone}</p>
-              )}
-            </div>
-          )}
-
-          <div className="md:col-span-2">
-            <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <MapPinIcon className="h-4 w-4 mr-1" />
-              Delivery Address
-            </h5>
-            <p className="text-sm text-gray-900 whitespace-pre-line">
-              {delivery.delivery_address || order.shipping_address?.address}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Information */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-blue-900 mb-4">
-          Need Help?
-        </h4>
-        <div className="space-y-2 text-sm text-blue-800">
-          <p>If you have any questions about your delivery, please contact:</p>
-          <div className="mt-3 space-y-1">
-            <p><strong>Seller:</strong> {order.seller?.name || 'Store'}</p>
-            {delivery.assigned_driver_phone && delivery.delivery_method === 'platform' && (
-              <p><strong>Delivery Driver:</strong> {delivery.assigned_driver_phone}</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Status Badge Component
+// ---------- Status Badge Component ----------
 const StatusBadge = ({ status }) => {
   const getStatusConfig = (status) => {
     const configs = {
@@ -384,270 +82,160 @@ const StatusBadge = ({ status }) => {
         label: "Cancelled"
       }
     };
-
     return configs[status] || configs.pending;
   };
 
   const config = getStatusConfig(status);
-  const IconComponent = config.icon;
-
+  const Icon = config.icon;
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${config.color}`}>
-      <IconComponent className="h-4 w-4 mr-1" />
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+      <Icon className="h-3 w-3 mr-1" />
       {config.label}
     </span>
   );
 };
 
-// Order Card Component
+// ---------- Order Card ----------
 const OrderCard = ({ order, onViewDetails }) => {
+  const product = order.items?.[0]?.product || {};
+  const primaryImage = product.images?.find(img => img.is_primary)?.url ||
+    product.images?.[0]?.url ||
+    "/placeholder-product.jpg";
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="bg-green-100 rounded-lg p-2">
-            <ShoppingBagIcon className="h-5 w-5 text-green-600" />
-          </div>
+    <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-3">
+          <img
+            src={primaryImage}
+            alt="product"
+            className="w-16 h-16 object-cover rounded-lg"
+            onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
+          />
           <div>
-            <h3 className="font-semibold text-gray-900">
-              Order #{order.order_number}
-            </h3>
-            <div className="flex items-center space-x-2 mt-1">
-              <CalendarIcon className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-500">
-                {formatDate(order.created_at)}
-              </span>
-            </div>
+            <h3 className="font-medium text-gray-900">Order #{order.order_number}</h3>
+            <p className="text-sm text-gray-500 mt-1">{order.items?.length} item(s)</p>
+            <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
           </div>
         </div>
-        <div className="mt-3 sm:mt-0">
-          <StatusBadge status={order.status} />
-        </div>
+        <StatusBadge status={order.status} />
       </div>
-
-      {/* Order Items Preview */}
-      <div className="mb-4">
-        {order.items?.slice(0, 2).map((item, index) => (
-          <div key={item.id || index} className="flex items-center justify-between py-2">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <img
-                  src={
-                    item.product_data?.images?.find(img => img.is_primary)?.url ||
-                    item.product_data?.images?.[0]?.url ||
-                    item.product?.images?.find(img => img.is_primary)?.url ||
-                    item.product?.images?.[0]?.url ||
-                    '/placeholder-product.jpg'
-                  }
-                  alt={item.product_name}
-                  className="w-8 h-8 object-cover rounded"
-                  onError={(e) => {
-                    e.target.src = '/placeholder-product.jpg';
-                  }}
-                />
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
-                  {item.product_name}
-                </h4>
-                <p className="text-gray-500 text-xs">
-                  Qty: {item.quantity} × {formatMMK(item.price)}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-medium text-gray-900 text-sm">
-                {formatMMK(item.subtotal)}
-              </p>
-            </div>
-          </div>
-        ))}
-
-        {order.items?.length > 2 && (
-          <div className="text-center pt-2 border-t border-gray-100">
-            <p className="text-sm text-gray-500">
-              +{order.items.length - 2} more items
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Order Summary */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+      <div className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600">Total</p>
-          <p className="text-lg font-semibold text-green-600">
-            {formatMMK(order.total_amount)}
-          </p>
+          <span className="text-sm text-gray-600">Total:</span>
+          <span className="ml-2 font-bold text-green-600">{formatMMK(order.total_amount)}</span>
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => onViewDetails(order)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            <EyeIcon className="h-4 w-4 mr-1" />
-            Details
-          </button>
-          {/* Track Order button for orders that are shipped or in delivery */}
-          {(order.status === 'shipped' || order.status === 'processing' || order.status === 'confirmed') && (
-            <button
-              onClick={() => onViewDetails(order)}
-              className="inline-flex items-center px-3 py-2 border border-green-300 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              <TruckIcon className="h-4 w-4 mr-1" />
-              Track
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => onViewDetails(order)}
+          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
+        >
+          <EyeIcon className="h-4 w-4 mr-1" />
+          View Details
+        </button>
       </div>
     </div>
   );
 };
 
-// Order Details Modal
+// ---------- Order Details Modal ----------
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   if (!isOpen || !order) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-
-        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
-          {/* Header */}
-          <div className="bg-white px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900">
-                Order Details - #{order.order_number}
-              </h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 transition-colors"
-              >
-                <XCircleIcon className="h-6 w-6" />
-              </button>
-            </div>
+        <div className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-xl font-semibold text-gray-900">Order #{order.order_number}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+              <XCircleIcon className="h-6 w-6" />
+            </button>
           </div>
-
-          {/* Content */}
-          <div className="bg-white px-6 py-4 max-h-[80vh] overflow-y-auto">
-            {/* Enhanced Delivery Tracking */}
-            <div className="mb-6">
-              <EnhancedOrderTracking order={order} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-              {/* Order Items */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Order Items</h4>
-                <div className="space-y-3">
-                  {order.items?.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="p-6 space-y-6">
+            {/* Items */}
+            <div>
+              <h4 className="text-lg font-medium mb-3">Items</h4>
+              <div className="space-y-3">
+                {order.items?.map((item) => {
+                  const img = item.product?.images?.find(i => i.is_primary)?.url ||
+                    item.product?.images?.[0]?.url ||
+                    "/placeholder-product.jpg";
+                  return (
+                    <div key={item.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-                          <img
-                            src={item.product_data?.images?.[0]?.url || item.product_data?.image || '/placeholder-product.jpg'}
-                            alt={item.product_name}
-                            className="w-10 h-10 object-cover rounded"
-                            onError={(e) => {
-                              e.target.src = '/placeholder-product.jpg';
-                            }}
-                          />
-                        </div>
+                        <img src={img} alt={item.product_name} className="w-12 h-12 object-cover rounded" />
                         <div>
-                          <h5 className="font-medium text-gray-900 text-sm">{item.product_name}</h5>
-                          <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                          <p className="text-xs text-gray-500">{formatMMK(item.price)} each</p>
+                          <p className="font-medium">{item.product_name}</p>
+                          <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-gray-900 text-sm">{formatMMK(item.subtotal)}</p>
+                        <p className="font-semibold">{formatMMK(item.subtotal)}</p>
+                        <p className="text-xs text-gray-500">{formatMMK(item.price)} each</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Information */}
-              <div className="space-y-6">
-                {/* Shipping Information */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Shipping Information</h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <MapPinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
-                      <div className="text-sm text-gray-600">
-                        <p className="font-medium">{order.shipping_address?.full_name}</p>
-                        <p>{order.shipping_address?.phone}</p>
-                        <p className="mt-1">{order.shipping_address?.address}</p>
-                        <p>
-                          {order.shipping_address?.city}, {order.shipping_address?.state}
-                          {order.shipping_address?.postal_code && `, ${order.shipping_address.postal_code}`}
-                        </p>
-                        <p>{order.shipping_address?.country}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Information */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3">Payment Information</h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 space-y-2">
-                      <div className="flex justify-between">
-                        <span>Payment Method:</span>
-                        <span className="font-medium capitalize">
-                          {order.payment_method?.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Payment Status:</span>
-                        <span className={`font-medium ${order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'
-                          }`}>
-                          {order.payment_status?.charAt(0).toUpperCase() + order.payment_status?.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Order Summary */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Order Summary</h4>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">{formatMMK(order.subtotal_amount)}</span>
+            {/* Shipping & Payment */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-lg font-medium mb-3">Shipping Address</h4>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium">{order.shipping_address?.full_name}</p>
+                  <p className="text-sm text-gray-600">{order.shipping_address?.phone}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {order.shipping_address?.address}, {order.shipping_address?.city}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-medium mb-3">Payment Information</h4>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Method:</span>
+                    <span className="font-medium capitalize">{order.payment_method?.replace('_', ' ')}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping Fee:</span>
-                    <span className="font-medium">{formatMMK(order.shipping_fee)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax ({order.tax_rate * 100}%):</span>
-                    <span className="font-medium">{formatMMK(order.tax_amount)}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-200">
-                    <span className="text-lg font-semibold text-gray-900">Total:</span>
-                    <span className="text-lg font-semibold text-green-600">
-                      {formatMMK(order.total_amount)}
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-gray-600">Status:</span>
+                    <span className={`font-medium ${order.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {order.payment_status}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-3">
+            {/* Summary */}
+            <div className="border-t pt-4">
+              <h4 className="text-lg font-medium mb-3">Order Summary</h4>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal:</span>
+                  <span>{formatMMK(order.subtotal_amount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Shipping:</span>
+                  <span>{formatMMK(order.shipping_fee)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax:</span>
+                  <span>{formatMMK(order.tax_amount)}</span>
+                </div>
+                <div className="flex justify-between font-bold pt-2 border-t">
+                  <span>Total:</span>
+                  <span className="text-green-600">{formatMMK(order.total_amount)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-4 bg-gray-50 flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
             >
               Close
             </button>
@@ -658,13 +246,428 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   );
 };
 
-// Tab Components (Keep the existing DashboardTab, PersonalInfoTab, OrdersTab, WishlistTab, SettingsTab components exactly as they are in your original file)
+// ---------- Personal Information Tab ----------
+const PersonalInfoTab = ({ user, onUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
 
-const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
-  // ... (Keep the exact same implementation from your original file)
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await api.put("/users/profile", formData);
+      if (response.data.success) {
+        setMessage({ type: "success", text: "Profile updated successfully" });
+        onUpdate(response.data.data); // update parent user state
+        setIsEditing(false);
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: err.response?.data?.message || "Update failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center text-green-600 hover:text-green-700"
+          >
+            <PencilSquareIcon className="h-5 w-5 mr-1" />
+            Edit
+          </button>
+        )}
+      </div>
+      {message && (
+        <div className={`mb-4 p-3 rounded ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          {message.text}
+        </div>
+      )}
+      {isEditing ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <input
+                type="text"
+                name="state"
+                value={formData.state}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              {loading ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <UserIcon className="h-5 w-5 text-gray-400 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Full Name</p>
+              <p className="font-medium">{user?.name || "—"}</p>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium">{user?.email || "—"}</p>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <PhoneIcon className="h-5 w-5 text-gray-400 mr-3" />
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{user?.phone || "—"}</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <MapPinIcon className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
+            <div>
+              <p className="text-sm text-gray-500">Address</p>
+              <p className="font-medium">{user?.address || "—"}</p>
+              {(user?.city || user?.state) && (
+                <p className="text-sm text-gray-600">{user?.city}{user?.city && user?.state ? ", " : ""}{user?.state}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------- Orders Tab ----------
+const OrdersTab = ({ orders, onViewDetails }) => {
+  const [filter, setFilter] = useState("all");
+  const filteredOrders = orders.filter(order => filter === "all" || order.status === filter);
+
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex flex-wrap items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">My Orders</h2>
+          <div className="flex space-x-2">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500"
+            >
+              <option value="all">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        {filteredOrders.length === 0 ? (
+          <div className="text-center py-12">
+            <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">No orders found</h3>
+            <p className="text-gray-500 mt-2">Try a different filter or start shopping!</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filteredOrders.map(order => (
+              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ---------- Wishlist Tab ----------
+const WishlistTab = ({ navigate }) => {
+  const [wishlist, setWishlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchWishlist = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/wishlist");
+      setWishlist(response.data.data || []);
+    } catch (err) {
+      setError("Failed to load wishlist");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeFromWishlist = async (productId) => {
+    try {
+      await api.delete(`/wishlist/${productId}`);
+      setWishlist(prev => prev.filter(item => item.id !== productId));
+    } catch (err) {
+      alert("Failed to remove item");
+    }
+  };
+
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-8"><div className="animate-spin h-8 w-8 border-t-2 border-green-500" /></div>;
+  if (error) return <div className="text-red-600 text-center py-8">{error}</div>;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6">
+      <h2 className="text-xl font-bold text-gray-900 mb-6">My Wishlist</h2>
+      {wishlist.length === 0 ? (
+        <div className="text-center py-12">
+          <HeartIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">Your wishlist is empty</h3>
+          <p className="text-gray-500 mt-2">Start adding items you love!</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="mt-4 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
+          >
+            Browse Products
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {wishlist.map(item => (
+            <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+              <div className="flex items-start space-x-3">
+                <img
+                  src={item.images?.[0] || "/placeholder-product.jpg"}
+                  alt={item.name}
+                  className="w-16 h-16 object-cover rounded"
+                  onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
+                />
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900 line-clamp-2">{item.name}</h3>
+                  <p className="text-sm text-green-600 font-bold mt-1">{formatMMK(item.price)}</p>
+                  <div className="mt-2 flex space-x-2">
+                    <button
+                      onClick={() => navigate(`/products/${item.slug || item.id}`)}
+                      className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => removeFromWishlist(item.id)}
+                      className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------- Settings Tab ----------
+const SettingsTab = () => {
+  const [passwordData, setPasswordData] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  const handleChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setMessage({ type: "error", text: "New passwords do not match" });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      await api.put("/users/password", {
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password,
+        new_password_confirmation: passwordData.confirm_password
+      });
+      setMessage({ type: "success", text: "Password changed successfully" });
+      setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
+    } catch (err) {
+      setMessage({ type: "error", text: err.response?.data?.message || "Failed to change password" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Password Change */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Change Password</h2>
+        {message && (
+          <div className={`mb-4 p-3 rounded ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            {message.text}
+          </div>
+        )}
+        <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <input
+              type="password"
+              name="current_password"
+              value={passwordData.current_password}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <input
+              type="password"
+              name="new_password"
+              value={passwordData.new_password}
+              onChange={handleChange}
+              required
+              minLength={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              name="confirm_password"
+              value={passwordData.confirm_password}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
+      </div>
+
+      {/* Account Actions (Optional) */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Account</h2>
+        <div className="space-y-3">
+          <button className="flex items-center text-red-600 hover:text-red-700">
+            <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+            Deactivate Account
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------- Dashboard Tab ----------
+const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
+  const recentOrders = orders.slice(0, 4);
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name}!</h1>
         <p className="text-green-100">Here's your buying activity overview</p>
@@ -683,7 +686,6 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -697,7 +699,6 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -711,7 +712,6 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -747,7 +747,7 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
           </button>
         </div>
 
-        {orders.length === 0 ? (
+        {recentOrders.length === 0 ? (
           <div className="text-center py-12">
             <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Yet</h3>
@@ -761,12 +761,8 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {orders.slice(0, 4).map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onViewDetails={onViewDetails}
-              />
+            {recentOrders.map(order => (
+              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} />
             ))}
           </div>
         )}
@@ -775,51 +771,7 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
   );
 };
 
-const PersonalInfoTab = ({ user }) => {
-  // ... (Keep the exact same implementation from your original file)
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        {/* ... existing personal info implementation ... */}
-      </div>
-    </div>
-  );
-};
-
-const OrdersTab = ({ orders, onViewDetails, navigate }) => {
-  // ... (Keep the exact same implementation from your original file)
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        {/* ... existing orders implementation ... */}
-      </div>
-    </div>
-  );
-};
-
-const WishlistTab = ({ navigate }) => {
-  // ... (Keep the exact same implementation from your original file)
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        {/* ... existing wishlist implementation ... */}
-      </div>
-    </div>
-  );
-};
-
-const SettingsTab = () => {
-  // ... (Keep the exact same implementation from your original file)
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm p-6">
-        {/* ... existing settings implementation ... */}
-      </div>
-    </div>
-  );
-};
-
-// Main Component
+// ---------- Main BuyerDashboard ----------
 const BuyerDashboard = () => {
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -831,31 +783,28 @@ const BuyerDashboard = () => {
 
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
-    { id: 'personal', name: 'Personal Information', icon: UserIcon },
+    { id: 'personal', name: 'Personal Info', icon: UserIcon },
     { id: 'orders', name: 'Orders', icon: ShoppingBagIcon },
     { id: 'wishlist', name: 'Wishlist', icon: HeartIcon },
-    { id: 'settings', name: 'Settings', icon: CogIcon },
+    { id: 'settings', name: 'Settings', icon: CogIcon }
   ];
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const userRes = await api.get("/auth/me");
+      setUser(userRes.data.data || userRes.data);
+
+      const ordersRes = await api.get("/orders");
+      setOrders(ordersRes.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        // Get user profile
-        const userResponse = await api.get("/auth/me");
-        setUser(userResponse.data.data || userResponse.data);
-
-        // Get user orders
-        const ordersResponse = await api.get("/orders");
-        setOrders(ordersResponse.data.data || []);
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -864,31 +813,26 @@ const BuyerDashboard = () => {
     setIsModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
-  };
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
       case 'personal':
-        return <PersonalInfoTab user={user} />;
+        return <PersonalInfoTab user={user} onUpdate={(updatedUser) => setUser(updatedUser)} />;
       case 'orders':
-        return <OrdersTab orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+        return <OrdersTab orders={orders} onViewDetails={handleViewDetails} />;
       case 'wishlist':
         return <WishlistTab navigate={navigate} />;
       case 'settings':
         return <SettingsTab />;
       default:
-        return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+        return null;
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
@@ -897,36 +841,35 @@ const BuyerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Buyer Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage your orders and profile</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Navigation */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-8">
               <nav className="space-y-2">
                 {tabs.map((tab) => {
-                  const IconComponent = tab.icon;
+                  const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${activeTab === tab.id
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
-                      <IconComponent className="h-5 w-5" />
+                      <Icon className="h-5 w-5" />
                       <span className="font-medium">{tab.name}</span>
                     </button>
                   );
                 })}
               </nav>
 
-              {/* Quick Stats in Sidebar */}
               <div className="mt-8 pt-8 border-t border-gray-200">
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
@@ -950,12 +893,7 @@ const BuyerDashboard = () => {
           </div>
         </div>
 
-        {/* Order Details Modal */}
-        <OrderDetailsModal
-          order={selectedOrder}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <OrderDetailsModal order={selectedOrder} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </div>
     </div>
   );

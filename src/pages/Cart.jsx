@@ -24,12 +24,21 @@ const Cart = () => {
       style: "currency",
       currency: "MMK",
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(amount || 0);
+  };
+
+  // Helper to get the best image URL
+  const getItemImage = (item) => {
+    if (item.image) return item.image;
+    if (item.product?.images) {
+      const primary = item.product.images.find(img => img.is_primary);
+      return primary?.url || item.product.images[0]?.url;
+    }
+    return '/placeholder-product.jpg';
   };
 
   const handleUpdateQuantity = async (cartItemId, newQuantity) => {
     if (newQuantity < 1) return;
-
     try {
       await updateQuantity(cartItemId, newQuantity);
     } catch (error) {
@@ -63,7 +72,6 @@ const Cart = () => {
     }
   };
 
-  // Show loading state
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -111,7 +119,7 @@ const Cart = () => {
                   <li key={item.id} className="py-6 flex">
                     <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden border border-gray-200">
                       <img
-                        src={item.image}
+                        src={getItemImage(item)}
                         alt={item.name}
                         className="w-full h-full object-center object-contain"
                         onError={(e) => {
@@ -129,10 +137,10 @@ const Cart = () => {
                             </Link>
                           </h4>
                           <p className="mt-1 text-sm text-gray-500">
-                            {item.category}
+                            {item.category || "—"}
                           </p>
                           <p className="mt-1 text-sm text-gray-500">
-                            Stock: {item.stock}
+                            Stock: {item.stock ?? "N/A"}
                           </p>
 
                           {!item.is_available && (
