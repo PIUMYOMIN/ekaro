@@ -73,8 +73,7 @@ function App() {
   return <I18nextProvider i18n={i18n}>
     <AuthProvider>
       <CartProvider>
-        <WishlistProvider>
-          <Router>
+        <Router>
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="flex-grow">
@@ -210,7 +209,6 @@ function App() {
             <Footer />
           </div>
         </Router>
-        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   </I18nextProvider>;

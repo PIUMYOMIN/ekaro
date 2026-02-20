@@ -133,8 +133,6 @@ const ProductDetail = () => {
     fetchProductData();
   }, [slug, user]);
 
-  // ... (keep all handlers unchanged: handleAddToCart, handleBuyNow, handleAddToWishlist, handleReviewAction, handleSubmitReview, closeSuccessMessage)
-
   const handleAddToCart = async () => {
     if (!user) {
       navigate("/login");

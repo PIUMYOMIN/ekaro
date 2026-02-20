@@ -87,7 +87,6 @@ const Home = () => {
       // Process categories to get root categories
       const rootCategories = categoriesData.filter(cat => !cat.parent_id || cat.parent_id === null);
 
-      // Optimize: Don't fetch product counts for all categories in home page
       // Just show categories with their children count
       const processedCategories = rootCategories.map((category) => ({
         ...category,
@@ -95,7 +94,7 @@ const Home = () => {
         childrenCount: category.children ? category.children.length : 0
       }));
 
-      setCategories(processedCategories.slice(0, 6)); // Show only first 6
+      setCategories(processedCategories.slice(0, 6));
     } catch (err) {
       console.error("Failed to fetch categories:", err);
       setCategories([]);
@@ -106,7 +105,7 @@ const Home = () => {
 
   const fetchTopSellers = useCallback(async () => {
     try {
-      const res = await api.get("/sellers?top=true&limit=4"); // Add limit to reduce data
+      const res = await api.get("/sellers?top=true&limit=4");
       const sellersData = res.data.data || res.data || [];
       setTopSellers(sellersData);
 
@@ -321,7 +320,7 @@ const Home = () => {
           ) : products.length > 0 ? (
             products.map(product => (
               <ProductCard
-                key={product.id}
+                key={product.slug_en || product.id}
                 product={product}
               />
             ))
