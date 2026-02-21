@@ -1,7 +1,9 @@
+// src/pages/Admin/categories/CategoryForm.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeftIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import api from "../../../utils/api";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../../config";
 
 const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuccess }) => {
   const { id } = useParams();
@@ -20,15 +22,22 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     name_mm: "",
     description_en: "",
     description_mm: "",
-    commission_rate: 0, // Store as percentage for display
+    commission_rate: 0,
     parent_id: "",
     is_active: true,
     image: null
   });
 
-  // Fetch parent categories for dropdown - memoized with useCallback
+  // Build full image URL using config
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    const cleanPath = imagePath.replace(/^public\//, '');
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
+  };
+
   const fetchCategories = useCallback(async () => {
-    if (categoriesFetched) return; // Prevent multiple fetches
+    if (categoriesFetched) return;
 
     try {
       setLoading(true);
@@ -44,10 +53,8 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     }
   }, [categoriesFetched]);
 
-  // Initialize form from initialCategory prop - memoized with useCallback
   const initializeForm = useCallback(() => {
     if (mode === "edit" && initialCategory) {
-      // Convert commission rate from decimal to percentage for display
       const commissionRate = initialCategory.commission_rate ?
         parseFloat(initialCategory.commission_rate) * 100 : 0;
 
@@ -66,10 +73,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
       // Set image preview if image exists
       if (initialCategory.image) {
-        const imageUrl = initialCategory.image.startsWith('http')
-          ? initialCategory.image
-          : `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${initialCategory.image.replace('public/', '')}`;
-        setImagePreview(imageUrl);
+        setImagePreview(getImageUrl(initialCategory.image));
       }
     }
   }, [mode, initialCategory]);
@@ -114,6 +118,11 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     }
   };
 
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -129,7 +138,6 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     return newErrors;
   };
 
-  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -163,21 +171,11 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
       if (formData.image && typeof formData.image === "object") {
         // New image file uploaded
         submitData.append("image", formData.image);
-      } else if (mode === "edit" && !formData.image && initialCategory?.image) {
-        // In edit mode, no new image selected, keep existing image
-        // Don't append anything for image - backend will keep existing
       } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
         // Image was removed - send empty string to delete image
         submitData.append("image", "");
-      } else if (mode === "create" && !formData.image) {
-        // In create mode, no image selected
-        // Don't append image field
       }
-
-      console.log("Submitting form data:");
-      for (let [key, value] of submitData.entries()) {
-        console.log(key, value, value instanceof File ? `[File: ${value.name}]` : '');
-      }
+      // else: no image field sent – backend will keep existing image (for edit) or leave null (for create)
 
       if (mode === "edit") {
         await api.put(`/categories/${id}`, submitData, {
@@ -189,40 +187,11 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
         });
       }
 
-      console.log("Image state:", {
-        formDataImage: formData.image,
-        initialCategoryImage: initialCategory?.image,
-        mode,
-        hasNewImage: formData.image && typeof formData.image === "object",
-        hasExistingImage: initialCategory?.image,
-        imageType: formData.image ? typeof formData.image : 'null'
-      });
-
-      // Also check the FormData
-      console.log("FormData entries:");
-      for (let [key, value] of submitData.entries()) {
-        console.log(`  ${key}:`, value, value instanceof File ? `[File: ${value.name}, ${value.size} bytes]` : '');
-      }
-
-      console.log("Full request details:");
-      console.log("Method:", mode === "edit" ? "PUT" : "POST");
-      console.log("URL:", mode === "edit" ? `/categories/${id}` : "/categories");
-      console.log("Headers:", { "Content-Type": "multipart/form-data" });
-      console.log("FormData size:", submitData);
-
-      // Count entries
-      let entryCount = 0;
-      for (let entry of submitData.entries()) {
-        entryCount++;
-      }
-      console.log("Total FormData entries:", entryCount);
-
       // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       } else {
-        // Default navigation
-        navigate("/admin");
+        navigate("/admin/dashboard");
       }
     } catch (error) {
       console.error("Failed to save category:", error);
@@ -242,18 +211,12 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     }
   };
 
-  // Update the handleRemoveImage function
-  const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image: null }));
-    setImagePreview(null);
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate("/admin")}
+          onClick={() => navigate("/admin/dashboard")}
           className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -363,6 +326,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                         src={imagePreview}
                         alt="Category preview"
                         className="h-32 w-32 rounded-lg object-cover"
+                        onError={(e) => { e.target.src = DEFAULT_PLACEHOLDER; }}
                       />
                       <button
                         type="button"
@@ -502,7 +466,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/admin/dashboard")}
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 disabled={saving}
               >

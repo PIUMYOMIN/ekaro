@@ -4,6 +4,8 @@
     "products": "Products",
     "sellers": "Sellers",
     "categories": "Categories",
+    "no_categories_found": "No Categories Found",
+    "browse_categories": "Browse Categories",
     "search": "Search",
     "search_placeholder": "Search products...",
     "open_menu": "Open main menu",

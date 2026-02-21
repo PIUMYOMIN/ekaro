@@ -4,6 +4,8 @@
     "products": "ကုန်ပစ္စည်းများ",
     "sellers": "ရောင်းချသူများ",
     "categories": "အမျိုးအစားများ",
+    "no_categories_found": "အမျိုးအစား မတွေ့ရှိပါ",
+    "browse_categories": "အမျိုးအစားများ ကြည့်ရှုပါ",
     "search": "ရှာဖွေပါ",
     "search_placeholder": "ကုန်ပစ္စည်းများ ရှာဖွေပါ...",
     "open_menu": "ပင်မ မီနူးဖွင့်ရန်",

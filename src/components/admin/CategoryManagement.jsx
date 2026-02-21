@@ -1,3 +1,4 @@
+// src/pages/Admin/categories/CategoryManagement.jsx
 import React, { useState, useEffect } from "react";
 import { 
   ChevronDownIcon, 
@@ -7,8 +8,9 @@ import {
   PencilIcon,
   TrashIcon
 } from "@heroicons/react/24/outline";
-import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -18,7 +20,6 @@ const CategoryManagement = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Fetch categories
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -52,17 +53,25 @@ const CategoryManagement = () => {
       try {
         await api.delete(`/categories/${categoryId}`);
         alert("Category deleted successfully");
-        fetchCategories(); // Refresh the list
+        fetchCategories();
       } catch (error) {
         alert(error.response?.data?.message || "Failed to delete category");
       }
     }
   };
 
-  // Helper function to flatten the nested category tree
+  // Toggle category active status
+  const handleStatusToggle = async (categoryId, currentStatus) => {
+    try {
+      await api.put(`/categories/${categoryId}`, { is_active: !currentStatus });
+      fetchCategories(); // refresh list
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to update status");
+    }
+  };
+
   const flattenCategories = (categories, level = 0) => {
     let result = [];
-
     categories.forEach((category) => {
       result.push({
         ...category,
@@ -70,34 +79,44 @@ const CategoryManagement = () => {
         hasChildren: (category.children && category.children.length > 0) || false,
         isExpanded: expandedCategories[category.id] || false
       });
-
-      // If category is expanded and has children, recursively add them
       if (expandedCategories[category.id] && category.children) {
         result = result.concat(flattenCategories(category.children, level + 1));
       }
     });
-
     return result;
   };
 
-  // Filter categories based on search term
   const filterCategories = (categories, term) => {
     if (!term) return categories;
-
     return categories.filter(category => {
       const matches = 
         (category.name_en && category.name_en.toLowerCase().includes(term.toLowerCase())) ||
         (category.name_mm && category.name_mm.toLowerCase().includes(term.toLowerCase())) ||
         (category.description_en && category.description_en.toLowerCase().includes(term.toLowerCase()));
-
-      // Also check children
       if (category.children && category.children.length > 0) {
         const childrenMatches = filterCategories(category.children, term);
         return matches || childrenMatches.length > 0;
       }
-
       return matches;
     });
+  };
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return DEFAULT_PLACEHOLDER;
+    if (imagePath.startsWith('http')) return imagePath;
+    const cleanPath = imagePath.replace(/^public\//, '');
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
+  };
+
+  // Format commission rate: if value ≤ 1 (decimal), multiply by 100; otherwise use as is
+  const formatCommissionRate = (rate) => {
+    if (rate === null || rate === undefined) return 0;
+    if (typeof rate !== 'number') rate = parseFloat(rate);
+    if (isNaN(rate)) return 0;
+    if (rate <= 1 && rate > 0) {
+      return (rate * 100).toFixed(1);
+    }
+    return rate;
   };
 
   const filteredCategories = filterCategories(categories, searchTerm);
@@ -135,15 +154,11 @@ const CategoryManagement = () => {
         <div className="flex items-center">
           {category.image && (
             <img 
-              src={category.image.startsWith('http') 
-                ? category.image 
-                : `${process.env.REACT_APP_API_URL || 'https://api.pyonea.com/api/v1'}/storage/${category.image.replace('public/', '')}`
-              }
+              src={getImageUrl(category.image)}
               alt={category.name_en}
               className="w-8 h-8 rounded-full object-cover mr-3"
               onError={(e) => {
-                e.target.src = '/placeholder-category.jpg';
-                e.target.className = 'w-8 h-8 rounded-full bg-gray-200 mr-3';
+                e.target.src = DEFAULT_PLACEHOLDER;
               }}
             />
           )}
@@ -170,17 +185,20 @@ const CategoryManagement = () => {
     ),
     commission_rate: (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-        {category.commission_rate || 0}%
+        {formatCommissionRate(category.commission_rate)}%
       </span>
     ),
     status: (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        category.is_active 
-          ? 'bg-green-100 text-green-800' 
-          : 'bg-red-100 text-red-800'
-      }`}>
+      <button
+        onClick={() => handleStatusToggle(category.id, category.is_active)}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          category.is_active 
+            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+            : 'bg-red-100 text-red-800 hover:bg-red-200'
+        }`}
+      >
         {category.is_active ? 'Active' : 'Inactive'}
-      </span>
+      </button>
     ),
     actions: (
       <div className="flex space-x-2">
@@ -208,6 +226,8 @@ const CategoryManagement = () => {
       </div>
     )
   }));
+
+  const anyExpanded = Object.values(expandedCategories).some(v => v);
 
   return (
     <div className="space-y-6">
@@ -369,16 +389,16 @@ const CategoryManagement = () => {
                 Showing <span className="font-medium">{flattenedCategories.length}</span> of{" "}
                 <span className="font-medium">{categories.length}</span> categories
               </div>
-              <div className="text-sm text-gray-500">
-                {expandedCategories && (
+              {anyExpanded && (
+                <div className="text-sm text-gray-500">
                   <button
                     onClick={() => setExpandedCategories({})}
                     className="text-green-600 hover:text-green-900"
                   >
                     Collapse All
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

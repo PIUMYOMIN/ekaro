@@ -1,5 +1,5 @@
 // src/context/CartContext.jsx
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import api from '../utils/api';
 import { useAuth } from './AuthContext';
 
@@ -7,9 +7,7 @@ const CartContext = createContext();
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (!context) throw new Error('useCart must be used within a CartProvider');
   return context;
 };
 
@@ -27,145 +25,163 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch cart items from backend
+  // Fetch cart from server
   const fetchCartItems = useCallback(async () => {
     if (!user) {
-      setCartItems([]);
-      setSubtotal(0);
-      setTotalItems(0);
-      setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+      resetCart();
       return;
     }
-
     setLoading(true);
     setError(null);
     try {
       const response = await api.get('/cart');
-      console.log('Cart API response:', response.data);
-
       const cartData = response.data.data || {};
-      const items = cartData.cart_items || [];
-      const subtotalValue = cartData.subtotal || 0;
-      const totalItemsValue = cartData.total_items || 0;
-      const summary = cartData.summary || {
+      setCartItems(cartData.cart_items || []);
+      setSubtotal(cartData.subtotal || 0);
+      setTotalItems(cartData.total_items || 0);
+      setCartSummary(cartData.summary || {
         shipping_fee: 0,
         tax_rate: 0,
         tax: 0,
         total: 0
-      };
-
-      setCartItems(items);
-      setSubtotal(subtotalValue);
-      setTotalItems(totalItemsValue);
-      setCartSummary(summary);
+      });
     } catch (err) {
-      console.error('Failed to fetch cart items:', err);
-      setError(err.response?.data?.message || 'Failed to fetch cart items');
-      setCartItems([]);
-      setSubtotal(0);
-      setTotalItems(0);
-      setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+      console.error('Failed to fetch cart:', err);
+      setError(err.response?.data?.message || 'Failed to fetch cart');
+      resetCart();
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  // Add item to cart
-  const addToCart = async (productId, quantity = 1) => {
-    if (!user) {
-      throw new Error('Please login to add items to cart');
-    }
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.post('/cart', {
-        product_id: productId,
-        quantity
-      });
-
-      // Refresh cart after successful add
-      await fetchCartItems();
-
-      return {
-        success: true,
-        message: response.data.message || 'Product added to cart successfully'
-      };
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to add product to cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+  const resetCart = () => {
+    setCartItems([]);
+    setSubtotal(0);
+    setTotalItems(0);
+    setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
   };
 
-  // Update quantity
+  // Add to cart with optimistic update
+  const addToCart = async (productId, quantity = 1) => {
+  if (!user) throw new Error('Please login');
+
+  setLoading(true);
+  setError(null);
+
+  // 🔥 Optimistic update
+  setTotalItems(prev => prev + quantity);
+
+  try {
+    const response = await api.post('/cart', {
+      product_id: productId,
+      quantity
+    });
+
+    // 🔥 Always sync with backend to ensure accuracy
+    await fetchCartItems();
+
+    return {
+      success: true,
+      message: response.data.message || 'Added to cart'
+    };
+
+  } catch (err) {
+    // 🔥 Revert optimistic update safely
+    setTotalItems(prev => Math.max(prev - quantity, 0));
+
+    const msg =
+      err.response?.data?.message || 'Failed to add to cart';
+
+    setError(msg);
+    throw new Error(msg);
+
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Update quantity with optimistic update
   const updateQuantity = async (cartItemId, newQuantity) => {
-    if (!user) {
-      throw new Error('Please login to update cart');
-    }
+    const itemIndex = cartItems.findIndex(item => item.id === cartItemId);
+    if (itemIndex === -1) return;
+
+    const oldQuantity = cartItems[itemIndex].quantity;
+    const quantityDiff = newQuantity - oldQuantity;
+
+    // Optimistic update
+    setTotalItems(prev => prev + quantityDiff);
+    // Also update the item locally (optional, but better)
+    const updatedItems = [...cartItems];
+    updatedItems[itemIndex].quantity = newQuantity;
+    updatedItems[itemIndex].subtotal = updatedItems[itemIndex].price * newQuantity;
+    setCartItems(updatedItems);
 
     setLoading(true);
-    setError(null);
     try {
       await api.put(`/cart/${cartItemId}`, { quantity: newQuantity });
-      await fetchCartItems(); // refresh
+      await fetchCartItems(); // sync
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to update quantity';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      // Revert
+      setTotalItems(prev => prev - quantityDiff);
+      await fetchCartItems(); // fetch actual state
+      const msg = err.response?.data?.message || 'Failed to update';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Remove item from cart
   const removeFromCart = async (cartItemId) => {
-    if (!user) {
-      throw new Error('Please login to modify cart');
-    }
+    const item = cartItems.find(i => i.id === cartItemId);
+    if (!item) return;
+
+    // Optimistic remove
+    setTotalItems(prev => prev - item.quantity);
+    setCartItems(prev => prev.filter(i => i.id !== cartItemId));
 
     setLoading(true);
-    setError(null);
     try {
       await api.delete(`/cart/${cartItemId}`);
-      await fetchCartItems(); // refresh
+      await fetchCartItems();
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to remove item from cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      await fetchCartItems();
+      const msg = err.response?.data?.message || 'Failed to remove';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Clear entire cart
   const clearCart = async () => {
-    if (!user) {
-      throw new Error('Please login to clear cart');
-    }
+    // Optimistic clear
+    const oldTotal = totalItems;
+    setTotalItems(0);
+    setCartItems([]);
+    setSubtotal(0);
+    setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
 
     setLoading(true);
-    setError(null);
     try {
       await api.post('/cart/clear');
-      await fetchCartItems(); // refresh
+      await fetchCartItems();
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to clear cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setTotalItems(oldTotal);
+      await fetchCartItems();
+      const msg = err.response?.data?.message || 'Failed to clear';
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch when user changes
   useEffect(() => {
     fetchCartItems();
   }, [fetchCartItems]);
 
-  const value = {
+  const value = useMemo(() => ({
     cartItems,
     cartSummary,
     subtotal,
@@ -177,7 +193,10 @@ export const CartProvider = ({ children }) => {
     removeFromCart,
     clearCart,
     refetchCart: fetchCartItems
-  };
+  }), [
+    cartItems, cartSummary, subtotal, totalItems, loading, error,
+    addToCart, updateQuantity, removeFromCart, clearCart, fetchCartItems
+  ]);
 
   return (
     <CartContext.Provider value={value}>

@@ -16,8 +16,7 @@ const PLACEHOLDER_IMAGE = "/placeholder-product.jpg";
 const ProductCard = ({ product }) => {
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const { cartItems } = useCart();
-  const [addingToCart, setAddingToCart] = useState(false);
+  const { cartItems, addToCart } = useCart();
   const [message, setMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
@@ -115,30 +114,31 @@ const ProductCard = ({ product }) => {
   // Add to cart
   const handleAddToCart = async () => {
     if (!user) {
-      navigate("/login", { state: { from: "cart-add", productId, returnTo: window.location.pathname } });
-      return;
-    }
-    if (!productId) {
-      setMessage({ type: "error", message: "Invalid product" });
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-    if (!product.is_active || product.quantity <= 0) {
-      setMessage({ type: "error", message: "Product unavailable" });
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
-    setAddingToCart(true);
-    try {
-      const response = await api.post("/cart", {
-        product_id: productId,
-        quantity: 1
+      navigate("/login", {
+        state: { from: "cart-add", productId, returnTo: window.location.pathname }
       });
-      setMessage({ type: "success", message: response.data.message || "Added to cart!" });
+      return;
+    }
+
+    if (!productId || !product.is_active || product.quantity <= 0) {
+      return;
+    }
+
+    // 🔥 1. Instantly update local UI
+    setIsInCart(true);
+
+    try {
+      // 🔥 2. Call context function (works in background)
+      await addToCart(productId, 1);
     } catch (error) {
-      setMessage({ type: "error", message: error.response?.data?.message || "Failed to add to cart" });
-    } finally {
-      setAddingToCart(false);
+      // ❌ If API fails → revert UI
+      setIsInCart(false);
+
+      setMessage({
+        type: "error",
+        message: error.message || "Failed to add to cart"
+      });
+
       setTimeout(() => setMessage(null), 3000);
     }
   };
@@ -148,19 +148,18 @@ const ProductCard = ({ product }) => {
 
   // Button text logic
   let buttonText = "Add to Cart";
-  if (addingToCart) buttonText = "Adding...";
-  else if (!product.is_active) buttonText = "Unavailable";
+
+  if (!product.is_active) buttonText = "Unavailable";
   else if (product.quantity <= 0) buttonText = "Out of Stock";
   else if (isInCart) buttonText = "In Cart";
 
   return (
     <>
       {message && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
-          message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
           message.type === "error" ? "bg-red-100 border-red-400 text-red-700" :
-          "bg-blue-100 border-blue-400 text-blue-700"
-        }`}>
+            "bg-blue-100 border-blue-400 text-blue-700"
+          }`}>
           <span className="text-sm sm:text-base">{message.message}</span>
           <button onClick={() => setMessage(null)} className="ml-4 text-xl font-bold hover:opacity-70">×</button>
         </div>
@@ -253,7 +252,7 @@ const ProductCard = ({ product }) => {
                 </Link>
                 <div className="flex items-center mt-0.5 sm:mt-2">
                   <div className="flex">
-                    {[0,1,2,3,4].map(i => (
+                    {[0, 1, 2, 3, 4].map(i => (
                       <StarIcon key={i} className={`h-3 w-3 sm:h-4 sm:w-4 ${i < ratingInfo.stars ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
                     ))}
                   </div>
@@ -270,7 +269,7 @@ const ProductCard = ({ product }) => {
                 {discountPercentage > 0 ? (
                   <>
                     <p className="text-xs sm:text-lg font-bold text-red-600">
-                      {formatMMK(product.discount_price || (product.price * (1 - discountPercentage/100)))}
+                      {formatMMK(product.discount_price || (product.price * (1 - discountPercentage / 100)))}
                     </p>
                     <p className="text-[8px] sm:text-xs text-gray-500 line-through">{formatMMK(product.price)}</p>
                   </>
@@ -290,19 +289,15 @@ const ProductCard = ({ product }) => {
           <div className="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-gray-100">
             <button
               onClick={handleAddToCart}
-              disabled={addingToCart || !product.is_active || product.quantity <= 0}
-              className={`w-full rounded-md py-1 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm font-medium text-white ${
-                !product.is_active || product.quantity <= 0 ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"
-              } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+              disabled={!product.is_active || product.quantity <= 0 || isInCart}
+              className={`w-full rounded-md py-2 px-4 text-sm font-medium text-white ${!product.is_active || product.quantity <= 0
+                  ? "bg-gray-400"
+                  : isInCart
+                    ? "bg-gray-500"
+                    : "bg-green-600 hover:bg-green-700"
+                } transition-colors`}
             >
-              {addingToCart ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white mr-1 inline-block"></div>
-                  {buttonText}
-                </>
-              ) : (
-                buttonText
-              )}
+              {buttonText}
             </button>
             <div className="flex justify-between items-center mt-1 sm:mt-2 text-[8px] sm:text-xs text-gray-500">
               <span className="truncate max-w-[60%]">{product.seller?.store_name || product.seller?.name || "Seller"}</span>
