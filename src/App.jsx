@@ -31,7 +31,7 @@ import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 
 // Protected Pages
-import BuyerDashboard from "./pages/BuyerDashboard";
+import BuyerDashboard from "./pages/Client/BuyerDashboard";
 import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";

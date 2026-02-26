@@ -1,8 +1,8 @@
 // src/pages/Admin/categories/CategoryManagement.jsx
 import React, { useState, useEffect } from "react";
-import { 
-  ChevronDownIcon, 
-  ChevronRightIcon, 
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
   MagnifyingGlassIcon,
   PlusIcon,
   PencilIcon,
@@ -89,7 +89,7 @@ const CategoryManagement = () => {
   const filterCategories = (categories, term) => {
     if (!term) return categories;
     return categories.filter(category => {
-      const matches = 
+      const matches =
         (category.name_en && category.name_en.toLowerCase().includes(term.toLowerCase())) ||
         (category.name_mm && category.name_mm.toLowerCase().includes(term.toLowerCase())) ||
         (category.description_en && category.description_en.toLowerCase().includes(term.toLowerCase()));
@@ -110,13 +110,18 @@ const CategoryManagement = () => {
 
   // Format commission rate: if value ≤ 1 (decimal), multiply by 100; otherwise use as is
   const formatCommissionRate = (rate) => {
-    if (rate === null || rate === undefined) return 0;
-    if (typeof rate !== 'number') rate = parseFloat(rate);
-    if (isNaN(rate)) return 0;
-    if (rate <= 1 && rate > 0) {
-      return (rate * 100).toFixed(1);
+    if (rate === null || rate === undefined) return "0.00";
+
+    const value = parseFloat(rate);
+    if (isNaN(value)) return "0.00";
+
+    // If stored as decimal (0.1 = 10%)
+    if (value <= 1) {
+      return (value * 100).toFixed(2);
     }
-    return rate;
+
+    // If stored as normal percentage (12.5)
+    return value.toFixed(2);
   };
 
   const filteredCategories = filterCategories(categories, searchTerm);
@@ -153,7 +158,7 @@ const CategoryManagement = () => {
         {!category.hasChildren && <span className="ml-6"></span>}
         <div className="flex items-center">
           {category.image && (
-            <img 
+            <img
               src={getImageUrl(category.image)}
               alt={category.name_en}
               className="w-8 h-8 rounded-full object-cover mr-3"
@@ -191,11 +196,10 @@ const CategoryManagement = () => {
     status: (
       <button
         onClick={() => handleStatusToggle(category.id, category.is_active)}
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          category.is_active 
-            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-            : 'bg-red-100 text-red-800 hover:bg-red-200'
-        }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.is_active
+          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+          : 'bg-red-100 text-red-800 hover:bg-red-200'
+          }`}
       >
         {category.is_active ? 'Active' : 'Inactive'}
       </button>
@@ -329,9 +333,8 @@ const CategoryManagement = () => {
                   categoryData.map((category, index) => (
                     <tr
                       key={`${category.id}-${index}`}
-                      className={`hover:bg-gray-50 ${
-                        category.level > 0 ? 'bg-gray-50/50' : ''
-                      }`}
+                      className={`hover:bg-gray-50 ${category.level > 0 ? 'bg-gray-50/50' : ''
+                        }`}
                     >
                       {columns.map((column) => (
                         <td
@@ -354,13 +357,13 @@ const CategoryManagement = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         <h3 className="text-lg font-medium text-gray-900 mb-1">
-                          {searchTerm 
-                            ? "No categories found" 
+                          {searchTerm
+                            ? "No categories found"
                             : "No categories yet"
                           }
                         </h3>
                         <p className="text-gray-500 mb-4">
-                          {searchTerm 
+                          {searchTerm
                             ? "Try adjusting your search or filter"
                             : "Get started by creating your first category"
                           }
