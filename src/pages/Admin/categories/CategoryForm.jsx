@@ -151,8 +151,6 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
       _method: mode === "edit" ? "PUT" : undefined,
     };
 
-    console.log("CategoryForm JSON payload:", body);
-
     if (mode === "edit") {
       return api.post(`/categories/${id}`, body);
     }

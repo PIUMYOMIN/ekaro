@@ -291,16 +291,22 @@ const ProductCard = ({ product }) => {
               onClick={handleAddToCart}
               disabled={!product.is_active || product.quantity <= 0 || isInCart}
               className={`w-full rounded-md py-2 px-4 text-sm font-medium text-white ${!product.is_active || product.quantity <= 0
-                  ? "bg-gray-400"
-                  : isInCart
-                    ? "bg-gray-500"
-                    : "bg-green-600 hover:bg-green-700"
+                ? "bg-gray-400"
+                : isInCart
+                  ? "bg-gray-500"
+                  : "bg-green-600 hover:bg-green-700"
                 } transition-colors`}
             >
               {buttonText}
             </button>
             <div className="flex justify-between items-center mt-1 sm:mt-2 text-[8px] sm:text-xs text-gray-500">
-              <span className="truncate max-w-[60%]">{product.seller?.store_name || product.seller?.name || "Seller"}</span>
+              <span className="truncate max-w-[60%]">
+                {product.seller?.seller_profile?.store_name ||
+                  product.seller?.store_name ||
+                  product.seller?.name ||
+                  "Seller"}
+              </span>
+
               <div className="flex items-center space-x-0.5 sm:space-x-1">
                 {product.is_new && <span className="bg-blue-100 text-blue-800 px-1 sm:px-2 py-0.5 rounded">New</span>}
                 {product.is_on_sale && discountPercentage === 0 && (
