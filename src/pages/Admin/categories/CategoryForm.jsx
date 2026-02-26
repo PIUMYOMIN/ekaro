@@ -16,7 +16,6 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
   const [errors, setErrors] = useState({});
   const [categoriesFetched, setCategoriesFetched] = useState(false);
 
-  // Initialize form state
   const [formData, setFormData] = useState({
     name_en: "",
     name_mm: "",
@@ -25,14 +24,13 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     commission_rate: 0,
     parent_id: "",
     is_active: true,
-    image: null
+    image: null, // File | string | null
   });
 
-  // Build full image URL using config
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    const cleanPath = imagePath.replace(/^public\//, '');
+    if (imagePath.startsWith("http")) return imagePath;
+    const cleanPath = imagePath.replace(/^public\//, "");
     return `${IMAGE_BASE_URL}/${cleanPath}`;
   };
 
@@ -55,8 +53,9 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
   const initializeForm = useCallback(() => {
     if (mode === "edit" && initialCategory) {
-      const commissionRate = initialCategory.commission_rate ?
-        parseFloat(initialCategory.commission_rate) * 100 : 0;
+      const commissionRate = initialCategory.commission_rate
+        ? parseFloat(initialCategory.commission_rate)
+        : 0;
 
       const newFormData = {
         name_en: initialCategory.name_en || "",
@@ -66,19 +65,17 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
         commission_rate: commissionRate,
         parent_id: initialCategory.parent_id || "",
         is_active: initialCategory.is_active !== false,
-        image: initialCategory.image || null
+        image: initialCategory.image || null, // string URL from API
       };
 
       setFormData(newFormData);
 
-      // Set image preview if image exists
       if (initialCategory.image) {
         setImagePreview(getImageUrl(initialCategory.image));
       }
     }
   }, [mode, initialCategory]);
 
-  // Run initialization once
   useEffect(() => {
     fetchCategories();
     initializeForm();
@@ -86,40 +83,44 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error for this field
+
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
       if (!validTypes.includes(file.type)) {
-        setErrors(prev => ({ ...prev, image: "Please upload a valid image file (JPEG, PNG, GIF, WebP)" }));
+        setErrors((prev) => ({
+          ...prev,
+          image: "Please upload a valid image file (JPEG, PNG, GIF, WebP)",
+        }));
         return;
       }
 
-      // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, image: "Image size should be less than 2MB" }));
+        setErrors((prev) => ({
+          ...prev,
+          image: "Image size should be less than 2MB",
+        }));
         return;
       }
 
-      setFormData(prev => ({ ...prev, image: file }));
+      setFormData((prev) => ({ ...prev, image: file }));
       setImagePreview(URL.createObjectURL(file));
-      setErrors(prev => ({ ...prev, image: null }));
+      setErrors((prev) => ({ ...prev, image: null }));
     }
   };
 
   const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, image: null }));
+    setFormData((prev) => ({ ...prev, image: null }));
     setImagePreview(null);
   };
 
@@ -138,6 +139,62 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     return newErrors;
   };
 
+  const submitWithoutImage = async () => {
+    const body = {
+      name_en: formData.name_en,
+      name_mm: formData.name_mm || null,
+      description_en: formData.description_en || null,
+      description_mm: formData.description_mm || null,
+      commission_rate: parseFloat(formData.commission_rate),
+      parent_id: formData.parent_id || null,
+      is_active: formData.is_active ? 1 : 0,
+      _method: mode === "edit" ? "PUT" : undefined,
+    };
+
+    console.log("CategoryForm JSON payload:", body);
+
+    if (mode === "edit") {
+      return api.post(`/categories/${id}`, body);
+    }
+    return api.post("/categories", body);
+  };
+
+  const submitWithImage = async () => {
+    const submitData = new FormData();
+
+    submitData.append("name_en", formData.name_en);
+    submitData.append("name_mm", formData.name_mm ?? "");
+    submitData.append("description_en", formData.description_en ?? "");
+    submitData.append("description_mm", formData.description_mm ?? "");
+    submitData.append("commission_rate", parseFloat(formData.commission_rate));
+    submitData.append("parent_id", formData.parent_id ? formData.parent_id : "");
+    submitData.append("is_active", formData.is_active ? 1 : 0);
+
+    if (formData.image && typeof formData.image === "object") {
+      submitData.append("image", formData.image);
+    } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
+      submitData.append("image", "");
+    }
+
+    if (mode === "edit") {
+      submitData.append("_method", "PUT");
+    }
+
+    console.log("CategoryForm multipart payload:");
+    for (const [key, value] of submitData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+
+    if (mode === "edit") {
+      return api.post(`/categories/${id}`, submitData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    }
+    return api.post("/categories", submitData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -149,57 +206,32 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
     setSaving(true);
     try {
-      const submitData = new FormData();
+      const hasNewImage = formData.image && typeof formData.image === "object";
+      const useMultipart = hasNewImage || (mode === "edit" && initialCategory?.image && formData.image === null);
 
-      // Append all fields with correct types
-      submitData.append("name_en", formData.name_en);
-      if (formData.name_mm) submitData.append("name_mm", formData.name_mm);
-      if (formData.description_en) submitData.append("description_en", formData.description_en);
-      if (formData.description_mm) submitData.append("description_mm", formData.description_mm);
-
-      // Convert percentage to decimal for API (e.g., 10% -> 0.10)
-      const commissionRate = parseFloat(formData.commission_rate) / 100;
-      submitData.append("commission_rate", commissionRate);
-
-      if (formData.parent_id) {
-        submitData.append("parent_id", formData.parent_id);
-      }
-
-      submitData.append("is_active", formData.is_active ? 1 : 0);
-
-      // Handle image upload
-      if (formData.image && typeof formData.image === "object") {
-        // New image file uploaded
-        submitData.append("image", formData.image);
-      } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
-        // Image was removed - send empty string to delete image
-        submitData.append("image", "");
-      }
-      // else: no image field sent – backend will keep existing image (for edit) or leave null (for create)
-
-      if (mode === "edit") {
-        await api.put(`/categories/${id}`, submitData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+      let response;
+      if (useMultipart) {
+        response = await submitWithImage();
       } else {
-        await api.post("/categories", submitData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        response = await submitWithoutImage();
       }
 
-      // Call success callback if provided
-      if (onSuccess) {
-        onSuccess();
+      if (response.data?.success) {
+        const updatedCategory = response.data.data;
+        if (onSuccess) {
+          onSuccess(updatedCategory);
+        } else {
+          navigate("/admin/dashboard");
+        }
       } else {
-        navigate("/admin/dashboard");
+        alert(response.data?.message || "Failed to save category");
       }
     } catch (error) {
       console.error("Failed to save category:", error);
 
       if (error.response?.data?.errors) {
-        // Handle Laravel validation errors
         const validationErrors = {};
-        Object.keys(error.response.data.errors).forEach(key => {
+        Object.keys(error.response.data.errors).forEach((key) => {
           validationErrors[key] = error.response.data.errors[key][0];
         });
         setErrors(validationErrors);
@@ -228,8 +260,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
         <p className="mt-1 text-sm text-gray-600">
           {mode === "edit"
             ? "Update category details and settings"
-            : "Add a new product category to your store"
-          }
+            : "Add a new product category to your store"}
         </p>
       </div>
 
@@ -251,8 +282,9 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                   name="name_en"
                   value={formData.name_en}
                   onChange={handleChange}
-                  className={`block w-full rounded-md border ${errors.name_en ? 'border-red-300' : 'border-gray-300'
-                    } px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                  className={`block w-full rounded-md border ${
+                    errors.name_en ? "border-red-300" : "border-gray-300"
+                  } px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
                   placeholder="e.g., Electronics"
                 />
                 {errors.name_en && (
@@ -326,7 +358,9 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                         src={imagePreview}
                         alt="Category preview"
                         className="h-32 w-32 rounded-lg object-cover"
-                        onError={(e) => { e.target.src = DEFAULT_PLACEHOLDER; }}
+                        onError={(e) => {
+                          e.target.src = DEFAULT_PLACEHOLDER;
+                        }}
                       />
                       <button
                         type="button"
@@ -368,7 +402,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
                 {mode === "edit" && formData.image && typeof formData.image === "string" && (
                   <p className="text-sm text-gray-500">
-                    Current image: {formData.image.split('/').pop()}
+                    Current image: {formData.image.split("/").pop()}
                     <br />
                     <span className="text-xs">Leave unchanged to keep current image</span>
                   </p>
@@ -397,13 +431,12 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                 >
                   <option value="">None (Root Category)</option>
                   {categories
-                    .filter(cat => mode === "edit" ? cat.id !== parseInt(id) : true)
-                    .map(cat => (
+                    .filter((cat) => (mode === "edit" ? cat.id !== parseInt(id) : true))
+                    .map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name_en}
                       </option>
-                    ))
-                  }
+                    ))}
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
                   Select parent category to create a subcategory
@@ -424,8 +457,9 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                     min="0"
                     max="100"
                     step="0.1"
-                    className={`block w-full rounded-md border ${errors.commission_rate ? 'border-red-300' : 'border-gray-300'
-                      } px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                    className={`block w-full rounded-md border ${
+                      errors.commission_rate ? "border-red-300" : "border-gray-300"
+                    } px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
                     placeholder="e.g., 10"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
