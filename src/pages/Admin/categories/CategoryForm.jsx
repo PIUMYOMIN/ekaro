@@ -184,13 +184,15 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     }
 
     if (mode === "edit") {
-      return api.post(`/categories/${id}`, submitData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      submitData.append("_method", "PUT");  // 👈 method spoofing
+      response = await api.post(`/categories/${id}`, submitData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+    } else {
+      response = await api.post("/categories", submitData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
     }
-    return api.post("/categories", submitData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
   };
 
   const handleSubmit = async (e) => {
@@ -204,25 +206,42 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
 
     setSaving(true);
     try {
-      const hasNewImage = formData.image && typeof formData.image === "object";
-      const useMultipart = hasNewImage || (mode === "edit" && initialCategory?.image && formData.image === null);
+      const submitData = new FormData();
 
-      let response;
-      if (useMultipart) {
-        response = await submitWithImage();
-      } else {
-        response = await submitWithoutImage();
+      // Always send all fields (allow clearing)
+      submitData.append("name_en", formData.name_en);
+      submitData.append("name_mm", formData.name_mm || "");
+      submitData.append("description_en", formData.description_en || "");
+      submitData.append("description_mm", formData.description_mm || "");
+      submitData.append("commission_rate", parseFloat(formData.commission_rate));
+      submitData.append("parent_id", formData.parent_id ? formData.parent_id : "");
+      submitData.append("is_active", formData.is_active ? 1 : 0);
+
+      // Image
+      if (formData.image && typeof formData.image === "object") {
+        submitData.append("image", formData.image);
+      } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
+        submitData.append("image", ""); // remove existing
       }
 
-      if (response.data?.success) {
-        const updatedCategory = response.data.data;
-        if (onSuccess) {
-          onSuccess(updatedCategory);
-        } else {
-          navigate("/admin/dashboard");
-        }
+      // 👇 Method spoofing for edit
+      if (mode === "edit") {
+        submitData.append("_method", "PUT");
+        response = await api.post(`/categories/${id}`, submitData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
       } else {
-        alert(response.data?.message || "Failed to save category");
+        response = await api.post("/categories", submitData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
+
+      // After success, refresh & navigate
+      if (onSuccess) {
+        onSuccess();
+        navigate("/admin/categories");
+      } else {
+        navigate("/admin/dashboard");
       }
     } catch (error) {
       console.error("Failed to save category:", error);
@@ -280,9 +299,8 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                   name="name_en"
                   value={formData.name_en}
                   onChange={handleChange}
-                  className={`block w-full rounded-md border ${
-                    errors.name_en ? "border-red-300" : "border-gray-300"
-                  } px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                  className={`block w-full rounded-md border ${errors.name_en ? "border-red-300" : "border-gray-300"
+                    } px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
                   placeholder="e.g., Electronics"
                 />
                 {errors.name_en && (
@@ -455,9 +473,8 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
                     min="0"
                     max="100"
                     step="0.1"
-                    className={`block w-full rounded-md border ${
-                      errors.commission_rate ? "border-red-300" : "border-gray-300"
-                    } px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
+                    className={`block w-full rounded-md border ${errors.commission_rate ? "border-red-300" : "border-gray-300"
+                      } px-3 py-2 pr-10 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm`}
                     placeholder="e.g., 10"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

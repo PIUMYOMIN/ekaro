@@ -24,6 +24,7 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       const response = await api.get("/categories");
+      console.log("Fetched categories:", response.data.data[0]);
       if (response.data.success) {
         setCategories(response.data.data);
       } else {
@@ -62,12 +63,33 @@ const CategoryManagement = () => {
 
   // Toggle category active status
   const handleStatusToggle = async (categoryId, currentStatus) => {
+    const newStatus = !currentStatus;
+
+    // Optimistic update
+    setCategories(prev => updateCategoryRecursively(prev, categoryId, { is_active: newStatus }));
+
     try {
-      await api.put(`/categories/${categoryId}`, { is_active: !currentStatus });
-      fetchCategories(); // refresh list
+      await api.put(`/categories/${categoryId}`, { is_active: newStatus });
+      fetchCategories(); // refresh list (optional, but ensures consistency)
+      alert(`Category ${newStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
+      // ❗ Revert optimistic update on error
+      setCategories(prev => updateCategoryRecursively(prev, categoryId, { is_active: currentStatus }));
       alert(error.response?.data?.message || "Failed to update status");
     }
+  };
+
+  // Helper function to update category in nested structure
+  const updateCategoryRecursively = (categories, targetId, updates) => {
+    return categories.map(cat => {
+      if (cat.id === targetId) {
+        return { ...cat, ...updates };
+      }
+      if (cat.children) {
+        return { ...cat, children: updateCategoryRecursively(cat.children, targetId, updates) };
+      }
+      return cat;
+    });
   };
 
   const flattenCategories = (categories, level = 0) => {

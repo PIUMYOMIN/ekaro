@@ -55,6 +55,7 @@ import AddressInfo from "./pages/Seller/AddressInfo";
 import PaymentMethod from "./components/ui/PaymentMethod";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
 import RFQManager from "./pages/RFQManager";
+import Contact from "./pages/contact";
 
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -94,6 +95,7 @@ function App() {
                 <Route path="/terms" element={<Legal />} />
                 <Route path="/help" element={<HelpCenter />} />
                 <Route path="/legal" element={<Legal />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/privacy-policy" element={<Legal />} />
                 <Route path="/page-not-found" element={<Error />} />
 
