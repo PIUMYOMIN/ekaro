@@ -26,7 +26,8 @@ import {
   PlusIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  BellIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +44,7 @@ import OrderManagement from "../../components/admin/OrderManagement";
 import AnalyticsManagement from "../../components/admin/AnalyticsManagement";
 import CategoryManagement from "../../components/admin/CategoryManagement";
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
+import Notifications from "../../components/admin/Notifications";
 import Settings from "../../components/admin/Settings";
 
 
@@ -849,6 +851,11 @@ const AdminDashboard = () => {
           error={dashboardError}
         />
       )
+    },
+    {
+      name: "Notifications",
+      icon: BellIcon,
+      component: <Notifications />
     },
     {
       name: t("users"),
