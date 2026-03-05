@@ -1,75 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-MM">
 
 <head>
-  <meta charset="utf-8" />
-  <link rel="icon" href="/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#16a34a" />
-  
-  <!-- Primary SEO -->
-  <title>Pyonea | Smart Digital Marketplace</title>
-  <meta name="description"
-    content="Pyonea is a smart digital marketplace connecting buyers and sellers. Explore quality products, grow your business, and shop securely online." />
-  <meta name="keywords" content="Pyonea, Myanmar marketplace, online shopping, digital marketplace, B2B platform" />
-  <meta name="author" content="Pyonea" />
-  <meta name="robots" content="index, follow" />
-  <!-- Canonical -->
-  <link rel="canonical" href="https://pyonea.com/" />
-  
-  <!-- Open Graph (Facebook, Messenger, LinkedIn) -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Pyonea | Smart Digital Marketplace" />
-  <meta property="og:description" content="Explore products, connect with sellers, and grow your business with Pyonea." />
-  <meta property="og:url" content="https://pyonea.com/" />
-  <meta property="og:site_name" content="Pyonea" />
-  <meta property="og:image" content="https://pyonea.com/og-image.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{pageTitle}}</title>
+  <meta name="description" content="{{pageDescription}}">
+  <meta name="keywords" content="{{pageKeywords}}">
+  <link rel="canonical" href="{{pageUrl}}">
+
+  <!-- Open Graph for social sharing -->
+  <meta property="og:title" content="{{pageTitle}}">
+  <meta property="og:description" content="{{pageDescription}}">
+  <meta property="og:image" content="{{pageImage}}">
+  <meta property="og:url" content="{{pageUrl}}">
+  <meta property="og:type" content="website">
+
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Pyonea | Smart Digital Marketplace" />
-  <meta name="twitter:description" content="Smart digital marketplace connecting buyers and sellers." />
-  <meta name="twitter:image" content="https://pyonea.com/og-image.png" />
-  
-  <!-- Apple -->
-  <link rel="apple-touch-icon" href="/logo192.png" />
-  
-  <!-- Manifest (PWA) -->
-  <link rel="manifest" href="/manifest.json" />
-  
-  <!-- Google Analytics (Replace G-XXXXXXXXXX) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX');
-  </script>
-  
-  <!-- Structured Data -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{pageTitle}}">
+  <meta name="twitter:description" content="{{pageDescription}}">
+  <meta name="twitter:image" content="{{pageImage}}">
+
+  <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
-            {
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "Pyonea",
-              "url": "https://pyonea.com",
-              "logo": "https://pyonea.com/logo.png",
-              "sameAs": [
-                "https://www.facebook.com/pyoneaofficial",
-                "https://www.instagram.com/pyoneaofficial",
-                "https://www.tiktok.com/@pyoneaofficial",
-                "https://twitter.com/PyoneaOfficial",
-                "https://www.youtube.com/@PyoneaOfficial"
-              ]
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+
+      {
+        "@type": "WebSite",
+        "name": "Your Store Name",
+        "url": "https://yourwebsite.com",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://yourwebsite.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+
+      {
+        "@type": "Organization",
+        "name": "Your Store Name",
+        "url": "https://yourwebsite.com",
+        "logo": "https://yourwebsite.com/logo.png",
+        "sameAs": [
+          "https://www.facebook.com/yourpage",
+          "https://twitter.com/yourprofile",
+          "https://www.instagram.com/yourprofile"
+        ]
+      },
+
+      <!-- Categories / Collections -->
+      {{#categories}}
+      {
+        "@type": "CollectionPage",
+        "name": "{{name}}",
+        "url": "https://yourwebsite.com/categories/{{slug}}",
+        "description": "{{description}}"
+      }{{#unless @last}},{{/unless}}
+      {{/categories}},
+
+      <!-- Products -->
+      {{#products}}
+      {
+        "@type": "Product",
+        "name": "{{name}}",
+        "image": [
+          {{#images}}"{{url}}"{{#unless @last}},{{/unless}}{{/images}}
+        ],
+        "description": "{{description}}",
+        "sku": "{{sku}}",
+        "brand": {
+          "@type": "Brand",
+          "name": "{{brand}}"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": "https://yourwebsite.com/products/{{slug}}",
+          "priceCurrency": "MMK",
+          "price": "{{price}}",
+          "availability": "{{#if inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
+          "itemCondition": "https://schema.org/NewCondition"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "{{average_rating}}",
+          "reviewCount": "{{review_count}}"
+        }
+      }{{#unless @last}},{{/unless}}
+      {{/products}},
+
+      <!-- Product Details Page Example -->
+      {
+        "@type": "Product",
+        "name": "{{product.name}}",
+        "image": [
+          {{#product.images}}"{{url}}"{{#unless @last}},{{/unless}}{{/product.images}}
+        ],
+        "description": "{{product.description}}",
+        "sku": "{{product.sku}}",
+        "brand": {
+          "@type": "Brand",
+          "name": "{{product.seller_name}}"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": "https://yourwebsite.com/products/{{product.slug}}",
+          "priceCurrency": "MMK",
+          "price": "{{product.price}}",
+          "availability": "{{#if product.inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
+          "itemCondition": "https://schema.org/NewCondition",
+          "seller": {
+            "@type": "Organization",
+            "name": "{{product.seller_name}}"
+          }
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "{{product.average_rating}}",
+          "reviewCount": "{{product.review_count}}"
+        },
+        "review": [
+          {{#product.reviews}}
+          {
+            "@type": "Review",
+            "author": {
+              "@type": "Person",
+              "name": "{{user_name}}"
+            },
+            "datePublished": "{{created_at}}",
+            "reviewBody": "{{comment}}",
+            "reviewRating": {
+              "@type": "Rating",
+              "ratingValue": "{{rating}}",
+              "bestRating": "5",
+              "worstRating": "1"
             }
-            </script>
-  </head>
+          }{{#unless @last}},{{/unless}}
+          {{/product.reviews}}
+        ]
+      }
+    ]
+  }
+  </script>
+
+</head>
 
 <body>
+
   <div id="root"></div>
+
   <script type="module" src="/src/main.jsx"></script>
+
 </body>
 
 </html>

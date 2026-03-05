@@ -229,10 +229,10 @@ const Footer = () => {
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-gray-700 text-center">
           <p className="text-gray-300">
-            &copy; {new Date().getFullYear()} {t("footer.copyright")}
+            &copy; {new Date().getFullYear()}
           </p>
           <p className="text-gray-400 text-sm mt-2">
-            {t("footer.rights_reserved")}
+            {t("footer.copyright")}
           </p>
         </div>
       </div>

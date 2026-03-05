@@ -284,195 +284,224 @@ const ProductList = () => {
   }, [searchQuery, selectedCategory, getCategoryName, t]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Search Box (unchanged) */}
-      <div className="mb-8">
-        <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+    <>
+      <Helmet>
+
+        <title>{getPageTitle} | Pyonea Marketplace</title>
+
+        <meta
+          name="description"
+          content={`Browse ${getPageTitle} on Pyonea marketplace. Discover trusted sellers, competitive prices, and secure shopping.`}
+        />
+
+        <meta name="robots" content="index,follow" />
+
+        <link
+          rel="canonical"
+          href={`https://pyonea.com/products${location.search || ""}`}
+        />
+
+        <meta property="og:title" content={`${getPageTitle} | Pyonea`} />
+        <meta property="og:description" content="Discover products and trusted sellers on Pyonea marketplace." />
+        <meta property="og:url" content={`https://pyonea.com/products${location.search || ""}`} />
+        <meta property="og:type" content="website" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${getPageTitle} | Pyonea`} />
+        <meta name="twitter:description" content="Explore thousands of products on Pyonea digital marketplace." />
+
+      </Helmet>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Box (unchanged) */}
+        <div className="mb-8">
+          <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  debouncedSearch(e.target.value);
+                }}
+                placeholder={t("products.search_placeholder")}
+                className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-lg"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center">
+                <button
+                  type="submit"
+                  className="bg-green-600 text-white px-6 py-2 rounded-r-lg h-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {t("products.search")}
+                </button>
+              </div>
             </div>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                debouncedSearch(e.target.value);
-              }}
-              placeholder={t("products.search_placeholder")}
-              className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-lg"
-            />
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <button
-                type="submit"
-                className="bg-green-600 text-white px-6 py-2 rounded-r-lg h-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                {t("products.search")}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {/* Active Filters Display (unchanged) */}
-      {(searchQuery || selectedCategory || filters.minPrice || filters.maxPrice) && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-blue-800">{t("products.active_filters")}:</span>
-
-            {searchQuery && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {t("products.search_filter", { query: searchQuery })}
-                <button
-                  onClick={() => {
-                    const params = new URLSearchParams(location.search);
-                    params.delete("search");
-                    navigate(`/products?${params.toString()}`);
-                  }}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-
-            {selectedCategory && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                {t("products.category_filter", { category: getCategoryName(selectedCategory) })}
-                <button
-                  onClick={() => {
-                    const params = new URLSearchParams(location.search);
-                    params.delete("category");
-                    navigate(`/products?${params.toString()}`);
-                  }}
-                  className="ml-2 text-green-600 hover:text-green-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-
-            {(filters.minPrice || filters.maxPrice) && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                {filters.minPrice && filters.maxPrice
-                  ? `${t("products.price_range")}: ${filters.minPrice} - ${filters.maxPrice} MMK`
-                  : filters.minPrice
-                    ? `${t("products.from")} ${filters.minPrice} MMK`
-                    : `${t("products.under")} ${filters.maxPrice} MMK`}
-                <button
-                  onClick={() => {
-                    const params = new URLSearchParams(location.search);
-                    params.delete("min_price");
-                    params.delete("max_price");
-                    navigate(`/products?${params.toString()}`);
-                  }}
-                  className="ml-2 text-purple-600 hover:text-purple-800"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-
-            <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-800 ml-auto">
-              {t("products.clear_all")}
-            </button>
-          </div>
+          </form>
         </div>
-      )}
 
-      {/* Main layout (unchanged) */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar */}
-        <div className="md:w-1/4">
-          <div className="sticky top-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">{t("products.filters")}</h2>
-              <button onClick={clearFilters} className="text-sm text-green-600 hover:text-green-700">
+        {/* Active Filters Display (unchanged) */}
+        {(searchQuery || selectedCategory || filters.minPrice || filters.maxPrice) && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-blue-800">{t("products.active_filters")}:</span>
+
+              {searchQuery && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {t("products.search_filter", { query: searchQuery })}
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams(location.search);
+                      params.delete("search");
+                      navigate(`/products?${params.toString()}`);
+                    }}
+                    className="ml-2 text-blue-600 hover:text-blue-800"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              {selectedCategory && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {t("products.category_filter", { category: getCategoryName(selectedCategory) })}
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams(location.search);
+                      params.delete("category");
+                      navigate(`/products?${params.toString()}`);
+                    }}
+                    className="ml-2 text-green-600 hover:text-green-800"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              {(filters.minPrice || filters.maxPrice) && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  {filters.minPrice && filters.maxPrice
+                    ? `${t("products.price_range")}: ${filters.minPrice} - ${filters.maxPrice} MMK`
+                    : filters.minPrice
+                      ? `${t("products.from")} ${filters.minPrice} MMK`
+                      : `${t("products.under")} ${filters.maxPrice} MMK`}
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams(location.search);
+                      params.delete("min_price");
+                      params.delete("max_price");
+                      navigate(`/products?${params.toString()}`);
+                    }}
+                    className="ml-2 text-purple-600 hover:text-purple-800"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+
+              <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-800 ml-auto">
                 {t("products.clear_all")}
               </button>
             </div>
+          </div>
+        )}
 
-            <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
+        {/* Main layout (unchanged) */}
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="md:w-1/4">
+            <div className="sticky top-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">{t("products.filters")}</h2>
+                <button onClick={clearFilters} className="text-sm text-green-600 hover:text-green-700">
+                  {t("products.clear_all")}
+                </button>
+              </div>
 
-            <div className="mt-6">
-              <CategorySelector
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onCategorySelect={handleCategoryChange}
-              />
+              <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
+
+              <div className="mt-6">
+                <CategorySelector
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onCategorySelect={handleCategoryChange}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Product grid */}
-        <div className="md:w-3/4">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{getPageTitle}</h1>
-            {products.length > 0 && (
-              <div className="text-sm text-gray-600">
-                {t("products.showing_count", { count: products.length })}
-                {hasMore && " + more"}
+          {/* Product grid */}
+          <div className="md:w-3/4">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-900">{getPageTitle}</h1>
+              {products.length > 0 && (
+                <div className="text-sm text-gray-600">
+                  {t("products.showing_count", { count: products.length })}
+                  {hasMore && " + more"}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">{error}</p>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
 
-          {error && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {loading && products.length === 0
+                ? [...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)
+                : products.length > 0
+                  ? products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
                     />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-yellow-700">{error}</p>
-                </div>
+                  ))
+                  : !loading && (
+                    <div className="col-span-full text-center py-12">
+                      <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
+                      <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>
+                      <button
+                        onClick={clearFilters}
+                        className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                      >
+                        {t("products.clear_filters")}
+                      </button>
+                    </div>
+                  )}
+
+              {loading && page > 1 && [...Array(3)].map((_, i) => <ProductCardSkeleton key={`skeleton-${i}`} />)}
+            </div>
+
+            {loading && (
+              <div className="flex justify-center items-center h-20 mt-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading && products.length === 0
-              ? [...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)
-              : products.length > 0
-                ? products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
-                ))
-                : !loading && (
-                  <div className="col-span-full text-center py-12">
-                    <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
-                    <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>
-                    <button
-                      onClick={clearFilters}
-                      className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                    >
-                      {t("products.clear_filters")}
-                    </button>
-                  </div>
-                )}
-
-            {loading && page > 1 && [...Array(3)].map((_, i) => <ProductCardSkeleton key={`skeleton-${i}`} />)}
+            {!hasMore && products.length > 0 && (
+              <div className="text-center py-6 text-gray-500">{t("products.no_more_products")}</div>
+            )}
           </div>
-
-          {loading && (
-            <div className="flex justify-center items-center h-20 mt-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
-            </div>
-          )}
-
-          {!hasMore && products.length > 0 && (
-            <div className="text-center py-6 text-gray-500">{t("products.no_more_products")}</div>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

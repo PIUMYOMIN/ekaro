@@ -9,6 +9,8 @@ import { useAuth } from "../context/AuthContext";
 import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
 import CategoryCard from "../components/ui/CategoryCard";
+import { Helmet } from "react-helmet-async";
+
 
 // Skeleton components for better loading states
 const ProductCardSkeleton = () => (
@@ -370,6 +372,35 @@ const Home = () => {
   ), [loading.sellers, transformedSellers, t]);
 
   return (
+    <>
+      <Helmet>
+        <title>Pyonea | Myanmar B2B Marketplace for Products & Suppliers</title>
+
+        <meta 
+          name="description" 
+          content="Pyonea is a trusted Myanmar B2B marketplace connecting buyers with verified suppliers. Discover wholesale products, trusted sellers, and business opportunities."
+        />
+
+        <meta 
+          name="keywords" 
+          content="Myanmar marketplace, B2B Myanmar, suppliers Myanmar, wholesale Myanmar, Pyonea marketplace"
+        />
+
+        <link rel="canonical" href="https://pyonea.com/" />
+
+        {/* Open Graph */}
+        <meta property="og:title" content="Pyonea Marketplace" />
+        <meta property="og:description" content="Discover trusted sellers and quality products on Pyonea marketplace." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://pyonea.com/" />
+        <meta property="og:image" content="https://pyonea.com/og-image.jpg" />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Pyonea Marketplace" />
+        <meta name="twitter:description" content="Discover trusted sellers and quality products on Pyonea marketplace." />
+        <meta name="twitter:image" content="https://pyonea.com/og-image.jpg" />
+      </Helmet>
     <div className="bg-gray-50">
       {renderHeroSection}
       {renderCategoriesSection}
@@ -505,7 +536,8 @@ const Home = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 
