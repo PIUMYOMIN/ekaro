@@ -371,9 +371,20 @@ const Home = () => {
     </section>
   ), [loading.sellers, transformedSellers, t]);
 
+  const ogImage = typeof window !== 'undefined'
+    ? `${window.location.origin}/og-image.jpg`
+    : '/og-image.jpg';
+
   return (
     <>
-
+      <SEO
+        title="Pyonea | Myanmar B2B Marketplace"
+        description="Pyonea is a trusted Myanmar B2B marketplace connecting buyers with verified suppliers. Discover wholesale products, trusted sellers, and business opportunities."
+        keywords="Myanmar marketplace, B2B Myanmar, suppliers Myanmar, wholesale Myanmar, Pyonea marketplace"
+        image={ogImage}
+        url="/"
+        type="website"
+      />
       <div className="bg-gray-50">
         {renderHeroSection}
         {renderCategoriesSection}
