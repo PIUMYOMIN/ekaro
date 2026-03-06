@@ -1,122 +1,96 @@
 <!DOCTYPE html>
-<html lang="en-MM">
+<html lang="{{lang}}">
 
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Page specific (filled by server) -->
   <title>{{pageTitle}}</title>
   <meta name="description" content="{{pageDescription}}">
   <meta name="keywords" content="{{pageKeywords}}">
   <link rel="canonical" href="{{pageUrl}}">
 
-  <!-- Open Graph for social sharing -->
+  <!-- Open Graph for social sharing (filled by server) -->
   <meta property="og:title" content="{{pageTitle}}">
   <meta property="og:description" content="{{pageDescription}}">
   <meta property="og:image" content="{{pageImage}}">
   <meta property="og:url" content="{{pageUrl}}">
-  <meta property="og:type" content="website">
+  <meta property="og:type" content="{{pageType}}"> <!-- e.g. website, product, article -->
+  <meta property="og:site_name" content="Pyonea Marketplace">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{pageTitle}}">
   <meta name="twitter:description" content="{{pageDescription}}">
   <meta name="twitter:image" content="{{pageImage}}">
+  <meta name="twitter:site" content="@pyonea">
 
-  <!-- JSON-LD Structured Data -->
+  <!-- Favicon / web app icons (adjust paths) -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  
+  <!-- JSON‑LD Structured Data – will be expanded server‑side based on the current page -->
   <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {{!-- Always present: Organization and WebSite --}}
       {
-        "@context": "https://schema.org",
-        "@graph": [
-
+        "@type": "Organization",
+        "name": "Pyonea Marketplace",
+        "url": "https://pyonea.com",
+        "logo": "https://pyonea.com/logo.png",
+        "sameAs": [
+          "https://www.facebook.com/pyonea",
+          "https://twitter.com/pyonea",
+          "https://www.instagram.com/pyonea"
+        ]
+      },
       {
         "@type": "WebSite",
-        "name": "Your Store Name",
-        "url": "https://yourwebsite.com",
+        "name": "Pyonea Marketplace",
+        "url": "https://pyonea.com",
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://yourwebsite.com/search?q={search_term_string}",
+          "target": "https://pyonea.com/search?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       },
-
-      {
-        "@type": "Organization",
-        "name": "Your Store Name",
-        "url": "https://yourwebsite.com",
-        "logo": "https://yourwebsite.com/logo.png",
-        "sameAs": [
-          "https://www.facebook.com/yourpage",
-          "https://twitter.com/yourprofile",
-          "https://www.instagram.com/yourprofile"
-        ]
-      },
-
-      <!-- Categories / Collections -->
-      {{#categories}}
-      {
-        "@type": "CollectionPage",
-        "name": "{{name}}",
-        "url": "https://yourwebsite.com/categories/{{slug}}",
-        "description": "{{description}}"
-      }{{#unless @last}},{{/unless}}
-      {{/categories}},
-
-      <!-- Products -->
-      {{#products}}
-      {
-        "@type": "Product",
-        "name": "{{name}}",
-        "image": [
-          {{#images}}"{{url}}"{{#unless @last}},{{/unless}}{{/images}}
-        ],
-        "description": "{{description}}",
-        "sku": "{{sku}}",
-        "brand": {
-          "@type": "Brand",
-          "name": "{{brand}}"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": "https://yourwebsite.com/products/{{slug}}",
-          "priceCurrency": "MMK",
-          "price": "{{price}}",
-          "availability": "{{#if inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
-          "itemCondition": "https://schema.org/NewCondition"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "{{average_rating}}",
-          "reviewCount": "{{review_count}}"
-        }
-      }{{#unless @last}},{{/unless}}
-      {{/products}},
-
-      <!-- Product Details Page Example -->
+      {{!-- For category pages – iterate over categories --}}
+      {{#if categories}}
+        {{#each categories}}
+        {
+          "@type": "CollectionPage",
+          "name": "{{this.name}}",
+          "url": "https://pyonea.com/categories/{{this.slug}}",
+          "description": "{{this.description}}"
+        }{{#unless @last}},{{/unless}}
+        {{/each}}
+      {{/if}}
+      {{!-- For product pages – include product details --}}
+      {{#if product}}
       {
         "@type": "Product",
         "name": "{{product.name}}",
         "image": [
-          {{#product.images}}"{{url}}"{{#unless @last}},{{/unless}}{{/product.images}}
+          {{#each product.images}}"{{this.url}}"{{#unless @last}},{{/unless}}{{/each}}
         ],
         "description": "{{product.description}}",
         "sku": "{{product.sku}}",
         "brand": {
           "@type": "Brand",
-          "name": "{{product.seller_name}}"
+          "name": "{{product.brand}}"
         },
         "offers": {
           "@type": "Offer",
-          "url": "https://yourwebsite.com/products/{{product.slug}}",
+          "url": "https://pyonea.com/products/{{product.slug}}",
           "priceCurrency": "MMK",
           "price": "{{product.price}}",
           "availability": "{{#if product.inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
-          "itemCondition": "https://schema.org/NewCondition",
-          "seller": {
-            "@type": "Organization",
-            "name": "{{product.seller_name}}"
-          }
+          "itemCondition": "https://schema.org/NewCondition"
         },
         "aggregateRating": {
           "@type": "AggregateRating",
@@ -124,37 +98,50 @@
           "reviewCount": "{{product.review_count}}"
         },
         "review": [
-          {{#product.reviews}}
+          {{#each product.reviews}}
           {
             "@type": "Review",
-            "author": {
-              "@type": "Person",
-              "name": "{{user_name}}"
-            },
-            "datePublished": "{{created_at}}",
-            "reviewBody": "{{comment}}",
+            "author": { "@type": "Person", "name": "{{this.user_name}}" },
+            "datePublished": "{{this.created_at}}",
+            "reviewBody": "{{this.comment}}",
             "reviewRating": {
               "@type": "Rating",
-              "ratingValue": "{{rating}}",
+              "ratingValue": "{{this.rating}}",
               "bestRating": "5",
               "worstRating": "1"
             }
           }{{#unless @last}},{{/unless}}
-          {{/product.reviews}}
+          {{/each}}
         ]
       }
+      {{/if}}
+      {{!-- For seller pages – you could add a LocalBusiness or Organization --}}
+      {{#if seller}}
+      {
+        "@type": "LocalBusiness",
+        "name": "{{seller.store_name}}",
+        "url": "https://pyonea.com/sellers/{{seller.slug}}",
+        "description": "{{seller.store_description}}",
+        "image": "{{seller.store_logo}}",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "{{seller.city}}",
+          "addressRegion": "{{seller.state}}",
+          "addressCountry": "MM"
+        }
+        {{!-- more fields as needed --}}
+      }
+      {{/if}}
     ]
   }
   </script>
-
 </head>
 
 <body>
-
   <div id="root"></div>
 
+  <!-- Your main JS bundle – adjust the path as needed -->
   <script type="module" src="/src/main.jsx"></script>
-
 </body>
 
 </html>

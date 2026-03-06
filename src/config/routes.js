@@ -4,8 +4,8 @@ const routes = {
     apiBaseUrl: process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'
   },
   production: {
-    baseUrl: 'https://yourdomain.com',
-    apiBaseUrl: 'https://yourdomain.com/api/v1'
+    baseUrl: 'https://pyonea.com',
+    apiBaseUrl: 'https://api.pyonea.com/api/v1'
   }
 };
 

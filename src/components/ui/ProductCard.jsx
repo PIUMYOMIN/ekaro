@@ -9,9 +9,29 @@ import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
-// Placeholder image path – ensure this file exists in your public folder
-const PLACEHOLDER_IMAGE = "/placeholder-product.jpg";
+// Helper to build full image URL (you can move this to a shared utils file)
+const getImageUrl = (image) => {
+  if (!image) return DEFAULT_PLACEHOLDER;
+  if (typeof image === 'string') {
+    if (image.startsWith('http')) return image;
+    const cleanPath = image.replace('public/', '');
+    return `${IMAGE_BASE_URL}/${cleanPath}`;
+  }
+  if (typeof image === 'object') {
+    if (image.url) {
+      if (image.url.startsWith('http')) return image.url;
+      const cleanPath = image.url.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
+    }
+    if (image.path) {
+      const cleanPath = image.path.replace('public/', '');
+      return `${IMAGE_BASE_URL}/${cleanPath}`;
+    }
+  }
+  return DEFAULT_PLACEHOLDER;
+};
 
 const ProductCard = ({ product }) => {
   const { user } = useAuth();
@@ -24,28 +44,13 @@ const ProductCard = ({ product }) => {
   const slug = product.slug_en || product.slug || product.id;
   const productId = product.id || product.product_id;
 
-  // Extract valid image URLs from product.images
-  const getValidImages = () => {
-    if (!product.images || !Array.isArray(product.images)) return [];
-    // Filter out invalid URLs (empty string, just folder path, etc.)
-    return product.images.filter(img => {
-      const url = img.url;
-      return url && url !== "http://localhost:8000/storage/" && url.trim() !== "";
-    });
-  };
+  // Extract valid image objects for counting and badge
+  const validImages = (product.images && Array.isArray(product.images))
+    ? product.images.filter(img => img && img.url && img.url.trim() !== "")
+    : [];
 
-  const validImages = getValidImages();
-
-  // Get the best image URL for display
-  const getImageUrl = () => {
-    if (validImages.length === 0) return null;
-    // Find primary image
-    const primary = validImages.find(img => img.is_primary === true);
-    const imageToUse = primary || validImages[0];
-    return imageToUse.url;
-  };
-
-  const imageUrl = getImageUrl();
+  // Get the best image URL using the helper
+  const imageUrl = product.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
 
   // Check if product is in wishlist
   const isInWishlist = wishlist?.some(item => item.id === productId);
@@ -124,21 +129,17 @@ const ProductCard = ({ product }) => {
       return;
     }
 
-    // 🔥 1. Instantly update local UI
+    // Optimistic UI update
     setIsInCart(true);
 
     try {
-      // 🔥 2. Call context function (works in background)
       await addToCart(productId, 1);
     } catch (error) {
-      // ❌ If API fails → revert UI
       setIsInCart(false);
-
       setMessage({
         type: "error",
         message: error.message || "Failed to add to cart"
       });
-
       setTimeout(() => setMessage(null), 3000);
     }
   };
@@ -148,7 +149,6 @@ const ProductCard = ({ product }) => {
 
   // Button text logic
   let buttonText = "Add to Cart";
-
   if (!product.is_active) buttonText = "Unavailable";
   else if (product.quantity <= 0) buttonText = "Out of Stock";
   else if (isInCart) buttonText = "In Cart";
@@ -156,10 +156,11 @@ const ProductCard = ({ product }) => {
   return (
     <>
       {message && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
+          message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
           message.type === "error" ? "bg-red-100 border-red-400 text-red-700" :
-            "bg-blue-100 border-blue-400 text-blue-700"
-          }`}>
+          "bg-blue-100 border-blue-400 text-blue-700"
+        }`}>
           <span className="text-sm sm:text-base">{message.message}</span>
           <button onClick={() => setMessage(null)} className="ml-4 text-xl font-bold hover:opacity-70">×</button>
         </div>
@@ -176,7 +177,7 @@ const ProductCard = ({ product }) => {
             <div className="w-full h-36 sm:h-48 bg-gray-100 rounded-t-lg overflow-hidden relative">
               {imageUrl && !imageError ? (
                 <LazyLoadImage
-                  src={imageUrl} // use full URL directly
+                  src={imageUrl}
                   alt={product.name_en || "Product"}
                   effect="blur"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
@@ -290,12 +291,13 @@ const ProductCard = ({ product }) => {
             <button
               onClick={handleAddToCart}
               disabled={!product.is_active || product.quantity <= 0 || isInCart}
-              className={`w-full rounded-md py-2 px-4 text-sm font-medium text-white ${!product.is_active || product.quantity <= 0
-                ? "bg-gray-400"
-                : isInCart
+              className={`w-full rounded-md py-2 px-4 text-sm font-medium text-white ${
+                !product.is_active || product.quantity <= 0
+                  ? "bg-gray-400"
+                  : isInCart
                   ? "bg-gray-500"
                   : "bg-green-600 hover:bg-green-700"
-                } transition-colors`}
+              } transition-colors`}
             >
               {buttonText}
             </button>

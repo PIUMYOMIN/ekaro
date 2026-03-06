@@ -6,6 +6,7 @@ import api from "../utils/api";
 import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
+import SEO from "../components/SEO/seo";
 
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
@@ -285,33 +286,11 @@ const ProductList = () => {
 
   return (
     <>
-      <Helmet>
-
-        <title>{getPageTitle} | Pyonea Marketplace</title>
-
-        <meta
-          name="description"
-          content={`Browse ${getPageTitle} on Pyonea marketplace. Discover trusted sellers, competitive prices, and secure shopping.`}
-        />
-
-        <meta name="robots" content="index,follow" />
-
-        <link
-          rel="canonical"
-          href={`https://pyonea.com/products${location.search || ""}`}
-        />
-
-        <meta property="og:title" content={`${getPageTitle} | Pyonea`} />
-        <meta property="og:description" content="Discover products and trusted sellers on Pyonea marketplace." />
-        <meta property="og:url" content={`https://pyonea.com/products${location.search || ""}`} />
-        <meta property="og:type" content="website" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${getPageTitle} | Pyonea`} />
-        <meta name="twitter:description" content="Explore thousands of products on Pyonea digital marketplace." />
-
-      </Helmet>
-
+      <SEO
+        title={getPageTitle}
+        description={`Browse ${getPageTitle} on Pyonea marketplace.`}
+        url={location.pathname + location.search}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Box (unchanged) */}
         <div className="mb-8">

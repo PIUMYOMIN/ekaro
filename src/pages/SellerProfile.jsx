@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tab } from "@headlessui/react";
+import SEO from "../components/SEO/seo";
 import {
   StarIcon,
   CheckCircleIcon,
@@ -20,19 +21,19 @@ import {
   ExclamationTriangleIcon,
   ShareIcon
 } from "@heroicons/react/24/outline";
-import { 
-  FacebookShareButton, 
-  TwitterShareButton, 
+import {
+  FacebookShareButton,
+  TwitterShareButton,
   LinkedinShareButton,
   FacebookIcon,
   TwitterIcon,
   LinkedinIcon
 } from "react-share";
-
 import ProductCard from "../components/ui/ProductCard";
 import ReviewCard from "../components/ui/ReviewCard";
 import Pagination from "../components/ui/Pagination";
 import api from "../utils/api";
+import { DEFAULT_PLACEHOLDER } from "../config"; // <-- import placeholder
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -53,6 +54,10 @@ const SellerProfile = () => {
     reviews: true
   });
   const [error, setError] = useState(null);
+
+  // Fallback values for SEO (used when seller is null)
+  const fallbackTitle = "Seller Profile";
+  const fallbackDescription = "View seller information on Pyonea marketplace.";
 
   // Follow state
   const [isFollowing, setIsFollowing] = useState(false);
@@ -80,44 +85,33 @@ const SellerProfile = () => {
         setLoading({ seller: true, products: true, reviews: true });
         setError(null);
 
-        // Fetch seller details
-        try {
-          const sellerRes = await api.get(`/sellers/${slug}`);
-          if (sellerRes.data.success && sellerRes.data.data) {
-            const sellerData = sellerRes.data.data.seller;
-            setSeller(sellerData);
+        const sellerRes = await api.get(`/sellers/${slug}`);
+        if (sellerRes.data.success && sellerRes.data.data) {
+          const sellerData = sellerRes.data.data.seller;
+          setSeller(sellerData);
 
-            // Set follow data
-            setIsFollowing(sellerRes.data.data.is_following || false);
-            setFollowersCount(sellerRes.data.data.stats?.followers_count || 0);
+          setIsFollowing(sellerRes.data.data.is_following || false);
+          setFollowersCount(sellerRes.data.data.stats?.followers_count || 0);
 
-            // Set products from the response
-            if (sellerRes.data.data.products && sellerRes.data.data.products.data) {
-              setProducts(sellerRes.data.data.products.data);
-            }
-
-            // Set reviews from the seller data
-            if (sellerData.reviews) {
-              setReviews(sellerData.reviews);
-            }
-
-            // Set stats if included
-            if (sellerRes.data.data.stats) {
-              setStats(sellerRes.data.data.stats);
-            }
-          } else {
-            throw new Error('Invalid seller data structure');
+          if (sellerRes.data.data.products && sellerRes.data.data.products.data) {
+            setProducts(sellerRes.data.data.products.data);
           }
-        } catch (err) {
-          console.error("Failed to fetch seller:", err);
-          setError("Failed to load seller information.");
-        } finally {
-          setLoading(prev => ({ ...prev, seller: false, reviews: false, products: false }));
+
+          if (sellerData.reviews) {
+            setReviews(sellerData.reviews);
+          }
+
+          if (sellerRes.data.data.stats) {
+            setStats(sellerRes.data.data.stats);
+          }
+        } else {
+          throw new Error('Invalid seller data structure');
         }
-      } catch (error) {
-        console.error("Error fetching seller data:", error);
-        setError("Failed to load seller data. Please try again later.");
-        setLoading({ seller: false, products: false, reviews: false });
+      } catch (err) {
+        console.error("Failed to fetch seller:", err);
+        setError("Failed to load seller information.");
+      } finally {
+        setLoading(prev => ({ ...prev, seller: false, reviews: false, products: false }));
       }
     };
 
@@ -243,12 +237,11 @@ const SellerProfile = () => {
     }
   };
 
-  // Safely get current reviews for pagination
+
+
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
   const currentReviews = Array.isArray(reviews) ? reviews.slice(indexOfFirstReview, indexOfLastReview) : [];
-
-  // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
 
   // Render star ratings (unchanged)
@@ -313,11 +306,10 @@ const SellerProfile = () => {
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
           className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full px-4"
         >
-          <div className={`rounded-lg shadow-lg border-l-4 ${
-            popupType === "success"
-              ? "bg-green-50 border-green-500"
-              : "bg-red-50 border-red-500"
-          }`}>
+          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success"
+            ? "bg-green-50 border-green-500"
+            : "bg-red-50 border-red-500"
+            }`}>
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -328,20 +320,18 @@ const SellerProfile = () => {
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1">
-                  <p className={`text-sm font-medium ${
-                    popupType === "success" ? "text-green-800" : "text-red-800"
-                  }`}>
+                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"
+                    }`}>
                     {popupMessage}
                   </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
                     onClick={() => setShowPopup(false)}
-                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      popupType === "success"
-                        ? "focus:ring-green-500 text-green-400 hover:text-green-500"
-                        : "focus:ring-red-500 text-red-400 hover:text-red-500"
-                    }`}
+                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success"
+                      ? "focus:ring-green-500 text-green-400 hover:text-green-500"
+                      : "focus:ring-red-500 text-red-400 hover:text-red-500"
+                      }`}
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
@@ -424,502 +414,510 @@ const SellerProfile = () => {
     );
   };
 
-  // ... (loading and error states remain unchanged)
-
-  if (loading.seller && !seller) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-          <p className="mt-4 text-gray-700">Loading seller information...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !seller) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-          </div>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading seller</h3>
-          <p className="mt-1 text-sm text-gray-500">{error}</p>
-          <div className="mt-6">
-            <Link
-              to="/sellers"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-            >
-              Back to Sellers
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!seller) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
-            <UserIcon className="h-6 w-6 text-gray-400" />
-          </div>
-          <h3 className="mt-2 text-lg font-medium text-gray-900">Seller not found</h3>
-          <p className="mt-1 text-sm text-gray-500">The seller you're looking for doesn't exist.</p>
-          <div className="mt-6">
-            <Link
-              to="/sellers"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-            >
-              Back to Sellers
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Calculate values from API data with safe fallbacks
   const rating = parseFloat(seller.reviews_avg_rating) || 0;
   const reviewCount = seller.reviews_count || 0;
   const productCount = products.length || stats.active_products || 0;
   const memberSince = seller.created_at ? new Date(seller.created_at).getFullYear() : 'N/A';
 
+  const pageTitle = seller?.store_name || fallbackTitle;
+  const pageDescription = seller?.store_description?.slice(0, 150) || fallbackDescription;
+  const pageImage = seller?.store_logo || DEFAULT_PLACEHOLDER;
+  const pageUrl = seller ? `/sellers/${seller.store_slug || seller.id}` : `/sellers/${slug}`;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <PopupNotification />
-      <ShareModal />
+    <>
+      <SEO
+        title={pageTitle}
+        description={pageDescription}
+        image={pageImage}
+        url={pageUrl}
+        type="profile"
+      />
 
-      {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Link to="/sellers" className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
-          <ChevronLeftIcon className="h-5 w-5 mr-1" />
-          {t("seller.back_to_sellers") || "Back to Sellers"}
-        </Link>
-      </div>
+      {loading.seller && !seller && (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-4 text-gray-700">Loading seller information...</p>
+          </div>
+        </div>
+      )}
 
-      {/* Seller Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 mb-6 md:mb-0 flex justify-center md:justify-start">
-              {!logoError && seller.store_logo ? (
-                <img
-                  src={seller.store_logo}
-                  alt={seller.store_name}
-                  className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                  <span className="text-gray-600 text-xl font-bold">
-                    {seller.store_name?.charAt(0)?.toUpperCase() || 'S'}
-                  </span>
-                </div>
-              )}
+      {error && !seller && (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
             </div>
-
-            <div className="md:w-3/4">
-              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div>
-                  <div className="flex items-center mb-2 flex-wrap gap-2">
-                    <h1 className="text-2xl font-bold">
-                      {seller.store_name}
-                    </h1>
-                    {(seller.status === "approved" || seller.status === "active") && (
-                      <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
-                    )}
-                  </div>
-
-                  <div className="flex items-center mb-4 flex-wrap gap-2">
-                    <div className="flex text-yellow-400">
-                      {renderStars(rating, "h-5 w-5")}
-                    </div>
-                    <span className="text-gray-600">
-                      {rating.toFixed(1)} ({stats.total_sales || 0} sales)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {/* Share button */}
-                  <button
-                    onClick={handleShare}
-                    className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
-                    title="Share store"
-                  >
-                    <ShareIcon className="h-5 w-5" />
-                  </button>
-                  {/* Follow button */}
-                  <button
-                    onClick={handleFollowToggle}
-                    disabled={!seller.user_id}
-                    className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${
-                      isFollowing
-                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
-                        : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
-                    } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {isFollowing ? (
-                      <div className="flex items-center space-x-2">
-                        <CheckCircleIcon className="h-5 w-5" />
-                        <span>Following</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <PlusIcon className="h-5 w-5" />
-                        <span>Follow</span>
-                      </div>
-                    )}
-                  </button>
-                  <div className="text-center hidden sm:block">
-                    <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
-                    <div className="text-xs text-gray-500">Followers</div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-gray-700 mb-4 leading-relaxed">
-                {seller.store_description || "No description available."}
-              </p>
-
-              {/* Categories and Business Type */}
-              {seller.business_type && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200">
-                    {seller.business_type}
-                  </span>
-                  {seller.categories && seller.categories.map((category, index) => (
-                    <span
-                      key={index}
-                      className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200"
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Products, Rating, Sales, Since Stats - responsive grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">{productCount}</div>
-                  <div className="text-gray-600 text-sm">Products</div>
-                </div>
-                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">{rating.toFixed(1)}</div>
-                  <div className="text-gray-600 text-sm">Rating</div>
-                </div>
-                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">{stats.total_sales || 0}</div>
-                  <div className="text-gray-600 text-sm">Sales</div>
-                </div>
-                <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                  <div className="font-bold text-lg text-gray-900">{followersCount}</div>
-                  <div className="text-gray-600 text-sm">Followers</div>
-                </div>
-              </div>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading seller</h3>
+            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            <div className="mt-6">
+              <Link
+                to="/sellers"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+              >
+                Back to Sellers
+              </Link>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Main Content (Tabs) – responsive, unchanged */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <Tab.Group>
-          <div className="border-b border-gray-200 overflow-x-auto">
-            <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
-              <Tab
-                className={({ selected }) =>
-                  classNames(
-                    selected
-                      ? 'border-green-500 text-green-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )
-                }
+      {!seller && !loading.seller && !error && (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
+              <UserIcon className="h-6 w-6 text-gray-400" />
+            </div>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Seller not found</h3>
+            <p className="mt-1 text-sm text-gray-500">The seller you're looking for doesn't exist.</p>
+            <div className="mt-6">
+              <Link
+                to="/sellers"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
               >
-                {t("sellers.products.title") || "Products"} ({productCount})
-              </Tab>
-              <Tab
-                className={({ selected }) =>
-                  classNames(
-                    selected
-                      ? 'border-green-500 text-green-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )
-                }
-              >
-                {t("sellers.reviews.title") || "Reviews"} ({reviewCount})
-              </Tab>
-              <Tab
-                className={({ selected }) =>
-                  classNames(
-                    selected
-                      ? 'border-green-500 text-green-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )
-                }
-              >
-                {t("sellers.about.title") || "About"}
-              </Tab>
-            </Tab.List>
+                Back to Sellers
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {seller && (
+        <div className="min-h-screen bg-gray-50">
+          <PopupNotification />
+          <ShareModal />
+
+          {/* Back Button */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <Link to="/sellers" className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
+              <ChevronLeftIcon className="h-5 w-5 mr-1" />
+              {t("seller.back_to_sellers") || "Back to Sellers"}
+            </Link>
           </div>
 
-          <Tab.Panels className="mt-6">
-            {/* Products Tab – unchanged */}
-            <Tab.Panel>
-              {loading.products ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-80"></div>
-                  ))}
+          {/* Seller Header */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-1/4 mb-6 md:mb-0 flex justify-center md:justify-start">
+                  {!logoError && seller.store_logo ? (
+                    <img
+                      src={seller.store_logo}
+                      alt={seller.store_name}
+                      className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
+                      onError={() => setLogoError(true)}
+                    />
+                  ) : (
+                    <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                      <span className="text-gray-600 text-xl font-bold">
+                        {seller.store_name?.charAt(0)?.toUpperCase() || 'S'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              ) : products.length === 0 ? (
-                <div className="bg-white rounded-lg shadow p-12 text-center">
-                  <ShoppingBagIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_products_found")}</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    This seller hasn't added any products yet.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {products.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              )}
-            </Tab.Panel>
 
-            {/* Reviews Tab – unchanged */}
-            <Tab.Panel>
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="md:w-3/4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.customers_reviews")}</h3>
-                      <div className="mt-1 flex items-center">
-                        {renderStars(rating)}
-                        <span className="ml-2 text-sm font-medium text-gray-900">
-                          {rating.toFixed(1)} out of 5
+                      <div className="flex items-center mb-2 flex-wrap gap-2">
+                        <h1 className="text-2xl font-bold">
+                          {seller.store_name}
+                        </h1>
+                        {(seller.status === "approved" || seller.status === "active") && (
+                          <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
+                        )}
+                      </div>
+
+                      <div className="flex items-center mb-4 flex-wrap gap-2">
+                        <div className="flex text-yellow-400">
+                          {renderStars(rating, "h-5 w-5")}
+                        </div>
+                        <span className="text-gray-600">
+                          {rating.toFixed(1)} ({stats.total_sales || 0} sales)
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setShowReviewForm(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
-                    >
-                      {t("seller.write_review") || "Write a Review"}
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {/* Share button */}
+                      <button
+                        onClick={handleShare}
+                        className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
+                        title="Share store"
+                      >
+                        <ShareIcon className="h-5 w-5" />
+                      </button>
+                      {/* Follow button */}
+                      <button
+                        onClick={handleFollowToggle}
+                        disabled={!seller.user_id}
+                        className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${isFollowing
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                          : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
+                          } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {isFollowing ? (
+                          <div className="flex items-center space-x-2">
+                            <CheckCircleIcon className="h-5 w-5" />
+                            <span>Following</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <PlusIcon className="h-5 w-5" />
+                            <span>Follow</span>
+                          </div>
+                        )}
+                      </button>
+                      <div className="text-center hidden sm:block">
+                        <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
+                        <div className="text-xs text-gray-500">Followers</div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Review Form */}
-                  {showReviewForm && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-medium text-gray-900">{t("seller.write_review") || "Write a Review"}</h4>
-                        <button
-                          onClick={() => setShowReviewForm(false)}
-                          className="text-gray-400 hover:text-gray-500 transition-colors"
+                  <p className="text-gray-700 mb-4 leading-relaxed">
+                    {seller.store_description || "No description available."}
+                  </p>
+
+                  {/* Categories and Business Type */}
+                  {seller.business_type && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200">
+                        {seller.business_type}
+                      </span>
+                      {seller.categories && seller.categories.map((category, index) => (
+                        <span
+                          key={index}
+                          className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200"
                         >
-                          <XMarkIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                      <form onSubmit={handleSubmitReview}>
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Rating
-                          </label>
-                          {renderInteractiveStars()}
-                          <p className="text-sm text-gray-500 mt-1">
-                            {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
-                          </p>
-                        </div>
-
-                        <div className="mb-4">
-                          <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
-                            {t("seller.write_review") || "Your Review"}
-                          </label>
-                          <textarea
-                            id="reviewComment"
-                            rows={4}
-                            value={reviewComment}
-                            onChange={(e) => setReviewComment(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                            placeholder={t("seller.rating.placeholder") || "Write your review here..."}
-                          />
-                        </div>
-
-                        <div className="flex space-x-3">
-                          <button
-                            type="submit"
-                            disabled={submittingReview}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
-                          >
-                            {submittingReview ? (
-                              <>
-                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></div>
-                                {t("seller.submitting") || "Submitting..."}
-                              </>
-                            ) : (
-                              t("seller.submit_review") || "Submit Review"
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setShowReviewForm(false)}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-                          >
-                            {t("seller.cancel") || "Cancel"}
-                          </button>
-                        </div>
-                      </form>
-                    </motion.div>
-                  )}
-
-                  {loading.reviews ? (
-                    <div className="mt-6 space-y-6">
-                      {Array.from({ length: 3 }).map((_, index) => (
-                        <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
+                          {category}
+                        </span>
                       ))}
                     </div>
-                  ) : currentReviews.length === 0 ? (
-                    <div className="mt-8 text-center py-12">
-                      <ChatBubbleLeftIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
+                  )}
+
+                  {/* Products, Rating, Sales, Since Stats - responsive grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                      <div className="font-bold text-lg text-gray-900">{productCount}</div>
+                      <div className="text-gray-600 text-sm">Products</div>
+                    </div>
+                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                      <div className="font-bold text-lg text-gray-900">{rating.toFixed(1)}</div>
+                      <div className="text-gray-600 text-sm">Rating</div>
+                    </div>
+                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                      <div className="font-bold text-lg text-gray-900">{stats.total_sales || 0}</div>
+                      <div className="text-gray-600 text-sm">Sales</div>
+                    </div>
+                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
+                      <div className="font-bold text-lg text-gray-900">{followersCount}</div>
+                      <div className="text-gray-600 text-sm">Followers</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content (Tabs) – responsive, unchanged */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+            <Tab.Group>
+              <div className="border-b border-gray-200 overflow-x-auto">
+                <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
+                  <Tab
+                    className={({ selected }) =>
+                      classNames(
+                        selected
+                          ? 'border-green-500 text-green-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                      )
+                    }
+                  >
+                    {t("sellers.products.title") || "Products"} ({productCount})
+                  </Tab>
+                  <Tab
+                    className={({ selected }) =>
+                      classNames(
+                        selected
+                          ? 'border-green-500 text-green-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                      )
+                    }
+                  >
+                    {t("sellers.reviews.title") || "Reviews"} ({reviewCount})
+                  </Tab>
+                  <Tab
+                    className={({ selected }) =>
+                      classNames(
+                        selected
+                          ? 'border-green-500 text-green-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                      )
+                    }
+                  >
+                    {t("sellers.about.title") || "About"}
+                  </Tab>
+                </Tab.List>
+              </div>
+
+              <Tab.Panels className="mt-6">
+                {/* Products Tab – unchanged */}
+                <Tab.Panel>
+                  {loading.products ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {Array.from({ length: 8 }).map((_, index) => (
+                        <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-80"></div>
+                      ))}
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                      <ShoppingBagIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_products_found")}</h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        This seller doesn't have any reviews yet.
+                        This seller hasn't added any products yet.
                       </p>
                     </div>
                   ) : (
-                    <>
-                      <div className="mt-6 space-y-6">
-                        {currentReviews.map(review => (
-                          <ReviewCard key={review.id} review={review} />
-                        ))}
-                      </div>
-
-                      {reviews.length > reviewsPerPage && (
-                        <div className="mt-8">
-                          <Pagination
-                            itemsPerPage={reviewsPerPage}
-                            totalItems={reviews.length}
-                            currentPage={currentPage}
-                            paginate={paginate}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            </Tab.Panel>
-
-            {/* About Tab – unchanged */}
-            <Tab.Panel>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.about_seller") || "About the Seller"}</h3>
-                      <p className="mt-4 text-gray-600 leading-relaxed">
-                        {t("seller.no_description") || "No additional information provided."}
-                      </p>
-
-                      <h4 className="mt-6 text-md font-medium text-gray-900">{t("seller.business_information") || "Business Information"}</h4>
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">{t("seller.business_type") || "Business Type"}</p>
-                          <p className="mt-1 text-gray-900">{seller.business_type || "Not specified"}</p>
-                        </div>
-                        {seller.business_registration_number && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">{t("seller.registration_number") || "Registration Number"}</p>
-                            <p className="mt-1 text-gray-900">{seller.business_registration_number}</p>
-                          </div>
-                        )}
-                        {seller.tax_id && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">Tax ID</p>
-                            <p className="mt-1 text-gray-900">{seller.tax_id}</p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Member Since</p>
-                          <p className="mt-1 text-gray-900">{memberSince}</p>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {products.map(product => (
+                        <ProductCard key={product.id} product={product} />
+                      ))}
                     </div>
-                  </div>
-                </div>
+                  )}
+                </Tab.Panel>
 
-                <div>
+                {/* Reviews Tab – unchanged */}
+                <Tab.Panel>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
-                      <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_information") || "Contact Information"}</h3>
-
-                      <div className="mt-4 space-y-4">
-                        {seller.address && (
-                          <div className="flex">
-                            <MapPinIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                            <p className="ml-3 text-gray-600">{seller.address}</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">{t("seller.customers_reviews")}</h3>
+                          <div className="mt-1 flex items-center">
+                            {renderStars(rating)}
+                            <span className="ml-2 text-sm font-medium text-gray-900">
+                              {rating.toFixed(1)} out of 5
+                            </span>
                           </div>
-                        )}
-
-                        {seller.contact_phone && (
-                          <div className="flex">
-                            <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                            <p className="ml-3 text-gray-600">{seller.contact_phone}</p>
-                          </div>
-                        )}
-
-                        {seller.contact_email && (
-                          <div className="flex">
-                            <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                            <p className="ml-3 text-gray-600">{seller.contact_email}</p>
-                          </div>
-                        )}
-
-                        {seller.website && (
-                          <div className="flex">
-                            <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                            <a
-                              href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200 break-all"
-                            >
-                              {seller.website}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-6">
-                        <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
-                          <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />
-                          Contact Seller
+                        </div>
+                        <button
+                          onClick={() => setShowReviewForm(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
+                        >
+                          {t("seller.write_review") || "Write a Review"}
                         </button>
                       </div>
+
+                      {/* Review Form */}
+                      {showReviewForm && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200"
+                        >
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-lg font-medium text-gray-900">{t("seller.write_review") || "Write a Review"}</h4>
+                            <button
+                              onClick={() => setShowReviewForm(false)}
+                              className="text-gray-400 hover:text-gray-500 transition-colors"
+                            >
+                              <XMarkIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                          <form onSubmit={handleSubmitReview}>
+                            <div className="mb-4">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Rating
+                              </label>
+                              {renderInteractiveStars()}
+                              <p className="text-sm text-gray-500 mt-1">
+                                {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
+                              </p>
+                            </div>
+
+                            <div className="mb-4">
+                              <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
+                                {t("seller.write_review") || "Your Review"}
+                              </label>
+                              <textarea
+                                id="reviewComment"
+                                rows={4}
+                                value={reviewComment}
+                                onChange={(e) => setReviewComment(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                placeholder={t("seller.rating.placeholder") || "Write your review here..."}
+                              />
+                            </div>
+
+                            <div className="flex space-x-3">
+                              <button
+                                type="submit"
+                                disabled={submittingReview}
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+                              >
+                                {submittingReview ? (
+                                  <>
+                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></div>
+                                    {t("seller.submitting") || "Submitting..."}
+                                  </>
+                                ) : (
+                                  t("seller.submit_review") || "Submit Review"
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowReviewForm(false)}
+                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                              >
+                                {t("seller.cancel") || "Cancel"}
+                              </button>
+                            </div>
+                          </form>
+                        </motion.div>
+                      )}
+
+                      {loading.reviews ? (
+                        <div className="mt-6 space-y-6">
+                          {Array.from({ length: 3 }).map((_, index) => (
+                            <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
+                          ))}
+                        </div>
+                      ) : currentReviews.length === 0 ? (
+                        <div className="mt-8 text-center py-12">
+                          <ChatBubbleLeftIcon className="mx-auto h-12 w-12 text-gray-400" />
+                          <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
+                          <p className="mt-1 text-sm text-gray-500">
+                            This seller doesn't have any reviews yet.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mt-6 space-y-6">
+                            {currentReviews.map(review => (
+                              <ReviewCard key={review.id} review={review} />
+                            ))}
+                          </div>
+
+                          {reviews.length > reviewsPerPage && (
+                            <div className="mt-8">
+                              <Pagination
+                                itemsPerPage={reviewsPerPage}
+                                totalItems={reviews.length}
+                                currentPage={currentPage}
+                                paginate={paginate}
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
-        </div>
-    </div>
+                </Tab.Panel>
+
+                {/* About Tab – unchanged */}
+                <Tab.Panel>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                      <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-6">
+                          <h3 className="text-lg font-medium text-gray-900">{t("seller.about_seller") || "About the Seller"}</h3>
+                          <p className="mt-4 text-gray-600 leading-relaxed">
+                            {t("seller.no_description") || "No additional information provided."}
+                          </p>
+
+                          <h4 className="mt-6 text-md font-medium text-gray-900">{t("seller.business_information") || "Business Information"}</h4>
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">{t("seller.business_type") || "Business Type"}</p>
+                              <p className="mt-1 text-gray-900">{seller.business_type || "Not specified"}</p>
+                            </div>
+                            {seller.business_registration_number && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500">{t("seller.registration_number") || "Registration Number"}</p>
+                                <p className="mt-1 text-gray-900">{seller.business_registration_number}</p>
+                              </div>
+                            )}
+                            {seller.tax_id && (
+                              <div>
+                                <p className="text-sm font-medium text-gray-500">Tax ID</p>
+                                <p className="mt-1 text-gray-900">{seller.tax_id}</p>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Member Since</p>
+                              <p className="mt-1 text-gray-900">{memberSince}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="bg-white rounded-lg shadow overflow-hidden">
+                        <div className="p-6">
+                          <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_information") || "Contact Information"}</h3>
+
+                          <div className="mt-4 space-y-4">
+                            {seller.address && (
+                              <div className="flex">
+                                <MapPinIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                                <p className="ml-3 text-gray-600">{seller.address}</p>
+                              </div>
+                            )}
+
+                            {seller.contact_phone && (
+                              <div className="flex">
+                                <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                                <p className="ml-3 text-gray-600">{seller.contact_phone}</p>
+                              </div>
+                            )}
+
+                            {seller.contact_email && (
+                              <div className="flex">
+                                <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                                <p className="ml-3 text-gray-600">{seller.contact_email}</p>
+                              </div>
+                            )}
+
+                            {seller.website && (
+                              <div className="flex">
+                                <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                                <a
+                                  href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200 break-all"
+                                >
+                                  {seller.website}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-6">
+                            <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
+                              <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />
+                              Contact Seller
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Tab.Panel>
+              </Tab.Panels>
+            </Tab.Group>
+          </div>
+        </div >
+      )}
+    </>
   );
 };
 

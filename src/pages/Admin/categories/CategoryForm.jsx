@@ -24,7 +24,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     commission_rate: 0,
     parent_id: "",
     is_active: true,
-    image: null, // File | string | null
+    image: null,
   });
 
   const getImageUrl = (imagePath) => {
@@ -205,6 +205,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
     }
 
     setSaving(true);
+    let response;
     try {
       const submitData = new FormData();
 
@@ -221,7 +222,7 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
       if (formData.image && typeof formData.image === "object") {
         submitData.append("image", formData.image);
       } else if (mode === "edit" && formData.image === null && initialCategory?.image) {
-        submitData.append("image", ""); // remove existing
+        submitData.append("image", "");
       }
 
       // 👇 Method spoofing for edit
@@ -239,22 +240,25 @@ const CategoryForm = ({ mode = "create", category: initialCategory = null, onSuc
       // After success, refresh & navigate
       if (onSuccess) {
         onSuccess();
-        navigate("/admin/categories");
+        navigate("/admin/dashboard");
       } else {
         navigate("/admin/dashboard");
       }
     } catch (error) {
       console.error("Failed to save category:", error);
 
-      if (error.response?.data?.errors) {
-        const validationErrors = {};
-        Object.keys(error.response.data.errors).forEach((key) => {
-          validationErrors[key] = error.response.data.errors[key][0];
-        });
-        setErrors(validationErrors);
-      } else {
-        alert(error.response?.data?.message || "Failed to save category");
-      }
+      if (error.response?.data?.message) {
+      alert(error.response.data.message);
+    } else if (error.response?.data?.errors) {
+      // handle validation errors as you already do
+      const validationErrors = {};
+      Object.keys(error.response.data.errors).forEach((key) => {
+        validationErrors[key] = error.response.data.errors[key][0];
+      });
+      setErrors(validationErrors);
+    } else {
+      alert("Failed to save category. Please check the console for details.");
+    }
     } finally {
       setSaving(false);
     }

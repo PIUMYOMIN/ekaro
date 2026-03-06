@@ -34,6 +34,8 @@
     "no_featured_products": "No featured products found.",
     "top_sellers": "Top Sellers",
     "no_top_sellers": "No top sellers found",
+    "no_categories_found": "No categories found",
+    "browse_categories": "Browse Categories",
     "general_merchant": "General Merchant",
     "why_us": "Why Choose Us",
     "why_choose_us": "Why Choose Our Platform",
@@ -215,7 +217,7 @@
     "active_filters": "Active Filters",
     "search_filter": "Search: \"{{query}}\"",
     "category_filter": "Category: {{category}}",
-    "all_products": "All Products",
+    "all_products": "Products",
     "price_range": "Price Range",
     "no_more_products": "No more products to load",
     "category_products": "{{category}} Products",
@@ -441,8 +443,8 @@
     }
   },
   "sellers": {
-    "title": "Our Sellers",
-    "subtitle": "Discover trusted sellers and their products",
+    "title": "Trusted Sellers",
+    "subtitle": "Browse verified sellers on Pyonea marketplace and find the best suppliers for your business needs.",
     "all_sellers": "All Sellers",
     "all_categories": "All Categories",
     "individual": "Individual",

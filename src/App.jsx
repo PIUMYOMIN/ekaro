@@ -101,12 +101,23 @@ function App() {
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<Legal />} />
                       <Route path="/page-not-found" element={<Error />} />
-
+                      {/* Catch-all route for 404 */}
+                      <Route path="*" element={<Error />} />
+                      {/* Auth Routes */}
                       {/* Guest-only Routes */}
-                      <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
-                      <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
-                      <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+                      <Route path="/login" element={
+                        <GuestRoute>
+                        <Login />
+                      </GuestRoute>} />
+                      <Route path="/register" element={
+                        <GuestRoute>
+                        <Register /></GuestRoute>} />
+                      <Route path="/forgot-password" element={
+                        <GuestRoute>
+                        <ForgotPassword />
+                      </GuestRoute>} />
 
+                      {/* Protected Routes */}
                       <Route path="/seller" element={
                         <ProtectedRoute roles={["seller"]}>
                           <SellerDashboardRedirect />
@@ -206,9 +217,6 @@ function App() {
                       <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
                       <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
                       <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
-
-                      {/* Catch-all route for 404 */}
-                      <Route path="*" element={<Error />} />
                     </Routes>
                   </WishlistProvider>
                 </main>
