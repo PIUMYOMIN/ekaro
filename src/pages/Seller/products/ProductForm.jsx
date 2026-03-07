@@ -58,7 +58,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   // Default form data
   const defaultFormData = {
-    name: "",
+    name_en: "",
     name_mm: "",
     description: "",
     description_mm: "",
@@ -592,7 +592,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <input
                   type="text"
                   name="name"
-                  value={formData.name}
+                  value={formData.name_en}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Enter product name in English"
