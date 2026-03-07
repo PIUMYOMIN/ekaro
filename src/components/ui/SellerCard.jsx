@@ -21,9 +21,9 @@ const SellerCard = ({ seller }) => {
       return (
         <div className="flex items-center">
           {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} className="h-4 w-4 text-gray-300" />
+            <StarIcon key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-gray-300" />
           ))}
-          <span className="ml-1 text-sm text-gray-500">No ratings</span>
+          <span className="ml-1 text-xs sm:text-sm text-gray-500">No ratings</span>
         </div>
       );
     }
@@ -34,11 +34,11 @@ const SellerCard = ({ seller }) => {
     
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
-        stars.push(<StarIcon key={i} className="h-4 w-4 text-yellow-400" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" fill="currentColor" />);
       } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(<StarIcon key={i} className="h-4 w-4 text-yellow-400" fill="currentColor" />);
+        stars.push(<StarIcon key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" fill="currentColor" />);
       } else {
-        stars.push(<StarIcon key={i} className="h-4 w-4 text-gray-300" />);
+        stars.push(<StarIcon key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-gray-300" />);
       }
     }
     
@@ -53,8 +53,8 @@ const SellerCard = ({ seller }) => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="p-4">
-        <div className="flex items-start space-x-3">
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start space-x-2 sm:space-x-3">
           {/* Seller Logo */}
           <div className="flex-shrink-0 relative">
             {storeLogo ? (
@@ -62,7 +62,7 @@ const SellerCard = ({ seller }) => {
                 <img
                   src={storeLogo}
                   alt={storeName}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-gray-200"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     const fallback = e.target.parentElement?.nextElementSibling;
@@ -73,14 +73,14 @@ const SellerCard = ({ seller }) => {
             ) : null}
             
             <div 
-              className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 rounded-full w-16 h-16 items-center justify-center`}
+              className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 rounded-full w-12 h-12 sm:w-16 sm:h-16 items-center justify-center`}
             >
-              <span className="text-gray-500 font-semibold text-lg">
+              <span className="text-gray-500 font-semibold text-base sm:text-lg">
                 {storeName.charAt(0).toUpperCase()}
               </span>
               {isVerified && (
                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
-                  <CheckBadgeIcon className="h-4 w-4 text-green-500" />
+                  <CheckBadgeIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 </div>
               )}
             </div>
@@ -88,15 +88,14 @@ const SellerCard = ({ seller }) => {
           
           {/* Seller Info */}
           <div className="flex-1 min-w-0">
-            {/* ✅ Use storeSlug for the link */}
             <Link to={`/sellers/${slug}`} className="block">
-              <h3 className="text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
                 {storeName}
               </h3>
             </Link>
             
-            <div className="flex items-center flex-wrap gap-1 mt-1">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-0.5 sm:gap-1 mt-1">
+              <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[120px] sm:max-w-none">
                 {businessType}
               </span>
               {city && (
@@ -106,20 +105,20 @@ const SellerCard = ({ seller }) => {
               )}
             </div>
             
-            <div className="flex items-center mt-2">
+            <div className="flex items-center mt-1 sm:mt-2">
               <div className="flex items-center">
                 {renderStars(displayRating)}
                 {displayRating > 0 && (
-                  <span className="ml-1 text-sm font-medium text-gray-900">
+                  <span className="ml-1 text-xs sm:text-sm font-medium text-gray-900">
                     {displayRating.toFixed(1)}
                   </span>
                 )}
               </div>
               {reviewsCount > 0 && (
                 <>
-                  <span className="mx-2 text-gray-300">•</span>
-                  <span className="text-sm text-gray-500">
-                    {reviewsCount} review{reviewsCount !== 1 ? 's' : ''}
+                  <span className="mx-1 sm:mx-2 text-gray-300">•</span>
+                  <span className="text-xs sm:text-sm text-gray-500">
+                    {reviewsCount}
                   </span>
                 </>
               )}
@@ -128,21 +127,21 @@ const SellerCard = ({ seller }) => {
         </div>
 
         {/* Stats */}
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="bg-green-50 p-2 rounded-lg text-center border border-green-100">
-            <p className="text-lg font-semibold text-green-700">{productsCount}</p>
+        <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2">
+          <div className="bg-green-50 p-1.5 sm:p-2 rounded-lg text-center border border-green-100">
+            <p className="text-base sm:text-lg font-semibold text-green-700">{productsCount}</p>
             <p className="text-xs text-green-600">Products</p>
           </div>
-          <div className="bg-blue-50 p-2 rounded-lg text-center border border-blue-100">
-            <p className="text-lg font-semibold text-blue-700">{reviewsCount}</p>
+          <div className="bg-blue-50 p-1.5 sm:p-2 rounded-lg text-center border border-blue-100">
+            <p className="text-base sm:text-lg font-semibold text-blue-700">{reviewsCount}</p>
             <p className="text-xs text-blue-600">Reviews</p>
           </div>
         </div>
 
-        {/* ✅ View Store Button – also uses slug */}
+        {/* View Store Button */}
         <Link
           to={`/sellers/${slug}`}
-          className="mt-4 w-full block text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+          className="mt-3 sm:mt-4 w-full block text-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md text-sm sm:text-base"
         >
           View Store
         </Link>

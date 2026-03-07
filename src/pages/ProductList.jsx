@@ -40,7 +40,7 @@ const ProductList = () => {
   const sortBy = queryParams.get("sort_by") || "created_at";
   const sortOrder = queryParams.get("sort_order") || "desc";
 
-  // State derived from URL (kept in sync when URL changes)
+  // State derived from URL
   const [searchInput, setSearchInput] = useState(searchQuery);
   const [selectedCategory, setSelectedCategory] = useState(categoryQuery || null);
   const [filters, setFilters] = useState({
@@ -56,7 +56,7 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Refs to prevent duplicate initial fetch (Strict Mode) and multiple simultaneous requests
+  // Refs to prevent duplicate requests
   const initialFetchDone = useRef(false);
   const isFetching = useRef(false);
 
@@ -74,7 +74,7 @@ const ProductList = () => {
     fetchCategories();
   }, []);
 
-  // Sync local state when URL changes (e.g., back/forward)
+  // Sync local state when URL changes
   useEffect(() => {
     setSearchInput(searchQuery);
     setSelectedCategory(categoryQuery || null);
@@ -88,10 +88,9 @@ const ProductList = () => {
     setHasMore(true);
   }, [location.search, searchQuery, categoryQuery, minPrice, maxPrice, sortBy, sortOrder]);
 
-  // Fetch products – only when URL parameters change
+  // Fetch products
   const fetchProducts = useCallback(
     async (reset = false) => {
-      // Prevent multiple simultaneous requests
       if (isFetching.current) return;
       isFetching.current = true;
       setLoading(true);
@@ -115,7 +114,6 @@ const ProductList = () => {
 
         const response = await api.get("/products", { params });
         const productsData = response.data.data || response.data || [];
-        console.log("Fetched products:", productsData);
 
         if (reset) {
           setProducts(Array.isArray(productsData) ? productsData : []);
@@ -142,7 +140,7 @@ const ProductList = () => {
     [searchQuery, selectedCategory, filters, page, t]
   );
 
-  // Initial fetch (with guard for Strict Mode)
+  // Initial fetch
   useEffect(() => {
     if (!initialFetchDone.current) {
       initialFetchDone.current = true;
@@ -150,15 +148,14 @@ const ProductList = () => {
     }
   }, [fetchProducts]);
 
-  // Fetch when URL parameters change (but not on first mount – handled above)
+  // Fetch when URL parameters change
   useEffect(() => {
-    // Skip the very first run because initialFetchDone handles it
     if (initialFetchDone.current) {
       fetchProducts(true);
     }
   }, [searchQuery, selectedCategory, filters.minPrice, filters.maxPrice, filters.sortBy, filters.sortOrder]);
 
-  // Infinite scroll handler with guard
+  // Infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -175,14 +172,14 @@ const ProductList = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore]);
 
-  // Fetch more when page changes (skip the initial page=1)
+  // Fetch more when page changes
   useEffect(() => {
     if (page > 1) {
       fetchProducts(false);
     }
   }, [page, fetchProducts]);
 
-  // Handlers – update URL directly (which triggers sync and fetch via the effect above)
+  // Handlers
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams(location.search);
@@ -292,7 +289,7 @@ const ProductList = () => {
         url={location.pathname + location.search}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Box (unchanged) */}
+        {/* Search Box */}
         <div className="mb-8">
           <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
             <div className="relative">
@@ -321,7 +318,7 @@ const ProductList = () => {
           </form>
         </div>
 
-        {/* Active Filters Display (unchanged) */}
+        {/* Active Filters Display */}
         {(searchQuery || selectedCategory || filters.minPrice || filters.maxPrice) && (
           <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -387,11 +384,11 @@ const ProductList = () => {
           </div>
         )}
 
-        {/* Main layout (unchanged) */}
+        {/* Main layout */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar */}
           <div className="md:w-1/4">
-            <div className="sticky top-4">
+            <div className="sticky top-20">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">{t("products.filters")}</h2>
                 <button onClick={clearFilters} className="text-sm text-green-600 hover:text-green-700">
@@ -411,7 +408,7 @@ const ProductList = () => {
             </div>
           </div>
 
-          {/* Product grid */}
+          {/* Product grid area */}
           <div className="md:w-3/4">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900">{getPageTitle}</h1>
@@ -421,6 +418,24 @@ const ProductList = () => {
                   {hasMore && " + more"}
                 </div>
               )}
+            </div>
+
+            {/* Mobile Sort Bar */}
+            <div className="md:hidden mb-4">
+              <select
+                value={`${filters.sortBy}:${filters.sortOrder}`}
+                onChange={(e) => {
+                  const [sortBy, sortOrder] = e.target.value.split(':');
+                  handleFilterChange({ sortBy, sortOrder });
+                }}
+                className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 rounded-md"
+              >
+                <option value="created_at:desc">{t('filter.newest')}</option>
+                <option value="price:asc">{t('filter.price_low_to_high')}</option>
+                <option value="price:desc">{t('filter.price_high_to_low')}</option>
+                <option value="average_rating:desc">{t('filter.top_rated')}</option>
+                <option value="review_count:desc">{t('filter.most_reviewed')}</option>
+              </select>
             </div>
 
             {error && (
@@ -442,30 +457,41 @@ const ProductList = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Product Grid */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {loading && products.length === 0
-                ? [...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)
+                ? [...Array(6)].map((_, i) => (
+                    <div key={i} className="col-span-1">
+                      <ProductCardSkeleton />
+                    </div>
+                  ))
                 : products.length > 0
                   ? products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                    />
-                  ))
+                      <div key={product.id} className="col-span-1">
+                        <ProductCard
+                          product={product}
+                          className="w-full" // Let the card fill the column width
+                        />
+                      </div>
+                    ))
                   : !loading && (
-                    <div className="col-span-full text-center py-12">
-                      <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
-                      <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>
-                      <button
-                        onClick={clearFilters}
-                        className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                      >
-                        {t("products.clear_filters")}
-                      </button>
-                    </div>
-                  )}
+                      <div className="col-span-full text-center py-12">
+                        <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
+                        <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>
+                        <button
+                          onClick={clearFilters}
+                          className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                        >
+                          {t("products.clear_filters")}
+                        </button>
+                      </div>
+                    )}
 
-              {loading && page > 1 && [...Array(3)].map((_, i) => <ProductCardSkeleton key={`skeleton-${i}`} />)}
+              {loading && page > 1 && [...Array(3)].map((_, i) => (
+                <div key={`skeleton-${i}`} className="col-span-1">
+                  <ProductCardSkeleton />
+                </div>
+              ))}
             </div>
 
             {loading && (

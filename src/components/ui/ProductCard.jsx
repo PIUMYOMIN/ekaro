@@ -11,7 +11,7 @@ import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
-// Helper to build full image URL (you can move this to a shared utils file)
+// Helper to build full image URL
 const getImageUrl = (image) => {
   if (!image) return DEFAULT_PLACEHOLDER;
   if (typeof image === 'string') {
@@ -33,7 +33,7 @@ const getImageUrl = (image) => {
   return DEFAULT_PLACEHOLDER;
 };
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, className = "" }) => {
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();
@@ -156,31 +156,30 @@ const ProductCard = ({ product }) => {
   return (
     <>
       {message && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${
-          message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
-          message.type === "error" ? "bg-red-100 border-red-400 text-red-700" :
-          "bg-blue-100 border-blue-400 text-blue-700"
-        }`}>
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
+            message.type === "error" ? "bg-red-100 border-red-400 text-red-700" :
+              "bg-blue-100 border-blue-400 text-blue-700"
+          }`}>
           <span className="text-sm sm:text-base">{message.message}</span>
           <button onClick={() => setMessage(null)} className="ml-4 text-xl font-bold hover:opacity-70">×</button>
         </div>
       )}
 
       <motion.div
-        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
+        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full ${className}`}
         whileHover={{ y: -5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
         <div className="relative flex-shrink-0">
           <Link to={`/products/${slug}`} className="block">
-            <div className="w-full h-36 sm:h-48 bg-gray-100 rounded-t-lg overflow-hidden relative">
+            <div className="w-full sm:h-48 bg-gray-100 rounded-t-lg overflow-hidden relative">
               {imageUrl && !imageError ? (
                 <LazyLoadImage
                   src={imageUrl}
                   alt={product.name_en || "Product"}
                   effect="blur"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                   placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E"
                   onError={() => setImageError(true)}
                 />
@@ -220,12 +219,6 @@ const ProductCard = ({ product }) => {
                 <HeartOutline className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600 hover:text-red-500" />
               )}
             </button>
-
-            {product.is_featured && (
-              <span className="bg-yellow-500 text-white text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
-                Featured
-              </span>
-            )}
             {validImages.length > 0 && (
               <span className="bg-black/70 text-white text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
                 {validImages.length}
@@ -244,8 +237,10 @@ const ProductCard = ({ product }) => {
         {/* Content */}
         <div className="p-2 sm:p-4 flex flex-col flex-grow">
           <div className="flex-grow">
-            <div className="flex justify-between items-start gap-1">
-              <div className="flex-1 min-w-0">
+            {/* Main row: product info and price - now wraps on mobile */}
+            <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-1">
+              {/* Left: product name, rating, description */}
+              <div className="flex-1 min-w-0 w-full sm:w-auto">
                 <Link to={`/products/${slug}`} className="block">
                   <h3 className="text-sm sm:text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 min-h-[2.5rem] sm:min-h-[3.5rem]">
                     {product.name_en || product.name || "Unnamed Product"}
@@ -266,7 +261,9 @@ const ProductCard = ({ product }) => {
                   <p className="mt-1 text-xs sm:text-sm text-gray-600 line-clamp-2">{product.description_en}</p>
                 )}
               </div>
-              <div className="text-right flex-shrink-0 ml-1 sm:ml-2">
+
+              {/* Right: price and MOQ - full width on mobile, auto on larger screens */}
+              <div className="text-right flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0 sm:ml-2">
                 {discountPercentage > 0 ? (
                   <>
                     <p className="text-xs sm:text-lg font-bold text-red-600">
@@ -291,13 +288,12 @@ const ProductCard = ({ product }) => {
             <button
               onClick={handleAddToCart}
               disabled={!product.is_active || product.quantity <= 0 || isInCart}
-              className={`w-full rounded-md py-2 px-4 text-sm font-medium text-white ${
-                !product.is_active || product.quantity <= 0
+              className={`w-full rounded-md py-1.5 sm:py-2 px-4 text-xs sm:text-sm font-medium text-white whitespace-nowrap ${!product.is_active || product.quantity <= 0
                   ? "bg-gray-400"
                   : isInCart
-                  ? "bg-gray-500"
-                  : "bg-green-600 hover:bg-green-700"
-              } transition-colors`}
+                    ? "bg-gray-500"
+                    : "bg-green-600 hover:bg-green-700"
+                } transition-colors`}
             >
               {buttonText}
             </button>

@@ -29,13 +29,12 @@ const ProductCardSkeleton = () => (
 );
 
 const CategoryCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
-    <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
-      <div className="flex-1">
-        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-        <div className="mt-1 h-3 bg-gray-300 rounded w-1/2"></div>
-      </div>
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+    <div className="aspect-square bg-gray-300"></div>
+    <div className="p-3 sm:p-4 space-y-2">
+      <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+      <div className="h-6 bg-gray-300 rounded w-1/3"></div>
+      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
     </div>
   </div>
 );
@@ -270,13 +269,13 @@ const Home = () => {
         </div>
 
         {loading.categories ? (
-          <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-6">
             {[...Array(6)].map((_, i) => (
               <CategoryCardSkeleton key={i} />
             ))}
           </div>
         ) : categories.length > 0 ? (
-          <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 sm:mt-10 grid grid-cols-4 gap-1 sm:gap-5 sm:grid-cols-2 lg:grid-cols-6">
             {categories.map((category) => (
               <CategoryCard
                 key={category.id}
@@ -316,7 +315,7 @@ const Home = () => {
           </Link>
         </div>
 
-        <div className="mt-6 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {loading.products ? (
             [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
           ) : products.length > 0 ? (
@@ -352,7 +351,7 @@ const Home = () => {
             {t("home.view_all")} →
           </Link>
         </div>
-        <div className="mt-6 sm:mt-6 grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {loading.sellers ? (
             [...Array(4)].map((_, i) => (
               <SellerCardSkeleton key={i} />
