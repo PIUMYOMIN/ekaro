@@ -24,7 +24,6 @@ const CategoryManagement = () => {
     try {
       setLoading(true);
       const response = await api.get("/categories");
-      console.log("Fetched categories:", response.data.data[0]);
       if (response.data.success) {
         setCategories(response.data.data);
       } else {

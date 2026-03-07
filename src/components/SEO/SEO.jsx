@@ -15,7 +15,7 @@ const SEO = ({
   noindex = false
 }) => {
   const siteName = "Pyonea Marketplace";
-  const defaultImage = "https://pyonea.com/default-og-image.jpg";
+  const defaultImage = "https://pyonea.com/og-image.png";
   const siteUrl = "https://pyonea.com";
 
   const metaTitle = title ? `${title} | ${siteName}` : siteName;
