@@ -129,6 +129,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const normalizedUser = normalizeUserRoles(response.data.data);
+      setUser(normalizedUser);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      return normalizedUser;
+    } catch (err) {
+      console.error('Failed to refresh user', err);
+      throw err;
+    }
+  };
+
+  const isEmailVerified = () => {
+    return !!user?.email_verified_at;
+  };
+
   const logout = () => {
     // Immediate client-side cleanup
     localStorage.removeItem('token');
@@ -180,14 +197,15 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
     canAddToCart: () => !!user,
     canAddToWishlist: () => !!user,
     isAuthenticated: !!user,
-    // Role check methods
     isBuyer,
     isSeller,
     isAdmin,
     hasRole,
+    isEmailVerified,
   };
 
   return (

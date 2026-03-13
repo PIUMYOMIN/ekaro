@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
@@ -14,7 +16,10 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('buyer');
-  
+
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
   const {
     register,
     handleSubmit,
@@ -24,7 +29,7 @@ const Register = () => {
 
   const normalizeMyanmarPhone = (phone) => {
     let cleanPhone = phone.replace(/\D/g, '');
-    
+
     if (cleanPhone.startsWith('09')) {
       return '+95' + cleanPhone.substring(1);
     } else if (cleanPhone.startsWith('9') && !cleanPhone.startsWith('95')) {
@@ -44,34 +49,34 @@ const Register = () => {
 
   const validateMyanmarPhone = (phone) => {
     if (!phone) return t('validation.required');
-    
+
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     // Check length: 7-9 digits after prefix
     const digitsOnly = cleanPhone.replace(/^(\+?959|09|9)/, '');
     if (digitsOnly.length < 7 || digitsOnly.length > 9) {
       return t('validation.invalidPhone');
     }
-    
+
     const validPrefixes = ['09', '9', '959', '+959', '+95'];
-    const hasValidPrefix = validPrefixes.some(prefix => 
+    const hasValidPrefix = validPrefixes.some(prefix =>
       phone.startsWith(prefix)
     );
-    
+
     if (!hasValidPrefix) {
       return t('validation.invalidPhone');
     }
-    
+
     return true;
   };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       const normalizedPhone = normalizeMyanmarPhone(data.phone);
-      
+
       const result = await registerUser({
         name: data.name,
         phone: normalizedPhone,
@@ -83,27 +88,12 @@ const Register = () => {
         city: data.city,
         state: data.state
       });
-      
-      console.log('Registration completed, checking result...');
-      
+
       if (result.success) {
         const user = result.user;
-        
-        const isSeller = user.type === 'seller' || user.roles?.includes('seller');
-        
-        if (isSeller) {
-          console.log('Navigating to seller onboarding...');
-          
-          // Clear any existing localStorage data for fresh start
-          localStorage.removeItem('seller_onboarding_data');
-          
-          // Navigate to seller onboarding
-          navigate('/seller/onboarding/store-basic', { replace: true });
-        } else if (user.roles?.includes('admin')) {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+        setRegisteredEmail(user.email || data.email);
+        setShowVerificationMessage(true);
+        // No automatic navigation – user needs to verify email
       } else {
         setError(result.message || t('register.error'));
       }
@@ -114,6 +104,48 @@ const Register = () => {
       setIsLoading(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    try {
+      await api.post('/email/resend');
+      alert('Verification email resent. Please check your inbox.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to resend verification email.');
+    }
+  };
+
+
+  if (showVerificationMessage) {
+    return (
+      <AuthLayout title="Verify Your Email" subtitle="Almost there!">
+        <div className="text-center">
+          <EnvelopeIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Inbox</h2>
+          <p className="text-gray-600 mb-6">
+            We've sent a verification email to <strong>{registeredEmail}</strong>.
+            Please click the link in the email to verify your account.
+          </p>
+          <p className="text-sm text-gray-500 mb-8">
+            If you don't see the email, check your spam folder or click the button below to resend.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={handleResendVerification}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition"
+            >
+              Resend Verification Email
+            </button>
+            <Link
+              to="/"
+              className="block w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition"
+            >
+              Go to Home
+            </Link>
+          </div>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
@@ -134,7 +166,7 @@ const Register = () => {
           </div>
         </div>
       )}
-      
+
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <div>
@@ -147,7 +179,7 @@ const Register = () => {
               type="text"
               className={`appearance-none block w-full px-3 py-3 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
               placeholder={t('register.name.placeholder')}
-              {...register('name', { 
+              {...register('name', {
                 required: t('validation.required'),
                 minLength: {
                   value: 2,
@@ -159,7 +191,7 @@ const Register = () => {
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
             )}
           </div>
-          
+
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
               {t('register.phone.label')}
@@ -176,7 +208,7 @@ const Register = () => {
                 type="tel"
                 className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder="912345678"
-                {...register('phone', { 
+                {...register('phone', {
                   required: t('validation.required'),
                   validate: validateMyanmarPhone
                 })}
@@ -189,7 +221,7 @@ const Register = () => {
               <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
             )}
           </div>
-          
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               {t('register.email.label')}
@@ -200,7 +232,7 @@ const Register = () => {
               type="email"
               className={`appearance-none block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
               placeholder={t('register.email.placeholder')}
-              {...register('email', { 
+              {...register('email', {
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: t('validation.invalidEmail')
@@ -211,7 +243,7 @@ const Register = () => {
               <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('register.accountType.label')}
@@ -220,34 +252,32 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setUserType('buyer')}
-                className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${
-                  userType === 'buyer' 
-                    ? 'border-green-500 bg-green-50 text-green-700 shadow-sm' 
+                className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${userType === 'buyer'
+                    ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
                     : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
+                  }`}
               >
                 {t('register.accountType.buyer')}
               </button>
               <button
                 type="button"
                 onClick={() => setUserType('seller')}
-                className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${
-                  userType === 'seller' 
-                    ? 'border-green-500 bg-green-50 text-green-700 shadow-sm' 
+                className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${userType === 'seller'
+                    ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
                     : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                }`}
+                  }`}
               >
                 {t('register.accountType.seller')}
               </button>
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              {userType === 'buyer' 
+              {userType === 'buyer'
                 ? t('register.accountType.buyerDescription')
                 : t('register.accountType.sellerDescription')
               }
             </p>
           </div>
-          
+
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               {t('register.password.label')}
@@ -259,7 +289,7 @@ const Register = () => {
                 type={showPassword ? "text" : "password"}
                 className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder={t('register.password.placeholder')}
-                {...register('password', { 
+                {...register('password', {
                   required: t('validation.required'),
                   minLength: {
                     value: 6,
@@ -285,7 +315,7 @@ const Register = () => {
               )}
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
               {t('register.confirmPassword.label')}
@@ -296,9 +326,9 @@ const Register = () => {
               type="password"
               className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
               placeholder={t('register.confirmPassword.placeholder')}
-              {...register('confirmPassword', { 
+              {...register('confirmPassword', {
                 required: t('validation.required'),
-                validate: value => 
+                validate: value =>
                   value === watch('password') || t('validation.passwordMismatch')
               })}
             />
@@ -312,11 +342,10 @@ const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${
-              isLoading 
-                ? 'bg-green-400 cursor-not-allowed' 
+            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${isLoading
+                ? 'bg-green-400 cursor-not-allowed'
                 : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
-            }`}
+              }`}
           >
             {isLoading ? (
               <>
@@ -331,7 +360,7 @@ const Register = () => {
             )}
           </button>
         </div>
-        
+
         <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">{t('register.hasAccount')} </span>
           <Link to="/login" className="font-medium text-green-600 hover:text-green-500 transition-colors">

@@ -6,6 +6,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
 import { HelmetProvider } from "react-helmet-async";
+import EmailVerification from './pages/Email/EmailVerification';
 
 // Layout
 import Header from "./components/layout/Header";
@@ -101,6 +102,7 @@ function App() {
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/privacy-policy" element={<Legal />} />
                       <Route path="/page-not-found" element={<Error />} />
+                      <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
                       {/* Catch-all route for 404 */}
                       <Route path="*" element={<Error />} />
                       {/* Auth Routes */}

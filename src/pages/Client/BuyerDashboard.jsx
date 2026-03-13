@@ -1,13 +1,13 @@
 // src/pages/BuyerDashboard.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from '../../context/AuthContext';
 import {
   ShoppingBagIcon,
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
   CreditCardIcon,
-  CalendarIcon,
   MapPinIcon,
   EyeIcon,
   TruckIcon,
@@ -16,15 +16,13 @@ import {
   XCircleIcon,
   HeartIcon,
   CogIcon,
-  ShieldCheckIcon,
   ChartBarIcon,
   HomeIcon,
   DocumentTextIcon,
   BuildingStorefrontIcon,
   PencilSquareIcon,
-  TrashIcon,
   ArrowPathIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 
@@ -1046,6 +1044,21 @@ const BuyerDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
 
+  const { isEmailVerified } = useAuth();
+  const [resending, setResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    try {
+      await api.post('/email/resend');
+      alert('Verification email resent. Please check your inbox.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to resend verification email.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       const ordersRes = await api.get("/orders");
@@ -1058,7 +1071,7 @@ const BuyerDashboard = () => {
   // Handle modal close and refresh orders
   const handleModalClose = () => {
     setIsModalOpen(false);
-    fetchOrders(); // refresh orders when modal closes
+    fetchOrders();
   };
 
   useEffect(() => {
@@ -1123,6 +1136,7 @@ const BuyerDashboard = () => {
     }
   };
 
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1134,6 +1148,30 @@ const BuyerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {!isEmailVerified() && (
+          <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <EnvelopeIcon className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  Your email is not verified. Please check your inbox for the verification link.
+                </p>
+                <div className="mt-2">
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resending}
+                    className="text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-200 disabled:opacity-50"
+                  >
+                    {resending ? 'Sending...' : 'Resend Verification Email'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Buyer Dashboard</h1>
           <p className="text-gray-600 mt-2">Manage your orders and profile</p>

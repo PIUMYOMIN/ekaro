@@ -774,14 +774,12 @@
   },
   "about": {
     "title": "About Pyonea",
-
     "mission": {
       "title": "Our Mission",
       "paragraph1": "Pyonea is a next-generation digital marketplace connecting buyers and sellers through a secure, transparent, and scalable commerce ecosystem.",
       "paragraph2": "We empower businesses and individuals by removing barriers to trade and creating equal access to opportunity in the digital economy.",
       "paragraph3": "Our mission is to build trusted infrastructure that supports sustainable growth, innovation, and long-term digital transformation."
     },
-
     "buyers": {
       "title": "For Buyers",
       "point1": "Access diverse products from verified sellers",
@@ -790,7 +788,6 @@
       "point4": "Reliable order tracking and delivery support",
       "point5": "Trusted reviews and ratings"
     },
-
     "sellers": {
       "title": "For Sellers",
       "point1": "Expand your reach beyond physical boundaries",
@@ -799,7 +796,6 @@
       "point4": "Advanced business insights and analytics",
       "point5": "Scalable tools for long-term growth"
     },
-
     "vision": {
       "title": "Our Vision",
       "paragraph1": "To become a globally recognized marketplace brand rooted in trust, innovation, and digital excellence.",
@@ -809,32 +805,26 @@
   },
   "legal": {
     "pageTitle": "Legal Information",
-
     "terms": {
       "title": "Terms of Service",
       "content": "By accessing or using Pyonea, you agree to comply with and be legally bound by our Terms of Service. All transactions conducted through the platform are subject to these terms and applicable laws. Pyonea reserves the right to update these terms at any time."
     },
-
     "privacy": {
       "title": "Privacy Policy",
       "content": "Pyonea collects and processes personal information to operate and improve our services. We implement industry-standard security measures to protect user data. Personal information will not be shared with third parties without consent, except where required by law or for service fulfillment."
     },
-
     "refund": {
       "title": "Refund Policy",
       "content": "Refund requests must comply with our return eligibility criteria. Approved refunds are typically processed within 7–10 business days. Items must be returned in their original condition unless otherwise specified. Shipping fees may be non-refundable."
     },
-
     "seller": {
       "title": "Seller Agreement",
       "content": "Sellers on Pyonea are responsible for maintaining accurate product listings, timely order fulfillment, and professional customer service. Pyonea may charge a commission or service fee as outlined in the applicable pricing structure."
     },
-
     "dispute": {
       "title": "Dispute Resolution",
       "content": "In the event of a dispute, buyers and sellers are encouraged to resolve issues directly. If unresolved, Pyonea may intervene and mediate at its discretion to ensure a fair outcome based on platform policies."
     },
-
     "contact": {
       "title": "Contact Our Legal Team",
       "description": "For legal inquiries or questions regarding our policies, please contact us at:",
@@ -842,5 +832,40 @@
       "addressLabel": "Address:",
       "address": "Yangon, Myanmar"
     }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We'd love to hear from you",
+    "info": {
+      "title": "Contact Information",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "hours": "Business Hours",
+      "mon_fri": "Monday - Friday: 9:00 AM - 5:00 PM",
+      "sat": "Saturday: 9:00 AM - 1:00 PM",
+      "sun": "Sunday: Closed"
+    },
+    "form": {
+      "title": "Send us a message",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "subject": "Subject",
+      "message": "Message",
+      "submit": "Send Message",
+      "submitting": "Sending...",
+      "success": "Your message has been sent successfully. Thank you!",
+      "error": "Failed to send message. Please try again."
+    },
+    "validation": {
+      "name_required": "Name is required",
+      "email_required": "Email is required",
+      "email_invalid": "Please enter a valid email address",
+      "phone_invalid": "Please enter a valid Myanmar phone number",
+      "subject_required": "Subject is required",
+      "message_required": "Message is required"
+    },
+    "map_placeholder": "Map will be displayed here"
   }
 }
