@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation, Link, useParams } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
@@ -11,28 +11,67 @@ const EmailVerification = () => {
   const [status, setStatus] = useState('verifying');
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
+  // Stable string representing the current verification parameters
+  const paramsString = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    const expires = params.get('expires');
-    const signature = params.get('signature');
+    return `${id}|${hash}|${params.get('expires')}|${params.get('signature')}`;
+  }, [id, hash, location.search]);
 
-    if (id && hash && expires && signature) {
-      const verifyUrl = `/email/verify/${id}/${hash}?expires=${expires}&signature=${signature}`;
-      api.get(verifyUrl)
-        .then(async (response) => {
-          await refreshUser();
-          setStatus('success');
-          setMessage(response.data.message || 'Email verified successfully!');
-        })
-        .catch(error => {
+  // Track whether we've already verified for the current paramsString
+  const verificationDoneForParams = useRef(null);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Skip if verification already performed for these exact parameters
+    if (verificationDoneForParams.current === paramsString) {
+      return;
+    }
+
+    // Reset UI for new verification attempt
+    setStatus('verifying');
+    setMessage('');
+
+    const [idVal, hashVal, expires, signature] = paramsString.split('|');
+    if (!idVal || !hashVal || !expires || !signature) {
+      if (mounted.current) {
+        setStatus('error');
+        setMessage('Invalid verification link.');
+        verificationDoneForParams.current = paramsString;
+      }
+      return;
+    }
+
+    const controller = new AbortController();
+    const verifyUrl = `/email/verify/${idVal}/${hashVal}?expires=${expires}&signature=${signature}`;
+
+    api.get(verifyUrl, { signal: controller.signal })
+      .then(async (response) => {
+        if (!mounted.current) return;
+        await refreshUser();
+        setStatus('success');
+        setMessage(response.data.message || 'Email verified successfully!');
+        verificationDoneForParams.current = paramsString;
+      })
+      .catch(error => {
+        if (!mounted.current) return;
+        if (error.name !== 'CanceledError') {
           setStatus('error');
           setMessage(error.response?.data?.message || 'Verification failed. The link may be invalid or expired.');
-        });
-    } else {
-      setStatus('error');
-      setMessage('Invalid verification link.');
-    }
-  }, [id, hash, location, refreshUser]);
+          verificationDoneForParams.current = paramsString;
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [paramsString, refreshUser]);
 
   const handleResend = async () => {
     try {

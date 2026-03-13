@@ -1,182 +1,207 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { EyeIcon, EyeOffIcon } from '@heroicons/react/outline';
 import { motion } from 'framer-motion';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import api from '../../utils/api';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import SEO from "../../components/SEO/seo";
 
 const ResetPassword = () => {
-  const { token } = useParams();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
-  const password = watch("password");
+  const password = watch('password', '');
+
+  // Get token and email from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const token = queryParams.get('token');
+  const email = queryParams.get('email');
+
+  useEffect(() => {
+    if (!token || !email) {
+      setError('Invalid reset link');
+    }
+  }, [token, email]);
 
   const onSubmit = async (data) => {
+    if (!executeRecaptcha) {
+      setError('reCAPTCHA not ready');
+      return;
+    }
+
     setIsLoading(true);
-    
+    setError('');
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would be an API call to your backend
-      console.log('Reset password data:', { token, ...data });
-      
-      // Show success message
+      const recaptchaToken = await executeRecaptcha('reset_password');
+      await api.post('/reset-password', {
+        token,
+        email,
+        password: data.password,
+        password_confirmation: data.password_confirmation,
+        recaptcha_token: recaptchaToken,
+      });
       setSuccess(true);
-      
-      // Redirect to login after 3 seconds
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
-      // Handle error
+      setError(err.response?.data?.message || t('reset_password.error'));
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Determine title based on link validity
+  const pageTitle = (!token || !email) ? "Invalid Reset Link" : t('reset_password.title');
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div 
-        className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div>
-          <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
+    <>
+      <SEO
+        title={pageTitle}
+        description="Reset your Pyonea account password. Enter your new password to regain access."
+        url="/reset-password"
+        noindex={true}
+      />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
+        <motion.div 
+          className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div>
+            <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              {pageTitle}
+            </h2>
+            {(!token || !email) ? (
+              <p className="mt-2 text-center text-sm text-gray-600">
+                The password reset link is invalid or expired.
+              </p>
+            ) : (
+              <p className="mt-2 text-center text-sm text-gray-600">
+                {t('reset_password.subtitle')}
+              </p>
+            )}
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {t('reset_password.title')}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {t('reset_password.subtitle')}
-          </p>
-        </div>
-        
-        {success ? (
-          <div className="rounded-md bg-green-50 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  {t('reset_password.success_message')}
-                </p>
+
+          {(!token || !email) && (
+            <div className="text-center">
+              <Link to="/forgot-password" className="text-green-600 hover:text-green-700 font-medium">
+                Request a new link
+              </Link>
+            </div>
+          )}
+
+          {success && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">
+                    {t('reset_password.success_message')}
+                  </p>
+                  <p className="text-sm text-green-700 mt-1">Redirecting to login...</p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  {t('reset_password.password_label')}
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    className={`appearance-none block w-full px-3 py-3 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                    {...register('password', { 
-                      required: t('reset_password.password_required'),
-                      minLength: {
-                        value: 8,
-                        message: t('reset_password.password_min_length')
-                      },
-                      pattern: {
-                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                        message: t('reset_password.password_strength')
-                      }
-                    })}
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+          )}
+
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {!success && token && email && (
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('reset_password.new_password_label')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                      placeholder={t('reset_password.new_password_placeholder')}
+                      {...register('password', {
+                        required: t('validation.required'),
+                        minLength: { value: 6, message: t('validation.minLength', { count: 6 }) }
+                      })}
+                    />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                     >
-                      {showPassword ? (
-                        <EyeOffIcon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                      )}
+                      {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
                   </div>
+                  {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
                 </div>
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                )}
-                <p className="mt-2 text-xs text-gray-500">
-                  {t('reset_password.password_requirements')}
-                </p>
-              </div>
-              
-              <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                  {t('reset_password.confirm_password_label')}
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="confirm-password"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
-                    {...register('confirmPassword', { 
-                      required: t('reset_password.confirm_password_required'),
-                      validate: value => 
-                        value === password || t('reset_password.passwords_mismatch')
-                    })}
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+
+                <div>
+                  <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('reset_password.confirm_password_label')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password_confirmation"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password_confirmation ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                      placeholder={t('reset_password.confirm_password_placeholder')}
+                      {...register('password_confirmation', {
+                        required: t('validation.required'),
+                        validate: value => value === password || t('validation.passwordMismatch')
+                      })}
+                    />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                     >
-                      {showConfirmPassword ? (
-                        <EyeOffIcon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                      )}
+                      {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
                   </div>
+                  {errors.password_confirmation && (
+                    <p className="mt-1 text-sm text-red-600">{errors.password_confirmation.message}</p>
+                  )}
                 </div>
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-                )}
               </div>
-            </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
-              >
-                {isLoading ? t('reset_password.updating') : t('reset_password.reset_password')}
-              </button>
-            </div>
-            
-            <div className="text-center">
-              <Link to="/login" className="text-sm font-medium text-green-600 hover:text-green-500">
-                {t('reset_password.back_to_login')}
-              </Link>
-            </div>
-          </form>
-        )}
-      </motion.div>
-    </div>
+              <div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                >
+                  {isLoading ? t('reset_password.resetting') : t('reset_password.reset_button')}
+                </button>
+              </div>
+            </form>
+          )}
+        </motion.div>
+      </div>
+    </>
   );
 };
 

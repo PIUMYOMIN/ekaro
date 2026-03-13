@@ -31,6 +31,7 @@ import HelpCenter from "./pages/HelpCenter";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 // Protected Pages
 import BuyerDashboard from "./pages/Client/BuyerDashboard";
@@ -106,8 +107,10 @@ function App() {
                         <Route path="/privacy-policy" element={<Legal />} />
                         <Route path="/page-not-found" element={<Error />} />
                         <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
+                        
                         {/* Auth Routes */}
                         {/* Guest-only Routes */}
                         <Route path="/login" element={
@@ -116,12 +119,12 @@ function App() {
                           </GuestRoute>} />
                         <Route path="/register" element={
                           <GuestRoute>
-                            <Register /></GuestRoute>} />
+                            <Register />
+                          </GuestRoute>} />
                         <Route path="/forgot-password" element={
                           <GuestRoute>
                             <ForgotPassword />
                           </GuestRoute>} />
-
                         {/* Protected Routes */}
                         <Route path="/seller" element={
                           <ProtectedRoute roles={["seller"]}>

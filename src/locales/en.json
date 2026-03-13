@@ -1,4 +1,5 @@
 {
+  "app_name": "Pyonea",
   "header": {
     "home": "Home",
     "products": "Products",
@@ -125,31 +126,28 @@
     "continue_shopping": "Continue Shopping"
   },
   "forgot_password": {
-    "title": "Reset your password",
-    "subtitle": "Enter your phone number or email and we'll send you a link to reset your password",
-    "email_or_phone_label": "Phone number or email address",
-    "email_or_phone_placeholder": "Enter phone or email",
-    "required_field": "Phone number or email is required",
-    "send_reset": "Send reset link",
+    "title": "Forgot Password?",
+    "subtitle": "Enter your email address to reset your password",
+    "email_or_phone_label": "Email or Phone Number",
+    "email_or_phone_placeholder": "Enter your email or phone number",
+    "required_field": "This field is required",
+    "send_reset": "Send Reset Link",
     "sending": "Sending...",
-    "back_to_login": "Back to login",
-    "success_message": "Password reset link sent! Please check your messages or email."
+    "success_message": "Password reset link sent! Please check your email.",
+    "back_to_login": "Back to Login",
+    "error": "Failed to send reset link. Please try again."
   },
   "reset_password": {
-    "title": "Set a new password",
-    "subtitle": "Create a strong password to secure your account",
-    "password_label": "New password",
-    "password_required": "Password is required",
-    "password_min_length": "Password must be at least 8 characters",
-    "password_strength": "Password must contain uppercase, lowercase, number and special character",
-    "password_requirements": "Must include at least one uppercase letter, one lowercase letter, one number, and one special character",
-    "confirm_password_label": "Confirm new password",
-    "confirm_password_required": "Please confirm your new password",
-    "passwords_mismatch": "Passwords do not match",
-    "reset_password": "Reset password",
-    "updating": "Updating...",
-    "back_to_login": "Back to login",
-    "success_message": "Password reset successfully! Redirecting to login..."
+    "title": "Reset Password",
+    "subtitle": "Enter your new password",
+    "new_password_label": "New Password",
+    "new_password_placeholder": "Enter new password",
+    "confirm_password_label": "Confirm New Password",
+    "confirm_password_placeholder": "Confirm new password",
+    "reset_button": "Reset Password",
+    "resetting": "Resetting...",
+    "success_message": "Password reset successfully!",
+    "error": "Failed to reset password. Please try again."
   },
   "footer": {
     "company": "Company",
