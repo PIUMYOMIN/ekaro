@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import api from '../utils/api';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const Contact = () => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const {
     register,
@@ -17,10 +20,21 @@ const Contact = () => {
   } = useForm();
 
   const onSubmit = async (data) => {
+
+    if (!executeRecaptcha) {
+      setSubmitError('reCAPTCHA not ready');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
+
     try {
-      await api.post('/contact', data);
+      const token = await executeRecaptcha('contact');
+      await api.post('/contact', {
+        ...data,
+        recaptcha_token: token,
+      });
       setSubmitSuccess(true);
       reset();
       setTimeout(() => setSubmitSuccess(false), 5000);

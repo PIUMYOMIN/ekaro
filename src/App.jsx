@@ -72,161 +72,165 @@ import SellerRouteGuard from "./components/SellerRouteGuard";
 import MyStore from "./components/seller/MyStore";
 import ShippingSettings from "./components/seller/ShippingSettings_org"
 
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+
 function App() {
   return (
     <HelmetProvider>
       <I18nextProvider i18n={i18n}>
-        <AuthProvider>
-          <CartProvider>
-            <Router>
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex-grow">
-                  <WishlistProvider>
-                    <Routes>
-                      {/* Public Routes */}
-                      <Route path="/" element={<Home />} />
-                      <Route path="/products" element={<ProductList />} />
-                      <Route path="/products/:slug" element={<ProductDetail />} />
-                      <Route path="/categories" element={<CategoryBrowser />} />
-                      <Route path="/sellers" element={<Sellers />} />
-                      <Route path="/sellers/:slug" element={<SellerProfile />} />
-                      <Route path="/product-comparison" element={<ProductComparison />} />
-                      <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
-                      <Route path="/order-tracking" element={<OrderTracking />} />
-                      <Route path="/pricing" element={<Pricing />} />
-                      <Route path="/about-us" element={<AboutUs />} />
-                      <Route path="/terms" element={<Legal />} />
-                      <Route path="/help" element={<HelpCenter />} />
-                      <Route path="/legal" element={<Legal />} />
-                      <Route path="/contact" element={<Contact />} />
-                      <Route path="/privacy-policy" element={<Legal />} />
-                      <Route path="/page-not-found" element={<Error />} />
-                      <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
-                      {/* Catch-all route for 404 */}
-                      <Route path="*" element={<Error />} />
-                      {/* Auth Routes */}
-                      {/* Guest-only Routes */}
-                      <Route path="/login" element={
-                        <GuestRoute>
-                        <Login />
-                      </GuestRoute>} />
-                      <Route path="/register" element={
-                        <GuestRoute>
-                        <Register /></GuestRoute>} />
-                      <Route path="/forgot-password" element={
-                        <GuestRoute>
-                        <ForgotPassword />
-                      </GuestRoute>} />
+        <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
+          <AuthProvider>
+            <CartProvider>
+              <Router>
+                <div className="flex flex-col min-h-screen">
+                  <Header />
+                  <main className="flex-grow">
+                    <WishlistProvider>
+                      <Routes>
+                        {/* Public Routes */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/products" element={<ProductList />} />
+                        <Route path="/products/:slug" element={<ProductDetail />} />
+                        <Route path="/categories" element={<CategoryBrowser />} />
+                        <Route path="/sellers" element={<Sellers />} />
+                        <Route path="/sellers/:slug" element={<SellerProfile />} />
+                        <Route path="/product-comparison" element={<ProductComparison />} />
+                        <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
+                        <Route path="/order-tracking" element={<OrderTracking />} />
+                        <Route path="/pricing" element={<Pricing />} />
+                        <Route path="/about-us" element={<AboutUs />} />
+                        <Route path="/terms" element={<Legal />} />
+                        <Route path="/help" element={<HelpCenter />} />
+                        <Route path="/legal" element={<Legal />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/privacy-policy" element={<Legal />} />
+                        <Route path="/page-not-found" element={<Error />} />
+                        <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
+                        {/* Catch-all route for 404 */}
+                        <Route path="*" element={<Error />} />
+                        {/* Auth Routes */}
+                        {/* Guest-only Routes */}
+                        <Route path="/login" element={
+                          <GuestRoute>
+                            <Login />
+                          </GuestRoute>} />
+                        <Route path="/register" element={
+                          <GuestRoute>
+                            <Register /></GuestRoute>} />
+                        <Route path="/forgot-password" element={
+                          <GuestRoute>
+                            <ForgotPassword />
+                          </GuestRoute>} />
 
-                      {/* Protected Routes */}
-                      <Route path="/seller" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <SellerDashboardRedirect />
-                        </ProtectedRoute>
-                      } />
+                        {/* Protected Routes */}
+                        <Route path="/seller" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <SellerDashboardRedirect />
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/dashboard" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <SellerDashboard />
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/dashboard" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <SellerDashboard />
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/onboarding/store-basic" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <StepGuard step="store-basic">
-                            <StoreBasicInfo />
-                          </StepGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/onboarding/store-basic" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="store-basic">
+                              <StoreBasicInfo />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/onboarding/business-details" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <StepGuard step="business-details">
-                            <BusinessDetails />
-                          </StepGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/onboarding/business-details" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="business-details">
+                              <BusinessDetails />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/onboarding/address" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <StepGuard step="address">
-                            <AddressInfo />
-                          </StepGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/onboarding/address" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="address">
+                              <AddressInfo />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/onboarding/documents" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <StepGuard step="documents">
-                            <DocumentUpload />
-                          </StepGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/onboarding/documents" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="documents">
+                              <DocumentUpload />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/onboarding/review-submit" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <StepGuard step="review-submit">
-                            <ReviewSubmit />
-                          </StepGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/onboarding/review-submit" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="review-submit">
+                              <ReviewSubmit />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/my-store" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <SellerRouteGuard>
-                            <MyStore />
-                          </SellerRouteGuard>
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/my-store" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <SellerRouteGuard>
+                              <MyStore />
+                            </SellerRouteGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      <Route path="/seller/shipping" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <ShippingSettings />
-                        </ProtectedRoute>
-                      } />
+                        <Route path="/seller/shipping" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <ShippingSettings />
+                          </ProtectedRoute>
+                        } />
 
-                      {/* Other seller routes that require complete onboarding */}
-                      <Route path="/seller/products" element={
-                        <ProtectedRoute roles={["seller"]}>
-                          <SellerRouteGuard>
-                            <ProductView />
-                          </SellerRouteGuard>
-                        </ProtectedRoute>
-                      } />
+                        {/* Other seller routes that require complete onboarding */}
+                        <Route path="/seller/products" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <SellerRouteGuard>
+                              <ProductView />
+                            </SellerRouteGuard>
+                          </ProtectedRoute>
+                        } />
 
-                      {/* Buyer Routes */}
-                      <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
-                      <Route path="/payment" element={<ProtectedRoute roles={["buyer"]}><PaymentMethod /></ProtectedRoute>} />
-                      <Route path="/checkout" element={<ProtectedRoute roles={["buyer"]}><Checkout /></ProtectedRoute>} />
-                      <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
-                      <Route path="/buyer/dashboard" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
-                      <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+                        {/* Buyer Routes */}
+                        <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                        <Route path="/payment" element={<ProtectedRoute roles={["buyer"]}><PaymentMethod /></ProtectedRoute>} />
+                        <Route path="/checkout" element={<ProtectedRoute roles={["buyer"]}><Checkout /></ProtectedRoute>} />
+                        <Route path="/buyer" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
+                        <Route path="/buyer/dashboard" element={<ProtectedRoute roles={["buyer"]}><BuyerDashboard /></ProtectedRoute>} />
+                        <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
 
-                      <Route path="/seller/products/create" element={<ProtectedRoute roles={["seller"]}><ProductCreate /></ProtectedRoute>} />
-                      <Route path="/seller/products/:id/edit" element={<ProtectedRoute roles={["seller"]}><ProductEdit /></ProtectedRoute>} />
+                        <Route path="/seller/products/create" element={<ProtectedRoute roles={["seller"]}><ProductCreate /></ProtectedRoute>} />
+                        <Route path="/seller/products/:id/edit" element={<ProtectedRoute roles={["seller"]}><ProductEdit /></ProtectedRoute>} />
 
-                      {/* Admin Routes */}
-                      <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-                      <Route path="/admin/dashboard" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-                      <Route path="/admin/categories/create" element={<ProtectedRoute roles={["admin"]}><CategoryCreate /></ProtectedRoute>} />
-                      <Route path="/admin/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}><CategoryEdit /></ProtectedRoute>} />
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+                        <Route path="/admin/dashboard" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+                        <Route path="/admin/categories/create" element={<ProtectedRoute roles={["admin"]}><CategoryCreate /></ProtectedRoute>} />
+                        <Route path="/admin/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}><CategoryEdit /></ProtectedRoute>} />
 
-                      {/* Shared Routes */}
-                      <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}><ProductCreate /></ProtectedRoute>} />
-                      <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}><ProductEdit /></ProtectedRoute>} />
-                      <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
-                      <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
-                      <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
-                      <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
-                    </Routes>
-                  </WishlistProvider>
-                </main>
-                <Footer />
-              </div>
-            </Router>
-          </CartProvider>
-        </AuthProvider>
+                        {/* Shared Routes */}
+                        <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}><ProductCreate /></ProtectedRoute>} />
+                        <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}><ProductEdit /></ProtectedRoute>} />
+                        <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
+                        <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
+                        <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
+                        <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
+                      </Routes>
+                    </WishlistProvider>
+                  </main>
+                  <Footer />
+                </div>
+              </Router>
+            </CartProvider>
+          </AuthProvider>
+        </GoogleReCaptchaProvider>
       </I18nextProvider>
     </HelmetProvider>);
 }

@@ -6,6 +6,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -16,6 +17,8 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const {
     register,
@@ -72,43 +75,29 @@ const Login = () => {
 
   const handleLoginSuccess = async (user) => {
     try {
-      // Check if there's a redirect location from ProtectedRoute
       const from = location.state?.from;
 
       if (from && from !== '/login') {
-        // Redirect to the originally requested page
         navigate(from, { replace: true });
         return;
       }
 
-      // Handle cart addition after login if needed
       if (from === 'cart-add' && productId) {
         try {
-          await addToCart({
-            id: productId,
-            quantity: 1
-          });
+          await addToCart({ id: productId, quantity: 1 });
           navigate(returnTo, {
-            state: {
-              message: 'Product added to cart successfully!',
-              messageType: 'success'
-            },
+            state: { message: 'Product added to cart successfully!', messageType: 'success' },
             replace: true
           });
         } catch (cartError) {
-          console.error('Failed to add product to cart after login:', cartError);
           navigate(returnTo, {
-            state: {
-              message: 'Logged in successfully, but failed to add product to cart. Please try again.',
-              messageType: 'error'
-            },
+            state: { message: 'Logged in successfully, but failed to add product to cart. Please try again.', messageType: 'error' },
             replace: true
           });
         }
         return;
       }
 
-      // Role-based redirection
       const userRoles = user.roles || [];
       const userRole = user.role || user.type;
 
@@ -119,25 +108,31 @@ const Login = () => {
       } else if (userRoles.includes('buyer') || userRole === 'buyer') {
         navigate('/buyer/dashboard', { replace: true });
       } else {
-        // Default fallback
         navigate('/', { replace: true });
       }
     } catch (error) {
-      console.error('Error in login success handler:', error);
       navigate('/', { replace: true });
     }
   };
 
   const onSubmit = async (data) => {
+    if (!executeRecaptcha) {
+      setError('reCAPTCHA not ready');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
+      const token = await executeRecaptcha('login');
       const normalizedPhone = normalizeMyanmarPhone(data.phone);
 
       const result = await login({
         phone: normalizedPhone,
-        password: data.password
+        password: data.password,
+        remember: data.remember,
+        recaptcha_token: token,
       });
 
       if (result.success) {
@@ -155,10 +150,7 @@ const Login = () => {
   const showRedirectMessage = from === 'cart-add' && productId;
 
   return (
-    <AuthLayout
-      title={t('login.title')}
-      subtitle={t('login.subtitle')}
-    >
+    <AuthLayout title={t('login.title')} subtitle={t('login.subtitle')}>
       {showRedirectMessage && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <div className="flex">
@@ -198,30 +190,23 @@ const Login = () => {
               {t('login.phone.label')}
             </label>
             <div className="mt-1 flex rounded-md shadow-sm">
-              {/* Myanmar Flag and Country Code */}
               <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
                 <span className="mr-2 text-base">🇲🇲</span>
                 +95
               </div>
               <input
                 id="phone"
-                name="phone"
                 type="tel"
                 autoComplete="tel"
                 className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder="912345678"
-                {...register('phone', {
-                  required: t('validation.required'),
-                  validate: validateMyanmarPhone
-                })}
+                {...register('phone', { required: t('validation.required'), validate: validateMyanmarPhone })}
               />
             </div>
             <p className="mt-1 text-xs text-gray-500">
               {t('register.phone.examples') || 'Examples: 912345678, 0912345678, +95912345678'}
             </p>
-            {errors.phone && (
-              <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-            )}
+            {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
           </div>
 
           <div>
@@ -231,17 +216,13 @@ const Login = () => {
             <div className="mt-1 relative">
               <input
                 id="password"
-                name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder={t('login.password.placeholder')}
                 {...register('password', {
                   required: t('validation.required'),
-                  minLength: {
-                    value: 6,
-                    message: t('validation.minLength', { count: 6 })
-                  }
+                  minLength: { value: 6, message: t('validation.minLength', { count: 6 }) }
                 })}
               />
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -250,16 +231,10 @@ const Login = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                  )}
+                  {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
             </div>
           </div>
         </div>
@@ -268,7 +243,6 @@ const Login = () => {
           <div className="flex items-center">
             <input
               id="remember-me"
-              name="remember-me"
               type="checkbox"
               className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               {...register('remember')}
@@ -277,7 +251,6 @@ const Login = () => {
               {t('login.remember')}
             </label>
           </div>
-
           <div className="text-sm">
             <Link to="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
               {t('login.forgotPassword')}
@@ -289,10 +262,9 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${isLoading
-                ? 'bg-green-400 cursor-not-allowed'
-                : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
-              }`}
+            className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white transition-colors ${
+              isLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'
+            }`}
           >
             {isLoading ? (
               <>
@@ -300,26 +272,17 @@ const Login = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {showRedirectMessage
-                  ? (t('login.signingInAndAdding') || 'Logging in & Adding to Cart...')
-                  : t('login.signingIn')
-                }
+                {showRedirectMessage ? t('login.signingInAndAdding') || 'Logging in & Adding to Cart...' : t('login.signingIn')}
               </>
             ) : (
-              showRedirectMessage
-                ? (t('login.signInAndAdd') || 'Login & Add to Cart')
-                : t('login.signIn')
+              showRedirectMessage ? t('login.signInAndAdd') || 'Login & Add to Cart' : t('login.signIn')
             )}
           </button>
         </div>
 
         <div className="mt-4 text-center text-sm">
           <span className="text-gray-600">{t('login.noAccount')} </span>
-          <Link
-            to="/register"
-            state={location.state}
-            className="font-medium text-green-600 hover:text-green-500"
-          >
+          <Link to="/register" state={location.state} className="font-medium text-green-600 hover:text-green-500">
             {t('login.register')}
           </Link>
         </div>
@@ -331,25 +294,16 @@ const Login = () => {
             <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
-              {t('login.orContinue')}
-            </span>
+            <span className="px-2 bg-white text-gray-500">{t('login.orContinue')}</span>
           </div>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-          >
+          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
             <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
             <span className="ml-2">Facebook</span>
           </button>
-
-          <button
-            type="button"
-            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-          >
+          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
             <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
             <span className="ml-2">Google</span>
           </button>

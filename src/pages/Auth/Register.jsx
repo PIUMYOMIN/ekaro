@@ -7,6 +7,7 @@ import AuthLayout from './AuthLayout';
 import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const Register = () => {
   const { t } = useTranslation();
@@ -16,6 +17,7 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('buyer');
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
@@ -71,10 +73,16 @@ const Register = () => {
   };
 
   const onSubmit = async (data) => {
+    if (!executeRecaptcha) {
+      setError('reCAPTCHA not ready');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
+      const token = await executeRecaptcha('register');
       const normalizedPhone = normalizeMyanmarPhone(data.phone);
 
       const result = await registerUser({
@@ -86,7 +94,8 @@ const Register = () => {
         type: userType,
         address: data.address,
         city: data.city,
-        state: data.state
+        state: data.state,
+        recaptcha_token: token,
       });
 
       if (result.success) {

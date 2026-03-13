@@ -9,25 +9,12 @@ import {
   CogIcon,
   ArrowPathIcon,
   MagnifyingGlassIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
   StarIcon,
-  CheckIcon,
-  XMarkIcon,
   TruckIcon,
-  BuildingStorefrontIcon,
-  UsersIcon,
   ShieldCheckIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  PlusIcon,
   BriefcaseIcon,
-  BuildingOfficeIcon,
-  BanknotesIcon,
-  BellIcon
+  BellIcon,
+  EnvelopeIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +33,7 @@ import CategoryManagement from "../../components/admin/CategoryManagement";
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
 import Notifications from "../../components/admin/Notifications";
 import Settings from "../../components/admin/Settings";
+import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
 
 
 const AdminDashboard = () => {
@@ -856,6 +844,11 @@ const AdminDashboard = () => {
       name: "Notifications",
       icon: BellIcon,
       component: <Notifications />
+    },
+    {
+      name: "Contact Messages",
+      icon: EnvelopeIcon,
+      component: <ContactMessagesManagement />
     },
     {
       name: t("users"),
