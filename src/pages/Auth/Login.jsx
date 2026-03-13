@@ -7,6 +7,7 @@ import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import SEO from "../../components/SEO/seo";
 
 const Login = () => {
   const { t } = useTranslation();
@@ -150,7 +151,13 @@ const Login = () => {
   const showRedirectMessage = from === 'cart-add' && productId;
 
   return (
-    <AuthLayout title={t('login.title')} subtitle={t('login.subtitle')}>
+    <>
+      <SEO
+      title="Login"
+      description="Login to your Pyonea account."
+      url="/login"
+      noindex={true}
+      />
       {showRedirectMessage && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <div className="flex">
@@ -167,7 +174,7 @@ const Login = () => {
           </div>
         </div>
       )}
-
+      <AuthLayout title={t('login.title')} subtitle={t('login.subtitle')}>
       {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
@@ -310,6 +317,7 @@ const Login = () => {
         </div>
       </div>
     </AuthLayout>
+    </>
   );
 };
 

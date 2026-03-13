@@ -57,7 +57,7 @@ import AddressInfo from "./pages/Seller/AddressInfo";
 import PaymentMethod from "./components/ui/PaymentMethod";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
 import RFQManager from "./pages/RFQManager";
-import Contact from "./pages/contact";
+import Contact from "./pages/Contact";
 
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute";

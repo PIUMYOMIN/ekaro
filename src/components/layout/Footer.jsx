@@ -183,13 +183,13 @@ const Footer = () => {
                 {t("footer.contact_info")}
               </h4>
               <p className="text-gray-300">
+                <a href="tel:+959792115547">{t("footer.phone")}</a>
+              </p>
+              <p className="text-gray-300">
                 {t("footer.address")}
               </p>
               <p className="text-gray-300">
-                {t("footer.phone")}
-              </p>
-              <p className="text-gray-300">
-                <a href="mailto:info.pyonea@gmail.com">{t("footer.email")}</a>
+                <a href="mailto:contact.pyonea@gmail.com">{t("footer.email")}</a>
               </p>
             </div>
             <div>
