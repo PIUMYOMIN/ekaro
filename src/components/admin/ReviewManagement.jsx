@@ -1,8 +1,66 @@
-import React, { useState } from "react";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
+// components/admin/ReviewManagement.js
+import React, { useState, useEffect } from "react";
+import { CheckIcon, XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import DataTable from "../ui/DataTable";
-const ReviewManagement = ({ reviews, loading, error, handleReviewStatus }) => {
+import api from "../../utils/api";
+
+const ReviewManagement = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/reviews");
+      const reviewsData = response.data.data || response.data;
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+    } catch (err) {
+      console.error("Failed to fetch reviews:", err);
+      setError(err.response?.data?.message || "Failed to load reviews");
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const handleReviewStatus = async (reviewId, status) => {
+    try {
+      let endpoint = "";
+      let method = "POST";
+
+      if (status === "approved") {
+        endpoint = `/reviews/${reviewId}/approve`;
+      } else if (status === "rejected") {
+        endpoint = `/reviews/${reviewId}/reject`;
+      } else {
+        endpoint = `/reviews/${reviewId}/status`;
+        method = "PUT";
+      }
+
+      const response = await api({
+        method,
+        url: endpoint,
+        data: status !== "approved" && status !== "rejected" ? { status } : {}
+      });
+
+      if (response.data.success) {
+        setReviews(reviews.map((review) =>
+          review.id === reviewId ? { ...review, status } : review
+        ));
+        alert(`Review ${status} successfully`);
+      }
+    } catch (error) {
+      console.error("Failed to update review status:", error);
+      alert(error.response?.data?.message || "Failed to update review status");
+    }
+  };
 
   const columns = [
     { header: "ID", accessor: "id" },
@@ -67,26 +125,48 @@ const ReviewManagement = ({ reviews, loading, error, handleReviewStatus }) => {
     )
   }));
 
+  // Filter by search term
+  const filteredReviews = reviewData.filter(review =>
+    review.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    review.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    review.comment?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            Review Management
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage product reviews and ratings
-          </p>
+          <h3 className="text-lg font-medium text-gray-900">Review Management</h3>
+          <p className="mt-1 text-sm text-gray-500">Manage product reviews and ratings</p>
+        </div>
+        <div className="relative max-w-xs">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search reviews..."
+            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-green-600 sm:text-sm sm:leading-6"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
 
-      {loading && <div className="p-8 flex justify-center">Loading...</div>}
-      {error && <div className="p-4 text-red-500">Error loading reviews</div>}
+      {loading && (
+        <div className="p-8 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="p-4 text-red-500">
+          Error loading reviews: {error}
+        </div>
+      )}
 
       {!loading && !error && (
         <DataTable
           columns={columns}
-          data={reviewData}
+          data={filteredReviews}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
         />

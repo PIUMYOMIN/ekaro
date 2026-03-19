@@ -1,568 +1,432 @@
-import React, { useState } from "react";
-import { 
+// components/admin/SellersManagement.js
+import React, { useState, useEffect } from "react";
+import {
   MagnifyingGlassIcon,
-  BuildingStorefrontIcon,
-  StarIcon,
-  ShieldCheckIcon,
-  MapPinIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  UserCircleIcon,
-  ArrowPathIcon as ArrowPathOutline
-} from "@heroicons/react/24/outline";
-import { 
-  CheckIcon, 
-  XMarkIcon,
-  ExclamationTriangleIcon,
+  FunnelIcon,
+  ArrowsUpDownIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
   EyeIcon,
-  PencilSquareIcon,
-  ArrowPathIcon
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
+import api from "../../utils/api";
 import DataTable from "../ui/DataTable";
 
-const SellersManagement = ({
-  sellers,
-  loading,
-  error,
-  handleSellerStatus,
-  searchTerm,
-  onSearchChange,
-  pagination,
-  onPageChange
-}) => {
-  const [selectedSeller, setSelectedSeller] = useState(null);
-  const [statusUpdateData, setStatusUpdateData] = useState({
-    status: '',
-    reason: '',
-    notes: ''
+const SellersManagement = () => {
+  const [sellers, setSellers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const [sortField, setSortField] = useState("created_at");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [selectedSellers, setSelectedSellers] = useState([]);
+
+  // Fetch sellers from API
+  const fetchSellers = async (page = currentPage, search = searchTerm, status = statusFilter) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page,
+        per_page: 15,
+        search: search || undefined,
+        ...(status !== "all" && { status }),
+      };
+      const response = await api.get("/admin/sellers", { params });
+      if (response.data.success) {
+        const data = response.data.data;
+        setSellers(data.data || []);
+        setPagination({
+          current_page: data.current_page,
+          per_page: data.per_page,
+          total: data.total,
+          last_page: data.last_page,
+          from: data.from,
+          to: data.to,
+        });
+      } else {
+        setSellers(response.data.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch sellers:", err);
+      setError(err.response?.data?.message || "Failed to load sellers");
+      setSellers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchSellers(1, searchTerm, statusFilter);
+  }, []);
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    fetchSellers(currentPage, searchTerm, statusFilter);
+  }, [searchTerm, statusFilter, currentPage]);
+
+  // Handle status update (approve/reject/suspend, etc.)
+  const handleStatusUpdate = async (sellerId, newStatus, reason = "") => {
+    try {
+      const response = await api.put(`/admin/seller/${sellerId}/status`, {
+        status: newStatus,
+        reason,
+      });
+      if (response.data.success) {
+        alert(`Seller status updated to ${newStatus} successfully`);
+        // Update local state
+        setSellers(prev =>
+          prev.map(seller =>
+            seller.id === sellerId ? { ...seller, status: newStatus } : seller
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating seller status:", error);
+      const message = error.response?.data?.message || error.message || "Failed to update seller status";
+      alert(message);
+    }
+  };
+
+  // Toggle selection for bulk actions
+  const toggleSelection = (sellerId) => {
+    setSelectedSellers(prev =>
+      prev.includes(sellerId) ? prev.filter(id => id !== sellerId) : [...prev, sellerId]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedSellers.length === sellers.length) {
+      setSelectedSellers([]);
+    } else {
+      setSelectedSellers(sellers.map(s => s.id));
+    }
+  };
+
+  // Handle column sorting
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Client‑side sorting (could be moved to server)
+  const sortedSellers = [...sellers].sort((a, b) => {
+    let aVal = a[sortField] || "";
+    let bVal = b[sortField] || "";
+    if (sortField === "rating") {
+      aVal = a.reviews_avg_rating || 0;
+      bVal = b.reviews_avg_rating || 0;
+    }
+    if (sortField === "products_count") {
+      aVal = a.products_count || 0;
+      bVal = b.products_count || 0;
+    }
+    if (typeof aVal === "string") aVal = aVal.toLowerCase();
+    if (typeof bVal === "string") bVal = bVal.toLowerCase();
+    return sortDirection === "asc" ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
   });
 
-  // Rename this function to avoid conflict with prop
-  const handleLocalStatusChange = async (sellerId, newStatus) => {
-    const reason = newStatus === 'suspended' || newStatus === 'rejected' 
-      ? prompt(`Please provide a reason for ${newStatus}:`) 
-      : '';
-    
-    // Call the parent function
-    await handleSellerStatus(sellerId, newStatus, reason);
+  // Helper: format date
+  const formatDate = (dateStr) => (dateStr ? new Date(dateStr).toLocaleDateString() : "N/A");
+
+  // Helper: status badge styling
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "approved":
+      case "active":
+        return { bg: "bg-green-100", text: "text-green-800", icon: CheckCircleIcon, label: "Approved" };
+      case "pending":
+        return { bg: "bg-yellow-100", text: "text-yellow-800", icon: ClockIcon, label: "Pending" };
+      case "rejected":
+      case "suspended":
+        return { bg: "bg-red-100", text: "text-red-800", icon: XCircleIcon, label: "Rejected" };
+      case "closed":
+        return { bg: "bg-gray-100", text: "text-gray-800", icon: null, label: "Closed" };
+      default:
+        return { bg: "bg-gray-100", text: "text-gray-800", icon: null, label: status || "Unknown" };
+    }
   };
 
-  const statusOptions = [
-    { value: 'setup_pending', label: 'Setup Pending', color: 'gray' },
-    { value: 'pending', label: 'Pending', color: 'yellow' },
-    { value: 'approved', label: 'Approved', color: 'green' },
-    { value: 'active', label: 'Active', color: 'green' },
-    { value: 'rejected', label: 'Rejected', color: 'red' },
-    { value: 'suspended', label: 'Suspended', color: 'red' },
-    { value: 'closed', label: 'Closed', color: 'red' }
-  ];
-
-  const verificationLevels = {
-    'unverified': { label: 'Unverified', color: 'gray' },
-    'basic': { label: 'Basic', color: 'blue' },
-    'verified': { label: 'Verified', color: 'green' },
-    'premium': { label: 'Premium', color: 'purple' }
-  };
-
+  // DataTable columns definition
   const columns = [
     {
-      header: "Store",
-      accessor: "store",
-      cell: (row) => (
-        <div className="flex items-center">
-          {row.store_logo ? (
-            <img
-              src={row.store_logo.startsWith('http') ? row.store_logo : `/storage/${row.store_logo}`}
-              alt={row.store_name}
-              className="h-10 w-10 rounded-lg object-cover mr-3"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div className={`${row.store_logo ? 'hidden' : 'flex'} h-10 w-10 rounded-lg bg-gray-200 items-center justify-center mr-3`}>
-            <BuildingStorefrontIcon className="h-6 w-6 text-gray-400" />
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">{row.store_name}</div>
-            <div className="text-xs text-gray-500 flex items-center">
-              <span className="mr-2">ID: {row.store_id || 'N/A'}</span>
-              {row.verification_level && row.verification_level !== 'unverified' && (
-                <span className={`px-1.5 py-0.5 rounded text-xs bg-${verificationLevels[row.verification_level]?.color || 'gray'}-100 text-${verificationLevels[row.verification_level]?.color || 'gray'}-800`}>
-                  {verificationLevels[row.verification_level]?.label || row.verification_level}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      )
+      header: (
+        <input
+          type="checkbox"
+          checked={selectedSellers.length === sellers.length && sellers.length > 0}
+          onChange={toggleAllSelection}
+          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+        />
+      ),
+      accessor: "selection",
+      width: "50px",
     },
+    { header: "Store ID", accessor: "store_id" },
+    { header: "Store Name", accessor: "store_name" },
+    { header: "Email", accessor: "contact_email" },
+    { header: "Phone", accessor: "contact_phone" },
+    { header: "Business Type", accessor: "business_type" },
     {
-      header: "Owner",
-      accessor: "owner",
-      cell: (row) => (
-        <div>
-          <div className="flex items-center">
-            <UserCircleIcon className="h-4 w-4 text-gray-400 mr-1" />
-            <span className="font-medium">{row.user?.name || 'Unknown'}</span>
-          </div>
-          <div className="text-sm text-gray-500">{row.user?.email || 'No email'}</div>
-        </div>
-      )
-    },
-    {
-      header: "Business Info",
-      accessor: "business_info",
-      cell: (row) => (
-        <div className="space-y-1">
-          <div className="flex items-center">
-            <BuildingStorefrontIcon className="h-4 w-4 text-gray-400 mr-1" />
-            <span className="text-sm">{row.business_type || 'Not specified'}</span>
-          </div>
-          <div className="flex items-center">
-            <MapPinIcon className="h-4 w-4 text-gray-400 mr-1" />
-            <span className="text-sm text-gray-600">{row.city}, {row.country}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Contact",
-      accessor: "contact",
-      cell: (row) => (
-        <div className="space-y-1">
-          <div className="flex items-center">
-            <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-1" />
-            <span className="text-sm">{row.contact_email}</span>
-          </div>
-          <div className="flex items-center">
-            <PhoneIcon className="h-4 w-4 text-gray-400 mr-1" />
-            <span className="text-sm text-gray-600">{row.contact_phone}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Rating",
-      accessor: "rating",
-      cell: (row) => {
-        const rating = row.reviews_avg_rating || 0;
-        return (
-          <div className="flex items-center">
-            <div className="flex mr-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon
-                  key={star}
-                  className={`h-4 w-4 ${
-                    star <= rating
-                      ? "text-yellow-400 fill-yellow-400"
-                      : "text-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm font-medium">{rating.toFixed(1)}</span>
-            <span className="text-xs text-gray-500 ml-1">
-              ({row.reviews_count || 0})
-            </span>
-          </div>
-        );
-      }
-    },
-    {
-      header: "Stats",
-      accessor: "stats",
-      cell: (row) => (
-        <div className="text-sm">
-          <div className="flex items-center">
-            <span className="text-gray-600 mr-2">Products:</span>
-            <span className="font-medium">{row.products_count || 0}</span>
-          </div>
-          <div className="flex items-center">
-            <span className="text-gray-600 mr-2">Orders:</span>
-            <span className="font-medium">{row.total_orders || 0}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: "Status",
+      header: (
+        <button onClick={() => handleSort("status")} className="flex items-center">
+          Status
+          {sortField === "status" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
+        </button>
+      ),
       accessor: "status",
-      cell: (row) => {
-        const statusConfig = {
-          setup_pending: { color: 'gray', label: 'Setup Pending' },
-          pending: { color: 'yellow', label: 'Pending' },
-          approved: { color: 'green', label: 'Approved' },
-          active: { color: 'green', label: 'Active' },
-          rejected: { color: 'red', label: 'Rejected' },
-          suspended: { color: 'red', label: 'Suspended' },
-          closed: { color: 'red', label: 'Closed' }
-        };
-        
-        const config = statusConfig[row.status] || { color: 'gray', label: row.status };
-        
-        return (
-          <div className="space-y-1">
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${config.color}-100 text-${config.color}-800`}>
-              {config.label}
-            </span>
-            {row.document_status && row.document_status !== 'approved' && (
-              <div className="text-xs text-gray-500">
-                Docs: {row.document_status}
-              </div>
-            )}
-          </div>
-        );
-      }
     },
     {
-      header: "Created",
+      header: (
+        <button onClick={() => handleSort("rating")} className="flex items-center">
+          Rating
+          {sortField === "rating" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
+        </button>
+      ),
+      accessor: "rating",
+    },
+    {
+      header: (
+        <button onClick={() => handleSort("products_count")} className="flex items-center">
+          Products
+          {sortField === "products_count" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
+        </button>
+      ),
+      accessor: "products_count",
+    },
+    {
+      header: (
+        <button onClick={() => handleSort("created_at")} className="flex items-center">
+          Created
+          {sortField === "created_at" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
+        </button>
+      ),
       accessor: "created_at",
-      cell: (row) => (
-        <div className="text-sm text-gray-600">
-          {new Date(row.created_at).toLocaleDateString()}
-          {row.verified_at && (
-            <div className="text-xs text-green-600">
-              Verified: {new Date(row.verified_at).toLocaleDateString()}
-            </div>
-          )}
-        </div>
-      )
     },
-    {
-      header: "Actions",
-      accessor: "actions",
-      cell: (row) => (
-        <div className="flex flex-col space-y-2">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => window.open(`/sellers/${row.store_slug || row.id}`, "_blank")}
-              className="text-blue-600 hover:text-blue-900 text-sm flex items-center"
-              title="View Store"
-            >
-              <EyeIcon className="h-4 w-4 mr-1" />
-              View
-            </button>
-            <button
-              onClick={() => setSelectedSeller(row)}
-              className="text-gray-600 hover:text-gray-900 text-sm flex items-center"
-              title="Edit Seller"
-            >
-              <PencilSquareIcon className="h-4 w-4 mr-1" />
-              Edit
-            </button>
-          </div>
-          
-          <div className="flex space-x-2">
-            {row.status === "pending" || row.status === "setup_pending" ? (
-              <button
-                onClick={() => handleLocalStatusChange(row.id, "approved")}
-                className="text-green-600 hover:text-green-900 text-sm flex items-center"
-                title="Approve Seller"
-              >
-                <CheckIcon className="h-4 w-4 mr-1" />
-                Approve
-              </button>
-            ) : (row.status === "approved" || row.status === "active") ? (
-              <button
-                onClick={() => handleLocalStatusChange(row.id, "suspended")}
-                className="text-red-600 hover:text-red-900 text-sm flex items-center"
-                title="Suspend Seller"
-              >
-                <XMarkIcon className="h-4 w-4 mr-1" />
-                Suspend
-              </button>
-            ) : null}
-            
-            {row.status === "suspended" && (
-              <button
-                onClick={() => handleLocalStatusChange(row.id, "active")}
-                className="text-green-600 hover:text-green-900 text-sm flex items-center"
-                title="Reactivate Seller"
-              >
-                <CheckIcon className="h-4 w-4 mr-1" />
-                Reactivate
-              </button>
-            )}
-          </div>
-        </div>
-      )
-    }
+    { header: "Actions", accessor: "actions", width: "200px" },
   ];
 
-  const handleStatusUpdate = async () => {
-    if (!selectedSeller || !statusUpdateData.status) return;
-    
-    // Use the parent function
-    await handleSellerStatus(
-      selectedSeller.id, 
-      statusUpdateData.status, 
-      statusUpdateData.reason || statusUpdateData.notes
-    );
-    setSelectedSeller(null);
-    setStatusUpdateData({ status: '', reason: '', notes: '' });
-  };
+  // Map seller data to table rows
+  const sellerData = sortedSellers.map((seller) => {
+    const badge = getStatusBadge(seller.status);
+    const StatusIcon = badge.icon;
+    return {
+      ...seller,
+      selection: (
+        <input
+          type="checkbox"
+          checked={selectedSellers.includes(seller.id)}
+          onChange={() => toggleSelection(seller.id)}
+          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+        />
+      ),
+      store_id: seller.store_id || "N/A",
+      store_name: seller.store_name || "N/A",
+      contact_email: seller.contact_email || "N/A",
+      contact_phone: seller.contact_phone || "N/A",
+      business_type: seller.business_type || "N/A",
+      status: (
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+          {StatusIcon && <StatusIcon className="h-3 w-3 mr-1" />}
+          {badge.label}
+        </span>
+      ),
+      rating: seller.reviews_avg_rating ? seller.reviews_avg_rating.toFixed(1) : "0.0",
+      products_count: seller.products_count || 0,
+      created_at: formatDate(seller.created_at),
+      actions: (
+        <div className="flex space-x-2 items-center">
+          <button
+            className="p-1 text-gray-600 hover:text-gray-900"
+            title="View Store"
+            onClick={() => window.open(`/sellers/${seller.id}`, "_blank")}
+          >
+            <EyeIcon className="h-4 w-4" />
+          </button>
+          <select
+            value={seller.status}
+            onChange={(e) => handleStatusUpdate(seller.id, e.target.value)}
+            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-500"
+          >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="active">Active</option>
+            <option value="rejected">Rejected</option>
+            <option value="suspended">Suspended</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      ),
+    };
+  });
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-gray-800">
-            {Array.isArray(sellers) ? sellers.length : 0}
-          </div>
-          <div className="text-sm text-gray-500">Total Sellers</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {Array.isArray(sellers) 
-              ? sellers.filter(s => s.status === 'active' || s.status === 'approved').length 
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Active Sellers</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-yellow-600">
-            {Array.isArray(sellers) 
-              ? sellers.filter(s => s.status === 'pending').length 
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Pending Review</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-red-600">
-            {Array.isArray(sellers) 
-              ? sellers.filter(s => s.status === 'suspended' || s.status === 'rejected').length 
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Suspended/Rejected</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-blue-600">
-            {Array.isArray(sellers) 
-              ? sellers.filter(s => s.verification_level === 'verified' || s.verification_level === 'premium').length 
-              : 0}
-          </div>
-          <div className="text-sm text-gray-500">Verified Sellers</div>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Seller Management</h1>
+          <p className="mt-1 text-sm text-gray-600">Manage all sellers in your marketplace</p>
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Seller Management
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage all seller accounts, status, and verification
-            </p>
-          </div>
-          <div className="flex space-x-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search Sellers</label>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search sellers..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 w-64"
+                placeholder="Store name, email..."
+                className="block w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
                 value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
-            <button
-              onClick={() => window.open('/admin/seller-verification', '_blank')}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
             >
-              <ShieldCheckIcon className="h-4 w-4 mr-2" />
-              Verification Queue
+              <option value="all">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="active">Active</option>
+              <option value="rejected">Rejected</option>
+              <option value="suspended">Suspended</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          {/* Reset Filters */}
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setSearchTerm("");
+                setStatusFilter("all");
+                setCurrentPage(1);
+              }}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              <FunnelIcon className="h-4 w-4 mr-2" />
+              Reset Filters
             </button>
           </div>
         </div>
 
-        {loading && (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+        {/* Stats */}
+        {pagination && (
+          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+            <span>Total: {pagination.total}</span>
+            <span>•</span>
+            <span>Showing {pagination.from}–{pagination.to}</span>
           </div>
-        )}
-
-        {error && (
-          <div className="p-4 text-red-500 bg-red-50">
-            Error: {error.message || 'Failed to load sellers'}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <>
-            <DataTable
-              columns={columns}
-              data={Array.isArray(sellers) ? sellers : []}
-              searchTerm={searchTerm}
-              onSearchChange={onSearchChange}
-            />
-
-            {/* Pagination */}
-            {pagination && pagination.total > pagination.per_page && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Showing <span className="font-medium">{pagination.from || 1}</span>{" "}
-                  to <span className="font-medium">{pagination.to || sellers.length}</span> of{" "}
-                  <span className="font-medium">{pagination.total || sellers.length}</span> results
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => onPageChange(pagination.current_page - 1)}
-                    disabled={pagination.current_page === 1}
-                    className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-1 text-sm">
-                    Page {pagination.current_page} of {pagination.last_page}
-                  </span>
-                  <button
-                    onClick={() => onPageChange(pagination.current_page + 1)}
-                    disabled={pagination.current_page === pagination.last_page}
-                    className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
         )}
       </div>
 
-      {/* Edit Modal */}
-      {selectedSeller && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">
-                Edit Seller: {selectedSeller.store_name}
-              </h3>
-              <button
-                onClick={() => setSelectedSeller(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
+          <p className="text-gray-600">Loading sellers...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
             </div>
-
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Basic Information</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Store Name
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedSeller.store_name}
-                      readOnly
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Type
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedSeller.business_type}
-                      readOnly
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Verification Level
-                    </label>
-                    <select
-                      value={statusUpdateData.verification_level || selectedSeller.verification_level}
-                      onChange={(e) => setStatusUpdateData({ ...statusUpdateData, verification_level: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    >
-                      {Object.entries(verificationLevels).map(([value, config]) => (
-                        <option key={value} value={value}>
-                          {config.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading sellers</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
               </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Status Management</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      value={statusUpdateData.status || selectedSeller.status}
-                      onChange={(e) => setStatusUpdateData({ ...statusUpdateData, status: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    >
-                      {statusOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Document Status
-                    </label>
-                    <select
-                      value={statusUpdateData.document_status || selectedSeller.document_status}
-                      onChange={(e) => setStatusUpdateData({ ...statusUpdateData, document_status: e.target.value })}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    >
-                      <option value="not_submitted">Not Submitted</option>
-                      <option value="pending">Pending</option>
-                      <option value="under_review">Under Review</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => fetchSellers(currentPage, searchTerm, statusFilter)}
+                  className="text-sm font-medium text-red-600 hover:text-red-500"
+                >
+                  Try again
+                </button>
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes / Reason (Optional)
-                </label>
-                <textarea
-                  value={statusUpdateData.notes}
-                  onChange={(e) => setStatusUpdateData({ ...statusUpdateData, notes: e.target.value })}
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Add notes or reason for status change..."
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-              <button
-                onClick={() => setSelectedSeller(null)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleStatusUpdate}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-              >
-                Save Changes
-              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Table */}
+      {!loading && !error && (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          {sortedSellers.length > 0 ? (
+            <DataTable columns={columns} data={sellerData} striped hoverable />
+          ) : (
+            <div className="p-12 text-center">
+              <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {searchTerm || statusFilter !== "all"
+                  ? "No sellers found matching your criteria"
+                  : "No sellers yet"}
+              </h3>
+              <p className="text-gray-500">
+                {searchTerm || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Sellers will appear here once they register."}
+              </p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pagination && pagination.last_page > 1 && (
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Page {pagination.current_page} of {pagination.last_page}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  disabled={pagination.current_page === 1}
+                  onClick={() => setCurrentPage(pagination.current_page - 1)}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={pagination.current_page === pagination.last_page}
+                  onClick={() => setCurrentPage(pagination.current_page + 1)}
+                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

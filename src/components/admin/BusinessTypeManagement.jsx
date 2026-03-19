@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// components/admin/BusinessTypeManagement.jsx
+import React, { useState, useEffect } from "react";
 import {
   BuildingStorefrontIcon,
   UsersIcon,
@@ -17,16 +18,12 @@ import {
   ChevronUpIcon,
   ChevronDownIcon
 } from "@heroicons/react/20/solid";
+import api from "../../utils/api";
 
-const BusinessTypeManagement = ({
-  businessTypes,
-  loading,
-  error,
-  refreshData,
-  onDelete,
-  onUpdate,
-  onCreate
-}) => {
+const BusinessTypeManagement = () => {
+  const [businessTypes, setBusinessTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingType, setEditingType] = useState(null);
@@ -77,6 +74,28 @@ const BusinessTypeManagement = ({
     { value: "#06b6d4", label: "Cyan", bg: "bg-cyan-500" }
   ];
 
+  // Fetch business types from API
+  const fetchBusinessTypes = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get("/business-types");
+      const data = response.data.data || response.data;
+      setBusinessTypes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch business types:", err);
+      setError(err.response?.data?.message || "Failed to load business types");
+      setBusinessTypes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchBusinessTypes();
+  }, []);
+
   const handleOpenModal = (type = null) => {
     if (type) {
       setEditingType(type);
@@ -91,8 +110,9 @@ const BusinessTypeManagement = ({
         requires_tax_document: type.requires_tax_document || false,
         requires_identity_document: type.requires_identity_document || false,
         requires_business_certificate: type.requires_business_certificate || false,
-        additional_requirements: type.additional_requirements ?
-          JSON.stringify(type.additional_requirements, null, 2) : "",
+        additional_requirements: type.additional_requirements
+          ? JSON.stringify(type.additional_requirements, null, 2)
+          : "",
         is_active: type.is_active !== undefined ? type.is_active : true,
         sort_order: type.sort_order || 0,
         icon: type.icon || "BuildingStorefront",
@@ -182,13 +202,13 @@ const BusinessTypeManagement = ({
       };
 
       if (editingType) {
-        await onUpdate(editingType.id, dataToSubmit);
+        await api.put(`/admin/business-types/${editingType.id}`, dataToSubmit);
       } else {
-        await onCreate(dataToSubmit);
+        await api.post("/admin/business-types", dataToSubmit);
       }
 
       handleCloseModal();
-      if (refreshData) refreshData();
+      await fetchBusinessTypes(); // refresh list
     } catch (error) {
       console.error("Failed to save business type:", error);
       setFormErrors({ submit: error.response?.data?.message || "Failed to save business type" });
@@ -200,8 +220,8 @@ const BusinessTypeManagement = ({
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this business type?")) {
       try {
-        await onDelete(id);
-        if (refreshData) refreshData();
+        await api.delete(`/admin/business-types/${id}`);
+        await fetchBusinessTypes(); // refresh list
       } catch (error) {
         alert(error.response?.data?.message || "Failed to delete business type");
       }
@@ -210,8 +230,8 @@ const BusinessTypeManagement = ({
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await onUpdate(id, { is_active: !currentStatus });
-      if (refreshData) refreshData();
+      await api.put(`/admin/business-types/${id}`, { is_active: !currentStatus });
+      await fetchBusinessTypes();
     } catch (error) {
       alert(error.response?.data?.message || "Failed to update status");
     }
@@ -327,7 +347,7 @@ const BusinessTypeManagement = ({
               />
             </div>
             <button
-              onClick={refreshData}
+              onClick={fetchBusinessTypes}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
             >
               <ArrowPathIcon className="h-4 w-4 mr-2" />
@@ -351,7 +371,7 @@ const BusinessTypeManagement = ({
 
         {error && (
           <div className="p-4 text-red-500 bg-red-50">
-            Error: {error.message}
+            Error: {error}
           </div>
         )}
 
@@ -441,10 +461,11 @@ const BusinessTypeManagement = ({
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
                             onClick={() => handleToggleStatus(businessType.id, businessType.is_active)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${businessType.is_active
-                              ? "bg-green-100 text-green-800 hover:bg-green-200"
-                              : "bg-red-100 text-red-800 hover:bg-red-200"
-                              }`}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              businessType.is_active
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : "bg-red-100 text-red-800 hover:bg-red-200"
+                            }`}
                           >
                             {businessType.is_active ? "Active" : "Inactive"}
                           </button>

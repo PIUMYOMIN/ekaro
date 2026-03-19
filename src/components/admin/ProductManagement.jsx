@@ -1,8 +1,9 @@
+// components/admin/ProductManagement.jsx
 import React, { useState, useEffect } from "react";
-import { 
-  MagnifyingGlassIcon, 
-  PlusIcon, 
-  PencilIcon, 
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  PencilIcon,
   TrashIcon,
   EyeIcon,
   CheckCircleIcon,
@@ -10,7 +11,7 @@ import {
   ClockIcon,
   FunnelIcon,
   ArrowsUpDownIcon,
-  SparklesIcon  // added
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
@@ -21,8 +22,8 @@ const ProductManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // active/inactive
-  const [approvalFilter, setApprovalFilter] = useState("all"); // pending, approved, rejected
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [approvalFilter, setApprovalFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [categories, setCategories] = useState([]);
   const [sortField, setSortField] = useState("created_at");
@@ -36,7 +37,7 @@ const ProductManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = {
         per_page: 100,
         include: "category,seller",
@@ -47,7 +48,7 @@ const ProductManagement = () => {
       };
 
       const response = await api.get("/admin/products", { params });
-      
+
       if (response.data.success) {
         setProducts(response.data.data || []);
       } else {
@@ -90,14 +91,14 @@ const ProductManagement = () => {
       await api.put(`/products/${productId}`, {
         is_active: isActive
       });
-      
+
       // Update local state
-      setProducts(prev => prev.map(product => 
-        product.id === productId 
+      setProducts(prev => prev.map(product =>
+        product.id === productId
           ? { ...product, is_active: isActive }
           : product
       ));
-      
+
       alert(`Product ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error("Failed to update product status:", error);
@@ -184,7 +185,7 @@ const ProductManagement = () => {
 
   // Toggle product selection
   const toggleProductSelection = (productId) => {
-    setSelectedProducts(prev => 
+    setSelectedProducts(prev =>
       prev.includes(productId)
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
@@ -210,17 +211,16 @@ const ProductManagement = () => {
     }
   };
 
-  // Filter and sort products (client-side as backup, but server-side is preferred)
-  // We'll rely on server-side filtering but keep client-side sort for now
+  // Client‑side sorting (could be moved to server)
   const filteredProducts = products
     .filter(product => {
-      // Client-side filtering for fields not supported by API? We'll skip for simplicity.
+      // Client‑side filtering is minimal; we rely on server‑side filtering.
       return true;
     })
     .sort((a, b) => {
       const aValue = a[sortField] || "";
       const bValue = b[sortField] || "";
-      
+
       if (sortDirection === "asc") {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -240,7 +240,7 @@ const ProductManagement = () => {
   // Get product image
   const getProductImage = (product) => {
     if (!product.images) return '/placeholder-product.jpg';
-    
+
     let images = product.images;
     if (typeof images === 'string') {
       try {
@@ -249,7 +249,7 @@ const ProductManagement = () => {
         return images;
       }
     }
-    
+
     if (Array.isArray(images) && images.length > 0) {
       const image = images[0];
       if (typeof image === 'object') {
@@ -257,7 +257,7 @@ const ProductManagement = () => {
       }
       return image;
     }
-    
+
     return '/placeholder-product.jpg';
   };
 
@@ -319,7 +319,7 @@ const ProductManagement = () => {
 
   // DataTable columns
   const columns = [
-    { 
+    {
       header: (
         <input
           type="checkbox"
@@ -327,17 +327,17 @@ const ProductManagement = () => {
           onChange={toggleAllProductsSelection}
           className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
         />
-      ), 
-      accessor: "selection", 
-      width: "50px" 
+      ),
+      accessor: "selection",
+      width: "50px"
     },
-    { 
-      header: "Image", 
-      accessor: "image", 
+    {
+      header: "Image",
+      accessor: "image",
       isImage: true,
       width: "80px"
     },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("name_en")}
@@ -348,11 +348,11 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "name" 
+      ),
+      accessor: "name"
     },
     { header: "SKU", accessor: "sku" },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("category.name_en")}
@@ -363,10 +363,10 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "category" 
+      ),
+      accessor: "category"
     },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("price")}
@@ -377,11 +377,11 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "price", 
-      isCurrency: true 
+      ),
+      accessor: "price",
+      isCurrency: true
     },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("quantity")}
@@ -392,16 +392,16 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "stock" 
+      ),
+      accessor: "stock"
     },
-    { 
-      header: "Discount", 
-      accessor: "discount", 
-      width: "120px" 
+    {
+      header: "Discount",
+      accessor: "discount",
+      width: "120px"
     },
     { header: "MOQ", accessor: "min_order" },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("status")}
@@ -412,10 +412,10 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "approvalStatus" 
+      ),
+      accessor: "approvalStatus"
     },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("is_active")}
@@ -426,10 +426,10 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "status" 
+      ),
+      accessor: "status"
     },
-    { 
+    {
       header: (
         <button
           onClick={() => handleSort("created_at")}
@@ -440,8 +440,8 @@ const ProductManagement = () => {
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
-      ), 
-      accessor: "created_at" 
+      ),
+      accessor: "created_at"
     },
     { header: "Actions", accessor: "actions", width: "200px" }
   ];
@@ -503,7 +503,7 @@ const ProductManagement = () => {
           )}
         </div>
       ),
-      discount: discountInfo.display,   // ✅ new discount column
+      discount: discountInfo.display,
       min_order: (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           {product.min_order || product.moq || 1}
@@ -522,8 +522,8 @@ const ProductManagement = () => {
       ),
       status: (
         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          product.is_active 
-            ? 'bg-green-100 text-green-800' 
+          product.is_active
+            ? 'bg-green-100 text-green-800'
             : 'bg-red-100 text-red-800'
         }`}>
           {product.is_active ? (
@@ -563,7 +563,7 @@ const ProductManagement = () => {
           >
             <TrashIcon className="h-4 w-4" />
           </button>
-          
+
           {/* Approval actions for pending products */}
           {product.status === 'pending' && (
             <>
@@ -802,8 +802,8 @@ const ProductManagement = () => {
       {!loading && !error && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {filteredProducts.length > 0 ? (
-            <DataTable 
-              columns={columns} 
+            <DataTable
+              columns={columns}
               data={productData}
               striped={true}
               hoverable={true}

@@ -19,7 +19,7 @@ import {
   PhoneIcon
 } from "@heroicons/react/24/solid";
 import DataTable from "../ui/DataTable";
-import api from "../../utils/api";  // import the API utility
+import api from "../../utils/api";
 
 const SellerVerificationManagement = () => {
   const [pendingSellers, setPendingSellers] = useState([]);
