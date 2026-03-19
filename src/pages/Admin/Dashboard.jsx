@@ -172,36 +172,34 @@ const AdminDashboard = () => {
 
   // Separate function for status management
   const handleSellerStatusUpdate = async (sellerId, status, reason = '') => {
-    try {
-      const response = await api.put(`/admin/seller/${sellerId}/status`, {
-        status,
-        reason
-      });
-
-      if (response.data.success) {
-        alert(`Seller status updated to ${status} successfully`);
-        // Update local state for SellerManagement
-        setSellers(prevSellers =>
-          prevSellers.map(seller =>
-            seller.id === sellerId ? { ...seller, status } : seller
-          )
-        );
-        return response.data;
-      }
-    } catch (error) {
-      console.error('Error updating seller status:', error);
-      throw error;
+  try {
+    const response = await api.put(`/admin/seller/${sellerId}/status`, {
+      status,
+      reason
+    });
+    if (response.data.success) {
+      alert(`Seller status updated to ${status} successfully`);
+      setSellers(prevSellers =>
+        prevSellers.map(seller =>
+          seller.id === sellerId ? { ...seller, status } : seller
+        )
+      );
+      return response.data;
     }
-  };
+  } catch (error) {
+    console.error('Error updating seller status:', error);
+    throw error;
+  }
+};
 
   // Fetch pending sellers
   const fetchPendingSellers = async () => {
     setIsVerificationLoading(true);
     setVerificationError(null);
     try {
-      // Use the new verification review endpoint
       const response = await api.get('/admin/seller/verification-review');
-      setPendingSellers(response.data);
+      // ✅ Store the paginated object (contains 'data' array)
+      setPendingSellers(response.data.data);
     } catch (error) {
       setVerificationError(error);
       console.error('Error fetching sellers for verification:', error);
@@ -296,12 +294,10 @@ const AdminDashboard = () => {
           search: sellerSearchTerm || undefined,
           page: sellerSearchPage || 1
         };
-
         const response = await api.get("/admin/sellers", { params });
 
-        // Handle response
         if (response.data.data && response.data.data.data) {
-          setSellers(response.data.data.data);
+          setSellers(response.data.data.data);               // ✅ array of sellers
           setSellersPagination({
             current_page: response.data.data.current_page,
             per_page: response.data.data.per_page,
@@ -316,7 +312,6 @@ const AdminDashboard = () => {
         }
       } catch (error) {
         setSellersError(error);
-        console.error("Error fetching sellers:", error);
       } finally {
         setIsSellersLoading(false);
       }
@@ -325,8 +320,15 @@ const AdminDashboard = () => {
     fetchSellers();
   }, [activeTab, sellerSearchTerm, sellerSearchPage]);
 
+  // Fetch pending sellers when seller verification tab is active
   useEffect(() => {
     if (activeTab !== 3) return;
+    fetchPendingSellers();
+  }, [activeTab]);
+
+  // Fetch products when products tab is active
+  useEffect(() => {
+    if (activeTab !== 4) return;
 
     const fetchProducts = async () => {
       setIsProductsLoading(true);
@@ -347,43 +349,9 @@ const AdminDashboard = () => {
     fetchProducts();
   }, [activeTab]);
 
-  // Add this function to your AdminDashboard component
-  const fetchSellers = async () => {
-    setIsSellersLoading(true);
-    setSellersError(null);
-    try {
-      const params = {
-        search: sellerSearchTerm || undefined,
-        page: sellerSearchPage || 1
-      };
-
-      const response = await api.get("/admin/sellers", { params });
-
-      if (response.data.data && response.data.data.data) {
-        setSellers(response.data.data.data);
-        setSellersPagination({
-          current_page: response.data.data.current_page,
-          per_page: response.data.data.per_page,
-          total: response.data.data.total,
-          last_page: response.data.data.last_page,
-          from: response.data.data.from,
-          to: response.data.data.to
-        });
-      } else {
-        setSellers(response.data.data || []);
-        setSellersPagination(null);
-      }
-    } catch (error) {
-      setSellersError(error);
-      console.error("Error fetching sellers:", error);
-    } finally {
-      setIsSellersLoading(false);
-    }
-  };
-
   // Fetch reviews when reviews tab is active
   useEffect(() => {
-    if (activeTab !== 4) return;
+    if (activeTab !== 5) return;
 
     const fetchReviews = async () => {
       setIsReviewsLoading(true);
@@ -406,7 +374,7 @@ const AdminDashboard = () => {
 
   // Fetch orders when orders tab is active
   useEffect(() => {
-    if (activeTab !== 5) return;
+    if (activeTab !== 6) return;
 
     const fetchOrders = async () => {
       setIsOrdersLoading(true);
@@ -429,7 +397,7 @@ const AdminDashboard = () => {
 
   // Fetch categories when category tab is active
   useEffect(() => {
-    if (activeTab !== 6) return;
+    if (activeTab !== 7) return;
 
     const fetchCategories = async () => {
       setIsCategoriesLoading(true);
@@ -476,12 +444,12 @@ const AdminDashboard = () => {
           setIsUsersLoading(false);
         }
         break;
-      case 2:
+      case 2:   // ✅ Sellers
+        setIsSellersLoading(true);
         try {
-          const response = await api.get("/admin/seller", {
-            params: sellerSearchTerm
+          const response = await api.get("/admin/sellers", {
+            params: { search: sellerSearchTerm, page: sellerSearchPage }
           });
-          // Handle response as in useEffect
           if (response.data.data && response.data.data.data) {
             setSellers(response.data.data.data);
             setSellersPagination({
@@ -502,7 +470,10 @@ const AdminDashboard = () => {
           setIsSellersLoading(false);
         }
         break;
-      case 3:
+      case 3:   // Seller Verification
+        fetchPendingSellers();
+        break;
+      case 4:
         setIsProductsLoading(true);
         try {
           const response = await api.get("/products");
@@ -514,7 +485,7 @@ const AdminDashboard = () => {
           setIsProductsLoading(false);
         }
         break;
-      case 4:
+      case 5:
         setIsReviewsLoading(true);
         try {
           const response = await api.get("/admin/reviews");
@@ -526,7 +497,7 @@ const AdminDashboard = () => {
           setIsReviewsLoading(false);
         }
         break;
-      case 5:
+      case 6:
         setIsOrdersLoading(true);
         try {
           const response = await api.get("/orders");
@@ -538,7 +509,7 @@ const AdminDashboard = () => {
           setIsOrdersLoading(false);
         }
         break;
-      case 6:
+      case 7:
         setIsCategoriesLoading(true);
         try {
           const response = await api.get("/categories");
@@ -550,10 +521,10 @@ const AdminDashboard = () => {
           setIsCategoriesLoading(false);
         }
         break;
-      case 7:
+      case 8:
         fetchPendingSellers();
         break;
-      case 8:
+      case 9:
         // Business types tab
         refreshBusinessTypes();
         break;
@@ -564,7 +535,7 @@ const AdminDashboard = () => {
 
   // Fetch business types when business types tab is active
   useEffect(() => {
-    if (activeTab !== 8) return;
+    if (activeTab !== 9) return;
 
     const fetchBusinessTypes = async () => {
       setIsBusinessTypesLoading(true);
@@ -875,7 +846,7 @@ const AdminDashboard = () => {
           sellers={sellers}
           loading={isSellersLoading}
           error={sellersError}
-          handleSellerStatus={handleSellerStatus} // This is passed as prop
+          handleSellerStatus={handleSellerStatusUpdate}  // ✅ Correct function
           searchTerm={sellerSearchTerm}
           onSearchChange={setSellerSearchTerm}
           pagination={sellersPagination}

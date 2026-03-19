@@ -1,9 +1,8 @@
-import React, { useState,useEffect } from "react";
+// components/admin/SellerVerificationManagement.jsx
+import React, { useState, useEffect } from "react";
 import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   EyeIcon,
   DocumentIcon,
   UserCircleIcon,
@@ -14,24 +13,19 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import {
-  StarIcon,
   BuildingStorefrontIcon,
   MapPinIcon,
   EnvelopeIcon,
-  PhoneIcon,
-  ArrowRightIcon
+  PhoneIcon
 } from "@heroicons/react/24/solid";
 import DataTable from "../ui/DataTable";
+import api from "../../utils/api";  // import the API utility
 
-const SellerVerificationManagement = ({
-  pendingSellers,
-  loading,
-  error,
-  handleVerifySeller,
-  searchTerm,
-  onSearchChange,
-  refreshData
-}) => {
+const SellerVerificationManagement = () => {
+  const [pendingSellers, setPendingSellers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [verificationData, setVerificationData] = useState({
     verification_level: 'verified',
@@ -40,97 +34,91 @@ const SellerVerificationManagement = ({
   });
   const [rejectReason, setRejectReason] = useState('');
 
-  // Handle verification approval
+  // Fetch pending sellers
+  const fetchPendingSellers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get('/admin/seller/verification-review');
+      // response.data.data contains the paginated object with the sellers array
+      setPendingSellers(response.data.data.data || []);
+    } catch (err) {
+      setError(err);
+      console.error('Error fetching sellers for verification:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch and set up auto-refresh every 30 seconds when no modal is open
+  useEffect(() => {
+    fetchPendingSellers();
+    const interval = setInterval(() => {
+      if (!selectedSeller) fetchPendingSellers();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [selectedSeller]);
+
+  // Handle approve
   const handleApprove = async (seller) => {
     if (!window.confirm(`Approve verification for ${seller.store_name}?`)) return;
-
     try {
-      // Use the correct endpoint path
-      await handleVerifySeller(seller.id, 'approve', {
+      await api.post(`/admin/seller/${seller.id}/verify`, {
         verification_level: verificationData.verification_level,
         badge_type: verificationData.badge_type,
         notes: verificationData.notes || `Seller approved by admin on ${new Date().toLocaleDateString()}`
       });
-
-      // Refresh data and close modal
-      refreshData();
+      await fetchPendingSellers();
       setSelectedSeller(null);
-      setVerificationData({
-        verification_level: 'verified',
-        badge_type: 'verified',
-        notes: ''
-      });
-
-      // Show success message
+      setVerificationData({ verification_level: 'verified', badge_type: 'verified', notes: '' });
       alert(`Successfully approved ${seller.store_name}`);
-    } catch (error) {
-      console.error('Approval failed:', error);
-      alert('Failed to approve seller: ' + error.message);
+    } catch (err) {
+      console.error('Approval failed:', err);
+      alert('Failed to approve seller: ' + (err.response?.data?.message || err.message));
     }
   };
 
-  // Handle verification rejection
+  // Handle reject
   const handleReject = async (seller) => {
     if (!rejectReason.trim()) {
       alert('Please provide a reason for rejection');
       return;
     }
-
     if (!window.confirm(`Reject verification for ${seller.store_name}?`)) return;
-
     try {
-      // Use the correct endpoint path
-      await handleVerifySeller(seller.id, 'reject', {
-        reason: rejectReason
-      });
-
-      // Refresh data and close modal
-      refreshData();
+      await api.post(`/admin/seller/${seller.id}/reject`, { reason: rejectReason });
+      await fetchPendingSellers();
       setSelectedSeller(null);
       setRejectReason('');
-
-      // Show success message
       alert(`Successfully rejected ${seller.store_name}`);
-    } catch (error) {
-      console.error('Rejection failed:', error);
-      alert('Failed to reject seller: ' + error.message);
+    } catch (err) {
+      console.error('Rejection failed:', err);
+      alert('Failed to reject seller: ' + (err.response?.data?.message || err.message));
     }
   };
 
-  useEffect(() => {
-    if (!selectedSeller) {
-      const interval = setInterval(() => {
-        refreshData();
-      }, 30000); // 30 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [selectedSeller, refreshData]);
-
-  // Get status badge color
+  // Status badge color
   const getStatusBadgeColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'under_review': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'approved': return 'bg-green-100 text-green-800 border-green-300';
+      case 'verified': return 'bg-green-100 text-green-800 border-green-300';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-300';
       default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
-  // Get document status
+  // Document status summary
   const getDocumentStatus = (seller) => {
     const docs = [];
-
     if (seller.identity_document_front) docs.push('ID Front ✓');
     if (seller.identity_document_back) docs.push('ID Back ✓');
     if (seller.business_registration_document) docs.push('Business Reg ✓');
     if (seller.tax_registration_document) docs.push('Tax Reg ✓');
-
     return docs.length > 0 ? docs.join(', ') : 'No documents';
   };
 
-  // Columns for verification table
+  // Table columns
   const columns = [
     {
       header: "Store Info",
@@ -150,9 +138,7 @@ const SellerVerificationManagement = ({
           )}
           <div>
             <div className="font-medium text-gray-900">{row.store_name}</div>
-            <div className="text-xs text-gray-500">
-              ID: {row.store_id || 'N/A'}
-            </div>
+            <div className="text-xs text-gray-500">ID: {row.store_id || 'N/A'}</div>
           </div>
         </div>
       )
@@ -217,9 +203,7 @@ const SellerVerificationManagement = ({
           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(row.verification_status)}`}>
             {row.verification_status}
           </span>
-          <div className="text-xs text-gray-500">
-            Profile: {row.status}
-          </div>
+          <div className="text-xs text-gray-500">Profile: {row.status}</div>
         </div>
       )
     },
@@ -233,16 +217,14 @@ const SellerVerificationManagement = ({
             className="text-blue-600 hover:text-blue-900 text-sm flex items-center"
             title="View Store"
           >
-            <EyeIcon className="h-4 w-4 mr-1" />
-            View
+            <EyeIcon className="h-4 w-4 mr-1" /> View
           </button>
           <button
             onClick={() => setSelectedSeller(row)}
             className="text-green-600 hover:text-green-900 text-sm flex items-center"
             title="Review Verification"
           >
-            <ShieldCheckIcon className="h-4 w-4 mr-1" />
-            Review
+            <ShieldCheckIcon className="h-4 w-4 mr-1" /> Review
           </button>
           {row.documents && (
             <button
@@ -250,8 +232,7 @@ const SellerVerificationManagement = ({
               className="text-purple-600 hover:text-purple-900 text-sm flex items-center"
               title="View Documents"
             >
-              <DocumentIcon className="h-4 w-4 mr-1" />
-              Docs
+              <DocumentIcon className="h-4 w-4 mr-1" /> Docs
             </button>
           )}
         </div>
@@ -259,40 +240,39 @@ const SellerVerificationManagement = ({
     }
   ];
 
+  // Filter sellers based on local search term
+  const filteredSellers = pendingSellers.filter(seller =>
+    seller.store_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    seller.contact_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    seller.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Stats counts
+  const stats = {
+    pending: pendingSellers.filter(s => s.verification_status === 'pending').length,
+    underReview: pendingSellers.filter(s => s.verification_status === 'under_review').length,
+    verified: pendingSellers.filter(s => s.verification_status === 'verified').length,
+    rejected: pendingSellers.filter(s => s.verification_status === 'rejected').length
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-yellow-600">
-            {Array.isArray(pendingSellers?.data)
-              ? pendingSellers.data.filter(s => s.verification_status === 'pending').length
-              : 0}
-          </div>
+          <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
           <div className="text-sm text-gray-500">Pending Review</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-blue-600">
-            {Array.isArray(pendingSellers?.data)
-              ? pendingSellers.data.filter(s => s.verification_status === 'under_review').length
-              : 0}
-          </div>
+          <div className="text-2xl font-bold text-blue-600">{stats.underReview}</div>
           <div className="text-sm text-gray-500">Under Review</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {Array.isArray(pendingSellers?.data)
-              ? pendingSellers.data.filter(s => s.verification_status === 'verified').length
-              : 0}
-          </div>
+          <div className="text-2xl font-bold text-green-600">{stats.verified}</div>
           <div className="text-sm text-gray-500">Verified</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-red-600">
-            {Array.isArray(pendingSellers?.data)
-              ? pendingSellers.data.filter(s => s.verification_status === 'rejected').length
-              : 0}
-          </div>
+          <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
           <div className="text-sm text-gray-500">Rejected</div>
         </div>
       </div>
@@ -301,12 +281,8 @@ const SellerVerificationManagement = ({
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Seller Verification Queue
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Review and verify seller documents and information
-            </p>
+            <h3 className="text-lg font-medium text-gray-900">Seller Verification Queue</h3>
+            <p className="mt-1 text-sm text-gray-500">Review and verify seller documents and information</p>
           </div>
           <div className="flex space-x-3">
             <div className="relative">
@@ -316,15 +292,14 @@ const SellerVerificationManagement = ({
                 placeholder="Search sellers..."
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 w-64"
                 value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
-              onClick={refreshData}
+              onClick={fetchPendingSellers}
               className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
             >
-              <ArrowPathIcon className="h-4 w-4 mr-2" />
-              Refresh
+              <ArrowPathIcon className="h-4 w-4 mr-2" /> Refresh
             </button>
           </div>
         </div>
@@ -345,7 +320,7 @@ const SellerVerificationManagement = ({
                   {error.response?.data?.message || error.message || 'Failed to load verification queue'}
                 </p>
                 <button
-                  onClick={refreshData}
+                  onClick={fetchPendingSellers}
                   className="mt-2 text-sm text-red-700 hover:text-red-900 underline"
                 >
                   Try Again
@@ -358,9 +333,9 @@ const SellerVerificationManagement = ({
         {!loading && !error && (
           <DataTable
             columns={columns}
-            data={Array.isArray(pendingSellers?.data) ? pendingSellers.data : pendingSellers || []}
+            data={filteredSellers}
             searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
+            onSearchChange={setSearchTerm}
           />
         )}
       </div>

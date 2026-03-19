@@ -110,7 +110,7 @@ function App() {
                         <Route path="/reset-password" element={<ResetPassword />} />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
-                        
+
                         {/* Auth Routes */}
                         {/* Guest-only Routes */}
                         <Route path="/login" element={
