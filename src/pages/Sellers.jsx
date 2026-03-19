@@ -8,7 +8,8 @@ import { StarIcon, ChevronDownIcon, FunnelIcon, MagnifyingGlassIcon } from "@her
 import SellerCard from "../components/ui/SellerCard";
 import Pagination from "../components/ui/Pagination";
 import api from "../utils/api";
-import SEO from "../components/SEO/seo";
+import SEO from "../components/SEO/SEO";
+import useSEO from "../hooks/useSEO";
 
 const Sellers = () => {
   const { t } = useTranslation();
@@ -40,19 +41,17 @@ const Sellers = () => {
         }
 
         if (sellersData && Array.isArray(sellersData) && sellersData.length > 0) {
-          const transformedSellers = sellersData
-            .map(seller => ({
-              id: seller.id,
-              name: seller.store_name || seller.user?.name || t('sellers.unknown_seller'),
-              category: seller.business_type || t('sellers.uncategorized'),
-              rating: parseFloat(seller.reviews_avg_rating) || 0,
-              reviewCount: seller.reviews_count || 0,
-              joined: seller.created_at,
-              products: seller.products_count || 0,
-              verified: seller.status === 'active' || seller.status === 'approved',
-              originalData: seller
-            }))
-            .filter(seller => seller.products > 0);
+          const transformedSellers = sellersData.map(seller => ({
+            id: seller.id,
+            name: seller.store_name || seller.user?.name || t('sellers.unknown_seller'),
+            category: seller.business_type || t('sellers.uncategorized'),
+            rating: parseFloat(seller.reviews_avg_rating) || 0,
+            reviewCount: seller.reviews_count || 0,
+            joined: seller.created_at,
+            products: seller.products_count || 0,
+            verified: seller.status === 'active' || seller.status === 'approved',
+            originalData: seller
+          }));
 
           setSellers(transformedSellers);
           setFilteredSellers(transformedSellers);
@@ -136,6 +135,12 @@ const Sellers = () => {
   // Change page
   const paginate = pageNumber => setCurrentPage(pageNumber);
 
+  const SeoComponent = useSEO({
+    title: t("sellers.title"),
+    description: t("sellers.subtitle"),
+    // Optionally add image of top sellers collage
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -150,12 +155,6 @@ const Sellers = () => {
   if (error) {
     return (
       <>
-        <SEO
-          title="Error Loading Sellers | Pyonea Marketplace"
-          description="We encountered an error while loading sellers. Please try again later."
-          url="/sellers"
-          noindex={true}  // prevent search engines from indexing error pages
-        />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
@@ -181,11 +180,7 @@ const Sellers = () => {
 
   return (
     <>
-      <SEO
-        title={t("sellers.title")}
-        description={t("sellers.subtitle")}
-        url="/sellers"
-      />
+      {SeoComponent}
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">

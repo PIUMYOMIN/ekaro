@@ -1,4 +1,42 @@
 {
+  "seo": {
+    "home": {
+      "title": "Pyonea | Myanmar B2B Marketplace",
+      "description": "Pyonea connects Myanmar businesses with verified suppliers. Buy wholesale products, find trusted sellers, and grow your business."
+    },
+    "products": {
+      "title": "Products | Pyonea",
+      "description": "Browse wholesale products from Myanmar suppliers across all categories."
+    },
+    "product": {
+      "title": "{{name}} | Pyonea",
+      "description": "Buy {{name}} at wholesale price from verified Myanmar suppliers. Check MOQ, reviews, and order securely on Pyonea."
+    },
+    "sellers": {
+      "title": "Sellers | Pyonea",
+      "description": "Discover verified sellers on Pyonea. Connect with trusted suppliers and grow your business."
+    },
+    "seller": {
+      "title": "{{name}} Store | Pyonea",
+      "description": "Shop from {{name}} on Pyonea. View products, ratings, and contact the seller directly."
+    },
+    "categories": {
+      "title": "Categories | Pyonea",
+      "description": "Browse product categories on Pyonea – electronics, fashion, home & more."
+    },
+    "category": {
+      "title": "{{name}} | Pyonea",
+      "description": "Browse {{name}} products from Myanmar suppliers. Wholesale prices, bulk orders, and verified sellers."
+    },
+    "auth": {
+      "title": "Login / Register | Pyonea",
+      "description": "Access your Pyonea account to manage orders, wishlist, and seller dashboard."
+    },
+    "default": {
+      "title": "Pyonea",
+      "description": "Myanmar's trusted B2B marketplace for wholesale trade."
+    }
+  },
   "app_name": "Pyonea",
   "header": {
     "home": "Home",
@@ -73,7 +111,15 @@
     "no_root_categories": "No root categories found",
     "back_to_parent": "Back to Parent",
     "click_to_view_subcategories": "Click to view subcategories",
-    "click_to_view_products": "Click to view products"
+    "click_to_view_products": "Click to view products",
+    "discover_products": "Discover products across all categories",
+    "search_placeholder": "Search categories...",
+    "no_categories_found": "No categories found",
+    "no_categories_available": "No categories available at the moment.",
+    "no_matching_categories": "No categories match \"{query}\". Try a different search term.",
+    "clear_search": "Clear search",
+    "fetch_error": "Failed to load categories. Please try again later.",
+    "try_again": "Try Again"
   },
   "filter": {
     "price_range": "Price Range",

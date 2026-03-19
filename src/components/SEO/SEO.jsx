@@ -1,64 +1,53 @@
-// components/SEO.jsx
 import { Helmet } from "react-helmet-async";
 
-const SEO = ({ 
-  title, 
-  description, 
-  keywords, 
-  image, 
-  url, 
+const SEO = ({
+  title,
+  description,
+  image = "/og-image.jpg",
+  url,
   type = "website",
-  publishedTime,
-  author,
-  section,
-  tags,
-  noindex = false
+  schema = null,
+  alternateUrls = {},
+  noindex = false,
 }) => {
-  const siteName = "Pyonea Marketplace";
-  const defaultImage = "https://pyonea.com/og-image.png";
+  // Append brand name if not already present
+  const fullTitle = title.includes("Pyonea") ? title : `${title} | Pyonea`;
   const siteUrl = "https://pyonea.com";
-
-  const metaTitle = title ? `${title} | ${siteName}` : siteName;
-  const metaDescription = description || "Discover trusted sellers and quality products on Pyonea marketplace.";
-  const metaImage = image || defaultImage;
-  const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
 
   return (
     <Helmet>
-      {/* Basic */}
-      <title>{metaTitle}</title>
-      <meta name="description" content={metaDescription} />
-      {keywords && <meta name="keywords" content={keywords} />}
-      {noindex && <meta name="robots" content="noindex,nofollow" />}
-      <link rel="canonical" href={canonicalUrl} />
+      <title>{fullTitle}</title>
+      <meta name="description" content={description} />
+      <link rel="canonical" href={url} />
+
+      {/* hreflang */}
+      {Object.entries(alternateUrls).map(([lang, href]) => (
+        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
+      ))}
+      <link rel="alternate" hrefLang="x-default" href={alternateUrls.en || siteUrl} />
 
       {/* Open Graph */}
-      <meta property="og:title" content={metaTitle} />
-      <meta property="og:description" content={metaDescription} />
-      <meta property="og:image" content={metaImage} />
-      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content={type} />
-      <meta property="og:site_name" content={siteName} />
+      <meta property="og:title" content={fullTitle} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={image} />
+      <meta property="og:url" content={url} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={metaTitle} />
-      <meta name="twitter:description" content={metaDescription} />
-      <meta name="twitter:image" content={metaImage} />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image} />
 
-      {/* Article specific (if type === "article") */}
-      {type === "article" && publishedTime && (
-        <meta property="article:published_time" content={publishedTime} />
+      {/* noindex if requested (e.g., error pages) */}
+      {noindex && <meta name="robots" content="noindex" />}
+
+      {/* JSON‑LD */}
+      {schema && (
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
       )}
-      {type === "article" && author && (
-        <meta property="article:author" content={author} />
-      )}
-      {type === "article" && section && (
-        <meta property="article:section" content={section} />
-      )}
-      {type === "article" && tags && tags.map(tag => (
-        <meta property="article:tag" content={tag} key={tag} />
-      ))}
     </Helmet>
   );
 };

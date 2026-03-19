@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 import CategoryCard from "../components/ui/CategoryCard";
+import useSEO from "../hooks/useSEO";
 
 // Skeleton loader matching the CategoryCard shape
 const CategoryCardSkeleton = () => (
@@ -19,6 +20,7 @@ const CategoryCardSkeleton = () => (
 );
 
 const CategoryBrowser = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,12 +39,9 @@ const CategoryBrowser = () => {
 
         let categoriesData = response.data.data || [];
         
-        // Process each category to include total product count (including children) if needed
-        // But we'll keep it simple – use products_count as total for root category
-        // If you need children counts, you can extend later
+        // Process each category to ensure consistent structure
         const processed = categoriesData.map(cat => ({
           ...cat,
-          // Ensure we have a consistent structure for CategoryCard
           name_en: cat.name_en || cat.name,
           products_count: cat.products_count || 0,
           children_count: cat.children?.length || 0,
@@ -52,7 +51,7 @@ const CategoryBrowser = () => {
         setCategories(processed);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
-        if (isMounted) setError("Failed to load categories. Please try again later.");
+        if (isMounted) setError(t("categories.fetch_error") || "Failed to load categories. Please try again later.");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -61,7 +60,7 @@ const CategoryBrowser = () => {
     fetchCategories();
 
     return () => { isMounted = false; };
-  }, []);
+  }, [t]);
 
   // Filter categories by search
   const filteredCategories = useMemo(() => {
@@ -72,6 +71,9 @@ const CategoryBrowser = () => {
     );
   }, [categories, searchQuery]);
 
+  // SEO is handled automatically by useSEO using i18n keys (seo.categories)
+  const SeoComponent = useSEO();
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -81,7 +83,7 @@ const CategoryBrowser = () => {
             onClick={() => window.location.reload()}
             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
           >
-            Try Again
+            {t("categories.try_again") || "Try Again"}
           </button>
         </div>
       </div>
@@ -90,13 +92,10 @@ const CategoryBrowser = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Browse Categories | Pyonea Marketplace</title>
-        <meta name="description" content="Explore product categories on Pyonea. Find electronics, fashion, home goods and more from trusted Myanmar sellers." />
-      </Helmet>
+      {SeoComponent}
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header – simple gradient with search */}
+        {/* Header with i18n */}
         <div className="bg-gradient-to-r from-green-600 to-emerald-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <motion.div
@@ -105,10 +104,10 @@ const CategoryBrowser = () => {
               className="text-center"
             >
               <h1 className="text-4xl font-bold text-white mb-4">
-                Browse Categories
+                {t("categories.browse_categories")}
               </h1>
               <p className="text-lg text-green-100 max-w-2xl mx-auto mb-8">
-                Discover products across all categories
+                {t("categories.discover_products") || "Discover products across all categories"}
               </p>
 
               {/* Search Bar */}
@@ -119,7 +118,7 @@ const CategoryBrowser = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search categories..."
+                    placeholder={t("categories.search_placeholder") || "Search categories..."}
                     className="w-full pl-12 pr-10 py-3 rounded-lg border-0 focus:ring-2 focus:ring-white bg-white/10 backdrop-blur-sm text-white placeholder-white/70"
                   />
                   {searchQuery && (
@@ -147,9 +146,9 @@ const CategoryBrowser = () => {
             </div>
           ) : filteredCategories.length > 0 ? (
             <>
-              {/* Optional result count */}
+              {/* Result count */}
               <p className="text-sm text-gray-500 mb-4">
-                Showing {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
+                {t("categories.showing_categories", { count: filteredCategories.length })}
               </p>
               <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-6">
                 {filteredCategories.map((category) => (
@@ -164,19 +163,19 @@ const CategoryBrowser = () => {
                 <MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No categories found
+                {t("categories.no_categories_found")}
               </h3>
               <p className="text-gray-600 max-w-md mx-auto mb-6">
                 {searchQuery
-                  ? `No categories match "${searchQuery}". Try a different search term.`
-                  : "No categories available at the moment."}
+                  ? t("categories.no_matching_categories", { query: searchQuery })
+                  : t("categories.no_categories_available")}
               </p>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
                 >
-                  Clear search
+                  {t("categories.clear_search") || "Clear search"}
                 </button>
               )}
             </div>

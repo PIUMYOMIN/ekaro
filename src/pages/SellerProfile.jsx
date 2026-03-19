@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tab } from "@headlessui/react";
-import SEO from "../components/SEO/seo";
+import useSEO from "../hooks/useSEO";
 import {
   StarIcon,
   CheckCircleIcon,
@@ -33,7 +33,7 @@ import ProductCard from "../components/ui/ProductCard";
 import ReviewCard from "../components/ui/ReviewCard";
 import Pagination from "../components/ui/Pagination";
 import api from "../utils/api";
-import { DEFAULT_PLACEHOLDER } from "../config"; // <-- import placeholder
+import { DEFAULT_PLACEHOLDER } from "../config";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -158,7 +158,7 @@ const SellerProfile = () => {
     }, 5000);
   };
 
-  // Handle review submission
+  // Handle review submission (FIXED: use seller.id instead of undefined id)
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
@@ -169,14 +169,14 @@ const SellerProfile = () => {
 
     setSubmittingReview(true);
     try {
-      const response = await api.post(`/sellers/${id}/reviews`, {
+      const response = await api.post(`/sellers/${seller.id}/reviews`, {
         rating: reviewRating,
         comment: reviewComment,
       });
 
       if (response.data.success) {
         // Refresh reviews
-        const sellerRes = await api.get(`/sellers/${id}`);
+        const sellerRes = await api.get(`/sellers/${seller.id}`);
         if (sellerRes.data.success && sellerRes.data.data) {
           setSeller(sellerRes.data.data.seller);
           setReviews(sellerRes.data.data.seller.reviews || []);
@@ -236,8 +236,6 @@ const SellerProfile = () => {
       showNotification('Failed to copy link', 'error');
     }
   };
-
-
 
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
@@ -415,25 +413,46 @@ const SellerProfile = () => {
   };
 
   // Calculate values from API data with safe fallbacks
-  const rating = parseFloat(seller.reviews_avg_rating) || 0;
-  const reviewCount = seller.reviews_count || 0;
+  const rating = parseFloat(seller?.reviews_avg_rating) || 0;
+  const reviewCount = seller?.reviews_count || 0;
   const productCount = products.length || stats.active_products || 0;
-  const memberSince = seller.created_at ? new Date(seller.created_at).getFullYear() : 'N/A';
+  const memberSince = seller?.created_at ? new Date(seller.created_at).getFullYear() : 'N/A';
 
   const pageTitle = seller?.store_name || fallbackTitle;
   const pageDescription = seller?.store_description?.slice(0, 150) || fallbackDescription;
   const pageImage = seller?.store_logo || DEFAULT_PLACEHOLDER;
   const pageUrl = seller ? `/sellers/${seller.store_slug || seller.id}` : `/sellers/${slug}`;
 
+  const sellerSchema = useMemo(() => {
+    if (!seller) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      name: seller.store_name,
+      description: seller.store_description,
+      image: seller.store_logo,
+      address: seller.address ? {
+        "@type": "PostalAddress",
+        streetAddress: seller.address,
+      } : undefined,
+      aggregateRating: seller.reviews_count > 0 ? {
+        "@type": "AggregateRating",
+        ratingValue: seller.reviews_avg_rating,
+        reviewCount: seller.reviews_count,
+      } : undefined,
+    };
+  }, [seller]);
+
+  const SeoComponent = useSEO({
+    title: seller?.store_name || "Seller Profile",
+    description: seller?.store_description?.slice(0, 150) || "View seller information on Pyonea marketplace.",
+    image: seller?.store_logo,
+    schema: sellerSchema,
+  });
+
   return (
     <>
-      <SEO
-        title={pageTitle}
-        description={pageDescription}
-        image={pageImage}
-        url={pageUrl}
-        type="profile"
-      />
+      {SeoComponent}
 
       {loading.seller && !seller && (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">

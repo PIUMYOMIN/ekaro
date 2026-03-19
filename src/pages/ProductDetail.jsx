@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import SEO from "../components/SEO/seo";
+import useSEO from "../hooks/useSEO";
+import { getImageUrl } from "../utils/imageHelpers"; // ✅ single source
 import {
   StarIcon,
   ShoppingCartIcon,
@@ -12,28 +13,7 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
-import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../config";
-
-const getImageUrl = (image) => {
-  if (!image) return DEFAULT_PLACEHOLDER;
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    const cleanPath = image.replace('public/', '');
-    return `${IMAGE_BASE_URL}/${cleanPath}`;
-  }
-  if (typeof image === 'object') {
-    if (image.url) {
-      if (image.url.startsWith('http')) return image.url;
-      const cleanPath = image.url.replace('public/', '');
-      return `${IMAGE_BASE_URL}/${cleanPath}`;
-    }
-    if (image.path) {
-      const cleanPath = image.path.replace('public/', '');
-      return `${IMAGE_BASE_URL}/${cleanPath}`;
-    }
-  }
-  return DEFAULT_PLACEHOLDER;
-};
+import { DEFAULT_PLACEHOLDER } from "../config";
 
 const ProductDetail = () => {
   const { t } = useTranslation();
@@ -68,7 +48,7 @@ const ProductDetail = () => {
         const productResponse = await api.get(`/products/${slug}`);
         const productData = productResponse.data.data.product;
 
-        // Parse images and specifications (same as before)
+        // Parse images and specifications
         let formattedImages = [];
         if (productData.images) {
           if (Array.isArray(productData.images)) {
@@ -130,7 +110,6 @@ const ProductDetail = () => {
 
     fetchProductData();
   }, [slug, user]);
-
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -276,16 +255,46 @@ const ProductDetail = () => {
   const pageImage = product?.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
   const pageUrl = product ? `/products/${product.slug || slug}` : `/products/${slug}`;
 
+  // Construct product schema for JSON‑LD
+  const productSchema = useMemo(() => {
+    if (!product) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name_en || product.name_mm,
+      description: product.description_en || product.description_mm,
+      image: product.images?.map(img => getImageUrl(img)),
+      sku: product.sku,
+      brand: product.seller ? {
+        "@type": "Brand",
+        name: product.seller.store_name || product.seller.name,
+      } : undefined,
+      offers: {
+        "@type": "Offer",
+        price: product.price,
+        priceCurrency: "MMK",
+        availability: product.quantity > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      },
+      aggregateRating: product.review_count > 0 ? {
+        "@type": "AggregateRating",
+        ratingValue: product.average_rating,
+        reviewCount: product.review_count,
+      } : undefined,
+    };
+  }, [product]);
+
+  const SeoComponent = useSEO({
+    title: product?.name_en || product?.name_mm || "Product",
+    description: product?.description_en || product?.description_mm || "View product details",
+    image: product?.images?.[0] ? getImageUrl(product.images[0]) : undefined,
+    schema: productSchema,
+  });
 
   return (
     <>
-      <SEO
-        title={pageTitle}
-        description={pageDescription}
-        image={pageImage}
-        url={pageUrl}
-        type="product"
-      />
+      {SeoComponent}
       {loading && (
         <div className="max-w-7xl mx-auto px-4 py-8 flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />

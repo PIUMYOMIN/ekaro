@@ -6,7 +6,8 @@ import api from "../utils/api";
 import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
-import SEO from "../components/SEO/seo";
+import SEO from "../components/SEO/SEO";
+import useSEO from "../hooks/useSEO";
 
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
@@ -281,13 +282,28 @@ const ProductList = () => {
     }
   }, [searchQuery, selectedCategory, getCategoryName, t]);
 
+  const metaDescription = useMemo(() => {
+    if (searchQuery && selectedCategory) {
+      return `Find ${searchQuery} products in ${getCategoryName(selectedCategory)} category on Pyonea. Browse ${products.length} items from trusted Myanmar suppliers.`;
+    }
+    if (searchQuery) {
+      return `Search results for "${searchQuery}" on Pyonea. Discover ${products.length} products from verified Myanmar sellers.`;
+    }
+    if (selectedCategory) {
+      return `Browse ${getCategoryName(selectedCategory)} products on Pyonea. Shop wholesale items from top Myanmar suppliers.`;
+    }
+    return "Discover thousands of wholesale products on Pyonea, Myanmar's leading B2B marketplace.";
+  }, [searchQuery, selectedCategory, products.length, getCategoryName]);
+
+  const SeoComponent = useSEO({
+    title: getPageTitle,
+    description: metaDescription,
+    url: location.pathname + location.search,
+  });
+
   return (
     <>
-      <SEO
-        title={getPageTitle}
-        description={`Browse ${getPageTitle} on Pyonea marketplace.`}
-        url={location.pathname + location.search}
-      />
+      {SeoComponent}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Box */}
         <div className="mb-8">

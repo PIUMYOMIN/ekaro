@@ -9,7 +9,8 @@ import { useAuth } from "../context/AuthContext";
 import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
 import CategoryCard from "../components/ui/CategoryCard";
-import SEO from "../components/SEO/seo";
+import SEO from "../components/SEO/SEO";
+import useSEO from "../hooks/useSEO";
 
 
 // Skeleton components for better loading states
@@ -68,6 +69,16 @@ const Home = () => {
     categories: true,
     products: true,
     sellers: true
+  });
+
+  const ogImage = typeof window !== 'undefined'
+    ? `${window.location.origin}/og-image.jpg`
+    : '/og-image.jpg';
+
+  const SeoComponent = useSEO({
+    title: "Pyonea | Myanmar B2B Marketplace",
+    description: "Pyonea is a trusted Myanmar B2B marketplace connecting buyers with verified suppliers. Discover wholesale products, trusted sellers, and business opportunities.",
+    image: ogImage,
   });
 
   // Memoize fetch functions to prevent unnecessary re-renders
@@ -370,20 +381,9 @@ const Home = () => {
     </section>
   ), [loading.sellers, transformedSellers, t]);
 
-  const ogImage = typeof window !== 'undefined'
-    ? `${window.location.origin}/og-image.jpg`
-    : '/og-image.jpg';
-
   return (
     <>
-      <SEO
-        title="Pyonea | Myanmar B2B Marketplace"
-        description="Pyonea is a trusted Myanmar B2B marketplace connecting buyers with verified suppliers. Discover wholesale products, trusted sellers, and business opportunities."
-        keywords="Myanmar marketplace, B2B Myanmar, suppliers Myanmar, wholesale Myanmar, Pyonea marketplace"
-        image={ogImage}
-        url="/"
-        type="website"
-      />
+      {SeoComponent}
       <div className="bg-gray-50">
         {renderHeroSection}
         {renderCategoriesSection}
