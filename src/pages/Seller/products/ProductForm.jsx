@@ -1,3 +1,4 @@
+// pages/seller/ProductForm.js
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -16,13 +17,13 @@ import {
   ArrowsUpDownIcon,
   EyeIcon,
   StarIcon,
-  PencilIcon
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 
 // Local storage keys for draft
 const STORAGE_KEYS = {
   PRODUCT_DRAFT: "product_draft",
-  IMAGE_PREVIEWS: "product_image_previews"
+  IMAGE_PREVIEWS: "product_image_previews",
 };
 
 // Image angle options
@@ -31,7 +32,7 @@ const IMAGE_ANGLES = [
   { value: "back", label: "Back View", icon: "↩️" },
   { value: "side", label: "Side View", icon: "↔️" },
   { value: "top", label: "Top View", icon: "⬆️" },
-  { value: "default", label: "Other View", icon: "📷" }
+  { value: "default", label: "Other View", icon: "📷" },
 ];
 
 // Image validation
@@ -50,6 +51,48 @@ const validateImageFile = (file) => {
   return { valid: true, message: "" };
 };
 
+// Helper to get full URL for image preview
+const getImageUrl = (url) => {
+  if (!url) return "";
+  
+  // If the URL is already absolute (starts with http), return it as is
+  if (url.startsWith("http")) return url;
+  
+  // Otherwise, construct the full URL using the image base URL
+  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL;
+  if (imageBaseUrl) {
+    // Remove leading slash from url if baseUrl already ends with slash
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    return `${imageBaseUrl}/${cleanUrl}`;
+  }
+  
+  // Fallback: use API URL + /storage
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    return `${apiUrl}/storage/${cleanUrl}`;
+  }
+  
+  // Last resort: return the url as is
+  return url;
+};
+
+// Helper to sanitize product data: convert null string fields to empty string
+const sanitizeProductData = (data) => {
+  const sanitized = { ...data };
+  const stringFields = [
+    "name_en", "name_mm", "description_en", "description_mm", "brand", "model",
+    "color", "material", "origin", "warranty", "warranty_type", "warranty_period",
+    "return_policy", "shipping_time", "packaging_details", "additional_info", "lead_time"
+  ];
+  stringFields.forEach(field => {
+    if (sanitized[field] === null || sanitized[field] === undefined) {
+      sanitized[field] = "";
+    }
+  });
+  return sanitized;
+};
+
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -60,7 +103,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const defaultFormData = {
     name_en: "",
     name_mm: "",
-    description: "",
+    description_en: "",
     description_mm: "",
     price: "",
     quantity: 0,
@@ -89,13 +132,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     is_new: true,
     discount_price: "",
     discount_start: "",
-    discount_end: ""
+    discount_end: "",
   };
 
   // Initialize form from product or saved draft
   const [formData, setFormData] = useState(() => {
     if (product) {
-      return { ...defaultFormData, ...product };
+      // Remove images from formData because they are handled separately
+      const { images, ...rest } = product;
+      return { ...defaultFormData, ...rest };
     }
     const savedDraft = localStorage.getItem(STORAGE_KEYS.PRODUCT_DRAFT);
     if (savedDraft) {
@@ -128,7 +173,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { value: "new", label: "New", description: "Brand new, never used" },
     { value: "used_like_new", label: "Used - Like New", description: "Used but looks and functions like new" },
     { value: "used_good", label: "Used - Good", description: "Used with minor signs of wear" },
-    { value: "used_fair", label: "Used - Fair", description: "Used with visible signs of wear" }
+    { value: "used_fair", label: "Used - Fair", description: "Used with visible signs of wear" },
   ];
 
   // Minimum order units
@@ -140,7 +185,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { value: "set", label: "Set" },
     { value: "pack", label: "Pack" },
     { value: "box", label: "Box" },
-    { value: "pallet", label: "Pallet" }
+    { value: "pallet", label: "Pallet" },
   ];
 
   // Warranty types
@@ -148,7 +193,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { value: "manufacturer", label: "Manufacturer Warranty" },
     { value: "seller", label: "Seller Warranty" },
     { value: "international", label: "International Warranty" },
-    { value: "no_warranty", label: "No Warranty" }
+    { value: "no_warranty", label: "No Warranty" },
   ];
 
   // Steps configuration
@@ -156,19 +201,21 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     { id: 1, title: "Basic Info", description: "Product details" },
     { id: 2, title: "Pricing", description: "Price and inventory" },
     { id: 3, title: "Media", description: "Images and specs" },
-    { id: 4, title: "Shipping & More", description: "Delivery and details" }
+    { id: 4, title: "Shipping & More", description: "Delivery and details" },
   ];
 
   // ----- Image management functions -----
   const setPrimaryImage = (index) => {
-    setImagePreviews(prev => prev.map((img, i) => ({
-      ...img,
-      is_primary: i === index
-    })));
+    setImagePreviews((prev) =>
+      prev.map((img, i) => ({
+        ...img,
+        is_primary: i === index,
+      }))
+    );
   };
 
   const removeImage = (index) => {
-    setImagePreviews(prev => {
+    setImagePreviews((prev) => {
       const newPreviews = prev.filter((_, i) => i !== index);
       // If primary image was removed, set first remaining as primary
       if (prev[index].is_primary && newPreviews.length > 0) {
@@ -191,12 +238,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   const updateImageAngle = (index, angle) => {
-    setImagePreviews(prev => prev.map((img, i) =>
-      i === index ? { ...img, angle } : img
-    ));
+    setImagePreviews((prev) =>
+      prev.map((img, i) => (i === index ? { ...img, angle } : img))
+    );
   };
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
@@ -216,20 +263,47 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       setError(`Some images were rejected:\n${errors.join("\n")}`);
     }
 
-    if (validFiles.length > 0) {
-      const newPreviews = validFiles.map((file, index) => ({
-        url: URL.createObjectURL(file),
-        file,
-        is_primary: imagePreviews.length === 0 && index === 0,
-        angle: "default",
-        isExisting: false,
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(2) + " MB"
-      }));
+    if (validFiles.length === 0) return;
 
-      setImagePreviews(prev => [...prev, ...newPreviews]);
+    setIsUploadingImages(true);
+    setUploadProgress(0);
+
+    const newPreviews = [];
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("angle", "default");
+
+        const response = await api.post("/seller/products/upload-image", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          },
+        });
+
+        if (response.data.success) {
+          const imageData = response.data.data;
+          newPreviews.push({
+            url: imageData.url, // relative path
+            file: null,
+            is_primary: imagePreviews.length === 0 && i === 0,
+            angle: imageData.angle,
+            isExisting: false,
+            name: file.name,
+            size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+          });
+        }
+      } catch (err) {
+        console.error(`Failed to upload image ${file.name}:`, err);
+        setError(`Failed to upload ${file.name}: ${err.message}`);
+      }
     }
 
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+    setIsUploadingImages(false);
     e.target.value = "";
   };
 
@@ -242,105 +316,52 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         angle: "default",
         isExisting: false,
         name: "External Image",
-        size: "External"
+        size: "External",
       };
-      setImagePreviews(prev => [...prev, newPreview]);
+      setImagePreviews((prev) => [...prev, newPreview]);
     }
   };
 
   const clearAllImages = () => {
     if (window.confirm("Are you sure you want to remove all images?")) {
-      imagePreviews.forEach(preview => {
-        if (!preview.isExisting && preview.url.startsWith("blob:")) {
-          URL.revokeObjectURL(preview.url);
+      imagePreviews.forEach((preview) => {
+        if (!preview.isExisting && preview.url && !preview.url.startsWith("http")) {
+          // No blob URL to revoke anymore; images are stored on server
         }
       });
       setImagePreviews([]);
     }
   };
 
-  // Upload images to server (returns array of image objects)
-  const uploadImagesToServer = async () => {
-    if (imagePreviews.length === 0) return [];
-
-    setIsUploadingImages(true);
-    setUploadProgress(0);
-
-    const uploadedImages = [];
-    const totalImages = imagePreviews.filter(img => img.file).length;
-    let uploadedCount = 0;
-
-    for (const preview of imagePreviews) {
-      if (preview.file) {
-        try {
-          const formData = new FormData();
-          formData.append("image", preview.file);
-          formData.append("angle", preview.angle);
-
-          const uploadResponse = await api.post("/products/upload-image", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-            onUploadProgress: (progressEvent) => {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(progress);
-            }
-          });
-
-          if (uploadResponse.data.success) {
-            uploadedImages.push({
-              url: uploadResponse.data.data.url,
-              angle: preview.angle,
-              is_primary: preview.is_primary
-            });
-          }
-
-          uploadedCount++;
-          setUploadProgress(Math.round((uploadedCount / totalImages) * 100));
-        } catch (err) {
-          console.error(`Failed to upload image ${preview.name}:`, err);
-        }
-      } else if (preview.isExisting) {
-        uploadedImages.push({
-          url: preview.url,
-          angle: preview.angle,
-          is_primary: preview.is_primary
-        });
-      }
-    }
-
-    setIsUploadingImages(false);
-    setUploadProgress(100);
-    return uploadedImages;
-  };
-
   // ----- Form handling -----
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   const handleSpecChange = (e) => {
     const { name, value } = e.target;
-    setSpecInput(prev => ({ ...prev, [name]: value }));
+    setSpecInput((prev) => ({ ...prev, [name]: value }));
   };
 
   const addSpecification = () => {
     if (specInput.key && specInput.value) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         specifications: {
           ...prev.specifications,
-          [specInput.key]: specInput.value
-        }
+          [specInput.key]: specInput.value,
+        },
       }));
       setSpecInput({ key: "", value: "" });
     }
   };
 
   const removeSpecification = (key) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newSpecs = { ...prev.specifications };
       delete newSpecs[key];
       return { ...prev, specifications: newSpecs };
@@ -351,7 +372,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const validateStep = (step) => {
     switch (step) {
       case 1:
-        return formData.name && formData.description && formData.category_id;
+        return formData.name_en && formData.description_en && formData.category_id;
       case 2:
         return formData.price && formData.quantity && formData.moq && formData.condition;
       case 3:
@@ -365,12 +386,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCompletedSteps(prev => new Set(prev).add(currentStep));
-      setCurrentStep(prev => Math.min(prev + 1, steps.length));
+      setCompletedSteps((prev) => new Set(prev).add(currentStep));
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
     }
   };
 
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   const goToStep = (step) => {
     if (completedSteps.has(step - 1) || step === 1) {
@@ -386,10 +407,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      const uploadedImages = await uploadImagesToServer();
-      if (imagePreviews.length > 0 && uploadedImages.length === 0) {
-        throw new Error("Failed to upload product images. Please try again.");
-      }
+      // Build images payload (relative paths)
+      const imagesPayload = imagePreviews.map((preview) => ({
+        url: preview.isExisting
+          ? preview.url // Already a relative path
+          : preview.url, // Also relative path from upload
+        angle: preview.angle,
+        is_primary: preview.is_primary,
+      }));
 
       const payload = {
         ...formData,
@@ -398,36 +423,23 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         moq: parseInt(formData.moq, 10),
         category_id: parseInt(formData.category_id, 10),
         specifications: formData.specifications,
-        images: uploadedImages,
+        images: imagesPayload,
         discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
-        name_mm: formData.name_mm || "",
-        description_mm: formData.description_mm || "",
-        brand: formData.brand || null,
-        model: formData.model || null,
-        color: formData.color || null,
-        material: formData.material || null,
-        origin: formData.origin || null,
         weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
         shipping_cost: formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
-        warranty: formData.warranty || null,
-        warranty_type: formData.warranty_type || null,
-        warranty_period: formData.warranty_period || null,
-        return_policy: formData.return_policy || null,
-        shipping_time: formData.shipping_time || null,
-        packaging_details: formData.packaging_details || null,
-        additional_info: formData.additional_info || null,
-        lead_time: formData.lead_time || null,
         is_featured: formData.is_featured || false,
         is_new: formData.is_new !== undefined ? formData.is_new : true,
-        condition: formData.condition
+        condition: formData.condition,
       };
 
       let response;
       if (product) {
+        // Update using seller endpoint
         response = await api.put(`/seller/products/${product.id}`, payload);
         setSuccessMessage("Product updated successfully!");
       } else {
-        response = await api.post("/products", payload);
+        // Create using seller endpoint
+        response = await api.post("/seller/products", payload);
         setSuccessMessage("Product created successfully!");
       }
 
@@ -452,7 +464,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // Auto-save draft
+  // Auto-save draft (only for new products)
   useEffect(() => {
     if (!product) {
       const draftToSave = { ...formData };
@@ -463,18 +475,18 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   useEffect(() => {
     if (!product) {
-      const previewsToSave = imagePreviews.map(preview => ({
+      const previewsToSave = imagePreviews.map((preview) => ({
         url: preview.url,
         is_primary: preview.is_primary,
         angle: preview.angle,
-        isExisting: preview.isExisting
+        isExisting: preview.isExisting,
       }));
       localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
     }
   }, [imagePreviews, product]);
 
-  // Load categories and existing images
-  useEffect(() => {
+  // Load categories and existing images for edit
+   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
       try {
@@ -489,15 +501,40 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }
     };
 
-    if (product && product.images) {
-      const previews = product.images.map((img) => ({
-        url: typeof img === "string" ? img : img.url,
-        is_primary: img.is_primary || false,
-        angle: img.angle || "default",
-        isExisting: true
-      }));
-      setImagePreviews(previews);
-    } else if (!product) {
+    const fetchProductForEdit = async () => {
+      if (!product || !product.id) return;
+      try {
+        const response = await api.get(`/seller/products/${product.id}/edit`);
+        const productData = response.data.data;
+
+        // Sanitize null values
+        const sanitizedData = sanitizeProductData(productData);
+
+        // Process images
+        const images = productData.images || [];
+        const previews = images.map((img, idx) => ({
+          url: img.url,
+          is_primary: img.is_primary || idx === 0,
+          angle: img.angle || "default",
+          isExisting: true,
+          name: img.url.split("/").pop(),
+          size: "Existing",
+        }));
+        setImagePreviews(previews);
+
+        // Set form data, remove images field
+        const { images: _, ...rest } = sanitizedData;
+        setFormData((prev) => ({ ...prev, ...rest }));
+      } catch (err) {
+        console.error("Error loading product for edit:", err);
+        setError("Failed to load product details.");
+      }
+    };
+
+    if (product && product.id) {
+      fetchProductForEdit();
+    } else {
+      // New product: load draft from local storage
       const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
       if (savedPreviews) {
         try {
@@ -512,16 +549,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     fetchCategories();
   }, [product]);
 
-  // Clean up blob URLs on unmount
+  // Clean up no longer needed (no blob URLs to revoke)
+  // Keep for safety if any blob URLs are still used
   useEffect(() => {
     return () => {
-      imagePreviews.forEach(preview => {
-        if (!preview.isExisting && preview.url.startsWith("blob:")) {
-          URL.revokeObjectURL(preview.url);
-        }
-      });
+      // No blob URLs to revoke in this version
     };
-  }, [imagePreviews]);
+  }, []);
 
   // Redirect after success
   useEffect(() => {
@@ -566,7 +600,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             <XMarkIcon className="h-6 w-6" />
           </button>
           <img
-            src={previewImage}
+            src={getImageUrl(previewImage)}
             alt="Product preview"
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
           />
@@ -591,7 +625,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="name_en"
                   value={formData.name_en}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -619,9 +653,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   Description (English) *
                 </label>
                 <textarea
-                  name="description"
+                  name="description_en"
                   rows="4"
-                  value={formData.description}
+                  value={formData.description_en}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   placeholder="Describe your product in detail in English..."
@@ -660,11 +694,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">Select a category</option>
-                    {categories.map(parentCategory => (
+                    {categories.map((parentCategory) => (
                       <optgroup key={parentCategory.id} label={parentCategory.name_en}>
                         {parentCategory.children && parentCategory.children.length > 0 ? (
-                          parentCategory.children.map(child => (
-                            <option key={child.id} value={child.id}>{child.name_en}</option>
+                          parentCategory.children.map((child) => (
+                            <option key={child.id} value={child.id}>
+                              {child.name_en}
+                            </option>
                           ))
                         ) : (
                           <option disabled>No sub-categories</option>
@@ -690,14 +726,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
-                  {productConditions.map(condition => (
+                  {productConditions.map((condition) => (
                     <option key={condition.value} value={condition.value}>
                       {condition.label}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  {productConditions.find(c => c.value === formData.condition)?.description}
+                  {productConditions.find((c) => c.value === formData.condition)?.description}
                 </p>
               </div>
             </div>
@@ -850,8 +886,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
-                  {minOrderUnits.map(unit => (
-                    <option key={unit.value} value={unit.value}>{unit.label}</option>
+                  {minOrderUnits.map((unit) => (
+                    <option key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -987,7 +1025,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       >
                         <div className="aspect-square bg-gray-100 relative">
                           <img
-                            src={image.url}
+                            src={getImageUrl(image.url)}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-full object-cover cursor-pointer"
                             onClick={() => setPreviewImage(image.url)}
@@ -1009,7 +1047,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                               onChange={(e) => updateImageAngle(index, e.target.value)}
                               className="text-xs bg-black/60 text-white border-none rounded px-1.5 py-0.5 focus:ring-0"
                             >
-                              {IMAGE_ANGLES.map(angle => (
+                              {IMAGE_ANGLES.map((angle) => (
                                 <option key={angle.value} value={angle.value}>
                                   {angle.icon} {angle.label}
                                 </option>
@@ -1198,8 +1236,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select warranty type</option>
-                  {warrantyTypes.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
+                  {warrantyTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1391,13 +1431,23 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     )}
                   </button>
                   <div className="ml-3 flex-1">
-                    <div className={`text-sm font-medium ${currentStep === step.id ? "text-green-600" : completedSteps.has(step.id) ? "text-gray-900" : "text-gray-500"}`}>
+                    <div
+                      className={`text-sm font-medium ${
+                        currentStep === step.id
+                          ? "text-green-600"
+                          : completedSteps.has(step.id)
+                          ? "text-gray-900"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {step.title}
                     </div>
                     <div className="text-xs text-gray-500 hidden sm:block">{step.description}</div>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-4 ${completedSteps.has(step.id) ? "bg-green-500" : "bg-gray-300"}`} />
+                    <div
+                      className={`flex-1 h-0.5 mx-4 ${completedSteps.has(step.id) ? "bg-green-500" : "bg-gray-300"}`}
+                    />
                   )}
                 </div>
               ))}

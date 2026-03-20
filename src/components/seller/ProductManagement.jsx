@@ -49,7 +49,7 @@ const ProductManagement = () => {
     if (showLoading) setLoading(true);
     setError("");
     try {
-      const response = await api.get("/seller/products/my-products");
+      const response = await api.get("/seller/products");
       if (response.data.success) {
         setProducts(response.data.data || []);
       } else {

@@ -580,7 +580,7 @@
       "examples": "ဥပမာ: 0912345678, 912345678, +95912345678"
     },
     "email": {
-      "label": "အီးမေးလ် (optional)",
+      "label": "အီးမေးလ်",
       "placeholder": "example@email.com",
       "error": "မှန်ကန်သောအီးမေးလ်လိပ်စာဖြည့်ပါ"
     },

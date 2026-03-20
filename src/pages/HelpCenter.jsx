@@ -137,20 +137,20 @@ const HelpCenter = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2">Email Support</h3>
-              <p className="text-gray-600 mb-3">support@Pyonea.com</p>
+              <p className="text-gray-600 mb-3">support@pyonea.com</p>
               <p className="text-sm text-gray-500">Typically responds within 24 hours</p>
             </div>
 
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2">Phone Support</h3>
-              <p className="text-gray-600 mb-3">09 123 456 789</p>
+              <p className="text-gray-600 mb-3">09 792 115 547</p>
               <p className="text-sm text-gray-500">Mon-Fri, 9AM-5PM</p>
             </div>
 
             <div className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2">Live Chat</h3>
               <p className="text-gray-600 mb-3">No available on the website</p>
-              <p className="text-sm text-gray-500">Mon-Sun, 8AM-8PM</p>
+              <p className="text-sm text-gray-500">Please contact with the email or direct phone</p>
             </div>
           </div>
         </div>

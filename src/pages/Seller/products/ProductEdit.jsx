@@ -12,80 +12,32 @@ const ProductEdit = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  useEffect(
-    () => {
-      const fetchProduct = async () => {
-        try {
-          const response = await api.get(`/products/${id}`);
-          const productData = response.data.data.product;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await api.get(`/seller/products/${id}/edit`);
+        setProduct(response.data.data);
+      } catch (err) {
+        setError("Failed to load product");
+        console.error("Error fetching product:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-          // Parse images and specifications if they're stored as JSON strings
-          let formattedImages = [];
-          if (productData.images) {
-            if (Array.isArray(productData.images)) {
-              formattedImages = productData.images;
-            } else if (typeof productData.images === "string") {
-              try {
-                formattedImages = JSON.parse(productData.images);
-              } catch (e) {
-                console.warn("Failed to parse images JSON:", e);
-                formattedImages = [
-                  { url: productData.images, angle: "front", is_primary: true }
-                ];
-              }
-            }
-          }
-
-          let formattedSpecifications = {};
-          if (productData.specifications) {
-            if (typeof productData.specifications === "string") {
-              try {
-                formattedSpecifications = JSON.parse(
-                  productData.specifications
-                );
-              } catch (e) {
-                console.warn("Failed to parse specifications JSON:", e);
-                formattedSpecifications = {};
-              }
-            } else if (typeof productData.specifications === "object") {
-              formattedSpecifications = productData.specifications;
-            }
-          }
-
-          setProduct({
-            ...productData,
-            images: formattedImages,
-            specifications: formattedSpecifications
-          });
-        } catch (err) {
-          setError("Failed to load product");
-          console.error("Error fetching product:", err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchProduct();
-    },
-    [id]
-  );
+    fetchProduct();
+  }, [id]);
 
   const handleSuccess = () => {
     setSuccess(true);
     setTimeout(() => {
       navigate("/seller");
-    }, 1500); // Redirect after 1.5s
+    }, 1500);
   };
 
   if (loading) return <div className="flex justify-center p-8">Loading...</div>;
-  if (error)
-    return (
-      <div className="p-4 text-red-500">
-        {error}
-      </div>
-    );
-  if (!product)
-    return <div className="p-4 text-red-500">Product not found</div>;
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (!product) return <div className="p-4 text-red-500">Product not found</div>;
 
   return (
     <div>
@@ -94,7 +46,7 @@ const ProductEdit = () => {
           Product updated successfully!
         </div>
       )}
-      <ProductForm product={product} isSeller={true} onSuccess={handleSuccess} />
+      <ProductForm product={product} onSuccess={handleSuccess} />
     </div>
   );
 };

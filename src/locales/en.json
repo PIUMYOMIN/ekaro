@@ -598,7 +598,7 @@
       "examples": "Examples: 0912345678, 912345678, +95912345678"
     },
     "email": {
-      "label": "Email (optional)",
+      "label": "Email",
       "placeholder": "example@email.com",
       "error": "Please enter a valid email address"
     },
