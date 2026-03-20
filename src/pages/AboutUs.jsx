@@ -1,17 +1,20 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import SEO from "../components/SEO/seo";
+import useSEO from "../hooks/useSEO";
 
 const AboutUs = () => {
   const { t } = useTranslation();
 
+  const SeoComponent = useSEO({
+    title: t("about.title"),
+    description: "Learn about Pyonea, Myanmar's trusted B2B marketplace connecting buyers and sellers.",
+    url: "/about-us",
+  });
+
   return (
     <>
-      <SEO
-        title={t("about.title")}
-        description="Learn about Pyonea, Myanmar's trusted B2B marketplace connecting buyers and sellers."
-        url="/about-us"
-      />
+      {SeoComponent}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-bold mb-8 text-center">

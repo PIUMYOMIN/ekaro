@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import SEO from "../components/SEO/SEO";
+import SEO from "../components/SEO/seo";
 
 const routeConfig = {
   "/": { type: "website", key: "home" },
@@ -43,6 +43,18 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
     // For now, we assume the same URL serves both languages (content negotiation)
     alternateUrls[lang] = `${baseUrl}${currentPath}`;
   });
+
+  let schemaData = schema;
+
+  if (!schemaData && pageKey === "product" && data.name) {
+    schemaData = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: data.name,
+      description: description,
+      image: image,
+    };
+  }
 
   return (
     <SEO

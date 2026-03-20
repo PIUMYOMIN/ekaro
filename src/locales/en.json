@@ -9,7 +9,7 @@
       "description": "Browse wholesale products from Myanmar suppliers across all categories."
     },
     "product": {
-      "title": "{{name}} | Pyonea",
+      "title": "{{name}}",
       "description": "Buy {{name}} at wholesale price from verified Myanmar suppliers. Check MOQ, reviews, and order securely on Pyonea."
     },
     "sellers": {
@@ -911,5 +911,118 @@
       "message_required": "Message is required"
     },
     "map_placeholder": "Map will be displayed here"
+  },
+  "returnPolicy": {
+    "title": "Return Policy",
+    "subtitle": "How returns work on Pyonea",
+    "platformPolicy": {
+      "title": "Platform Policy",
+      "description": "Pyonea is a marketplace where independent sellers offer their products. Each seller may have their own return, exchange, and refund policy. By placing an order, you agree to the seller’s policy as displayed on the product page and during checkout.",
+      "buyerResponsibility": {
+        "title": "Buyer Responsibility",
+        "text": "Before making a purchase, you must carefully read and understand the return policy of the seller. The seller’s policy is clearly shown on each product page and summarized at checkout. If you have any questions, please contact the seller directly before placing your order."
+      },
+      "platformRole": {
+        "title": "Platform’s Role",
+        "text": "Pyonea facilitates transactions but does not set the return policy for sellers. However, all sellers must comply with the Myanmar Consumer Protection Law (2019) and the platform’s minimum standards outlined below."
+      },
+      "minimumRequirements": {
+        "title": "Minimum Platform Requirements",
+        "items": [
+          "A clearly stated return window (e.g., 7 days, 14 days, etc.)",
+          "Conditions for returns (e.g., unused, original packaging, tags attached)",
+          "Process for initiating a return",
+          "Refund method and timeline",
+          "Who pays return shipping (seller or buyer)"
+        ]
+      },
+      "consumerRights": {
+        "title": "Consumer Protection Law Rights",
+        "items": [
+          "If delivery exceeds 15 days beyond the agreed date, you may cancel and receive a full refund.",
+          "You have the right to receive products that match their description and are free from defects.",
+          "If a product is defective, you may claim repair, replacement, refund, or compensation."
+        ]
+      },
+      "disputeResolution": {
+        "title": "Dispute Resolution",
+        "text": "If you cannot resolve a return issue directly with the seller, please contact Pyonea support. We will mediate based on the seller’s stated policy and applicable law. If mediation fails, you may file a complaint with the Myanmar Consumer Protection Commission."
+      }
+    },
+    "sellerPolicy": {
+      "title": "Seller‑Specific Return Policies",
+      "description": "Each seller may have a unique return policy. You can view the full policy on the product page before adding to cart or during checkout. The seller’s policy will be summarized at checkout, and you must agree to it to complete your purchase."
+    },
+    "lastUpdated": "Last updated: {{date}}"
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "subtitle": "How we collect, use, and protect your information",
+    "lastUpdated": "Last updated: {{date}}",
+    "intro": "Pyonea respects your privacy and is committed to protecting your personal data. This policy explains how we collect, use, and safeguard your information when you use our platform.",
+    "dataCollection": {
+      "title": "1. Information We Collect",
+      "text": "We may collect the following types of information:",
+      "items": [
+        "Personal identification information (name, email, phone number, address)",
+        "Business information (company name, tax ID, business license)",
+        "Payment information (processed securely through third‑party providers)",
+        "Transaction history (orders, purchases, returns)",
+        "Technical data (IP address, browser type, device information)",
+        "Usage data (pages visited, time spent, interactions)"
+      ]
+    },
+    "dataUsage": {
+      "title": "2. How We Use Your Information",
+      "text": "We use your information to:",
+      "items": [
+        "Provide, operate, and maintain our services",
+        "Process your transactions and fulfill orders",
+        "Communicate with you about orders, updates, and promotions",
+        "Improve our platform and user experience",
+        "Comply with legal obligations and enforce our terms",
+        "Prevent fraud and enhance security"
+      ]
+    },
+    "dataSharing": {
+      "title": "3. Sharing of Information",
+      "text": "We do not sell your personal information. We may share data with:",
+      "items": [
+        "Sellers (to fulfill orders and communicate about products)",
+        "Service providers (payment processors, shipping partners, analytics) under strict confidentiality",
+        "Legal authorities when required by law or to protect our rights",
+        "Business transfers in case of merger, acquisition, or sale of assets"
+      ]
+    },
+    "dataSecurity": {
+      "title": "4. Data Security",
+      "text": "We implement appropriate technical and organizational measures to protect your data from unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure."
+    },
+    "userRights": {
+      "title": "5. Your Rights",
+      "text": "Under the Myanmar Consumer Protection Law and best practices, you have the right to:",
+      "items": [
+        "Access your personal data",
+        "Request correction of inaccurate data",
+        "Request deletion of your data (subject to legal retention)",
+        "Withdraw consent for processing (where applicable)",
+        "Lodge a complaint with the Myanmar Consumer Protection Commission"
+      ]
+    },
+    "cookies": {
+      "title": "6. Cookies",
+      "text": "We use cookies to enhance your browsing experience. You can manage cookie preferences in your browser settings."
+    },
+    "changes": {
+      "title": "7. Changes to This Policy",
+      "text": "We may update this policy from time to time. We will notify you of significant changes by email or through a notice on our platform."
+    },
+    "contact": {
+      "title": "8. Contact Us",
+      "text": "If you have questions about this policy or your data, please contact us:",
+      "email": "contact@pyonea.com",
+      "phone": "+95 9 792 115 547",
+      "address": "123 Business Street, Yangon, Myanmar"
+    }
   }
 }

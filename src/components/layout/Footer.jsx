@@ -124,7 +124,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/returns"
+                  to="/return-policy"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.returns")}
@@ -141,18 +141,18 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/privacy"
+                  to="/legal"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
-                  {t("footer.privacy")}
+                  {t("footer.legal")}
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/terms"
+                  to="/privacy-policy"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
-                  {t("footer.terms")}
+                  {t("footer.privacy")}
                 </Link>
               </li>
               <li>

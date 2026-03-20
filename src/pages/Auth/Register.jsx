@@ -9,6 +9,7 @@ import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import SEO from "../../components/SEO/seo";
+import useSEO from '../../hooks/useSEO';
 
 const Register = () => {
   const { t } = useTranslation();
@@ -124,14 +125,15 @@ const Register = () => {
     }
   };
 
+  const SeoComponent = useSEO({
+    title: t('register.title'),
+    description: t('register.subtitle'),
+    noindex: true,
+  });
+
   return (
     <>
-      <SEO
-        title="Register"
-        description="Create a new Pyonea account to start buying or selling."
-        url="/register"
-        noindex={true}
-      />
+      {SeoComponent}
       {showVerificationMessage ? (
         <AuthLayout title="Verify Your Email" subtitle="Almost there!">
           <div className="text-center">

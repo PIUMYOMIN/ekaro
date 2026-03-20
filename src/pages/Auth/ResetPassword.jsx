@@ -7,6 +7,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import SEO from "../../components/SEO/seo";
+import useSEO from '../../hooks/useSEO';
 
 const ResetPassword = () => {
   const { t } = useTranslation();
@@ -63,14 +64,15 @@ const ResetPassword = () => {
   // Determine title based on link validity
   const pageTitle = (!token || !email) ? "Invalid Reset Link" : t('reset_password.title');
 
+  const SeoComponent = useSEO({
+    title: pageTitle,
+    description: "Reset your Pyonea account password. Enter your new password to regain access.",
+    noindex: true,
+  });
+
   return (
     <>
-      <SEO
-        title={pageTitle}
-        description="Reset your Pyonea account password. Enter your new password to regain access."
-        url="/reset-password"
-        noindex={true}
-      />
+      {SeoComponent}
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"

@@ -26,6 +26,9 @@ import Pricing from "./pages/Pricing";
 import AboutUs from "./pages/AboutUs";
 import Legal from "./pages/Legal";
 import HelpCenter from "./pages/HelpCenter";
+import ReturnPolicy from './pages/ReturnPolicy';
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Contact from "./pages/Contact";
 
 // Auth Pages
 import Login from "./pages/Auth/Login";
@@ -58,7 +61,6 @@ import AddressInfo from "./pages/Seller/AddressInfo";
 import PaymentMethod from "./components/ui/PaymentMethod";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
 import RFQManager from "./pages/RFQManager";
-import Contact from "./pages/Contact";
 
 // Route Guards
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -103,8 +105,9 @@ function App() {
                         <Route path="/terms" element={<Legal />} />
                         <Route path="/help" element={<HelpCenter />} />
                         <Route path="/legal" element={<Legal />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/return-policy" element={<ReturnPolicy />} />
                         <Route path="/contact" element={<Contact />} />
-                        <Route path="/privacy-policy" element={<Legal />} />
                         <Route path="/page-not-found" element={<Error />} />
                         <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

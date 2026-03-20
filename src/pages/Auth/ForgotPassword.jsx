@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import api from '../../utils/api';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import SEO from "../../components/SEO/seo";
+import useSEO from '../../hooks/useSEO';
 
 const ForgotPassword = () => {
   const { t } = useTranslation();
@@ -40,14 +41,15 @@ const ForgotPassword = () => {
     }
   };
 
+  const SeoComponent = useSEO({
+    title: t('forgot_password.title'),
+    description: t('forgot_password.subtitle'),
+    noindex: true,
+  });
+
   return (
     <>
-      <SEO
-        title={t('forgot_password.title')}
-        description="Reset your Pyonea account password. Enter your email to receive a password reset link."
-        url="/forgot-password"
-        noindex={true}
-      />
+      {SeoComponent}
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
         <motion.div 
           className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"

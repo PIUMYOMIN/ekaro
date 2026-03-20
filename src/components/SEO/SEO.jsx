@@ -11,8 +11,10 @@ const SEO = ({
   noindex = false,
 }) => {
   // Append brand name if not already present
-  const fullTitle = title.includes("Pyonea") ? title : `${title} | Pyonea`;
-  const siteUrl = "https://pyonea.com";
+  const fullTitle = title
+  ? title.includes("Pyonea") ? title : `${title} | Pyonea`
+  : "Pyonea Marketplace";
+  const siteUrl = import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
   return (
     <Helmet>

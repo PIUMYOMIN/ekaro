@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import SEO from "../../components/SEO/seo";
+import useSEO from '../../hooks/useSEO';
 
 const Login = () => {
   const { t } = useTranslation();
@@ -150,14 +151,15 @@ const Login = () => {
 
   const showRedirectMessage = from === 'cart-add' && productId;
 
+  const SeoComponent = useSEO({
+    title: t('login.title'),
+    description: t('login.subtitle'),
+    noindex: true,
+  });
+
   return (
     <>
-      <SEO
-      title="Login"
-      description="Login to your Pyonea account."
-      url="/login"
-      noindex={true}
-      />
+      {SeoComponent}
       {showRedirectMessage && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
           <div className="flex">
