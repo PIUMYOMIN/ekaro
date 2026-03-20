@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 const SEO = ({
   title,
   description,
-  image = "/og-image.jpg",
+  image = "/og-image.png",
   url,
   type = "website",
   schema = null,

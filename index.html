@@ -12,12 +12,17 @@
   <meta name="keywords" content="{{pageKeywords}}">
   <link rel="canonical" href="{{pageUrl}}">
 
-  <!-- Open Graph for social sharing (filled by server) -->
+  <!-- hreflang for multilingual support (adjust URLs to your language structure) -->
+  <link rel="alternate" hreflang="en" href="https://pyonea.com{{canonicalPath}}" />
+  <link rel="alternate" hreflang="my" href="https://pyonea.com/my{{canonicalPath}}" />
+  <link rel="alternate" hreflang="x-default" href="https://pyonea.com{{canonicalPath}}" />
+  
+  <!-- Open Graph for social sharing -->
   <meta property="og:title" content="{{pageTitle}}">
   <meta property="og:description" content="{{pageDescription}}">
   <meta property="og:image" content="{{pageImage}}">
   <meta property="og:url" content="{{pageUrl}}">
-  <meta property="og:type" content="{{pageType}}"> <!-- e.g. website, product, article -->
+  <meta property="og:type" content="{{pageType}}">
   <meta property="og:site_name" content="Pyonea Marketplace">
 
   <!-- Twitter Card -->
@@ -27,17 +32,22 @@
   <meta name="twitter:image" content="{{pageImage}}">
   <meta name="twitter:site" content="@pyonea">
 
-  <!-- Favicon / web app icons (adjust paths) -->
+  <!-- Favicon / web app icons -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="pyonea-touch-icon" sizes="180x180" href="/pyonea-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.json" />
+
+  <!-- Optional: robots directive for paginated/faceted pages (add server‑side condition) -->
+  {{#if noindex}}
+    <meta name="robots" content="noindex,follow">
+  {{/if}}
   
-  <!-- JSON‑LD Structured Data – will be expanded server‑side based on the current page -->
+  <!-- JSON‑LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@graph": [
-      {{!-- Always present: Organization and WebSite --}}
+      {{! Always present: Organization }}
       {
         "@type": "Organization",
         "name": "Pyonea Marketplace",
@@ -49,30 +59,58 @@
           "https://www.instagram.com/pyonea"
         ]
       },
+      {{! Always present: WebSite }}
       {
         "@type": "WebSite",
         "name": "Pyonea Marketplace",
         "url": "https://pyonea.com",
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://pyonea.com/search?q={search_term_string}",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://pyonea.com/search?q={search_term_string}"
+          },
           "query-input": "required name=search_term_string"
         }
-      },
-      {{!-- For category pages – iterate over categories --}}
-      {{#if categories}}
-        {{#each categories}}
-        {
-          "@type": "CollectionPage",
-          "name": "{{this.name}}",
-          "url": "https://pyonea.com/categories/{{this.slug}}",
-          "description": "{{this.description}}"
-        }{{#unless @last}},{{/unless}}
-        {{/each}}
+      }
+
+      {{! BreadcrumbList (if breadcrumbs are provided) }}
+      {{#if breadcrumbs}}
+      ,{
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {{#each breadcrumbs}}
+          {
+            "@type": "ListItem",
+            "position": {{add @index 1}},  {{! positions start at 1 }}
+            "name": "{{this.name}}",
+            "item": "https://pyonea.com{{this.url}}"
+          }{{#unless @last}},{{/unless}}
+          {{/each}}
+        ]
+      }
       {{/if}}
-      {{!-- For product pages – include product details --}}
+
+      {{! For category listing page (multiple categories) – use ItemList }}
+      {{#if categories}}
+      ,{
+        "@type": "ItemList",
+        "itemListElement": [
+          {{#each categories}}
+          {
+            "@type": "ListItem",
+            "position": {{add @index 1}},
+            "url": "https://pyonea.com/categories/{{this.slug}}",
+            "name": "{{this.name}}"
+          }{{#unless @last}},{{/unless}}
+          {{/each}}
+        ]
+      }
+      {{/if}}
+
+      {{! For product detail page }}
       {{#if product}}
-      {
+      ,{
         "@type": "Product",
         "name": "{{product.name}}",
         "image": [
@@ -91,13 +129,16 @@
           "price": "{{product.price}}",
           "availability": "{{#if product.inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
           "itemCondition": "https://schema.org/NewCondition"
-        },
-        "aggregateRating": {
+        }
+        {{#if product.review_count}}
+        ,"aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "{{product.average_rating}}",
           "reviewCount": "{{product.review_count}}"
-        },
-        "review": [
+        }
+        {{/if}}
+        {{#if product.reviews}}
+        ,"review": [
           {{#each product.reviews}}
           {
             "@type": "Review",
@@ -113,23 +154,31 @@
           }{{#unless @last}},{{/unless}}
           {{/each}}
         ]
+        {{/if}}
       }
       {{/if}}
-      {{!-- For seller pages – you could add a LocalBusiness or Organization --}}
+
+      {{! For seller profile page }}
       {{#if seller}}
-      {
-        "@type": "LocalBusiness",
+      ,{
+        "@type": "{{#if seller.hasStorefront}}LocalBusiness{{else}}Organization{{/if}}",
         "name": "{{seller.store_name}}",
         "url": "https://pyonea.com/sellers/{{seller.slug}}",
         "description": "{{seller.store_description}}",
-        "image": "{{seller.store_logo}}",
-        "address": {
+        "image": "{{seller.store_logo}}"
+        {{#if seller.address}}
+        ,"address": {
           "@type": "PostalAddress",
           "addressLocality": "{{seller.city}}",
           "addressRegion": "{{seller.state}}",
           "addressCountry": "MM"
         }
-        {{!-- more fields as needed --}}
+        {{/if}}
+        {{#if seller.sameAs}}
+        ,"sameAs": [
+          {{#each seller.sameAs}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}
+        ]
+        {{/if}}
       }
       {{/if}}
     ]
