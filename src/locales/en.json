@@ -100,7 +100,7 @@
     "browse_categories": "Browse Categories",
     "browse_subcategories": "Browse Subcategories",
     "browse_root_categories": "Browse Root Categories",
-    "showing_categories": "Showing {count} categories",
+    "showing_categories": "Showing {{count}} categories",
     "view_subcategories": "View Subcategories",
     "view_products": "View Products",
     "subcategories": "Subcategories",
