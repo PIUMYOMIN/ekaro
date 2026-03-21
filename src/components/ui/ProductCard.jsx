@@ -219,11 +219,6 @@ const ProductCard = ({ product, className = "" }) => {
                 <HeartOutline className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600 hover:text-red-500" />
               )}
             </button>
-            {validImages.length > 0 && (
-              <span className="bg-black/70 text-white text-[10px] sm:text-xs font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
-                {validImages.length}
-              </span>
-            )}
           </div>
 
           {/* Category badge */}

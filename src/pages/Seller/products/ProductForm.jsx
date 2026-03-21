@@ -565,7 +565,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         if (onSuccess) {
           onSuccess();
         } else {
-          navigate("/seller/products");
+          navigate("/seller/dashboard");
         }
       }, 3000);
       return () => clearTimeout(timer);

@@ -192,7 +192,7 @@ const AdminDashboard = () => {
       component: <ProductManagement />
     },
     {
-      name: t("reviews"),
+      name: t("Seller Reviews"),
       icon: StarIcon,
       component: <ReviewManagement />
     },

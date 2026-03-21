@@ -20,17 +20,13 @@ const MyStore = ({ storeData, stats, refreshData }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Helper function to get full image URL using IMAGE_BASE_URL
+  // Helper to get full image URL (if backend doesn't return absolute URLs)
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-
-    // Remove any 'public/' prefix if present
     const cleanPath = imagePath.replace(/^public\//, '');
-    // Ensure no double slashes
     return `${IMAGE_BASE_URL}/${cleanPath}`.replace(/([^:]\/)\/+/g, '$1');
   };
-
 
   if (!storeData) {
     return (
@@ -43,8 +39,10 @@ const MyStore = ({ storeData, stats, refreshData }) => {
     );
   }
 
-  const displayLogoUrl = getImageUrl(storeData?.store_logo);
-  const displayBannerUrl = getImageUrl(storeData?.store_banner);
+  // Use full URL directly (backend already returns absolute URL)
+  const logoUrl = storeData.store_logo;
+  const bannerUrl = storeData.store_banner;
+
   const rating = storeData.reviews_avg_rating || 0;
   const totalReviews = storeData.reviews_count || 0;
   const memberSince = new Date(storeData.created_at).toLocaleDateString('en-US', {
@@ -71,10 +69,10 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
       {/* Store Header with Banner */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        {displayBannerUrl && (
+        {bannerUrl && (
           <div className="h-48 bg-gradient-to-r from-green-500 to-emerald-600 relative">
             <img
-              src={displayBannerUrl}
+              src={bannerUrl}
               alt="Store banner"
               className="w-full h-full object-cover"
               onError={(e) => (e.target.style.display = 'none')}
@@ -84,30 +82,38 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         )}
 
         {/* Store Info Section */}
-         <div className={`p-6 ${!displayBannerUrl ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : ''}`}>
+        <div className={`p-6 ${!bannerUrl ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : ''}`}>
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             {/* Logo */}
-            <div className="relative">
-              {displayLogoUrl ? (
+            <div className="relative w-20 h-20">
+              {logoUrl ? (
                 <img
-                  src={displayLogoUrl}
+                  src={logoUrl}
                   alt={storeData.store_name}
                   className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
                   onError={(e) => {
                     e.target.style.display = 'none';
+                    // Show fallback when image fails to load
                     const fallback = e.target.parentNode?.querySelector('.logo-fallback');
                     if (fallback) fallback.style.display = 'flex';
                   }}
                 />
               ) : null}
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback hidden">
-                <BuildingStorefrontIcon className="h-10 w-10 text-white" />
+              <div
+                className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback ${
+                  logoUrl ? 'hidden' : 'flex'
+                }`}
+                style={{ background: bannerUrl ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)' }}
+              >
+                <BuildingStorefrontIcon
+                  className={`h-10 w-10 ${!bannerUrl ? 'text-white' : 'text-gray-500'}`}
+                />
               </div>
             </div>
 
             <div className="flex-1">
               <h1 className="text-2xl font-bold">{storeData.store_name}</h1>
-              <p className={`mt-1 ${displayBannerUrl ? 'text-gray-600' : 'text-green-100 opacity-90'}`}>
+              <p className={`mt-1 ${bannerUrl ? 'text-gray-600' : 'text-green-100 opacity-90'}`}>
                 {storeData.description || storeData.store_description || "No description provided"}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -127,7 +133,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                 }`}>
                   {storeData.verification_status?.charAt(0).toUpperCase() + storeData.verification_status?.slice(1)}
                 </span>
-                <span className={`text-sm ${displayBannerUrl ? 'text-gray-600' : 'text-green-100'}`}>
+                <span className={`text-sm ${bannerUrl ? 'text-gray-600' : 'text-green-100'}`}>
                   <CalendarIcon className="h-3 w-3 inline mr-1" />
                   Since {memberSince}
                 </span>
@@ -174,7 +180,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
+      {/* Main Content Grid (unchanged) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">

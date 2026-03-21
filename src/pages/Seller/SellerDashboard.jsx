@@ -21,7 +21,7 @@ import DashboardSummary from "../../components/seller/DashboardSummary";
 import OrderManagement from "../../components/seller/OrderManagement";
 import ProductManagement from "../../components/seller/ProductManagement";
 import SalesReports from "../../components/seller/SalesReports";
-import Reviews from "../../components/seller/Reviews.jsx";
+import Reviews from "../../components/seller/ProductReviewManagement.jsx";
 import Customers from "./Customers";
 import ShippingSettings from "../../components/seller/ShippingSettings.jsx";
 import StoreSettings from "../../components/seller/StoreSettings";
@@ -106,6 +106,10 @@ const SellerDashboard = () => {
     }
   }, [navigate]);
 
+  const refreshGlobalData = useCallback(async () => {
+    await fetchGlobalData();
+  }, [fetchGlobalData]);
+
   // ---------- Handle setup click (only for navigation) ----------
   const handleSetupClick = useCallback((step) => {
     console.log("Setup click:", step);
@@ -133,12 +137,12 @@ const SellerDashboard = () => {
     {
       name: "Edit Store",
       icon: PencilIcon,
-      component: <EditStore storeData={storeData} />
+      component: <EditStore storeData={storeData} refreshData={refreshGlobalData} />
     },
     {
       name: t("seller.order.title"),
       icon: ShoppingBagIcon,
-      component: <OrderManagement />  
+      component: <OrderManagement />
     },
     {
       name: t("seller.delivery.title"),
@@ -148,7 +152,7 @@ const SellerDashboard = () => {
     {
       name: t("seller.product.title"),
       icon: CubeIcon,
-      component: <ProductManagement /> 
+      component: <ProductManagement />
     },
     {
       name: t("seller.discount.title"),
@@ -163,7 +167,7 @@ const SellerDashboard = () => {
     {
       name: t("seller.reviews.title"),
       icon: StarIcon,
-      component: <Reviews />
+      component: <ProductReviewManagement />
     },
     {
       name: t("seller.customers"),
@@ -180,7 +184,7 @@ const SellerDashboard = () => {
       icon: CogIcon,
       component: <StoreSettings storeData={storeData} setStoreData={setStoreData} />
     }
-  ], [t, storeData, stats, handleSetupClick]);
+  ], [t, storeData, stats, handleSetupClick, refreshGlobalData]);
 
   // ---------- Handle URL parameters (tab selection) ----------
   useEffect(() => {

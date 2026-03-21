@@ -14,12 +14,13 @@ const ReviewManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get("/reviews");
-      const reviewsData = response.data.data || response.data;
+      // ✅ Correct endpoint for seller reviews
+      const response = await api.get("/admin/seller-reviews");
+      const reviewsData = response.data.data?.data || response.data.data || [];
       setReviews(Array.isArray(reviewsData) ? reviewsData : []);
     } catch (err) {
-      console.error("Failed to fetch reviews:", err);
-      setError(err.response?.data?.message || "Failed to load reviews");
+      console.error("Failed to fetch seller reviews:", err);
+      setError(err.response?.data?.message || "Failed to load seller reviews");
       setReviews([]);
     } finally {
       setLoading(false);
@@ -36,11 +37,11 @@ const ReviewManagement = () => {
       let method = "POST";
 
       if (status === "approved") {
-        endpoint = `/reviews/${reviewId}/approve`;
+        endpoint = `/admin/seller-reviews/${reviewId}/approve`;
       } else if (status === "rejected") {
-        endpoint = `/reviews/${reviewId}/reject`;
+        endpoint = `/admin/seller-reviews/${reviewId}/reject`;
       } else {
-        endpoint = `/reviews/${reviewId}/status`;
+        endpoint = `/admin/seller-reviews/${reviewId}/status`;
         method = "PUT";
       }
 
@@ -65,7 +66,7 @@ const ReviewManagement = () => {
   const columns = [
     { header: "ID", accessor: "id" },
     { header: "User", accessor: "user_name" },
-    { header: "Product", accessor: "product_name" },
+    { header: "Seller", accessor: "seller_name" }, // Changed from Product
     { header: "Rating", accessor: "rating", isStars: true },
     { header: "Comment", accessor: "comment" },
     { header: "Status", accessor: "status", isStatus: true },
@@ -76,7 +77,7 @@ const ReviewManagement = () => {
   const reviewData = reviews.map((review) => ({
     ...review,
     user_name: review.user?.name || "Unknown User",
-    product_name: review.product?.name || "Unknown Product",
+    seller_name: review.seller?.store_name || "Unknown Seller", // ✅ Use store_name
     status: review.status || "pending",
     date: new Date(review.created_at).toLocaleDateString(),
     actions: (
@@ -128,7 +129,7 @@ const ReviewManagement = () => {
   // Filter by search term
   const filteredReviews = reviewData.filter(review =>
     review.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    review.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    review.seller_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     review.comment?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -136,8 +137,8 @@ const ReviewManagement = () => {
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">Review Management</h3>
-          <p className="mt-1 text-sm text-gray-500">Manage product reviews and ratings</p>
+          <h3 className="text-lg font-medium text-gray-900">Seller Review Management</h3>
+          <p className="mt-1 text-sm text-gray-500">Manage reviews left by buyers for sellers</p>
         </div>
         <div className="relative max-w-xs">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -159,7 +160,7 @@ const ReviewManagement = () => {
 
       {error && (
         <div className="p-4 text-red-500">
-          Error loading reviews: {error}
+          Error loading seller reviews: {error}
         </div>
       )}
 

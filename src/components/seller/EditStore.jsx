@@ -1,3 +1,4 @@
+// src/components/seller/EditStore.jsx
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +13,8 @@ import {
   BuildingStorefrontIcon,
   DocumentTextIcon,
   LinkIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  TrashIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
@@ -26,20 +28,19 @@ const EditStore = ({ storeData, refreshData }) => {
   const [loadingBusinessTypes, setLoadingBusinessTypes] = useState(true);
   const [businessTypesError, setBusinessTypesError] = useState("");
 
-  // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return DEFAULT_PLACEHOLDER;
-    if (imagePath.startsWith('http')) return imagePath;
-    const cleanPath = imagePath.replace('public/', '');
-    if (cleanPath.startsWith('storage/')) {
-      return `${IMAGE_BASE_URL}/${cleanPath.replace('storage/', '')}`;
+    if (imagePath.startsWith("http")) return imagePath;
+    const cleanPath = imagePath.replace("public/", "");
+    if (cleanPath.startsWith("storage/")) {
+      return `${IMAGE_BASE_URL}/${cleanPath.replace("storage/", "")}`;
     }
     return `${IMAGE_BASE_URL}/${cleanPath}`;
   };
 
   const [formData, setFormData] = useState({
     store_name: "",
-    description: "",
+    store_description: "",        // changed from "description"
     business_type: "",
     business_registration_number: "",
     tax_id: "",
@@ -63,7 +64,7 @@ const EditStore = ({ storeData, refreshData }) => {
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState("");
 
-  // Fetch business types from API (no fallback)
+  // Fetch business types
   useEffect(() => {
     const fetchBusinessTypes = async () => {
       try {
@@ -85,12 +86,12 @@ const EditStore = ({ storeData, refreshData }) => {
     fetchBusinessTypes();
   }, []);
 
-  // Initialize form data when storeData is available
+  // Initialize form when storeData changes
   useEffect(() => {
     if (storeData) {
       setFormData({
         store_name: storeData.store_name || "",
-        description: storeData.description || storeData.store_description || "",
+        store_description: storeData.store_description || storeData.description || "",
         business_type: storeData.business_type || "",
         business_registration_number: storeData.business_registration_number || "",
         tax_id: storeData.tax_id || "",
@@ -120,10 +121,7 @@ const EditStore = ({ storeData, refreshData }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLogoChange = (e) => {
@@ -144,69 +142,101 @@ const EditStore = ({ storeData, refreshData }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage({ type: "", text: "" });
-
-    // Ensure business type is selected
-    if (!formData.business_type) {
-      setMessage({ type: "error", text: "Please select a business type." });
-      setSaving(false);
-      return;
-    }
-
-    try {
-      const submitFormData = new FormData();
-
-      // Append all form fields
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
-          submitFormData.append(key, formData[key]);
-        }
-      });
-
-      // Append files if they exist
-      if (logoFile) {
-        submitFormData.append('store_logo', logoFile);
-      } else if (logoPreview && !logoPreview.startsWith('blob:')) {
-        // keep existing logo path as string
-        submitFormData.append('store_logo', logoPreview);
-      }
-
-      if (bannerFile) {
-        submitFormData.append('store_banner', bannerFile);
-      } else if (bannerPreview && !bannerPreview.startsWith('blob:')) {
-        submitFormData.append('store_banner', bannerPreview);
-      }
-
-      const response = await api.put('/sellers/my-store/update', submitFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      if (response.data.success) {
-        setMessage({ type: "success", text: "Store profile updated successfully!" });
-        setLogoFile(null);
-        setBannerFile(null);
-        if (refreshData) await refreshData();
-        setTimeout(() => navigate('/seller/dashboard?tab=my-store'), 1500);
-      }
-    } catch (error) {
-      console.error("Failed to update store:", error);
-      let errorMessage = "Failed to update store profile";
-      if (error.response?.data?.errors) {
-        errorMessage = Object.values(error.response.data.errors).flat().join(', ');
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      }
-      setMessage({ type: "error", text: errorMessage });
-    } finally {
-      setSaving(false);
-    }
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview("");
+    // We'll send store_logo as empty string to indicate removal
   };
 
+  const handleRemoveBanner = () => {
+    setBannerFile(null);
+    setBannerPreview("");
+    // We'll send store_banner as empty string to indicate removal
+  };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSaving(true);
+  setMessage({ type: "", text: "" });
+
+  if (!formData.business_type) {
+    setMessage({ type: "error", text: "Please select a business type." });
+    setSaving(false);
+    return;
+  }
+
+  try {
+    const submitFormData = new FormData();
+
+    // Append all form fields
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null && formData[key] !== undefined) {
+        submitFormData.append(key, formData[key]);
+      }
+    });
+
+    // Log FormData contents
+    for (let pair of submitFormData.entries()) {
+      console.log(`   ${pair[0]}: ${pair[1]}`);
+    }
+
+    // Append files
+    if (logoFile) {
+      submitFormData.append("store_logo", logoFile);
+      console.log("   store_logo: [FILE]");
+    } else if (logoPreview && !logoPreview.startsWith("blob:")) {
+      if (logoPreview === "") {
+        submitFormData.append("store_logo", "");
+        console.log("   store_logo: '' (removal)");
+      } else {
+        const originalPath = storeData?.store_logo || "";
+        submitFormData.append("store_logo", originalPath);
+        console.log(`   store_logo: ${originalPath} (keep)`);
+      }
+    }
+
+    if (bannerFile) {
+      submitFormData.append("store_banner", bannerFile);
+      console.log("   store_banner: [FILE]");
+    } else if (bannerPreview && !bannerPreview.startsWith("blob:")) {
+      if (bannerPreview === "") {
+        submitFormData.append("store_banner", "");
+        console.log("   store_banner: '' (removal)");
+      } else {
+        const originalPath = storeData?.store_banner || "";
+        submitFormData.append("store_banner", originalPath);
+        console.log(`   store_banner: ${originalPath} (keep)`);
+      }
+    }
+
+    // 🔥 FIX: Remove manual Content-Type header
+    const response = await api.put("/seller/my-store/update", submitFormData);
+
+    console.log("✅ Server response:", response.data);
+
+    if (response.data.success) {
+      setMessage({ type: "success", text: "Store profile updated successfully!" });
+      setLogoFile(null);
+      setBannerFile(null);
+      if (refreshData) await refreshData();
+      setTimeout(() => navigate("/seller/dashboard?tab=my-store"), 1500);
+    }
+  } catch (error) {
+    console.error("❌ Update failed:", error.response?.data || error.message);
+    let errorMessage = "Failed to update store profile";
+    if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).flat().join(", ");
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    }
+    setMessage({ type: "error", text: errorMessage });
+  } finally {
+    setSaving(false);
+  }
+};
+
   const cancelEdit = () => {
-    navigate('/seller/dashboard?tab=my-store');
+    navigate("/seller/dashboard?tab=my-store");
   };
 
   if (!storeData) {
@@ -239,10 +269,12 @@ const EditStore = ({ storeData, refreshData }) => {
 
       {/* Status Message */}
       {message.text && (
-        <div className={`p-4 rounded-xl flex items-center space-x-3 ${message.type === "success"
-            ? "bg-green-50 border border-green-200 text-green-700"
-            : "bg-red-50 border border-red-200 text-red-700"
-          }`}>
+        <div
+          className={`p-4 rounded-xl flex items-center space-x-3 ${message.type === "success"
+              ? "bg-green-50 border border-green-200 text-green-700"
+              : "bg-red-50 border border-red-200 text-red-700"
+            }`}
+        >
           {message.type === "success" ? (
             <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
           ) : (
@@ -270,7 +302,7 @@ const EditStore = ({ storeData, refreshData }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Store Media Section (unchanged) */}
+        {/* Store Media Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <CameraIcon className="h-5 w-5 mr-2 text-green-600" />
@@ -281,7 +313,7 @@ const EditStore = ({ storeData, refreshData }) => {
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">Store Logo</label>
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+              <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
                 {logoPreview ? (
                   <img src={logoPreview} alt="Store logo preview" className="w-full h-full object-cover" />
                 ) : (
@@ -289,6 +321,16 @@ const EditStore = ({ storeData, refreshData }) => {
                     <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <span className="text-xs text-gray-500">No logo</span>
                   </div>
+                )}
+                {logoPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    title="Remove logo"
+                  >
+                    <TrashIcon className="h-3 w-3" />
+                  </button>
                 )}
               </div>
               <div className="flex-1">
@@ -310,7 +352,7 @@ const EditStore = ({ storeData, refreshData }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Store Banner</label>
             <div className="space-y-3">
-              <div className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+              <div className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
                 {bannerPreview ? (
                   <img src={bannerPreview} alt="Store banner preview" className="w-full h-full object-cover" />
                 ) : (
@@ -318,6 +360,16 @@ const EditStore = ({ storeData, refreshData }) => {
                     <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <span className="text-xs text-gray-500">No banner</span>
                   </div>
+                )}
+                {bannerPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveBanner}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    title="Remove banner"
+                  >
+                    <TrashIcon className="h-3 w-3" />
+                  </button>
                 )}
               </div>
               <div>
@@ -344,7 +396,6 @@ const EditStore = ({ storeData, refreshData }) => {
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Store Name */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Store Name *</label>
               <input
@@ -359,12 +410,11 @@ const EditStore = ({ storeData, refreshData }) => {
               />
             </div>
 
-            {/* Description */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Store Description</label>
               <textarea
-                name="description"
-                value={formData.description}
+                name="store_description"
+                value={formData.store_description}
                 onChange={handleInputChange}
                 rows={3}
                 disabled={loadingBusinessTypes}
@@ -373,7 +423,6 @@ const EditStore = ({ storeData, refreshData }) => {
               />
             </div>
 
-            {/* Business Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Business Type *</label>
               {loadingBusinessTypes ? (
@@ -402,7 +451,6 @@ const EditStore = ({ storeData, refreshData }) => {
               )}
             </div>
 
-            {/* Contact Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email *</label>
               <div className="relative">
@@ -420,7 +468,6 @@ const EditStore = ({ storeData, refreshData }) => {
               </div>
             </div>
 
-            {/* Contact Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone *</label>
               <div className="relative">
@@ -438,7 +485,6 @@ const EditStore = ({ storeData, refreshData }) => {
               </div>
             </div>
 
-            {/* Website */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
               <div className="relative">
@@ -466,7 +512,9 @@ const EditStore = ({ storeData, refreshData }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Business Registration Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Business Registration Number
+              </label>
               <input
                 type="text"
                 name="business_registration_number"
@@ -506,7 +554,7 @@ const EditStore = ({ storeData, refreshData }) => {
           </div>
         </div>
 
-        {/* Address Information (unchanged) */}
+        {/* Address Information */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <MapPinIcon className="h-5 w-5 mr-2 text-green-600" />
@@ -594,7 +642,7 @@ const EditStore = ({ storeData, refreshData }) => {
           </div>
         </div>
 
-        {/* Social Media Links (unchanged) */}
+        {/* Social Media Links */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <LinkIcon className="h-5 w-5 mr-2 text-green-600" />
@@ -689,9 +737,25 @@ const EditStore = ({ storeData, refreshData }) => {
           >
             {saving ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Saving...
               </>

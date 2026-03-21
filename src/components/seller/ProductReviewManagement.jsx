@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 
-const Reviews = () => {
+const ProductReviewManagement = () => {
   const { t } = useTranslation();
   const [activeFilter, setActiveFilter] = useState("all");
   const [reviews, setReviews] = useState([]);
@@ -285,4 +285,4 @@ const Reviews = () => {
     </div>;
 };
 
-export default Reviews;
+export default ProductReviewManagement;
