@@ -9,7 +9,6 @@ import { useAuth } from "../context/AuthContext";
 import ProductCard from "../components/ui/ProductCard";
 import SellerCard from "../components/ui/SellerCard";
 import CategoryCard from "../components/ui/CategoryCard";
-import SEO from "../components/SEO/SEO";
 import useSEO from "../hooks/useSEO";
 
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tab } from "@headlessui/react";
@@ -45,6 +45,7 @@ const SellerProfile = () => {
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({});
+  const navigate = useNavigate();
   const [loading, setLoading] = useState({
     seller: true,
     products: true,
@@ -162,12 +163,14 @@ const SellerProfile = () => {
 
   // ----- Follow toggle -----
   const handleFollowToggle = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Redirect to login page
+      navigate('/login');
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showNotification('Please login to follow sellers', 'error');
-        return;
-      }
       const response = await api.post(`/follow/seller/${seller.user_id}/toggle`);
       if (response.data.success) {
         setIsFollowing(response.data.data.is_following);
@@ -180,14 +183,14 @@ const SellerProfile = () => {
     } catch (error) {
       console.error('Error toggling follow:', error);
       if (error.response?.status === 401) {
-        showNotification('Please login to follow sellers', 'error');
+        navigate('/login');
       } else {
         showNotification('Failed to update follow status', 'error');
       }
     }
   };
 
-  // ----- Submit review (fixed) -----
+  // ----- Submit review -----
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
@@ -636,7 +639,7 @@ const SellerProfile = () => {
           {/* Main Content (Tabs) */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
             <Tab.Group>
-              <div className="border-b border-gray-200 overflow-x-auto">
+              <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden">
                 <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
                   <Tab className={({ selected }) => classNames(
                     selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
