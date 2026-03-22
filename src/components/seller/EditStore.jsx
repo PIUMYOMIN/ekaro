@@ -1,9 +1,7 @@
-// src/components/seller/EditStore.jsx
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
-  CameraIcon,
   MapPinIcon,
   GlobeAltIcon,
   PhoneIcon,
@@ -14,7 +12,6 @@ import {
   DocumentTextIcon,
   LinkIcon,
   ExclamationCircleIcon,
-  TrashIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
@@ -40,7 +37,7 @@ const EditStore = ({ storeData, refreshData }) => {
 
   const [formData, setFormData] = useState({
     store_name: "",
-    store_description: "",        // changed from "description"
+    store_description: "",
     business_type: "",
     business_registration_number: "",
     tax_id: "",
@@ -56,13 +53,8 @@ const EditStore = ({ storeData, refreshData }) => {
     social_instagram: "",
     social_twitter: "",
     social_linkedin: "",
-    account_number: ""
+    account_number: "",
   });
-
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState("");
-  const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState("");
 
   // Fetch business types
   useEffect(() => {
@@ -107,15 +99,8 @@ const EditStore = ({ storeData, refreshData }) => {
         social_instagram: storeData.social_instagram || "",
         social_twitter: storeData.social_twitter || "",
         social_linkedin: storeData.social_linkedin || "",
-        account_number: storeData.account_number || ""
+        account_number: storeData.account_number || "",
       });
-
-      if (storeData.store_logo) {
-        setLogoPreview(getImageUrl(storeData.store_logo));
-      }
-      if (storeData.store_banner) {
-        setBannerPreview(getImageUrl(storeData.store_banner));
-      }
     }
   }, [storeData]);
 
@@ -124,116 +109,47 @@ const EditStore = ({ storeData, refreshData }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setLogoFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setLogoPreview(previewUrl);
-    }
-  };
-
-  const handleBannerChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setBannerFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setBannerPreview(previewUrl);
-    }
-  };
-
-  const handleRemoveLogo = () => {
-    setLogoFile(null);
-    setLogoPreview("");
-    // We'll send store_logo as empty string to indicate removal
-  };
-
-  const handleRemoveBanner = () => {
-    setBannerFile(null);
-    setBannerPreview("");
-    // We'll send store_banner as empty string to indicate removal
-  };
-
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSaving(true);
-  setMessage({ type: "", text: "" });
+    e.preventDefault();
+    setSaving(true);
+    setMessage({ type: "", text: "" });
 
-  if (!formData.business_type) {
-    setMessage({ type: "error", text: "Please select a business type." });
-    setSaving(false);
-    return;
-  }
+    if (!formData.business_type) {
+      setMessage({ type: "error", text: "Please select a business type." });
+      setSaving(false);
+      return;
+    }
 
-  try {
-    const submitFormData = new FormData();
+    try {
+      const submitFormData = new FormData();
 
-    // Append all form fields
-    Object.keys(formData).forEach((key) => {
-      if (formData[key] !== null && formData[key] !== undefined) {
-        submitFormData.append(key, formData[key]);
+      // Append all form fields
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          submitFormData.append(key, formData[key]);
+        }
+      });
+
+      const response = await api.put("/seller/my-store/update", submitFormData);
+
+      if (response.data.success) {
+        setMessage({ type: "success", text: "Store profile updated successfully!" });
+        if (refreshData) await refreshData();
+        setTimeout(() => navigate("/seller/dashboard?tab=my-store"), 1500);
       }
-    });
-
-    // Log FormData contents
-    for (let pair of submitFormData.entries()) {
-      console.log(`   ${pair[0]}: ${pair[1]}`);
-    }
-
-    // Append files
-    if (logoFile) {
-      submitFormData.append("store_logo", logoFile);
-      console.log("   store_logo: [FILE]");
-    } else if (logoPreview && !logoPreview.startsWith("blob:")) {
-      if (logoPreview === "") {
-        submitFormData.append("store_logo", "");
-        console.log("   store_logo: '' (removal)");
-      } else {
-        const originalPath = storeData?.store_logo || "";
-        submitFormData.append("store_logo", originalPath);
-        console.log(`   store_logo: ${originalPath} (keep)`);
+    } catch (error) {
+      console.error("Update failed:", error.response?.data || error.message);
+      let errorMessage = "Failed to update store profile";
+      if (error.response?.data?.errors) {
+        errorMessage = Object.values(error.response.data.errors).flat().join(", ");
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
+      setMessage({ type: "error", text: errorMessage });
+    } finally {
+      setSaving(false);
     }
-
-    if (bannerFile) {
-      submitFormData.append("store_banner", bannerFile);
-      console.log("   store_banner: [FILE]");
-    } else if (bannerPreview && !bannerPreview.startsWith("blob:")) {
-      if (bannerPreview === "") {
-        submitFormData.append("store_banner", "");
-        console.log("   store_banner: '' (removal)");
-      } else {
-        const originalPath = storeData?.store_banner || "";
-        submitFormData.append("store_banner", originalPath);
-        console.log(`   store_banner: ${originalPath} (keep)`);
-      }
-    }
-
-    // 🔥 FIX: Remove manual Content-Type header
-    const response = await api.put("/seller/my-store/update", submitFormData);
-
-    console.log("✅ Server response:", response.data);
-
-    if (response.data.success) {
-      setMessage({ type: "success", text: "Store profile updated successfully!" });
-      setLogoFile(null);
-      setBannerFile(null);
-      if (refreshData) await refreshData();
-      setTimeout(() => navigate("/seller/dashboard?tab=my-store"), 1500);
-    }
-  } catch (error) {
-    console.error("❌ Update failed:", error.response?.data || error.message);
-    let errorMessage = "Failed to update store profile";
-    if (error.response?.data?.errors) {
-      errorMessage = Object.values(error.response.data.errors).flat().join(", ");
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    }
-    setMessage({ type: "error", text: errorMessage });
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   const cancelEdit = () => {
     navigate("/seller/dashboard?tab=my-store");
@@ -243,7 +159,7 @@ const EditStore = ({ storeData, refreshData }) => {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading store information...</p>
         </div>
       </div>
@@ -270,10 +186,11 @@ const EditStore = ({ storeData, refreshData }) => {
       {/* Status Message */}
       {message.text && (
         <div
-          className={`p-4 rounded-xl flex items-center space-x-3 ${message.type === "success"
+          className={`p-4 rounded-xl flex items-center space-x-3 ${
+            message.type === "success"
               ? "bg-green-50 border border-green-200 text-green-700"
               : "bg-red-50 border border-red-200 text-red-700"
-            }`}
+          }`}
         >
           {message.type === "success" ? (
             <CheckIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
@@ -302,92 +219,6 @@ const EditStore = ({ storeData, refreshData }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Store Media Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <CameraIcon className="h-5 w-5 mr-2 text-green-600" />
-            Store Media
-          </h3>
-
-          {/* Logo Upload */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">Store Logo</label>
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Store logo preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center">
-                    <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <span className="text-xs text-gray-500">No logo</span>
-                  </div>
-                )}
-                {logoPreview && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveLogo}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    title="Remove logo"
-                  >
-                    <TrashIcon className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-              <div className="flex-1">
-                <label className="block">
-                  <span className="sr-only">Choose logo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                  />
-                </label>
-                <p className="text-xs text-gray-500 mt-2">Recommended: 400x400px, JPG/PNG format, Max 2MB</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Banner Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Store Banner</label>
-            <div className="space-y-3">
-              <div className="w-full h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden relative">
-                {bannerPreview ? (
-                  <img src={bannerPreview} alt="Store banner preview" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center">
-                    <CameraIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <span className="text-xs text-gray-500">No banner</span>
-                  </div>
-                )}
-                {bannerPreview && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveBanner}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    title="Remove banner"
-                  >
-                    <TrashIcon className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
-              <div>
-                <label className="block">
-                  <span className="sr-only">Choose banner</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                  />
-                </label>
-                <p className="text-xs text-gray-500 mt-2">Recommended: 1200x300px, JPG/PNG format, Max 5MB</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Store Basic Information */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">

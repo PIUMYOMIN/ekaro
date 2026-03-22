@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BuildingStorefrontIcon,
@@ -11,44 +11,127 @@ import {
   CalendarIcon,
   ShoppingBagIcon,
   CurrencyDollarIcon,
-  ClockIcon
+  ClockIcon,
+  CameraIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
-import { IMAGE_BASE_URL } from "../../config";
+import api from "../../utils/api";
 
 const MyStore = ({ storeData, stats, refreshData }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // Helper to get full image URL (if backend doesn't return absolute URLs)
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    const cleanPath = imagePath.replace(/^public\//, '');
-    return `${IMAGE_BASE_URL}/${cleanPath}`.replace(/([^:]\/)\/+/g, '$1');
-  };
+  // Upload states
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+
+  // Refs for hidden file inputs
+  const logoInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
 
   if (!storeData) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading store information...</p>
         </div>
       </div>
     );
   }
 
-  // Use full URL directly (backend already returns absolute URL)
   const logoUrl = storeData.store_logo;
   const bannerUrl = storeData.store_banner;
-
   const rating = storeData.reviews_avg_rating || 0;
   const totalReviews = storeData.reviews_count || 0;
-  const memberSince = new Date(storeData.created_at).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long'
+  const memberSince = new Date(storeData.created_at).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
   });
+
+  // ----- Logo handlers -----
+  const handleLogoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLogoUploading(true);
+    setUploadError(null);
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    try {
+      await api.post('/seller/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (refreshData) await refreshData();
+    } catch (error) {
+      console.error('Logo upload failed', error);
+      setUploadError('Failed to update logo. Please try again.');
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+  if (!window.confirm('Are you sure you want to remove the store logo?')) return;
+
+  setLogoUploading(true);
+  setUploadError(null);
+
+  try {
+    await api.delete('/seller/logo');
+    if (refreshData) await refreshData();
+  } catch (error) {
+    console.error('Logo removal failed', error);
+    setUploadError('Failed to remove logo. Please try again.');
+  } finally {
+    setLogoUploading(false);
+  }
+};
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setBannerUploading(true);
+    setUploadError(null);
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    try {
+      await api.post('/seller/banner', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (refreshData) await refreshData();
+    } catch (error) {
+      console.error('Banner upload failed', error);
+      setUploadError('Failed to update banner. Please try again.');
+    } finally {
+      setBannerUploading(false);
+      if (bannerInputRef.current) bannerInputRef.current.value = '';
+    }
+  };
+
+
+  const handleRemoveBanner = async () => {
+  if (!window.confirm('Are you sure you want to remove the store banner?')) return;
+
+  setBannerUploading(true);
+  setUploadError(null);
+
+  try {
+    await api.delete('/seller/banner');
+    if (refreshData) await refreshData();
+  } catch (error) {
+    console.error('Banner removal failed', error);
+    setUploadError('Failed to remove banner. Please try again.');
+  } finally {
+    setBannerUploading(false);
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -59,7 +142,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           <p className="mt-1 text-sm text-gray-500">{t("seller.my_store_summary")}</p>
         </div>
         <button
-          onClick={() => navigate('/seller/dashboard?tab=my-store&edit=true')}
+          onClick={() => navigate("/seller/dashboard?tab=my-store&edit=true")}
           className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-200 font-medium"
         >
           <PencilIcon className="h-4 w-4" />
@@ -69,71 +152,143 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
       {/* Store Header with Banner */}
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        {/* Banner section with hover overlay */}
         {bannerUrl && (
-          <div className="h-48 bg-gradient-to-r from-green-500 to-emerald-600 relative">
+          <div className="relative h-48 bg-gradient-to-r from-green-500 to-emerald-600 group">
             <img
               src={bannerUrl}
               alt="Store banner"
               className="w-full h-full object-cover"
-              onError={(e) => (e.target.style.display = 'none')}
+              onError={(e) => (e.target.style.display = "none")}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+            <div className="absolute inset-0 bg-black bg-opacity-20" />
+
+            {/* Hover overlay for banner */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => bannerInputRef.current?.click()}
+                  disabled={bannerUploading}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition disabled:opacity-50"
+                  title="Update banner"
+                >
+                  <CameraIcon className="h-5 w-5 text-gray-700" />
+                </button>
+                <button
+                  onClick={handleRemoveBanner}
+                  disabled={bannerUploading}
+                  className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition disabled:opacity-50"
+                  title="Remove banner"
+                >
+                  <TrashIcon className="h-5 w-5 text-red-500" />
+                </button>
+              </div>
+            </div>
+            <input
+              type="file"
+              ref={bannerInputRef}
+              onChange={handleBannerChange}
+              accept="image/*"
+              className="hidden"
+            />
+            {bannerUploading && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+              </div>
+            )}
           </div>
         )}
 
         {/* Store Info Section */}
-        <div className={`p-6 ${!bannerUrl ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white' : ''}`}>
+        <div className={`p-6 ${!bannerUrl ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white" : ""}`}>
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            {/* Logo */}
-            <div className="relative w-20 h-20">
+            {/* Logo with hover overlay */}
+            <div className="relative w-20 h-20 group">
               {logoUrl ? (
                 <img
                   src={logoUrl}
                   alt={storeData.store_name}
                   className="w-20 h-20 rounded-2xl object-cover border-4 border-white/20 shadow-lg"
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    // Show fallback when image fails to load
-                    const fallback = e.target.parentNode?.querySelector('.logo-fallback');
-                    if (fallback) fallback.style.display = 'flex';
+                    e.target.style.display = "none";
+                    const fallback = e.target.parentNode?.querySelector(".logo-fallback");
+                    if (fallback) fallback.style.display = "flex";
                   }}
                 />
               ) : null}
               <div
-                className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback ${
-                  logoUrl ? 'hidden' : 'flex'
-                }`}
-                style={{ background: bannerUrl ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)' }}
+                className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg logo-fallback ${logoUrl ? "hidden" : "flex"
+                  }`}
+                style={{ background: bannerUrl ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.2)" }}
               >
                 <BuildingStorefrontIcon
-                  className={`h-10 w-10 ${!bannerUrl ? 'text-white' : 'text-gray-500'}`}
+                  className={`h-10 w-10 ${!bannerUrl ? "text-white" : "text-gray-500"}`}
                 />
               </div>
+
+              {/* Hover overlay for logo */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-2xl transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="flex space-x-1">
+                  <button
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={logoUploading}
+                    className="p-1 bg-white rounded-full shadow-lg hover:bg-gray-100 transition disabled:opacity-50"
+                    title="Update logo"
+                  >
+                    <CameraIcon className="h-4 w-4 text-gray-700" />
+                  </button>
+                  {logoUrl && (
+                    <button
+                      onClick={handleRemoveLogo}
+                      disabled={logoUploading}
+                      className="p-1 bg-white rounded-full shadow-lg hover:bg-gray-100 transition disabled:opacity-50"
+                      title="Remove logo"
+                    >
+                      <TrashIcon className="h-4 w-4 text-red-500" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={logoInputRef}
+                onChange={handleLogoChange}
+                accept="image/*"
+                className="hidden"
+              />
+              {logoUploading && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
+                </div>
+              )}
             </div>
 
             <div className="flex-1">
               <h1 className="text-2xl font-bold">{storeData.store_name}</h1>
-              <p className={`mt-1 ${bannerUrl ? 'text-gray-600' : 'text-green-100 opacity-90'}`}>
+              <p className={`mt-1 ${bannerUrl ? "text-gray-600" : "text-green-100 opacity-90"}`}>
                 {storeData.description || storeData.store_description || "No description provided"}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  storeData.status === 'approved' || storeData.status === 'active'
-                    ? 'bg-green-400 text-white'
-                    : storeData.status === 'pending'
-                    ? 'bg-yellow-400 text-white'
-                    : 'bg-blue-400 text-white'
-                }`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${storeData.status === "approved" || storeData.status === "active"
+                    ? "bg-green-400 text-white"
+                    : storeData.status === "pending"
+                      ? "bg-yellow-400 text-white"
+                      : "bg-blue-400 text-white"
+                    }`}
+                >
                   {storeData.status?.charAt(0).toUpperCase() + storeData.status?.slice(1)}
                 </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  storeData.verification_status === 'verified'
-                    ? 'bg-blue-400 text-white'
-                    : 'bg-gray-400 text-white'
-                }`}>
-                  {storeData.verification_status?.charAt(0).toUpperCase() + storeData.verification_status?.slice(1)}
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${storeData.verification_status === "verified"
+                    ? "bg-blue-400 text-white"
+                    : "bg-gray-400 text-white"
+                    }`}
+                >
+                  {storeData.verification_status?.charAt(0).toUpperCase() +
+                    storeData.verification_status?.slice(1)}
                 </span>
-                <span className={`text-sm ${bannerUrl ? 'text-gray-600' : 'text-green-100'}`}>
+                <span className={`text-sm ${bannerUrl ? "text-gray-600" : "text-green-100"}`}>
                   <CalendarIcon className="h-3 w-3 inline mr-1" />
                   Since {memberSince}
                 </span>
@@ -162,7 +317,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {stats.totalRevenue ? `${parseInt(stats.totalRevenue).toLocaleString()} MMK` : '0 MMK'}
+                {stats.totalRevenue ? `${parseInt(stats.totalRevenue).toLocaleString()} MMK` : "0 MMK"}
               </div>
               <div className="text-sm text-purple-800 flex items-center justify-center">
                 <CurrencyDollarIcon className="h-4 w-4 mr-1" />
@@ -180,7 +335,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         </div>
       </div>
 
-      {/* Main Content Grid (unchanged) */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
@@ -236,10 +391,9 @@ const MyStore = ({ storeData, stats, refreshData }) => {
               </div>
               <div>
                 <p className="font-medium text-gray-900">
-                  {storeData.address ?
-                    `${storeData.address}, ${storeData.city}, ${storeData.state}, ${storeData.country}`
-                    : "No address provided"
-                  }
+                  {storeData.address
+                    ? `${storeData.address}, ${storeData.city}, ${storeData.state}, ${storeData.country}`
+                    : "No address provided"}
                 </p>
                 {storeData.postal_code && (
                   <p className="text-sm text-gray-500 mt-1">Postal Code: {storeData.postal_code}</p>
@@ -291,8 +445,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                       <StarIcon
                         key={star}
                         className={`h-6 w-6 ${star <= rating
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300"
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
                           }`}
                       />
                     ))}
@@ -300,7 +454,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                   <span className="text-2xl font-bold text-gray-900">{rating.toFixed(1)}</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Based on {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
+                  Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
                 </p>
               </div>
             </div>
@@ -359,25 +513,25 @@ const MyStore = ({ storeData, stats, refreshData }) => {
             <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/seller/dashboard?tab=edit-store')}
+                onClick={() => navigate("/seller/dashboard?tab=edit-store")}
                 className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-sm font-medium"
               >
                 Edit Store Profile
               </button>
               <button
-                onClick={() => navigate('/seller/dashboard?tab=settings')}
+                onClick={() => navigate("/seller/dashboard?tab=settings")}
                 className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-sm font-medium"
               >
                 Store Settings
               </button>
               <button
-                onClick={() => navigate('/seller/dashboard?tab=product')}
+                onClick={() => navigate("/seller/dashboard?tab=product")}
                 className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-sm font-medium"
               >
                 Manage Products
               </button>
               <button
-                onClick={() => navigate('/seller/dashboard?tab=order')}
+                onClick={() => navigate("/seller/dashboard?tab=order")}
                 className="w-full py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-sm font-medium"
               >
                 View Orders
@@ -386,6 +540,13 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           </div>
         </div>
       </div>
+
+      {/* Error message */}
+      {uploadError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+          {uploadError}
+        </div>
+      )}
     </div>
   );
 };

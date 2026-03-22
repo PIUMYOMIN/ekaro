@@ -132,7 +132,7 @@ const SellerDashboard = () => {
     {
       name: t("seller.my_store"),
       icon: BuildingStorefrontIcon,
-      component: <MyStore storeData={storeData} stats={stats} />
+      component: <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />
     },
     {
       name: "Edit Store",
