@@ -21,7 +21,7 @@ import DashboardSummary from "../../components/seller/DashboardSummary";
 import OrderManagement from "../../components/seller/OrderManagement";
 import ProductManagement from "../../components/seller/ProductManagement";
 import SalesReports from "../../components/seller/SalesReports";
-import Reviews from "../../components/seller/ProductReviewManagement.jsx";
+import ProductReviewManagement from "../../components/seller/ProductReviewManagement";
 import Customers from "./Customers";
 import ShippingSettings from "../../components/seller/ShippingSettings.jsx";
 import StoreSettings from "../../components/seller/StoreSettings";
