@@ -50,7 +50,7 @@ const DiscountManagement = () => {
     max_uses_per_customer: "",
     starts_at: "",
     expires_at: "",
-    applicable_to: isAdmin ? "all_products" : "specific_products", // default for seller
+    applicable_to: isAdmin ? "all_products" : "specific_products",
     applicable_product_ids: [],
     applicable_category_ids: [],
     applicable_seller_ids: [],
@@ -81,7 +81,7 @@ const DiscountManagement = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get("/seller/products/my-products");
+      const response = await api.get("/seller/products");
       if (response.data.success) {
         setProducts(response.data.data || []);
       }

@@ -410,8 +410,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       // Build images payload (relative paths)
       const imagesPayload = imagePreviews.map((preview) => ({
         url: preview.isExisting
-          ? preview.url // Already a relative path
-          : preview.url, // Also relative path from upload
+          ? preview.url
+          : preview.url,
         angle: preview.angle,
         is_primary: preview.is_primary,
       }));
@@ -583,7 +583,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     if (onCancel) {
       onCancel();
     } else {
-      navigate("/seller/products");
+      navigate("/seller/dashboard");
     }
   };
 

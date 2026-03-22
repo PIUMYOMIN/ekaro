@@ -68,7 +68,7 @@ const SalesReports = ({ refreshData }) => {
           setSalesData({
             monthlyData,
             weeklyData,
-            topProducts: salesData.topProducts, // Keep existing top products
+            topProducts: salesData.topProducts,
             summary: {
               totalSales: parseFloat(data.sales?.total_revenue) || 0,
               totalOrders: parseInt(data.sales?.total_orders) || 0,
@@ -156,10 +156,10 @@ const SalesReports = ({ refreshData }) => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {t("seller.sales_reports")}
+            {t("seller.sales.sales_reports")}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            {t("seller.sales_analytics_and_insights")}
+            {t("seller.sales.sales_analytics_and_insights")}
           </p>
         </div>
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
@@ -169,8 +169,8 @@ const SalesReports = ({ refreshData }) => {
               onChange={e => setTimeRange(e.target.value)}
               className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             >
-              <option value="week">{t("seller.this_week")}</option>
-              <option value="month">{t("seller.this_month")}</option>
+              <option value="week">{t("seller.sales.this_week")}</option>
+              <option value="month">{t("seller.sales.this_month")}</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
               <svg className="fill-current h-4 w-4" viewBox="0 0 20 20">
@@ -180,7 +180,7 @@ const SalesReports = ({ refreshData }) => {
           </div>
           <button className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center transition-colors">
             <LocalDownloadIcon className="h-5 w-5 mr-1" />
-            {t("seller.export_report")}
+            {t("seller.sales.export_report")}
           </button>
         </div>
       </div>
@@ -194,7 +194,7 @@ const SalesReports = ({ refreshData }) => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-blue-700">
-                {t("seller.total_sales")}
+                {t("seller.sales.total_sales")}
               </p>
               <p className="text-2xl font-bold text-gray-900">
                 {salesData.summary.totalSales.toLocaleString()} MMK
@@ -205,7 +205,7 @@ const SalesReports = ({ refreshData }) => {
             <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-            {salesData.summary.totalSales > 0 ? "+0%" : "0%"} {t("seller.increase")}
+            {salesData.summary.totalSales > 0 ? "+0%" : "0%"} {t("seller.sales.increase")}
           </p>
         </div>
 
@@ -216,7 +216,7 @@ const SalesReports = ({ refreshData }) => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-purple-700">
-                {t("seller.total_orders")}
+                {t("seller.sales.total_orders")}
               </p>
               <p className="text-2xl font-bold text-gray-900">
                 {salesData.summary.totalOrders}
@@ -227,7 +227,7 @@ const SalesReports = ({ refreshData }) => {
             <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-            {salesData.summary.totalOrders > 0 ? "+0%" : "0%"} {t("seller.increase")}
+            {salesData.summary.totalOrders > 0 ? "+0%" : "0%"} {t("seller.sales.increase")}
           </p>
         </div>
 
@@ -238,7 +238,7 @@ const SalesReports = ({ refreshData }) => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-yellow-700">
-                {t("seller.new_customers")}
+                {t("seller.sales.new_customers")}
               </p>
               <p className="text-2xl font-bold text-gray-900">
                 {salesData.summary.newCustomers}
@@ -249,7 +249,7 @@ const SalesReports = ({ refreshData }) => {
             <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
-            {salesData.summary.newCustomers > 0 ? "+0%" : "0%"} {t("seller.increase")}
+            {salesData.summary.newCustomers > 0 ? "+0%" : "0%"} {t("seller.sales.increase")}
           </p>
         </div>
       </div>
@@ -259,7 +259,7 @@ const SalesReports = ({ refreshData }) => {
         {/* Sales Overview Chart */}
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {t("seller.sales_overview")}
+            {t("seller.sales.sales_overview")}
           </h3>
           <div className="h-72">
             {data.length > 0 ? (
@@ -308,7 +308,7 @@ const SalesReports = ({ refreshData }) => {
         {/* Revenue by Product Chart */}
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {t("seller.revenue_by_product")}
+            {t("seller.sales.revenue_by_product")}
           </h3>
           <div className="h-72">
             {salesData.topProducts.length > 0 ? (
@@ -324,7 +324,7 @@ const SalesReports = ({ refreshData }) => {
                   />
                   <YAxis tick={{ fill: '#666' }} />
                   <Tooltip
-                    formatter={(value) => [`${value.toLocaleString()} MMK`, t("seller.revenue")]}
+                    formatter={(value) => [`${value.toLocaleString()} MMK`, t("seller.sales.revenue")]}
                     contentStyle={{
                       backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
@@ -335,7 +335,7 @@ const SalesReports = ({ refreshData }) => {
                   <Bar
                     dataKey="revenue"
                     fill="#8B5CF6"
-                    name={t("seller.revenue")}
+                    name={t("seller.sales.revenue")}
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -354,10 +354,10 @@ const SalesReports = ({ refreshData }) => {
       <div className="bg-white rounded-xl shadow">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            {t("seller.top_selling_products")}
+            {t("seller.sales.top_selling_products")}
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            {t("seller.best_performing_products")}
+            {t("seller.sales.best_performing_products")}
           </p>
         </div>
 
@@ -367,19 +367,19 @@ const SalesReports = ({ refreshData }) => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("seller.product")}
+                    {t("seller.sales.product")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("seller.sold")}
+                    {t("seller.sales.sold")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("seller.revenue")}
+                    {t("seller.sales.revenue")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("seller.performance")}
+                    {t("seller.sales.performance")}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("seller.actions")}
+                    {t("seller.sales.actions")}
                   </th>
                 </tr>
               </thead>
@@ -442,7 +442,7 @@ const SalesReports = ({ refreshData }) => {
           ) : (
             <div className="text-center py-12">
               <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500">{t("seller.no_products_found")}</p>
+              <p className="text-gray-500">{t("seller.sales.no_products_found")}</p>
             </div>
           )}
         </div>
