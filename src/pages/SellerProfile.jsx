@@ -44,18 +44,27 @@ const SellerProfile = () => {
   const { slug } = useParams();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
-  const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const [reviewsPerPage] = useState(5);
   const [loading, setLoading] = useState({
     seller: true,
     products: true,
-    reviews: true
   });
+
+  // Reviews state
+  const [reviewsData, setReviewsData] = useState({
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    per_page: 5,
+    total: 0,
+  });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const reviewsPerPage = 5; // matches pagination setting
+
   const [error, setError] = useState(null);
 
-  // Fallback values for SEO (used when seller is null)
+  // Fallback values for SEO
   const fallbackTitle = "Seller Profile";
   const fallbackDescription = "View seller information on Pyonea marketplace.";
 
@@ -79,10 +88,11 @@ const SellerProfile = () => {
 
   const [logoError, setLogoError] = useState(false);
 
+  // ----- Fetch seller data (store, products, stats) -----
   useEffect(() => {
     const fetchSellerData = async () => {
       try {
-        setLoading({ seller: true, products: true, reviews: true });
+        setLoading({ seller: true, products: true });
         setError(null);
 
         const sellerRes = await api.get(`/sellers/${slug}`);
@@ -97,10 +107,6 @@ const SellerProfile = () => {
             setProducts(sellerRes.data.data.products.data);
           }
 
-          if (sellerData.reviews) {
-            setReviews(sellerData.reviews);
-          }
-
           if (sellerRes.data.data.stats) {
             setStats(sellerRes.data.data.stats);
           }
@@ -111,14 +117,50 @@ const SellerProfile = () => {
         console.error("Failed to fetch seller:", err);
         setError("Failed to load seller information.");
       } finally {
-        setLoading(prev => ({ ...prev, seller: false, reviews: false, products: false }));
+        setLoading(prev => ({ ...prev, seller: false, products: false }));
       }
     };
 
     fetchSellerData();
   }, [slug]);
 
-  // Handle follow toggle
+  // ----- Fetch seller reviews (separate, paginated) -----
+  const fetchReviews = async (page = 1) => {
+    if (!slug) return;
+    setReviewsLoading(true);
+    try {
+      const response = await api.get(`/reviews/sellers/${slug}`, {
+        params: { page, per_page: reviewsPerPage }
+      });
+      if (response.data.success) {
+        setReviewsData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+      // Optionally show error message
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews(reviewsPage);
+  }, [slug, reviewsPage]);
+
+  // Handle page change in reviews tab
+  const handleReviewsPageChange = (page) => {
+    setReviewsPage(page);
+  };
+
+  // ----- Helper functions -----
+  const showNotification = (message, type = "success") => {
+    setPopupMessage(message);
+    setPopupType(type);
+    setShowPopup(true);
+    setTimeout(() => setShowPopup(false), 5000);
+  };
+
+  // ----- Follow toggle -----
   const handleFollowToggle = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -126,12 +168,10 @@ const SellerProfile = () => {
         showNotification('Please login to follow sellers', 'error');
         return;
       }
-
       const response = await api.post(`/follow/seller/${seller.user_id}/toggle`);
       if (response.data.success) {
         setIsFollowing(response.data.data.is_following);
         setFollowersCount(response.data.data.followers_count);
-
         showNotification(
           response.data.data.is_following ? 'Successfully followed seller' : 'Successfully unfollowed seller',
           'success'
@@ -147,18 +187,7 @@ const SellerProfile = () => {
     }
   };
 
-  // Show popup notification
-  const showNotification = (message, type = "success") => {
-    setPopupMessage(message);
-    setPopupType(type);
-    setShowPopup(true);
-
-    setTimeout(() => {
-      setShowPopup(false);
-    }, 5000);
-  };
-
-  // Handle review submission (FIXED: use seller.id instead of undefined id)
+  // ----- Submit review (fixed) -----
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
@@ -169,22 +198,20 @@ const SellerProfile = () => {
 
     setSubmittingReview(true);
     try {
+      // Use seller.id (numeric) for the endpoint
       const response = await api.post(`/sellers/${seller.id}/reviews`, {
         rating: reviewRating,
         comment: reviewComment,
       });
 
       if (response.data.success) {
-        // Refresh reviews
-        const sellerRes = await api.get(`/sellers/${seller.id}`);
-        if (sellerRes.data.success && sellerRes.data.data) {
-          setSeller(sellerRes.data.data.seller);
-          setReviews(sellerRes.data.data.seller.reviews || []);
-        }
-
+        // Reset form
         setReviewRating(0);
         setReviewComment("");
         setShowReviewForm(false);
+        // Refetch reviews (reset to page 1)
+        setReviewsPage(1);
+        fetchReviews(1);
         showNotification("Review submitted successfully!", "success");
       }
     } catch (err) {
@@ -196,20 +223,15 @@ const SellerProfile = () => {
     }
   };
 
-  // Handle share action
+  // ----- Share actions -----
   const handleShare = async () => {
-    const slugOrId = seller.store_slug;
-    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
     const shareTitle = seller.store_name;
     const shareText = seller.store_description || `Check out ${seller.store_name} on our marketplace`;
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl,
-        });
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
         showNotification('Shared successfully!', 'success');
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -218,15 +240,12 @@ const SellerProfile = () => {
         }
       }
     } else {
-      // Web Share not supported, open modal
       setShowShareModal(true);
     }
   };
 
-  // Copy link to clipboard (for modal)
   const handleCopyLink = async () => {
-    const slugOrId = seller.store_slug;
-    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       showNotification('Store link copied to clipboard!', 'success');
@@ -237,12 +256,7 @@ const SellerProfile = () => {
     }
   };
 
-  const indexOfLastReview = currentPage * reviewsPerPage;
-  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
-  const currentReviews = Array.isArray(reviews) ? reviews.slice(indexOfFirstReview, indexOfLastReview) : [];
-  const paginate = pageNumber => setCurrentPage(pageNumber);
-
-  // Render star ratings (unchanged)
+  // ----- Render stars -----
   const renderStars = (rating, size = "h-5 w-5") => {
     if (!rating) {
       return (
@@ -269,32 +283,28 @@ const SellerProfile = () => {
         stars.push(<StarIcon key={i} className={`${size} text-gray-300`} />);
       }
     }
-
     return stars;
   };
 
-  // Render interactive stars for review form (unchanged)
-  const renderInteractiveStars = () => {
-    return (
-      <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setReviewRating(star)}
-            className="focus:outline-none transition-transform hover:scale-110"
-          >
-            <StarIcon
-              className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"}`}
-              fill={star <= reviewRating ? "currentColor" : "none"}
-            />
-          </button>
-        ))}
-      </div>
-    );
-  };
+  const renderInteractiveStars = () => (
+    <div className="flex space-x-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => setReviewRating(star)}
+          className="focus:outline-none transition-transform hover:scale-110"
+        >
+          <StarIcon
+            className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"}`}
+            fill={star <= reviewRating ? "currentColor" : "none"}
+          />
+        </button>
+      ))}
+    </div>
+  );
 
-  // Popup notification component (unchanged)
+  // ----- Popup notification component -----
   const PopupNotification = () => (
     <AnimatePresence>
       {showPopup && (
@@ -304,10 +314,7 @@ const SellerProfile = () => {
           exit={{ opacity: 0, y: -50, scale: 0.9 }}
           className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full px-4"
         >
-          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success"
-            ? "bg-green-50 border-green-500"
-            : "bg-red-50 border-red-500"
-            }`}>
+          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success" ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"}`}>
             <div className="p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
@@ -318,18 +325,14 @@ const SellerProfile = () => {
                   )}
                 </div>
                 <div className="ml-3 w-0 flex-1">
-                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"
-                    }`}>
+                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"}`}>
                     {popupMessage}
                   </p>
                 </div>
                 <div className="ml-4 flex-shrink-0 flex">
                   <button
                     onClick={() => setShowPopup(false)}
-                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success"
-                      ? "focus:ring-green-500 text-green-400 hover:text-green-500"
-                      : "focus:ring-red-500 text-red-400 hover:text-red-500"
-                      }`}
+                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success" ? "focus:ring-green-500 text-green-400 hover:text-green-500" : "focus:ring-red-500 text-red-400 hover:text-red-500"}`}
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
@@ -342,12 +345,10 @@ const SellerProfile = () => {
     </AnimatePresence>
   );
 
-  // Share Modal Component
+  // ----- Share Modal -----
   const ShareModal = () => {
-    const slugOrId = seller.store_slug;
-    const shareUrl = `${window.location.origin}/sellers/${slugOrId}`;
+    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
     const shareTitle = seller.store_name;
-
     return (
       <AnimatePresence>
         {showShareModal && (
@@ -367,14 +368,10 @@ const SellerProfile = () => {
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold text-gray-900">Share this store</h3>
-                <button
-                  onClick={() => setShowShareModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={() => setShowShareModal(false)} className="text-gray-400 hover:text-gray-600">
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
-
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <FacebookShareButton url={shareUrl} quote={shareTitle}>
                   <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
@@ -382,14 +379,12 @@ const SellerProfile = () => {
                     <span className="text-xs mt-1 font-medium">Facebook</span>
                   </div>
                 </FacebookShareButton>
-
                 <TwitterShareButton url={shareUrl} title={shareTitle}>
                   <div className="flex flex-col items-center p-3 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors">
                     <TwitterIcon size={40} round />
                     <span className="text-xs mt-1 font-medium">Twitter</span>
                   </div>
                 </TwitterShareButton>
-
                 <LinkedinShareButton url={shareUrl} title={shareTitle}>
                   <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                     <LinkedinIcon size={40} round />
@@ -397,7 +392,6 @@ const SellerProfile = () => {
                   </div>
                 </LinkedinShareButton>
               </div>
-
               <button
                 onClick={handleCopyLink}
                 className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
@@ -412,7 +406,7 @@ const SellerProfile = () => {
     );
   };
 
-  // Calculate values from API data with safe fallbacks
+  // ----- Computed values -----
   const rating = parseFloat(seller?.reviews_avg_rating) || 0;
   const reviewCount = seller?.reviews_count || 0;
   const productCount = products.length || stats.active_products || 0;
@@ -431,10 +425,7 @@ const SellerProfile = () => {
       name: seller.store_name,
       description: seller.store_description,
       image: seller.store_logo,
-      address: seller.address ? {
-        "@type": "PostalAddress",
-        streetAddress: seller.address,
-      } : undefined,
+      address: seller.address ? { "@type": "PostalAddress", streetAddress: seller.address } : undefined,
       aggregateRating: seller.reviews_count > 0 ? {
         "@type": "AggregateRating",
         ratingValue: seller.reviews_avg_rating,
@@ -449,6 +440,7 @@ const SellerProfile = () => {
     image: seller?.store_logo,
     schema: sellerSchema,
   });
+
 
   return (
     <>
@@ -641,52 +633,34 @@ const SellerProfile = () => {
             </div>
           </div>
 
-          {/* Main Content (Tabs) – responsive, unchanged */}
+          {/* Main Content (Tabs) */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
             <Tab.Group>
               <div className="border-b border-gray-200 overflow-x-auto">
                 <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
-                  <Tab
-                    className={({ selected }) =>
-                      classNames(
-                        selected
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                      )
-                    }
-                  >
+                  <Tab className={({ selected }) => classNames(
+                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                  )}>
                     {t("sellers.products.title") || "Products"} ({productCount})
                   </Tab>
-                  <Tab
-                    className={({ selected }) =>
-                      classNames(
-                        selected
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                      )
-                    }
-                  >
+                  <Tab className={({ selected }) => classNames(
+                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                  )}>
                     {t("sellers.reviews.title") || "Reviews"} ({reviewCount})
                   </Tab>
-                  <Tab
-                    className={({ selected }) =>
-                      classNames(
-                        selected
-                          ? 'border-green-500 text-green-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                      )
-                    }
-                  >
+                  <Tab className={({ selected }) => classNames(
+                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
+                  )}>
                     {t("sellers.about.title") || "About"}
                   </Tab>
                 </Tab.List>
               </div>
 
               <Tab.Panels className="mt-6">
-                {/* Products Tab – unchanged */}
+                {/* Products Tab */}
                 <Tab.Panel>
                   {loading.products ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -711,7 +685,7 @@ const SellerProfile = () => {
                   )}
                 </Tab.Panel>
 
-                {/* Reviews Tab – unchanged */}
+                {/* Reviews Tab */}
                 <Tab.Panel>
                   <div className="bg-white rounded-lg shadow overflow-hidden">
                     <div className="p-6">
@@ -743,24 +717,18 @@ const SellerProfile = () => {
                         >
                           <div className="flex justify-between items-center mb-4">
                             <h4 className="text-lg font-medium text-gray-900">{t("seller.write_review") || "Write a Review"}</h4>
-                            <button
-                              onClick={() => setShowReviewForm(false)}
-                              className="text-gray-400 hover:text-gray-500 transition-colors"
-                            >
+                            <button onClick={() => setShowReviewForm(false)} className="text-gray-400 hover:text-gray-500 transition-colors">
                               <XMarkIcon className="h-5 w-5" />
                             </button>
                           </div>
                           <form onSubmit={handleSubmitReview}>
                             <div className="mb-4">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Rating
-                              </label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                               {renderInteractiveStars()}
                               <p className="text-sm text-gray-500 mt-1">
                                 {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
                               </p>
                             </div>
-
                             <div className="mb-4">
                               <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
                                 {t("seller.write_review") || "Your Review"}
@@ -774,7 +742,6 @@ const SellerProfile = () => {
                                 placeholder={t("seller.rating.placeholder") || "Write your review here..."}
                               />
                             </div>
-
                             <div className="flex space-x-3">
                               <button
                                 type="submit"
@@ -802,35 +769,32 @@ const SellerProfile = () => {
                         </motion.div>
                       )}
 
-                      {loading.reviews ? (
+                      {reviewsLoading ? (
                         <div className="mt-6 space-y-6">
-                          {Array.from({ length: 3 }).map((_, index) => (
-                            <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
                           ))}
                         </div>
-                      ) : currentReviews.length === 0 ? (
+                      ) : reviewsData.data.length === 0 ? (
                         <div className="mt-8 text-center py-12">
                           <ChatBubbleLeftIcon className="mx-auto h-12 w-12 text-gray-400" />
                           <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
-                          <p className="mt-1 text-sm text-gray-500">
-                            This seller doesn't have any reviews yet.
-                          </p>
+                          <p className="mt-1 text-sm text-gray-500">This seller doesn't have any reviews yet.</p>
                         </div>
                       ) : (
                         <>
                           <div className="mt-6 space-y-6">
-                            {currentReviews.map(review => (
+                            {reviewsData.data.map(review => (
                               <ReviewCard key={review.id} review={review} />
                             ))}
                           </div>
-
-                          {reviews.length > reviewsPerPage && (
+                          {reviewsData.last_page > 1 && (
                             <div className="mt-8">
                               <Pagination
-                                itemsPerPage={reviewsPerPage}
-                                totalItems={reviews.length}
-                                currentPage={currentPage}
-                                paginate={paginate}
+                                itemsPerPage={reviewsData.per_page}
+                                totalItems={reviewsData.total}
+                                currentPage={reviewsData.current_page}
+                                paginate={handleReviewsPageChange}
                               />
                             </div>
                           )}
@@ -840,7 +804,7 @@ const SellerProfile = () => {
                   </div>
                 </Tab.Panel>
 
-                {/* About Tab – unchanged */}
+                {/* About Tab */}
                 <Tab.Panel>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
