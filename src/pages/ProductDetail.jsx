@@ -129,16 +129,11 @@ const ProductDetail = () => {
 
     setAddingToCart(true);
     try {
-      const result = await addToCart({
-        id: product.id,
-        quantity: quantity
-      });
-
-      setSuccessMessage(
-        result.message || "Product added to cart successfully!"
-      );
+      const result = await addToCart(product.id, quantity);
+      setSuccessMessage(result.message || "Product added to cart successfully!");
     } catch (error) {
       console.error("Failed to add to cart:", error);
+      // Store an object with type and message for error display
       setSuccessMessage({
         type: "error",
         message: error.message || "Failed to add product to cart"
@@ -147,6 +142,14 @@ const ProductDetail = () => {
       setAddingToCart(false);
     }
   };
+
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const handleBuyNow = async () => {
     await handleAddToCart();
@@ -324,14 +327,13 @@ const ProductDetail = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Success Message Popup */}
           {successMessage && (
-            <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md">
-              <span>{successMessage}</span>
-              <button
-                onClick={closeSuccessMessage}
-                className="ml-4 text-green-700 hover:text-green-900"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md">
+                <span>{successMessage}</span>
+                <button onClick={closeSuccessMessage} className="ml-4 text-green-700 hover:text-green-900">
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           )}
 

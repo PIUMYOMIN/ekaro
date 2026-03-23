@@ -31,10 +31,12 @@ export const CartProvider = ({ children }) => {
       resetCart();
       return;
     }
+    
     setLoading(true);
     setError(null);
+    
     try {
-      const response = await api.get('/cart');
+      const response = await api.get('/buyer/cart');
       const cartData = response.data.data || {};
       setCartItems(cartData.cart_items || []);
       setSubtotal(cartData.subtotal || 0);
@@ -61,119 +63,164 @@ export const CartProvider = ({ children }) => {
     setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
   };
 
-  // Add to cart with optimistic update
+  // Add to cart
   const addToCart = async (productId, quantity = 1) => {
-  if (!user) throw new Error('Please login');
+    if (!user) throw new Error('Please login');
 
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  // 🔥 Optimistic update
-  setTotalItems(prev => prev + quantity);
+    try {
+      const response = await api.post('/buyer/cart', {
+        product_id: productId,
+        quantity
+      });
 
-  try {
-    const response = await api.post('/cart', {
-      product_id: productId,
-      quantity
-    });
+      // Refresh cart to get accurate data
+      await fetchCartItems();
 
-    // 🔥 Always sync with backend to ensure accuracy
-    await fetchCartItems();
+      return {
+        success: true,
+        message: response.data.message || 'Added to cart'
+      };
 
-    return {
-      success: true,
-      message: response.data.message || 'Added to cart'
-    };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to add to cart';
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  } catch (err) {
-    // 🔥 Revert optimistic update safely
-    setTotalItems(prev => Math.max(prev - quantity, 0));
-
-    const msg =
-      err.response?.data?.message || 'Failed to add to cart';
-
-    setError(msg);
-    throw new Error(msg);
-
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // Update quantity with optimistic update
+  // Update quantity
   const updateQuantity = async (cartItemId, newQuantity) => {
-    const itemIndex = cartItems.findIndex(item => item.id === cartItemId);
-    if (itemIndex === -1) return;
-
-    const oldQuantity = cartItems[itemIndex].quantity;
-    const quantityDiff = newQuantity - oldQuantity;
+    if (!user) throw new Error('Please login');
+    
+    // Find current item
+    const currentItem = cartItems.find(item => item.id === cartItemId);
+    if (!currentItem) return;
 
     // Optimistic update
-    setTotalItems(prev => prev + quantityDiff);
-    // Also update the item locally (optional, but better)
-    const updatedItems = [...cartItems];
-    updatedItems[itemIndex].quantity = newQuantity;
-    updatedItems[itemIndex].subtotal = updatedItems[itemIndex].price * newQuantity;
+    const oldCartItems = [...cartItems];
+    const oldTotalItems = totalItems;
+    const oldSubtotal = subtotal;
+    
+    const updatedItems = cartItems.map(item => 
+      item.id === cartItemId 
+        ? { ...item, quantity: newQuantity, subtotal: item.price * newQuantity }
+        : item
+    );
+    
+    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const newTotalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
+    
     setCartItems(updatedItems);
+    setSubtotal(newSubtotal);
+    setTotalItems(newTotalItems);
+    setCartSummary(prev => ({
+      ...prev,
+      subtotal: newSubtotal,
+      tax: newSubtotal * prev.tax_rate,
+      total: newSubtotal + prev.shipping_fee + (newSubtotal * prev.tax_rate)
+    }));
 
-    setLoading(true);
     try {
-      await api.put(`/cart/${cartItemId}`, { quantity: newQuantity });
-      await fetchCartItems(); // sync
+      const response = await api.put(`/buyer/cart/${cartItemId}`, { quantity: newQuantity });
+      await fetchCartItems();
+      return response.data;
     } catch (err) {
-      // Revert
-      setTotalItems(prev => prev - quantityDiff);
-      await fetchCartItems(); // fetch actual state
-      const msg = err.response?.data?.message || 'Failed to update';
+      // Revert on error
+      setCartItems(oldCartItems);
+      setSubtotal(oldSubtotal);
+      setTotalItems(oldTotalItems);
+      await fetchCartItems();
+      
+      const msg = err.response?.data?.message || 'Failed to update quantity';
       setError(msg);
       throw new Error(msg);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Remove from cart
   const removeFromCart = async (cartItemId) => {
-    const item = cartItems.find(i => i.id === cartItemId);
-    if (!item) return;
+    if (!user) throw new Error('Please login');
+    
+    // Find current item
+    const currentItem = cartItems.find(item => item.id === cartItemId);
+    if (!currentItem) return;
 
-    // Optimistic remove
-    setTotalItems(prev => prev - item.quantity);
-    setCartItems(prev => prev.filter(i => i.id !== cartItemId));
+    // Optimistic update
+    const oldCartItems = [...cartItems];
+    const oldTotalItems = totalItems;
+    const oldSubtotal = subtotal;
+    
+    const updatedItems = cartItems.filter(item => item.id !== cartItemId);
+    const newSubtotal = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const newTotalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
+    
+    setCartItems(updatedItems);
+    setSubtotal(newSubtotal);
+    setTotalItems(newTotalItems);
+    setCartSummary(prev => ({
+      ...prev,
+      subtotal: newSubtotal,
+      tax: newSubtotal * prev.tax_rate,
+      total: newSubtotal + prev.shipping_fee + (newSubtotal * prev.tax_rate)
+    }));
 
-    setLoading(true);
     try {
-      await api.delete(`/cart/${cartItemId}`);
+      const response = await api.delete(`/buyer/cart/${cartItemId}`);
       await fetchCartItems();
+      return response.data;
     } catch (err) {
+      // Revert on error
+      setCartItems(oldCartItems);
+      setSubtotal(oldSubtotal);
+      setTotalItems(oldTotalItems);
       await fetchCartItems();
-      const msg = err.response?.data?.message || 'Failed to remove';
+      
+      const msg = err.response?.data?.message || 'Failed to remove item';
       setError(msg);
       throw new Error(msg);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Clear cart
   const clearCart = async () => {
-    // Optimistic clear
-    const oldTotal = totalItems;
-    setTotalItems(0);
-    setCartItems([]);
-    setSubtotal(0);
-    setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+    if (!user) throw new Error('Please login');
 
-    setLoading(true);
+    // Optimistic clear
+    const oldCartItems = [...cartItems];
+    const oldTotalItems = totalItems;
+    const oldSubtotal = subtotal;
+    const oldCartSummary = { ...cartSummary };
+    
+    setCartItems([]);
+    setTotalItems(0);
+    setSubtotal(0);
+    setCartSummary({
+      shipping_fee: 0,
+      tax_rate: 0,
+      tax: 0,
+      total: 0
+    });
+
     try {
-      await api.post('/cart/clear');
+      const response = await api.post('/buyer/cart/clear');
       await fetchCartItems();
+      return response.data;
     } catch (err) {
-      setTotalItems(oldTotal);
+      // Revert on error
+      setCartItems(oldCartItems);
+      setTotalItems(oldTotalItems);
+      setSubtotal(oldSubtotal);
+      setCartSummary(oldCartSummary);
       await fetchCartItems();
-      const msg = err.response?.data?.message || 'Failed to clear';
+      
+      const msg = err.response?.data?.message || 'Failed to clear cart';
       setError(msg);
       throw new Error(msg);
-    } finally {
-      setLoading(false);
     }
   };
 

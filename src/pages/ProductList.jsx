@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 import ProductCard from "../components/ui/ProductCard";
 import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
-import SEO from "../components/SEO/SEO";
 import useSEO from "../hooks/useSEO";
+import { useCart } from "../context/CartContext";
 
 const ProductCardSkeleton = () => (
   <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full animate-pulse">
@@ -31,6 +31,10 @@ const ProductList = () => {
   const { slug_en } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
+
+  // Centered cart message state
+  const [cartMessage, setCartMessage] = useState(null);
 
   // Parse URL parameters once per location change
   const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -180,7 +184,22 @@ const ProductList = () => {
     }
   }, [page, fetchProducts]);
 
-  // Handlers
+  // Cart handler – uses context's addToCart and manages the centered message
+  const handleAddToCart = async (productId, quantity) => {
+    setCartMessage(null);
+    try {
+      const result = await addToCart(productId, quantity);
+      setCartMessage({ type: 'success', message: result.message || 'Added to cart' });
+      setTimeout(() => setCartMessage(null), 3000);
+      return result;
+    } catch (err) {
+      setCartMessage({ type: 'error', message: err.message || 'Failed to add to cart' });
+      setTimeout(() => setCartMessage(null), 3000);
+      throw err;
+    }
+  };
+
+  // Handlers for search, filters, etc.
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams(location.search);
@@ -305,6 +324,25 @@ const ProductList = () => {
     <>
       {SeoComponent}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Centered cart message */}
+        {cartMessage && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className={`px-6 py-4 rounded-lg shadow-xl max-w-md text-center pointer-events-auto ${
+              cartMessage.type === 'error'
+                ? 'bg-red-100 border border-red-400 text-red-700'
+                : 'bg-green-100 border border-green-400 text-green-700'
+            }`}>
+              <p className="text-base font-medium">{cartMessage.message}</p>
+              <button
+                onClick={() => setCartMessage(null)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Search Box */}
         <div className="mb-8">
           <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
@@ -486,7 +524,8 @@ const ProductList = () => {
                       <div key={product.id} className="col-span-1">
                         <ProductCard
                           product={product}
-                          className="w-full" // Let the card fill the column width
+                          className="w-full"
+                          onAddToCart={handleAddToCart}
                         />
                       </div>
                     ))
