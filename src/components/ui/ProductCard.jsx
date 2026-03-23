@@ -39,6 +39,7 @@ const ProductCard = ({ product, className = "" }) => {
   const [message, setMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const slug = product.slug_en || product.slug || product.id;
   const productId = product.id || product.product_id;
@@ -165,20 +166,31 @@ const ProductCard = ({ product, className = "" }) => {
       )}
 
       <motion.div
-        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full ${className}`}
-        whileHover={{ y: -5 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className={`
+          bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full 
+          transition-all duration-300 ease-out 
+          hover:shadow-xl hover:-translate-y-1
+          ${className}
+        `}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <div className="relative flex-shrink-0">
+        {/* Image Section */}
+        <div className="relative flex-shrink-0 overflow-hidden bg-gray-100">
           <Link to={`/products/${slug}`} className="block">
-            <div className="w-full sm:h-48 bg-gray-100 rounded-t-lg overflow-hidden relative">
+            <div className="relative w-full aspect-square">
               {imageUrl && !imageError ? (
                 <LazyLoadImage
                   src={imageUrl}
                   alt={product.name_en || "Product"}
                   effect="blur"
-                  className="w-full h-full object-cover"
+                  className={`
+                    w-full h-full object-cover transition-transform duration-500 ease-out
+                    ${isHovered ? 'scale-110' : 'scale-100'}
+                  `}
                   placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E"
                   onError={() => setImageError(true)}
                 />
@@ -191,120 +203,137 @@ const ProductCard = ({ product, className = "" }) => {
             </div>
           </Link>
 
-          {/* Top left badges */}
-          <div className="absolute top-1 left-1 sm:top-2 sm:left-2 flex flex-col items-start space-y-0.5 sm:space-y-1">
+          {/* Top left badges: discount and stock */}
+          <div className="absolute top-2 left-2 flex flex-col items-start space-y-1">
             {discountPercentage > 0 && product.quantity > 0 && (
-              <span className="bg-red-600 text-white text-[10px] sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
+              <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
                 -{discountPercentage}%
               </span>
             )}
             {product.quantity <= 0 && (
-              <span className="bg-red-600 text-white text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
+              <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
                 Out of Stock
               </span>
             )}
           </div>
 
-          {/* Top right row */}
-          <div className="absolute top-1 right-1 sm:top-2 sm:right-2 flex items-center space-x-0.5 sm:space-x-1">
-            <button
-              onClick={toggleWishlist}
-              className="p-1 sm:p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
-              aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              {isInWishlist ? (
-                <HeartSolid className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
-              ) : (
-                <HeartOutline className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600 hover:text-red-500" />
-              )}
-            </button>
-          </div>
+          {/* Top right wishlist button */}
+          <button
+            onClick={toggleWishlist}
+            className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {isInWishlist ? (
+              <HeartSolid className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+            ) : (
+              <HeartOutline className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 hover:text-red-500 transition-colors" />
+            )}
+          </button>
 
-          {/* Category badge */}
-          {product.category?.name_en && (
-            <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-green-600 text-white text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full">
-              {product.category.name_en}
-            </div>
-          )}
+          {/* Bottom left: Category + Condition badges (New, Sale) */}
+          <div className="absolute bottom-2 left-2 flex flex-wrap gap-1">
+            {product.category?.name_en && (
+              <span className="bg-green-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                {product.category.name_en}
+              </span>
+            )}
+            {product.is_new && (
+              <span className="bg-blue-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                New
+              </span>
+            )}
+            {product.is_on_sale && discountPercentage === 0 && (
+              <span className="bg-orange-600/90 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                Sale
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="p-2 sm:p-4 flex flex-col flex-grow">
-          <div className="flex-grow">
-            {/* Main row: product info and price - now wraps on mobile */}
-            <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-1">
-              {/* Left: product name, rating, description */}
-              <div className="flex-1 min-w-0 w-full sm:w-auto">
-                <Link to={`/products/${slug}`} className="block">
-                  <h3 className="text-sm sm:text-lg font-medium text-gray-900 hover:text-green-700 line-clamp-2 min-h-[2.5rem] sm:min-h-[3.5rem]">
-                    {product.name_en || product.name || "Unnamed Product"}
-                  </h3>
-                </Link>
-                <div className="flex items-center mt-0.5 sm:mt-2">
-                  <div className="flex">
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <StarIcon key={i} className={`h-3 w-3 sm:h-4 sm:w-4 ${i < ratingInfo.stars ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-                    ))}
-                  </div>
-                  <span className="ml-1 text-[10px] sm:text-sm text-gray-500">{ratingInfo.formatted}</span>
-                  {product.review_count > 0 && (
-                    <span className="ml-1 text-[10px] sm:text-sm text-gray-500">({product.review_count})</span>
-                  )}
-                </div>
-                {product.description_en && (
-                  <p className="mt-1 text-xs sm:text-sm text-gray-600 line-clamp-2">{product.description_en}</p>
-                )}
-              </div>
+        {/* Content Section */}
+        <div className="p-4 flex flex-col flex-grow">
+          {/* Product Info */}
+          <div className="flex-grow space-y-2">
+            <Link to={`/products/${slug}`} className="block group">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-green-700 line-clamp-2 transition-colors">
+                {product.name_en || product.name || "Unnamed Product"}
+              </h3>
+            </Link>
 
-              {/* Right: price and MOQ - full width on mobile, auto on larger screens */}
-              <div className="text-right flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0 sm:ml-2">
+            {/* Rating */}
+            <div className="flex items-center space-x-1">
+              <div className="flex items-center">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <StarIcon key={i} className={`h-3 w-3 sm:h-4 sm:w-4 ${i < ratingInfo.stars ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">{ratingInfo.formatted}</span>
+              {product.review_count > 0 && (
+                <span className="text-xs text-gray-500">({product.review_count})</span>
+              )}
+            </div>
+
+            {/* Description (optional) */}
+            {product.description_en && (
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {product.description_en}
+              </p>
+            )}
+
+            {/* Price and MOQ */}
+            <div className="flex items-baseline justify-between flex-wrap gap-1">
+              <div className="flex flex-wrap items-baseline gap-2">
                 {discountPercentage > 0 ? (
                   <>
-                    <p className="text-xs sm:text-lg font-bold text-red-600">
+                    <span className="text-lg sm:text-xl font-bold text-red-600">
                       {formatMMK(product.discount_price || (product.price * (1 - discountPercentage / 100)))}
-                    </p>
-                    <p className="text-[8px] sm:text-xs text-gray-500 line-through">{formatMMK(product.price)}</p>
+                    </span>
+                    <span className="text-xs text-gray-500 line-through">
+                      {formatMMK(product.price)}
+                    </span>
                   </>
                 ) : (
-                  <p className="text-xs sm:text-lg font-bold text-green-700">{formatMMK(product.price)}</p>
-                )}
-                {product.moq > 1 && (
-                  <p className="text-[8px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">
-                    MOQ: {product.moq} {product.min_order_unit || "units"}
-                  </p>
+                  <span className="text-lg sm:text-xl font-bold text-green-700">
+                    {formatMMK(product.price)}
+                  </span>
                 )}
               </div>
+              {product.moq > 1 && (
+                <span className="text-xs text-gray-500">
+                  MOQ: {product.moq} {product.min_order_unit || "units"}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Button */}
-          <div className="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-gray-100">
+          {/* Actions */}
+          <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
             <button
               onClick={handleAddToCart}
               disabled={!product.is_active || product.quantity <= 0 || isInCart}
-              className={`w-full rounded-md py-1.5 sm:py-2 px-4 text-xs sm:text-sm font-medium text-white whitespace-nowrap ${!product.is_active || product.quantity <= 0
-                  ? "bg-gray-400"
+              className={`
+                w-full rounded-lg py-2 px-4 text-sm font-medium text-white 
+                transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                ${!product.is_active || product.quantity <= 0
+                  ? "bg-gray-400 cursor-not-allowed"
                   : isInCart
-                    ? "bg-gray-500"
-                    : "bg-green-600 hover:bg-green-700"
-                } transition-colors`}
+                    ? "bg-gray-500 cursor-default"
+                    : "bg-green-600 hover:bg-green-700 active:bg-green-800"
+                }
+              `}
+              aria-label={buttonText}
             >
               {buttonText}
             </button>
-            <div className="flex justify-between items-center mt-1 sm:mt-2 text-[8px] sm:text-xs text-gray-500">
+
+            {/* Seller info */}
+            <div className="flex items-center justify-between text-xs text-gray-500">
               <span className="truncate max-w-[60%]">
                 {product.seller?.seller_profile?.store_name ||
                   product.seller?.store_name ||
                   product.seller?.name ||
                   "Seller"}
               </span>
-
-              <div className="flex items-center space-x-0.5 sm:space-x-1">
-                {product.is_new && <span className="bg-blue-100 text-blue-800 px-1 sm:px-2 py-0.5 rounded">New</span>}
-                {product.is_on_sale && discountPercentage === 0 && (
-                  <span className="bg-red-100 text-red-800 px-1 sm:px-2 py-0.5 rounded">Sale</span>
-                )}
-              </div>
             </div>
           </div>
         </div>

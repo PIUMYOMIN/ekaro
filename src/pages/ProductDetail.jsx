@@ -213,32 +213,29 @@ const ProductDetail = () => {
 
     setSubmittingReview(true);
     try {
-      const response = await api.post(`/products/${product.id}/reviews`, {
+      // ✅ Fix 1: Use correct endpoint (singular 'product')
+      // ✅ Fix 2: Send 'comment: reviewText' instead of 'comment' (which is undefined)
+      const response = await api.post(`/buyer/reviews/product/${product.id}`, {
         product_id: product.id,
         rating,
-        comment: reviewText
+        comment: reviewText,   // <-- This is the correct variable
       });
 
-      const newReview = {
-        ...response.data.data,
-        user: { name: user.name }
-      };
+      // Add new review to the list
+      setReviews([response.data.data, ...reviews]);
 
-      setReviews([newReview, ...reviews]);
-      setReviewText("");
-      setRating(0);
-      setShowReviewForm(false);
-
-      // Update product rating
+      // Update product rating and review count
       setProduct((prev) => ({
         ...prev,
         average_rating: response.data.product_rating,
-        review_count: prev.review_count + 1
+        review_count: response.data.product_review_count,
       }));
 
-      setSuccessMessage(
-        response.data.message || "Review submitted successfully!"
-      );
+      // Reset form
+      setReviewText("");
+      setRating(0);
+      setShowReviewForm(false);
+      setSuccessMessage(response.data.message || "Review submitted successfully!");
     } catch (error) {
       console.error("Failed to submit review:", error);
       alert(error.response?.data?.message || "Failed to submit review");
@@ -301,6 +298,20 @@ const ProductDetail = () => {
       {loading && (
         <div className="max-w-7xl mx-auto px-4 py-8 flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${successMessage.type === 'error'
+              ? 'bg-red-100 border-red-400 text-red-700'
+              : 'bg-green-100 border-green-400 text-green-700'
+            }`}>
+            <span>{typeof successMessage === 'string' ? successMessage : successMessage.message}</span>
+            <button onClick={closeSuccessMessage} className="ml-4">
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       )}
 
