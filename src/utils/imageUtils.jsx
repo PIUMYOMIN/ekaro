@@ -1,20 +1,22 @@
 const getImageUrl = (image) => {
-  if (!image) return DEFAULT_PLACEHOLDER;
-  if (typeof image === 'string') {
-    if (image.startsWith('http')) return image;
-    const cleanPath = image.replace('public/', '');
+  const formatUrl = (path) => {
+    if (path.startsWith('http')) {
+      return path;
+    }
+    const cleanPath = path.replace('public/', '');
     return `${IMAGE_BASE_URL}/${cleanPath}`;
-  }
-  if (typeof image === 'object') {
-    if (image.url) {
-      if (image.url.startsWith('http')) return image.url;
-      const cleanPath = image.url.replace('public/', '');
-      return `${IMAGE_BASE_URL}/${cleanPath}`;
+  };
+
+  if (!image) return DEFAULT_PLACEHOLDER;
+
+  const handlers = {
+    string: (img) => formatUrl(img),
+    object: (img) => {
+      const path = img.url || img.path;
+      return path ? formatUrl(path) : DEFAULT_PLACEHOLDER;
     }
-    if (image.path) {
-      const cleanPath = image.path.replace('public/', '');
-      return `${IMAGE_BASE_URL}/${cleanPath}`;
-    }
-  }
-  return DEFAULT_PLACEHOLDER;
+  };
+
+  const handler = handlers[typeof image];
+  return handler ? handler(image) : DEFAULT_PLACEHOLDER;
 };
