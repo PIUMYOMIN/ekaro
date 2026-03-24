@@ -1,3 +1,4 @@
+import { DEFAULT_PLACEHOLDER, IMAGE_BASE_URL } from '../config';
 const getImageUrl = (image) => {
   if (!image) return DEFAULT_PLACEHOLDER;
   if (typeof image === 'string') {
