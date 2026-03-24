@@ -1,3 +1,5 @@
+import { DEFAULT_PLACEHOLDER, IMAGE_BASE_URL } from '../constants';
+
 const getImageUrl = (image) => {
   if (!image) return DEFAULT_PLACEHOLDER;
   if (typeof image === 'string') {
