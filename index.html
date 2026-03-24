@@ -1,196 +1,92 @@
 <!DOCTYPE html>
-<html lang="{{lang}}">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
+
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Page specific (filled by server) -->
-  <title>{{pageTitle}}</title>
-  <meta name="description" content="{{pageDescription}}">
-  <meta name="keywords" content="{{pageKeywords}}">
-  <link rel="canonical" href="{{pageUrl}}">
+  <!-- Default fallback title -->
+  <title>Pyonea Marketplace | Buy & Sell Products in Myanmar</title>
+  
+  <!-- Default description fallback -->
+  <meta name="description"
+    content="Buy and sell products easily across Myanmar with Pyonea marketplace. Discover trusted sellers and great deals." />
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="https://pyonea.com/" />
+  
+  <!-- hreflang fallback -->
+  <link rel="alternate" hreflang="en" href="https://pyonea.com/" />
+  <link rel="alternate" hreflang="my" href="https://pyonea.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://pyonea.com/" />
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Pyonea Marketplace" />
+  <meta property="og:description" content="Buy and sell products easily across Myanmar with Pyonea marketplace." />
+  <meta property="og:image" content="https://pyonea.com/logo.png" />
+  <meta property="og:url" content="https://pyonea.com/" />
+  <meta property="og:type" content="website" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Pyonea Marketplace" />
+  <meta name="twitter:description" content="Buy and sell products easily across Myanmar with Pyonea marketplace." />
+  <meta name="twitter:image" content="https://pyonea.com/logo.png" />
+  
+  <!-- Performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- hreflang for multilingual support (adjust URLs to your language structure) -->
-  <link rel="alternate" hreflang="en" href="https://pyonea.com{{canonicalPath}}" />
-  <link rel="alternate" hreflang="my" href="https://pyonea.com/my{{canonicalPath}}" />
-  <link rel="alternate" hreflang="x-default" href="https://pyonea.com{{canonicalPath}}" />
-  
-  <!-- Open Graph for social sharing -->
-  <meta property="og:title" content="{{pageTitle}}">
-  <meta property="og:description" content="{{pageDescription}}">
-  <meta property="og:image" content="{{pageImage}}">
-  <meta property="og:url" content="{{pageUrl}}">
-  <meta property="og:site_name" content="Pyonea" />
-  <meta property="og:type" content="{{pageType}}">
-  <meta property="og:site_name" content="Pyonea Marketplace">
+  <!-- Icons -->
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{pageTitle}}">
-  <meta name="twitter:description" content="{{pageDescription}}">
-  <meta name="twitter:image" content="{{pageImage}}">
-  <meta name="twitter:site" content="@pyonea">
-
-  <!-- Favicon / web app icons -->
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <!-- Manifest -->
   <link rel="manifest" href="/manifest.json" />
 
   <!-- Robots -->
-  <link rel="robots" href="/robots.txt" />
+  <meta name="robots" content="index, follow" />
 
-  <!-- JSON‑LD Structured Data -->
+  <!-- Base JSON-LD -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {{! Always present: Organization }}
-      {
-        "@type": "Organization",
-        "name": "Pyonea Marketplace",
-        "url": "https://pyonea.com",
-        "logo": "https://pyonea.com/logo.png",
-        "sameAs": [
-          "https://www.facebook.com/pyonea",
-          "https://twitter.com/pyonea",
-          "https://www.instagram.com/pyonea"
-        ]
-      },
-      {{! Always present: WebSite }}
-      {
-        "@type": "WebSite",
-        "name": "Pyonea Marketplace",
-        "url": "https://pyonea.com",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://pyonea.com/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        }
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "name": "Pyonea Marketplace",
+      "url": "https://pyonea.com",
+      "logo": "https://pyonea.com/logo.png"
+    },
+    {
+      "@type": "WebSite",
+      "name": "Pyonea Marketplace",
+      "url": "https://pyonea.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target":
+        "https://pyonea.com/search?q={search_term_string}",
+        "query-input":
+        "required name=search_term_string"
       }
+    }
+  ]
+}
+</script>
 
-      {{! BreadcrumbList (if breadcrumbs are provided) }}
-      {{#if breadcrumbs}}
-      ,{
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          {{#each breadcrumbs}}
-          {
-            "@type": "ListItem",
-            "position": {{add @index 1}},  {{! positions start at 1 }}
-            "name": "{{this.name}}",
-            "item": "https://pyonea.com{{this.url}}"
-          }{{#unless @last}},{{/unless}}
-          {{/each}}
-        ]
-      }
-      {{/if}}
-
-      {{! For category listing page (multiple categories) – use ItemList }}
-      {{#if categories}}
-      ,{
-        "@type": "ItemList",
-        "itemListElement": [
-          {{#each categories}}
-          {
-            "@type": "ListItem",
-            "position": {{add @index 1}},
-            "url": "https://pyonea.com/categories/{{this.slug}}",
-            "name": "{{this.name}}"
-          }{{#unless @last}},{{/unless}}
-          {{/each}}
-        ]
-      }
-      {{/if}}
-
-      {{! For product detail page }}
-      {{#if product}}
-      ,{
-        "@type": "Product",
-        "name": "{{product.name}}",
-        "image": [
-          {{#each product.images}}"{{this.url}}"{{#unless @last}},{{/unless}}{{/each}}
-        ],
-        "description": "{{product.description}}",
-        "sku": "{{product.sku}}",
-        "brand": {
-          "@type": "Brand",
-          "name": "{{product.brand}}"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": "https://pyonea.com/products/{{product.slug}}",
-          "priceCurrency": "MMK",
-          "price": "{{product.price}}",
-          "availability": "{{#if product.inStock}}https://schema.org/InStock{{else}}https://schema.org/OutOfStock{{/if}}",
-          "itemCondition": "https://schema.org/NewCondition"
-        }
-        {{#if product.review_count}}
-        ,"aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "{{product.average_rating}}",
-          "reviewCount": "{{product.review_count}}"
-        }
-        {{/if}}
-        {{#if product.reviews}}
-        ,"review": [
-          {{#each product.reviews}}
-          {
-            "@type": "Review",
-            "author": { "@type": "Person", "name": "{{this.user_name}}" },
-            "datePublished": "{{this.created_at}}",
-            "reviewBody": "{{this.comment}}",
-            "reviewRating": {
-              "@type": "Rating",
-              "ratingValue": "{{this.rating}}",
-              "bestRating": "5",
-              "worstRating": "1"
-            }
-          }{{#unless @last}},{{/unless}}
-          {{/each}}
-        ]
-        {{/if}}
-      }
-      {{/if}}
-
-      {{! For seller profile page }}
-      {{#if seller}}
-      ,{
-        "@type": "{{#if seller.hasStorefront}}LocalBusiness{{else}}Organization{{/if}}",
-        "name": "{{seller.store_name}}",
-        "url": "https://pyonea.com/sellers/{{seller.slug}}",
-        "description": "{{seller.store_description}}",
-        "image": "{{seller.store_logo}}"
-        {{#if seller.address}}
-        ,"address": {
-          "@type": "PostalAddress",
-          "addressLocality": "{{seller.city}}",
-          "addressRegion": "{{seller.state}}",
-          "addressCountry": "MM"
-        }
-        {{/if}}
-        {{#if seller.sameAs}}
-        ,"sameAs": [
-          {{#each seller.sameAs}}"{{this}}"{{#unless @last}},{{/unless}}{{/each}}
-        ]
-        {{/if}}
-      }
-      {{/if}}
-    ]
-  }
-  </script>
 </head>
 
 <body>
+
   <div id="root"></div>
+
   <script type="module" src="/src/main.jsx"></script>
+
 </body>
 
 </html>

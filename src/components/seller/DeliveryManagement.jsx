@@ -55,10 +55,10 @@ const DeliveryManagement = ({ refreshData }) => {
         platformFee = calculatePlatformFee();
       }
 
-      const response = await api.post(`/orders/${order.id}/delivery-method`, {
+      const response = await api.post(`/seller/delivery/${order.id}/delivery-method`, {
         delivery_method: method,
         platform_delivery_fee: platformFee,
-        pickup_address: "Supplier Warehouse, Yangon, Myanmar" // This should come from seller profile
+        pickup_address: "Supplier Warehouse, Yangon, Myanmar"
       });
 
       if (response.data.success) {

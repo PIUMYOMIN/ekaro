@@ -386,6 +386,7 @@
       "review_submitted": "Review submitted successfully",
       "error_submitting": "Error submitting review. Please try again.",
       "no_reviews_found": "No reviews found",
+      "reply_to_review": "Reply to review",
       "total_reviews": "Total Reviews"
     },
     "rating": {

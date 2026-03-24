@@ -84,6 +84,7 @@ const ProductDetail = () => {
           images: formattedImages,
           specifications: formattedSpecifications,
           review_count: productData.review_count || 0,
+          average_rating: parseFloat(productData.average_rating) || 0,
         });
 
         setReviews(productResponse.data.data.reviews || []);
@@ -227,7 +228,7 @@ const ProductDetail = () => {
       // Update product rating and review count
       setProduct((prev) => ({
         ...prev,
-        average_rating: response.data.product_rating,
+        average_rating: parseFloat(response.data.product_rating) || 0,
         review_count: response.data.product_review_count,
       }));
 
