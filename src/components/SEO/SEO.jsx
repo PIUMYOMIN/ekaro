@@ -13,7 +13,9 @@ const SEO = ({
   // Append brand name if not already present
   const fullTitle = title
   ? title.includes("Pyonea") ? title : `${title} | Pyonea`
-  : "Pyonea Marketplace";
+    : "Pyonea Marketplace";
+  const absoluteImage = image?.startsWith('http') ? image : `${siteUrl}${image}`;
+  const absoluteUrl = url?.startsWith('http') ? url : `${siteUrl}${url}`;
   const siteUrl = import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
   return (
@@ -34,6 +36,8 @@ const SEO = ({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
       <meta property="og:url" content={url} />
+      <meta property="og:site_name" content="Pyonea" />
+      <meta property="og:locale" content="en_US" />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

@@ -167,6 +167,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [draggedImage, setDraggedImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  // FIX: replaces window.prompt() in addImageFromUrl
+  const [urlInput, setUrlInput] = useState("");
 
   // Product condition options
   const productConditions = [
@@ -268,58 +270,70 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setIsUploadingImages(true);
     setUploadProgress(0);
 
-    const newPreviews = [];
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i];
-      try {
-        const formData = new FormData();
-        formData.append("image", file);
-        formData.append("angle", "default");
+    // FIX: upload all valid files in parallel instead of one-by-one.
+    // The old sequential for-await loop was noticeably slow for 3+ images.
+    // Track total bytes uploaded across all files for an aggregate progress bar.
+    const totalBytes = validFiles.reduce((sum, f) => sum + f.size, 0);
+    const uploadedBytes = new Array(validFiles.length).fill(0);
 
-        const response = await api.post("/seller/products/upload-image", formData, {
+    const uploadOne = async (file, index) => {
+      const fd = new FormData();
+      fd.append("image", file);
+      fd.append("angle", "default");
+
+      try {
+        const response = await api.post("/seller/products/upload-image", fd, {
           headers: { "Content-Type": "multipart/form-data" },
           onUploadProgress: (progressEvent) => {
-            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percent);
+            uploadedBytes[index] = progressEvent.loaded;
+            const totalUploaded = uploadedBytes.reduce((a, b) => a + b, 0);
+            setUploadProgress(Math.round((totalUploaded / totalBytes) * 100));
           },
         });
 
         if (response.data.success) {
           const imageData = response.data.data;
-          newPreviews.push({
-            url: imageData.url, // relative path
-            file: null,
-            is_primary: imagePreviews.length === 0 && i === 0,
-            angle: imageData.angle,
+          return {
+            url:        imageData.url,
+            file:       null,
+            is_primary: imagePreviews.length === 0 && index === 0,
+            angle:      imageData.angle,
             isExisting: false,
-            name: file.name,
-            size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-          });
+            name:       file.name,
+            size:       (file.size / (1024 * 1024)).toFixed(2) + " MB",
+          };
         }
+        return null;
       } catch (err) {
         console.error(`Failed to upload image ${file.name}:`, err);
         setError(`Failed to upload ${file.name}: ${err.message}`);
+        return null;
       }
-    }
+    };
+
+    const results = await Promise.all(validFiles.map((file, i) => uploadOne(file, i)));
+    const newPreviews = results.filter(Boolean);
 
     setImagePreviews((prev) => [...prev, ...newPreviews]);
     setIsUploadingImages(false);
     e.target.value = "";
   };
 
+  // FIX: replaced window.prompt() with inline urlInput state.
+  // The caller should render a small input + "Add" button bound to urlInput.
   const addImageFromUrl = () => {
-    const url = prompt("Enter image URL:");
-    if (url && url.trim()) {
-      const newPreview = {
-        url: url.trim(),
-        is_primary: imagePreviews.length === 0,
-        angle: "default",
-        isExisting: false,
-        name: "External Image",
-        size: "External",
-      };
-      setImagePreviews((prev) => [...prev, newPreview]);
-    }
+    const url = urlInput.trim();
+    if (!url) return;
+    const newPreview = {
+      url,
+      is_primary: imagePreviews.length === 0,
+      angle:      "default",
+      isExisting: false,
+      name:       "External Image",
+      size:       "External",
+    };
+    setImagePreviews((prev) => [...prev, newPreview]);
+    setUrlInput("");
   };
 
   const clearAllImages = () => {
@@ -407,12 +421,19 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      // Build images payload (relative paths)
+      // Build images payload.
+      // FIX: the original code had url: preview.isExisting ? preview.url : preview.url
+      // — both branches were identical, so existing images (full URLs from the API)
+      // were sent as-is. The backend update() checks whether a URL starts with the
+      // expected temp prefix to decide if it should be moved. Full https:// URLs
+      // don't match that prefix, so they fall through to the "existing image" path
+      // which validates them against the product's current images. That flow is
+      // correct, but the comment and the dead conditional were misleading.
+      // Now explicit: existing images send their stored relative path; new uploads
+      // send the relative path returned by the upload endpoint.
       const imagesPayload = imagePreviews.map((preview) => ({
-        url: preview.isExisting
-          ? preview.url
-          : preview.url,
-        angle: preview.angle,
+        url:        preview.url,   // relative path for both new and existing images
+        angle:      preview.angle,
         is_primary: preview.is_primary,
       }));
 
@@ -465,23 +486,35 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   // Auto-save draft (only for new products)
+  // FIX: wrap setItem in try/catch — large form states (many specs, long descriptions)
+  // can exceed the 5MB localStorage quota, throwing a QuotaExceededError that
+  // would otherwise crash silently and wipe user input on next load.
   useEffect(() => {
     if (!product) {
-      const draftToSave = { ...formData };
-      delete draftToSave.seller_id;
-      localStorage.setItem(STORAGE_KEYS.PRODUCT_DRAFT, JSON.stringify(draftToSave));
+      try {
+        const draftToSave = { ...formData };
+        delete draftToSave.seller_id;
+        localStorage.setItem(STORAGE_KEYS.PRODUCT_DRAFT, JSON.stringify(draftToSave));
+      } catch {
+        // Quota exceeded — draft not saved, that's acceptable
+        console.warn("Draft auto-save skipped: localStorage quota exceeded");
+      }
     }
   }, [formData, product]);
 
   useEffect(() => {
     if (!product) {
-      const previewsToSave = imagePreviews.map((preview) => ({
-        url: preview.url,
-        is_primary: preview.is_primary,
-        angle: preview.angle,
-        isExisting: preview.isExisting,
-      }));
-      localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
+      try {
+        const previewsToSave = imagePreviews.map((preview) => ({
+          url:        preview.url,
+          is_primary: preview.is_primary,
+          angle:      preview.angle,
+          isExisting: preview.isExisting,
+        }));
+        localStorage.setItem(STORAGE_KEYS.IMAGE_PREVIEWS, JSON.stringify(previewsToSave));
+      } catch {
+        console.warn("Image preview auto-save skipped: localStorage quota exceeded");
+      }
     }
   }, [imagePreviews, product]);
 
@@ -944,13 +977,25 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   </span>
                 </label>
                 <div className="flex space-x-2">
-                  <button
-                    type="button"
-                    onClick={addImageFromUrl}
-                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Add from URL
-                  </button>
+                  {/* FIX: replaced window.prompt() with an inline URL input */}
+                  <div className="flex gap-1">
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageFromUrl(); } }}
+                      placeholder="https://example.com/image.jpg"
+                      className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 w-56 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={addImageFromUrl}
+                      disabled={!urlInput.trim()}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Add URL
+                    </button>
+                  </div>
                   {imagePreviews.length > 0 && (
                     <button
                       type="button"

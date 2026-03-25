@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import SEO from "../components/SEO/seo";
+import SEO from "../components/SEO/SEO";
 
 const routeConfig = {
   "/": { type: "website", key: "home" },
@@ -63,7 +63,7 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
       image={image}
       url={`${baseUrl}${currentPath}`}
       type={routeConfig[location.pathname]?.type || "website"}
-      schema={schema}
+      schema={schemaData}
       alternateUrls={alternateUrls}
       noindex={noindex}
     />

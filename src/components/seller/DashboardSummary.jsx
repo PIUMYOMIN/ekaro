@@ -196,7 +196,12 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
-      setError("Failed to load dashboard data. Please try again.");
+      const isNetworkError = !error.response;
+      setError(
+        isNetworkError
+          ? "Cannot reach the server. Please check your internet connection and make sure the API URL is configured correctly."
+          : "Failed to load dashboard data. Please try again."
+      );
     } finally {
       setLoading(false);
     }

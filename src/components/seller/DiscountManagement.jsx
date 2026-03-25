@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useMemo } from "react";
+// src/components/seller/DiscountManagement.jsx
+//
+// Manages price reductions applied DIRECTLY to product prices.
+// No code entry required from the buyer — the discounted price
+// shows on the product listing automatically.
+//
+// For buyer-entered coupon codes at checkout, see CouponManagement.jsx.
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   PlusIcon,
@@ -7,267 +15,253 @@ import {
   CalendarIcon,
   TagIcon,
   CurrencyDollarIcon,
-  TicketIcon
-} from "@heroicons/react/24/solid";
+  TruckIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
 import api from "../../utils/api";
-import { useAuth } from "../../context/AuthContext"; // ✅ import auth
+import { useAuth } from "../../context/AuthContext";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+const formatDate = (d) =>
+  d ? new Date(d).toLocaleDateString() : "—";
+
+const formatMMK = (n) =>
+  n != null ? new Intl.NumberFormat("en-MM").format(n) + " MMK" : "—";
+
+const EMPTY_FORM = (isAdmin) => ({
+  name: "",
+  type: "",
+  value: "",
+  // FIX: correct field names matching the backend
+  min_order_amount: "",
+  max_uses: "",
+  max_uses_per_user: "",
+  starts_at: "",
+  expires_at: "",
+  // Sellers can only target specific_products or specific_categories
+  applicable_to: isAdmin ? "all_products" : "specific_products",
+  applicable_product_ids: [],
+  applicable_category_ids: [],
+  is_one_time_use: false,
+  is_active: true,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
 const DiscountManagement = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.roles?.includes("admin");
 
-  const [discounts, setDiscounts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [discounts, setDiscounts]         = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState("");
+  const [showForm, setShowForm]           = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget]   = useState(null);
+  const [products, setProducts]           = useState([]);
+  const [categories, setCategories]       = useState([]);
+  const [submitting, setSubmitting]       = useState(false);
+  const [formData, setFormData]           = useState(() => EMPTY_FORM(isAdmin));
 
-  // ✅ Compute a set of category IDs that actually have products from this seller
+  // Only show categories that have at least one of the seller's products
   const sellerCategoryIds = useMemo(() => {
     const ids = new Set();
-    products.forEach(product => {
-      if (product.category_id) ids.add(product.category_id);
-    });
+    products.forEach((p) => { if (p.category_id) ids.add(p.category_id); });
     return ids;
   }, [products]);
 
-  // ✅ Filter categories to only those that appear in seller's products
-  const relevantCategories = useMemo(() => {
-    return categories.filter(cat => sellerCategoryIds.has(cat.id));
-  }, [categories, sellerCategoryIds]);
+  const relevantCategories = useMemo(
+    () => categories.filter((c) => sellerCategoryIds.has(c.id)),
+    [categories, sellerCategoryIds]
+  );
 
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    type: "",
-    value: "",
-    min_order: "",
-    max_uses_total: "",
-    max_uses_per_customer: "",
-    starts_at: "",
-    expires_at: "",
-    applicable_to: isAdmin ? "all_products" : "specific_products",
-    applicable_product_ids: [],
-    applicable_category_ids: [],
-    applicable_seller_ids: [],
-    is_one_time_use: false,
-    is_active: true
-  });
+  // ── Data fetching ──────────────────────────────────────────────────────────
+
+  const fetchDiscounts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/seller/discounts");
+      // FIX: handle both paginated {data:{data:[]}} and flat {data:[]}
+      setDiscounts(res.data.data?.data ?? res.data.data ?? []);
+    } catch {
+      setError("Failed to fetch discounts");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await api.get("/seller/products");
+      setProducts(res.data.data ?? []);
+    } catch {
+      console.error("Failed to fetch products");
+    }
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await api.get("/categories");
+      setCategories(res.data.data ?? []);
+    } catch {
+      console.error("Failed to fetch categories");
+    }
+  }, []);
 
   useEffect(() => {
     fetchDiscounts();
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, [fetchDiscounts, fetchProducts, fetchCategories]);
 
-  const fetchDiscounts = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get("/seller/discounts");
-      if (response.data.success) {
-        const discountsArray = response.data.data?.data || [];
-        setDiscounts(discountsArray);
-      }
-    } catch (err) {
-      setError("Failed to fetch discounts");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ── Form helpers ──────────────────────────────────────────────────────────
 
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get("/seller/products");
-      if (response.data.success) {
-        setProducts(response.data.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch products");
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get("/categories");
-      if (response.data.success) {
-        setCategories(response.data.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories");
-    }
+  const resetForm = () => {
+    setFormData(EMPTY_FORM(isAdmin));
+    setEditingDiscount(null);
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleProductSelect = (productId) => {
-    setFormData(prev => {
-      const ids = prev.applicable_product_ids;
-      const newIds = ids.includes(productId)
-        ? ids.filter(id => id !== productId)
-        : [...ids, productId];
-      return { ...prev, applicable_product_ids: newIds };
+  const toggleSelection = (field, id) => {
+    setFormData((prev) => {
+      const ids = prev[field];
+      return {
+        ...prev,
+        [field]: ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
+      };
     });
   };
 
-  const handleCategorySelect = (categoryId) => {
-    setFormData(prev => {
-      const ids = prev.applicable_category_ids;
-      const newIds = ids.includes(categoryId)
-        ? ids.filter(id => id !== categoryId)
-        : [...ids, categoryId];
-      return { ...prev, applicable_category_ids: newIds };
+  const openEdit = (discount) => {
+    setEditingDiscount(discount);
+    setFormData({
+      name:               discount.name,
+      type:               discount.type,
+      value:              discount.value ?? "",
+      // FIX: read the correct field names from the API response
+      min_order_amount:   discount.min_order_amount ?? "",
+      max_uses:           discount.max_uses ?? "",
+      max_uses_per_user:  discount.max_uses_per_user ?? "",
+      starts_at:          discount.starts_at ? discount.starts_at.split("T")[0].split(" ")[0] : "",
+      expires_at:         discount.expires_at ? discount.expires_at.split("T")[0].split(" ")[0] : "",
+      applicable_to:      discount.applicable_to,
+      applicable_product_ids:  discount.applicable_product_ids ?? [],
+      applicable_category_ids: discount.applicable_category_ids ?? [],
+      is_one_time_use:    discount.is_one_time_use ?? false,
+      is_active:          discount.is_active ?? true,
     });
+    setShowForm(true);
   };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!formData.type) {
-      setError("Please select a discount type");
-      return;
-    }
-
+    if (!formData.type) { setError("Please select a discount type"); return; }
     if (formData.type !== "free_shipping" && !formData.value) {
       setError("Discount value is required");
       return;
     }
 
+    setSubmitting(true);
     try {
-      const submitData = {
-        name: formData.name,
-        code: formData.code || null,
-        type: formData.type,
-        value: formData.type === "free_shipping" ? null : formData.value,
-        min_order: formData.min_order || null,
-        max_uses_total: formData.max_uses_total || null,
-        max_uses_per_customer: formData.max_uses_per_customer || null,
-        starts_at: formData.starts_at ? formData.starts_at + " 00:00:00" : null,
-        expires_at: formData.expires_at ? formData.expires_at + " 23:59:59" : null,
-        applicable_to: formData.applicable_to,
-        applicable_product_ids: formData.applicable_product_ids,
-        applicable_category_ids: formData.applicable_category_ids,
-        applicable_seller_ids: formData.applicable_seller_ids,
-        is_one_time_use: formData.is_one_time_use,
-        is_active: formData.is_active
+      const payload = {
+        name:             formData.name,
+        type:             formData.type,
+        value:            formData.type === "free_shipping" ? null : parseFloat(formData.value),
+        // FIX: send correct field names — backend expects min_order_amount, max_uses, max_uses_per_user
+        min_order_amount: formData.min_order_amount ? parseFloat(formData.min_order_amount) : null,
+        max_uses:         formData.max_uses          ? parseInt(formData.max_uses, 10)         : null,
+        max_uses_per_user:formData.max_uses_per_user ? parseInt(formData.max_uses_per_user, 10): null,
+        starts_at:        formData.starts_at  ? formData.starts_at  + " 00:00:00" : null,
+        expires_at:       formData.expires_at ? formData.expires_at + " 23:59:59" : null,
+        applicable_to:    formData.applicable_to,
+        applicable_product_ids:  formData.applicable_to === "specific_products"
+                                    ? formData.applicable_product_ids : [],
+        applicable_category_ids: formData.applicable_to === "specific_categories"
+                                    ? formData.applicable_category_ids : [],
+        is_one_time_use:  formData.is_one_time_use,
+        is_active:        formData.is_active,
       };
 
-      const url = editingDiscount
-        ? `/seller/discounts/${editingDiscount.id}`
-        : "/seller/discounts";
+      const url    = editingDiscount ? `/seller/discounts/${editingDiscount.id}` : "/seller/discounts";
       const method = editingDiscount ? "put" : "post";
 
-      const response = await api[method](url, submitData);
-
-      if (response.data.success) {
+      const res = await api[method](url, payload);
+      if (res.data.success) {
         await fetchDiscounts();
         resetForm();
         setShowForm(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save discount");
+      setError(err.response?.data?.message ?? "Failed to save discount");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      code: "",
-      type: "",
-      value: "",
-      min_order: "",
-      max_uses_total: "",
-      max_uses_per_customer: "",
-      starts_at: "",
-      expires_at: "",
-      applicable_to: isAdmin ? "all_products" : "specific_products",
-      applicable_product_ids: [],
-      applicable_category_ids: [],
-      applicable_seller_ids: [],
-      is_one_time_use: false,
-      is_active: true
-    });
-    setEditingDiscount(null);
-  };
+  // ── Delete ────────────────────────────────────────────────────────────────
 
-  const editDiscount = (discount) => {
-    setEditingDiscount(discount);
-    const startsDate = discount.starts_at ? discount.starts_at.split(" ")[0] : "";
-    const expiresDate = discount.expires_at ? discount.expires_at.split(" ")[0] : "";
-
-    setFormData({
-      name: discount.name,
-      code: discount.code || "",
-      type: discount.type,
-      value: discount.value || "",
-      min_order: discount.min_order || "",
-      max_uses_total: discount.max_uses_total || "",
-      max_uses_per_customer: discount.max_uses_per_customer || "",
-      starts_at: startsDate,
-      expires_at: expiresDate,
-      applicable_to: discount.applicable_to,
-      applicable_product_ids: discount.applicable_product_ids || [],
-      applicable_category_ids: discount.applicable_category_ids || [],
-      applicable_seller_ids: discount.applicable_seller_ids || [],
-      is_one_time_use: discount.is_one_time_use || false,
-      is_active: discount.is_active
-    });
-    setShowForm(true);
-  };
-
-  const deleteDiscount = async (id) => {
-    if (window.confirm("Are you sure you want to delete this discount?")) {
-      try {
-        await api.delete(`/seller/discounts/${id}`);
-        await fetchDiscounts();
-      } catch (err) {
-        setError("Failed to delete discount");
-      }
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/seller/discounts/${deleteTarget}`);
+      await fetchDiscounts();
+    } catch {
+      setError("Failed to delete discount");
+    } finally {
+      setDeleteTarget(null);
     }
   };
+
+  // ── Toggle status (optimistic) ────────────────────────────────────────────
 
   const toggleStatus = async (discount) => {
+    setDiscounts((prev) =>
+      prev.map((d) => d.id === discount.id ? { ...d, is_active: !d.is_active } : d)
+    );
     try {
-      await api.put(`/seller/discounts/${discount.id}/toggle-status`);
-      await fetchDiscounts();
-    } catch (err) {
+      // FIX: use PATCH (matches the fixed api.php route)
+      await api.patch(`/seller/discounts/${discount.id}/toggle-status`);
+    } catch {
+      // revert on failure
+      setDiscounts((prev) =>
+        prev.map((d) => d.id === discount.id ? { ...d, is_active: discount.is_active } : d)
+      );
       setError("Failed to update discount status");
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+  // ── Applicable scope summary ──────────────────────────────────────────────
 
-  const getApplicableText = (discount) => {
-    switch (discount.applicable_to) {
-      case "all_products":
-        return "All Products";
-      case "specific_products":
-        return `${discount.applicable_product_ids?.length || 0} Products`;
-      case "specific_categories":
-        return `${discount.applicable_category_ids?.length || 0} Categories`;
-      case "specific_sellers":
-        return `${discount.applicable_seller_ids?.length || 0} Sellers`;
-      default:
-        return "N/A";
+  const scopeSummary = (d) => {
+    switch (d.applicable_to) {
+      case "all_products":        return "All products";
+      case "specific_products":   return `${d.applicable_product_ids?.length ?? 0} product(s)`;
+      case "specific_categories": return `${d.applicable_category_ids?.length ?? 0} category(s)`;
+      default:                    return "—";
     }
   };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
       </div>
     );
   }
@@ -277,450 +271,342 @@ const DiscountManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('seller.discount.title')}</h2>
-          <p className="text-gray-600">{t('seller.discount.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {t("seller.discount.title", "Product Discounts")}
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Price reductions applied directly to product listings — no code required.
+          </p>
         </div>
         <button
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+          onClick={() => { resetForm(); setShowForm((v) => !v); }}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700"
         >
           <PlusIcon className="h-5 w-5" />
-          <span>{showForm ? t('common.cancel') : t('seller.discount.create')}</span>
+          {showForm ? "Cancel" : "New Discount"}
         </button>
       </div>
 
+      {/* Error banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {t('common.error')}: {error}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex justify-between items-center text-red-700">
+          <span className="text-sm">{error}</span>
+          <button onClick={() => setError("")}><XCircleIcon className="h-5 w-5" /></button>
         </div>
       )}
 
-      {/* Discount Form */}
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Discount</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this discount? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Form */}
       {showForm && (
         <div className="bg-white rounded-lg shadow border p-6">
-          <h3 className="text-lg font-semibold mb-4">
-            {editingDiscount ? t('seller.discount.edit') : t('seller.discount.createNew')}
+          <h3 className="text-lg font-semibold mb-6">
+            {editingDiscount ? "Edit Discount" : "New Discount"}
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.name')} *
-                </label>
+            {/* Name + Type + Value */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={t('seller.discount.namePlaceholder')}
+                  type="text" name="name" value={formData.name}
+                  onChange={handleChange} required
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  placeholder="Summer Sale 20%"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.code')}
-                </label>
-                <input
-                  type="text"
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={t('seller.discount.codePlaceholder')}
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  {t('seller.discount.codeHint')}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.type')} *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                 <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-3 py-2"
+                  name="type" value={formData.type}
+                  onChange={handleChange} required
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
                 >
-                  <option value="" disabled>{t('seller.discount.selectType')}</option>
-                  <option value="percentage">{t('seller.discount.percentage')}</option>
-                  <option value="fixed">{t('seller.discount.fixed')}</option>
-                  <option value="free_shipping">{t('seller.discount.freeShipping')}</option>
+                  <option value="" disabled>Select type</option>
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Fixed amount (MMK)</option>
+                  <option value="free_shipping">Free shipping</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.type === "percentage"
-                    ? t('seller.discount.percentageValue')
-                    : formData.type === "fixed"
-                    ? t('seller.discount.fixedAmount')
-                    : t('seller.discount.value')}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {formData.type === "percentage" ? "Percentage (0–100)" : "Amount (MMK)"}
                 </label>
                 <input
-                  type="number"
-                  name="value"
-                  value={formData.value}
+                  type="number" name="value" value={formData.value}
                   onChange={handleChange}
-                  required={formData.type && formData.type !== "free_shipping"}
+                  required={!!formData.type && formData.type !== "free_shipping"}
                   disabled={!formData.type || formData.type === "free_shipping"}
-                  min="0"
-                  step="0.01"
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={
-                    formData.type === "percentage"
-                      ? t('seller.discount.percentagePlaceholder')
-                      : formData.type === "fixed"
-                      ? t('seller.discount.fixedPlaceholder')
-                      : t('seller.discount.notRequired')
-                  }
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.minOrder')}
-                </label>
-                <input
-                  type="number"
-                  name="min_order"
-                  value={formData.min_order}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={t('seller.discount.minOrderPlaceholder')}
+                  min="0" step="0.01"
+                  className="w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                  placeholder={formData.type === "percentage" ? "e.g. 20" : "e.g. 5000"}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Dates + Min order */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.startsAt')} *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Starts at *</label>
                 <input
-                  type="date"
-                  name="starts_at"
-                  value={formData.starts_at}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-3 py-2"
+                  type="date" name="starts_at" value={formData.starts_at}
+                  onChange={handleChange} required
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.expiresAt')} *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Expires at *</label>
                 <input
-                  type="date"
-                  name="expires_at"
-                  value={formData.expires_at}
-                  onChange={handleChange}
-                  required
-                  className="w-full border rounded-lg px-3 py-2"
+                  type="date" name="expires_at" value={formData.expires_at}
+                  onChange={handleChange} required
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                {/* FIX: input name is now min_order_amount (matches backend) */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Min order amount (MMK)</label>
+                <input
+                  type="number" name="min_order_amount" value={formData.min_order_amount}
+                  onChange={handleChange} min="0" step="0.01"
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  placeholder="Leave empty for no minimum"
                 />
               </div>
             </div>
 
+            {/* Usage limits */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                {/* FIX: name is max_uses (was max_uses_total) */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max total uses</label>
+                <input
+                  type="number" name="max_uses" value={formData.max_uses}
+                  onChange={handleChange} min="1"
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  placeholder="Leave empty for unlimited"
+                />
+              </div>
+              <div>
+                {/* FIX: name is max_uses_per_user (was max_uses_per_customer) */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max uses per customer</label>
+                <input
+                  type="number" name="max_uses_per_user" value={formData.max_uses_per_user}
+                  onChange={handleChange} min="1"
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  placeholder="Leave empty for unlimited"
+                />
+              </div>
+            </div>
+
+            {/* Applicable to */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('seller.discount.applicableTo')} *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Applies to *</label>
               <select
-                name="applicable_to"
-                value={formData.applicable_to}
+                name="applicable_to" value={formData.applicable_to}
                 onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
+                className="w-full border rounded-lg px-3 py-2 text-sm"
               >
-                {isAdmin ? (
-                  // Admin sees all options
-                  <>
-                    <option value="all_products">{t('seller.discount.allProducts')}</option>
-                    <option value="specific_products">{t('seller.discount.specificProducts')}</option>
-                    <option value="specific_categories">{t('seller.discount.specificCategories')}</option>
-                    <option value="specific_sellers">{t('seller.discount.specificSellers')}</option>
-                  </>
-                ) : (
-                  // Seller sees only their own options
-                  <>
-                    <option value="specific_products">{t('seller.discount.specificProducts')}</option>
-                    <option value="specific_categories">{t('seller.discount.specificCategories')}</option>
-                  </>
-                )}
+                {isAdmin && <option value="all_products">All products (store-wide)</option>}
+                <option value="specific_products">Specific products</option>
+                <option value="specific_categories">Specific categories</option>
               </select>
             </div>
 
-            {/* Specific Products Selection */}
+            {/* Product picker */}
             {formData.applicable_to === "specific_products" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.selectProducts')}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select products ({formData.applicable_product_ids.length} selected)
                 </label>
-                <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
-                  {products.length === 0 ? (
-                    <p className="text-gray-500 text-sm">{t('seller.discount.noProducts')}</p>
-                  ) : (
-                    products.map((product) => (
-                      <div key={product.id} className="flex items-center mb-2">
+                <div className="max-h-52 overflow-y-auto border rounded-lg divide-y">
+                  {products.length === 0
+                    ? <p className="p-3 text-sm text-gray-500">No products found</p>
+                    : products.map((p) => (
+                      <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
                         <input
                           type="checkbox"
-                          id={`product-${product.id}`}
-                          checked={formData.applicable_product_ids.includes(product.id)}
-                          onChange={() => handleProductSelect(product.id)}
+                          checked={formData.applicable_product_ids.includes(p.id)}
+                          onChange={() => toggleSelection("applicable_product_ids", p.id)}
                           className="h-4 w-4 text-green-600"
                         />
-                        <label htmlFor={`product-${product.id}`} className="ml-2 text-sm">
-                          {product.name_en} - {product.price} MMK
-                        </label>
-                      </div>
+                        <span className="text-sm flex-1">{p.name_en}</span>
+                        <span className="text-xs text-gray-400">{formatMMK(p.price)}</span>
+                      </label>
                     ))
-                  )}
+                  }
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {t('seller.discount.selected')}: {formData.applicable_product_ids.length} {t('seller.discount.products')}
-                </p>
               </div>
             )}
 
-            {/* Specific Categories Selection */}
+            {/* Category picker */}
             {formData.applicable_to === "specific_categories" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.selectCategories')}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select categories ({formData.applicable_category_ids.length} selected)
                 </label>
-                <div className="max-h-60 overflow-y-auto border rounded-lg p-3">
-                  {relevantCategories.length === 0 ? (
-                    <p className="text-gray-500 text-sm">
-                      {t('seller.discount.noCategories')}
-                    </p>
-                  ) : (
-                    relevantCategories.map((category) => (
-                      <div key={category.id} className="flex items-center mb-2">
+                <div className="max-h-52 overflow-y-auto border rounded-lg divide-y">
+                  {relevantCategories.length === 0
+                    ? <p className="p-3 text-sm text-gray-500">No relevant categories found</p>
+                    : relevantCategories.map((c) => (
+                      <label key={c.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
                         <input
                           type="checkbox"
-                          id={`category-${category.id}`}
-                          checked={formData.applicable_category_ids.includes(category.id)}
-                          onChange={() => handleCategorySelect(category.id)}
+                          checked={formData.applicable_category_ids.includes(c.id)}
+                          onChange={() => toggleSelection("applicable_category_ids", c.id)}
                           className="h-4 w-4 text-green-600"
                         />
-                        <label htmlFor={`category-${category.id}`} className="ml-2 text-sm">
-                          {category.name_en}
-                        </label>
-                      </div>
+                        <span className="text-sm">{c.name_en}</span>
+                      </label>
                     ))
-                  )}
+                  }
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {t('seller.discount.selected')}: {formData.applicable_category_ids.length} {t('seller.discount.categories')}
-                </p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.maxTotalUses')}
-                </label>
-                <input
-                  type="number"
-                  name="max_uses_total"
-                  value={formData.max_uses_total}
-                  onChange={handleChange}
-                  min="1"
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={t('seller.discount.leaveEmpty')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('seller.discount.maxPerCustomer')}
-                </label>
-                <input
-                  type="number"
-                  name="max_uses_per_customer"
-                  value={formData.max_uses_per_customer}
-                  onChange={handleChange}
-                  min="1"
-                  className="w-full border rounded-lg px-3 py-2"
-                  placeholder={t('seller.discount.leaveEmpty')}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
+            {/* Flags */}
+            <div className="flex items-center gap-3">
               <input
-                type="checkbox"
-                id="is_one_time_use"
-                name="is_one_time_use"
-                checked={formData.is_one_time_use}
-                onChange={handleChange}
+                type="checkbox" id="is_one_time_use" name="is_one_time_use"
+                checked={formData.is_one_time_use} onChange={handleChange}
                 className="h-4 w-4 text-green-600"
               />
-              <label htmlFor="is_one_time_use" className="text-sm">
-                {t('seller.discount.oneTimeUse')}
+              <label htmlFor="is_one_time_use" className="text-sm text-gray-700">
+                One-time use per customer
               </label>
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  resetForm();
-                }}
-                className="px-4 py-2 border rounded-lg"
+                onClick={() => { setShowForm(false); resetForm(); }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
               >
-                {t('common.cancel')}
+                Cancel
               </button>
               <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit" disabled={submitting}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
               >
-                {submitting ? t('seller.discount.creating') : editingDiscount ? t('seller.discount.update') : t('seller.discount.create')}
+                {submitting ? "Saving…" : editingDiscount ? "Update Discount" : "Create Discount"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Discounts List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('seller.discount.discount')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('seller.discount.type')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('seller.discount.applicable')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('seller.discount.validity')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('seller.discount.status')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  {t('common.actions')}
-                </th>
+                {["Name", "Type / Value", "Applies to", "Validity", "Uses", "Status", "Actions"].map((h) => (
+                  <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {discounts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
-                    {t('seller.discount.no_discounts')}
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-400 text-sm">
+                    No discounts yet. Create one to get started.
                   </td>
                 </tr>
-              ) : (
-                discounts.map((discount) => (
-                  <tr key={discount.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium text-gray-900">{discount.name}</div>
-                        {discount.code && (
-                          <div className="text-sm text-gray-500">{t('seller.discount.code')}: {discount.code}</div>
-                        )}
+              ) : discounts.map((d) => (
+                <tr key={d.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{d.name}</td>
+
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      {d.type === "percentage" && <TagIcon className="h-4 w-4 text-blue-500" />}
+                      {d.type === "fixed"       && <CurrencyDollarIcon className="h-4 w-4 text-green-500" />}
+                      {d.type === "free_shipping" && <TruckIcon className="h-4 w-4 text-purple-500" />}
+                      <span>
+                        {d.type === "percentage"   ? `${d.value}%`
+                         : d.type === "fixed"      ? formatMMK(d.value)
+                         : "Free shipping"}
+                      </span>
+                    </div>
+                    {/* FIX: read min_order_amount (correct field name) */}
+                    {d.min_order_amount && (
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        Min: {formatMMK(d.min_order_amount)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {discount.type === "percentage" && (
-                          <TagIcon className="h-5 w-5 text-blue-500 mr-2" />
-                        )}
-                        {discount.type === "fixed" && (
-                          <CurrencyDollarIcon className="h-5 w-5 text-green-500 mr-2" />
-                        )}
-                        {discount.type === "free_shipping" && (
-                          <TicketIcon className="h-5 w-5 text-purple-500 mr-2" />
-                        )}
-                        <div>
-                          <div className="font-medium">
-                            {discount.type === "percentage"
-                              ? `${discount.value}%`
-                              : discount.type === "fixed"
-                              ? `${discount.value} MMK`
-                              : "Free Shipping"}
-                          </div>
-                          {discount.min_order && (
-                            <div className="text-sm text-gray-500">
-                              {t('seller.discount.min')}: {discount.min_order} MMK
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">{getApplicableText(discount)}</div>
-                      {discount.max_uses_total && (
-                        <div className="text-xs text-gray-500">
-                          {t('seller.discount.used')}: {discount.used_count || 0}/{discount.max_uses_total}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="flex items-center">
-                          <CalendarIcon className="h-4 w-4 mr-1 text-gray-400" />
-                          {formatDate(discount.starts_at)}
-                        </div>
-                        <div className="flex items-center">
-                          <CalendarIcon className="h-4 w-4 mr-1 text-gray-400" />
-                          {formatDate(discount.expires_at)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => toggleStatus(discount)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          discount.is_active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {discount.is_active ? t('seller.discount.active') : t('seller.discount.inactive')}
+                    )}
+                  </td>
+
+                  <td className="px-6 py-4 text-sm text-gray-600">{scopeSummary(d)}</td>
+
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      {formatDate(d.starts_at)}
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      {formatDate(d.expires_at)}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {/* FIX: read max_uses (was max_uses_total) */}
+                    {d.max_uses ? `${d.used_count ?? 0} / ${d.max_uses}` : `${d.used_count ?? 0} / ∞`}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => toggleStatus(d)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        d.is_active
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {d.is_active ? "Active" : "Inactive"}
+                    </button>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(d)} className="text-green-600 hover:text-green-800" title="Edit">
+                        <PencilIcon className="h-5 w-5" />
                       </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => editDiscount(discount)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Edit"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => deleteDiscount(discount.id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                      <button onClick={() => setDeleteTarget(d.id)} className="text-red-500 hover:text-red-700" title="Delete">
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -43,6 +43,8 @@ const ProductManagement = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
+  // FIX: replaces window.confirm for image deletion
+  const [deleteImageTarget, setDeleteImageTarget] = useState(null); // { product, imageIndex }
 
   // --------------------- Data fetching (initial & refresh) --------------------
   const fetchProducts = useCallback(async (showLoading = true) => {
@@ -110,7 +112,7 @@ const ProductManagement = () => {
     } catch (error) {
       console.error("Delete error:", error);
       fetchProducts(true);
-      alert(error.response?.data?.message || "Failed to delete product");
+      setError(error.response?.data?.message || "Failed to delete product");
     }
   };
 
@@ -133,14 +135,16 @@ const ProductManagement = () => {
     setStatusTarget(null);
 
     try {
-      await api.put(`/products/${selectedProduct.id}`, { is_active: newStatus });
+      // FIX: was calling PUT /products/{id} which doesn't exist for sellers.
+      // The correct seller endpoint is PUT /seller/products/{id}.
+      await api.put(`/seller/products/${selectedProduct.id}`, { is_active: newStatus });
       // Optionally refetch in background
       fetchProducts(false);
     } catch (error) {
       console.error("Status update error:", error);
       // Revert
       updateProductInState(originalProduct);
-      alert(error.response?.data?.message || "Failed to update product status");
+      setError(error.response?.data?.message || "Failed to update product status");
     }
   };
 
@@ -178,33 +182,39 @@ const ProductManagement = () => {
     updateProductInState({ ...product, images: updatedImages });
 
     try {
-      await api.post(`/products/${product.id}/set-primary-image/${imageIndex}`);
+      // FIX: was /products/{id}/... — correct seller route is /seller/products/{id}/...
+      await api.post(`/seller/products/${product.id}/set-primary-image/${imageIndex}`);
       // Background sync
       fetchProducts(false);
     } catch (err) {
       console.error("Error setting primary image:", err);
       // Revert
       updateProductInState({ ...product, images: originalImages });
-      alert(err.response?.data?.message || "Failed to set primary image");
+      setError(err.response?.data?.message || "Failed to set primary image");
     }
   };
 
   const deleteImage = async (product, imageIndex) => {
-    if (!window.confirm("Are you sure you want to delete this image?")) return;
+    // FIX: replaced window.confirm with inline modal state
+    setDeleteImageTarget({ product, imageIndex });
+  };
+
+  const confirmDeleteImage = async () => {
+    if (!deleteImageTarget) return;
+    const { product, imageIndex } = deleteImageTarget;
+    setDeleteImageTarget(null);
+
     const originalImages = [...product.images];
-    // Optimistically remove
     const updatedImages = product.images.filter((_, idx) => idx !== imageIndex);
     updateProductInState({ ...product, images: updatedImages });
 
     try {
-      await api.delete(`/products/${product.id}/images/${imageIndex}`);
-      // Background sync
+      await api.delete(`/seller/products/${product.id}/images/${imageIndex}`);
       fetchProducts(false);
     } catch (err) {
       console.error("Error deleting image:", err);
-      // Revert
       updateProductInState({ ...product, images: originalImages });
-      alert(err.response?.data?.message || "Failed to delete image");
+      setError(err.response?.data?.message || "Failed to delete image");
     }
   };
 
@@ -213,7 +223,8 @@ const ProductManagement = () => {
     files.forEach(file => formData.append("images[]", file));
 
     try {
-      const response = await api.post(`/products/${product.id}/upload-image`, formData, {
+      // FIX: was /products/{id}/upload-image — correct seller route is /seller/products/{id}/upload-image
+      const response = await api.post(`/seller/products/${product.id}/upload-image`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       if (response.data.success) {
@@ -222,7 +233,7 @@ const ProductManagement = () => {
       }
     } catch (err) {
       console.error("Error uploading images:", err);
-      alert(err.response?.data?.message || "Failed to upload images");
+      setError(err.response?.data?.message || "Failed to upload images");
     }
   };
 
@@ -402,6 +413,33 @@ const ProductManagement = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Delete image confirmation modal ── */}
+      {deleteImageTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Image</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this image? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteImageTarget(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteImage}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
@@ -417,7 +455,7 @@ const ProductManagement = () => {
             {t("seller.product.refresh")}
           </button>
           <button
-            onClick={() => navigate("/products/create")}
+            onClick={() => navigate("/seller/products/create")}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />

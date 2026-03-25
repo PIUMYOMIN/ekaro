@@ -73,7 +73,11 @@ const AdminDashboard = () => {
         const response = await api.get("/admin");
         setDashboardData(response.data);
       } catch (error) {
-        setDashboardError(error);
+        const isNetworkError = !error.response;
+        const friendlyError = isNetworkError
+          ? new Error("Cannot reach the server. Check your internet connection and that VITE_API_URL points to the live API, not localhost.")
+          : error;
+        setDashboardError(friendlyError);
         console.error("Error fetching dashboard data:", error);
       } finally {
         setIsDashboardLoading(false);

@@ -32,6 +32,12 @@ const ProductManagement = () => {
   const [bulkAction, setBulkAction] = useState("");
   const navigate = useNavigate();
 
+  // Modal state — replaces alert/confirm/prompt
+  const [deleteModal, setDeleteModal]   = useState(null);  // productId | null
+  const [rejectModal, setRejectModal]   = useState(null);  // productId | null
+  const [rejectReason, setRejectReason] = useState("");
+  const [bulkModal, setBulkModal]       = useState(false);
+
   // Fetch products (admin endpoint)
   const fetchProducts = async () => {
     try {
@@ -88,9 +94,10 @@ const ProductManagement = () => {
   // Handle product status change (active/inactive)
   const handleProductStatus = async (productId, isActive) => {
     try {
-      await api.put(`/products/${productId}`, {
-        is_active: isActive
-      });
+      // FIX: was calling PUT /products/{id} which is the seller-scoped update endpoint.
+      // Admins always get 404 from that route because it does where('seller_id', Auth::id()).
+      // Use the dedicated admin toggle-status route instead.
+      await api.patch(`/admin/products/${productId}/toggle-status`);
 
       // Update local state
       setProducts(prev => prev.map(product =>
@@ -98,11 +105,9 @@ const ProductManagement = () => {
           ? { ...product, is_active: isActive }
           : product
       ));
-
-      alert(`Product ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error("Failed to update product status:", error);
-      alert(error.response?.data?.message || "Failed to update product status");
+      setError(error.response?.data?.message || "Failed to update product status");
     }
   };
 
@@ -111,75 +116,75 @@ const ProductManagement = () => {
     if (!window.confirm("Are you sure you want to approve this product?")) return;
     try {
       await api.post(`/admin/products/${productId}/approve`);
-      await fetchProducts(); // refresh
-      alert("Product approved successfully");
+      await fetchProducts();
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to approve product");
+      setError(error.response?.data?.message || "Failed to approve product");
     }
   };
 
   // Reject product
-  const handleReject = async (productId) => {
-    const reason = window.prompt("Please enter rejection reason (optional):");
-    if (reason === null) return;
+  const handleReject = async () => {
+    if (!rejectModal) return;
     try {
-      await api.post(`/admin/products/${productId}/reject`, { reason });
+      await api.post(`/admin/products/${rejectModal}/reject`, { reason: rejectReason });
       await fetchProducts();
-      alert("Product rejected");
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to reject product");
+      setError(error.response?.data?.message || "Failed to reject product");
+    } finally {
+      setRejectModal(null);
+      setRejectReason("");
     }
   };
 
   // Handle product deletion
-  const handleDelete = async (productId) => {
-    if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
-      try {
-        await api.delete(`/products/${productId}`);
-        alert("Product deleted successfully");
-        fetchProducts(); // Refresh the list
-      } catch (error) {
-        alert(error.response?.data?.message || "Failed to delete product");
-      }
+  const handleDelete = async () => {
+    if (!deleteModal) return;
+    try {
+      // FIX: admin delete can use the same /products/{id} endpoint — the
+      // destroy() method now allows admins through after the auth fix
+      await api.delete(`/products/${deleteModal}`);
+      fetchProducts();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to delete product");
+    } finally {
+      setDeleteModal(null);
     }
   };
 
   // Handle bulk actions
   const handleBulkAction = async () => {
-    if (selectedProducts.length === 0) {
-      alert("Please select products first");
-      return;
-    }
+    if (selectedProducts.length === 0) { setError("Please select products first"); return; }
+    if (!bulkAction) { setError("Please select an action"); return; }
+    setBulkModal(true);
+  };
 
-    if (!bulkAction) {
-      alert("Please select an action");
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to ${bulkAction} ${selectedProducts.length} product(s)?`)) {
-      try {
-        const promises = selectedProducts.map(productId => {
-          if (bulkAction === "delete") {
-            return api.delete(`/products/${productId}`);
-          } else if (bulkAction === "activate") {
-            return api.put(`/products/${productId}`, { is_active: true });
-          } else if (bulkAction === "deactivate") {
-            return api.put(`/products/${productId}`, { is_active: false });
-          } else if (bulkAction === "approve") {
-            return api.post(`/admin/products/${productId}/approve`);
-          } else if (bulkAction === "reject") {
-            return api.post(`/admin/products/${productId}/reject`);
-          }
-        });
-
-        await Promise.all(promises);
-        alert(`Successfully performed ${bulkAction} on ${selectedProducts.length} product(s)`);
-        fetchProducts(); // Refresh the list
-        setSelectedProducts([]);
-        setBulkAction("");
-      } catch (error) {
-        alert(error.response?.data?.message || `Failed to perform ${bulkAction} operation`);
+  const executeBulkAction = async () => {
+    setBulkModal(false);
+    try {
+      // FIX: activate/deactivate now use the correct admin toggle-status route.
+      // FIX: batch requests sequentially in chunks of 5 instead of all at once
+      // to avoid overwhelming the server on large selections.
+      const chunks = [];
+      for (let i = 0; i < selectedProducts.length; i += 5) {
+        chunks.push(selectedProducts.slice(i, i + 5));
       }
+
+      for (const chunk of chunks) {
+        await Promise.all(chunk.map(productId => {
+          if (bulkAction === "delete")     return api.delete(`/products/${productId}`);
+          if (bulkAction === "activate")   return api.patch(`/admin/products/${productId}/toggle-status`);
+          if (bulkAction === "deactivate") return api.patch(`/admin/products/${productId}/toggle-status`);
+          if (bulkAction === "approve")    return api.post(`/admin/products/${productId}/approve`);
+          if (bulkAction === "reject")     return api.post(`/admin/products/${productId}/reject`);
+          return Promise.resolve();
+        }));
+      }
+
+      fetchProducts();
+      setSelectedProducts([]);
+      setBulkAction("");
+    } catch (error) {
+      setError(error.response?.data?.message || `Failed to perform ${bulkAction} operation`);
     }
   };
 
@@ -544,21 +549,21 @@ const ProductManagement = () => {
         <div className="flex space-x-2 items-center">
           <button
             className="inline-flex items-center p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded"
-            onClick={() => navigate(`/products/${product.id}`)}
+            onClick={() => navigate(`/admin/products/${product.id}`)}
             title="View Product"
           >
             <EyeIcon className="h-4 w-4" />
           </button>
           <button
             className="inline-flex items-center p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded"
-            onClick={() => navigate(`/products/${product.id}/edit`)}
+            onClick={() => navigate(`/admin/products/${product.id}/edit`)}
             title="Edit Product"
           >
             <PencilIcon className="h-4 w-4" />
           </button>
           <button
             className="inline-flex items-center p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
-            onClick={() => handleDelete(product.id)}
+            onClick={() => setDeleteModal(product.id)}
             title="Delete Product"
           >
             <TrashIcon className="h-4 w-4" />
@@ -575,7 +580,7 @@ const ProductManagement = () => {
                 <CheckCircleIcon className="h-4 w-4" />
               </button>
               <button
-                onClick={() => handleReject(product.id)}
+                onClick={() => { setRejectModal(product.id); setRejectReason(""); }}
                 className="inline-flex items-center p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
                 title="Reject"
               >
@@ -602,6 +607,60 @@ const ProductManagement = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Delete confirmation modal ── */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Product</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this product? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reject reason modal ── */}
+      {rejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reject Product</h3>
+            <p className="text-sm text-gray-600 mb-3">Optionally provide a reason for the seller:</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              placeholder="Rejection reason (optional)"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => { setRejectModal(null); setRejectReason(""); }} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={handleReject} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Reject Product</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk action confirmation modal ── */}
+      {bulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Bulk Action</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to <strong>{bulkAction}</strong> {selectedProducts.length} product(s)?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setBulkModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={executeBulkAction} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -613,7 +672,7 @@ const ProductManagement = () => {
         <div className="flex space-x-3">
           <button
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            onClick={() => navigate("/products/create")}
+            onClick={() => navigate("/admin/products/create")}
           >
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Product
@@ -828,7 +887,7 @@ const ProductManagement = () => {
               {(!searchTerm && statusFilter === "all" && approvalFilter === "all" && categoryFilter === "all") && (
                 <button
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  onClick={() => navigate("/products/create")}
+                  onClick={() => navigate("/admin/products/create")}
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Your First Product

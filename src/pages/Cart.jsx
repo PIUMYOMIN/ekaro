@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useCart } from "../context/CartContext";
+import SEO from "../components/SEO/SEO";
 
 const Cart = () => {
   const { t } = useTranslation();
@@ -92,6 +93,7 @@ const Cart = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <SEO title="My Cart" description="Your shopping cart on Pyonea." noindex={true} />
       <div className="max-w-2xl mx-auto lg:max-w-none">
         <h1 className="text-3xl font-extrabold text-gray-900">
           Cart ({totalItems} {totalItems === 1 ? "item" : "items"})
