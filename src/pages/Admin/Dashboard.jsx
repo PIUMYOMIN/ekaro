@@ -1,6 +1,6 @@
 // pages/AdminDashboard.js (excerpt – only relevant changes shown)
 import React, { useState, useEffect } from "react";
-import { Tab } from "@headlessui/react";
+
 import {
   ChartBarIcon,
   UserGroupIcon,
@@ -407,131 +407,140 @@ const AdminDashboard = () => {
         url="/admin/dashboard"
         noindex={true}
       />
-      <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
-        <div className="flex h-screen bg-gray-50">
-          {/* Mobile sidebar toggle */}
-          <div className="md:hidden fixed top-4 left-4 z-10">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <span className="sr-only">{t("sidebar.open")}</span>
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+      <div className="flex h-screen bg-gray-50">
+        {/* Mobile sidebar toggle */}
+        <div className="md:hidden fixed top-4 left-4 z-10">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <span className="sr-only">{t("sidebar.open")}</span>
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
 
-          {/* Mobile overlay */}
-          {sidebarOpen && (
-            <div className="md:hidden fixed inset-0 z-20 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}>
-              <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
-                <Sidebar navigation={navigation} />
-              </div>
-            </div>
-          )}
-
-          {/* Desktop sidebar */}
-          <div className="hidden md:flex md:flex-shrink-0">
-            <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
-              <div className="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-                <div className="flex items-center flex-shrink-0 px-4">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
-                  <span className="ml-2 text-lg font-bold text-green-600">{t("app_name")}</span>
-                </div>
-                <nav className="mt-5 flex-1 px-2 space-y-1">
-                  <Tab.List className="space-y-1">
-                    {navigation.map((item) => (
-                      <Tab
-                        key={item.name}
-                        className={({ selected }) =>
-                          `group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left ${
-                            selected
-                              ? "bg-green-50 text-green-700"
-                              : "text-gray-600 hover:text-green-700 hover:bg-green-50"
-                          }`
-                        }
-                      >
-                        <item.icon className="mr-3 h-6 w-6" aria-hidden="true" />
-                        {item.name}
-                      </Tab>
-                    ))}
-                  </Tab.List>
-                </nav>
-              </div>
-              <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
-                <div className="flex items-center">
-                  <div className="bg-gray-200 border-2 border-dashed rounded-full w-9 h-9" />
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-700">{t("admin.user")}</p>
-                    <p className="text-xs font-medium text-gray-500">{t("admin.role")}</p>
-                  </div>
-                </div>
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-20 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}>
+            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="pt-5 pb-4 px-2">
+                {navigation.map((item, idx) => (
+                  <button
+                    key={item.name}
+                    onClick={() => { setActiveTab(idx); setSidebarOpen(false); }}
+                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left mb-1 ${
+                      activeTab === idx
+                        ? "bg-green-50 text-green-700"
+                        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-6 w-6" aria-hidden="true" />
+                    {item.name}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
+        )}
 
-          {/* Main content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="bg-white shadow-sm">
-              <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
-                <div className="relative w-full max-w-md">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder={t("search.placeholder")}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                    value={mainSearchTerm}
-                    onChange={(e) => setMainSearchTerm(e.target.value)}
-                  />
-                </div>
-                <button
-                  className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                  onClick={handleRefresh}
-                >
-                  <ArrowPathIcon className="h-4 w-4 mr-2" />
-                  {t("refresh")}
-                </button>
+        {/* Desktop sidebar */}
+        <div className="hidden md:flex md:flex-shrink-0">
+          <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
+            <div className="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+              <div className="flex items-center flex-shrink-0 px-4">
+                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
+                <span className="ml-2 text-lg font-bold text-green-600">{t("app_name")}</span>
               </div>
+              <nav className="mt-5 flex-1 px-2 space-y-1">
+                {navigation.map((item, idx) => (
+                  <button
+                    key={item.name}
+                    onClick={() => setActiveTab(idx)}
+                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left ${
+                      activeTab === idx
+                        ? "bg-green-50 text-green-700"
+                        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-6 w-6" aria-hidden="true" />
+                    {item.name}
+                  </button>
+                ))}
+              </nav>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="md:hidden mb-6">
-                  <Tab.List className="flex space-x-1 rounded-xl bg-green-100 p-1 overflow-x-auto">
-                    {navigation.map((item) => (
-                      <Tab
-                        key={item.name}
-                        className={({ selected }) =>
-                          `w-full rounded-lg py-2.5 text-sm font-medium leading-5 focus:outline-none focus:ring-2 ring-offset-2 ring-offset-green-400 ring-white ring-opacity-60 ${
-                            selected
-                              ? "bg-white shadow text-green-700"
-                              : "text-gray-600 hover:bg-white/[0.12] hover:text-green-700"
-                          }`
-                        }
-                      >
-                        <div className="flex items-center justify-center">
-                          <item.icon className="h-5 w-5 mr-2" />
-                          <span>{item.name}</span>
-                        </div>
-                      </Tab>
-                    ))}
-                  </Tab.List>
+            <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
+              <div className="flex items-center">
+                <div className="bg-gray-200 border-2 border-dashed rounded-full w-9 h-9" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-700">{t("admin.user")}</p>
+                  <p className="text-xs font-medium text-gray-500">{t("admin.role")}</p>
                 </div>
-
-                <Tab.Panels className="mt-4">
-                  {navigation.map((item, idx) => (
-                    <Tab.Panel key={idx}>{item.component}</Tab.Panel>
-                  ))}
-                </Tab.Panels>
               </div>
             </div>
           </div>
         </div>
-      </Tab.Group>
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="bg-white shadow-sm">
+            <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
+              <div className="relative w-full max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder={t("search.placeholder")}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  value={mainSearchTerm}
+                  onChange={(e) => setMainSearchTerm(e.target.value)}
+                />
+              </div>
+              <button
+                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                onClick={handleRefresh}
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-2" />
+                {t("refresh")}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto">
+              {/* Mobile tab bar — plain buttons, no HeadlessUI Tab */}
+              <div className="md:hidden mb-6">
+                <div className="flex space-x-1 rounded-xl bg-green-100 p-1 overflow-x-auto">
+                  {navigation.map((item, idx) => (
+                    <button
+                      key={item.name}
+                      onClick={() => setActiveTab(idx)}
+                      className={`flex-shrink-0 rounded-lg py-2.5 px-3 text-sm font-medium leading-5 focus:outline-none transition-all ${
+                        activeTab === idx
+                          ? "bg-white shadow text-green-700"
+                          : "text-gray-600 hover:bg-white/60 hover:text-green-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-center whitespace-nowrap">
+                        <item.icon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                        <span>{item.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Content — direct render, no Tab.Panels */}
+              <div className="mt-4">
+                {navigation[activeTab]?.component}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </>
   );
 };
