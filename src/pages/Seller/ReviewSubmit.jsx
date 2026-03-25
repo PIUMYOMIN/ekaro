@@ -47,23 +47,42 @@ const ReviewSubmit = () => {
         setError('');
         setSubmitting(true);
 
+        // FIX: check document submission status before calling the backend.
+        // submitOnboarding() validates documents_submitted server-side and returns a
+        // generic 422 if false — give the user a direct, actionable message instead.
+        const docsStatus = formData.documents;
+        const docsSubmitted = docsStatus?.documents_submitted ?? formData.documents_submitted;
+        if (docsSubmitted === false) {
+            setError(
+                'Your documents have not been submitted yet. ' +
+                'Please go back to the Documents step, upload all required documents, ' +
+                'and click "Continue" to mark them as complete.'
+            );
+            setSubmitting(false);
+            return;
+        }
+
         const result = await saveStep('review', {});
-        
+
         if (result.success) {
             setSuccess(true);
-            // Redirect after 3 seconds
             setTimeout(() => {
                 navigate('/seller', {
                     state: {
                         success: true,
-                        message: 'Seller onboarding completed successfully! Your store is now under review.'
-                    }
+                        message: 'Seller onboarding completed successfully! Your store is now under review.',
+                    },
                 });
             }, 3000);
         } else {
-            setError(result.message || 'Failed to submit onboarding');
+            // Surface missing-field errors from the backend clearly
+            if (Array.isArray(result.errors) && result.errors.length > 0) {
+                setError('Please complete the following before submitting: ' + result.errors.join(', '));
+            } else {
+                setError(result.message || 'Failed to submit onboarding. Please check all steps are complete.');
+            }
         }
-        
+
         setSubmitting(false);
     };
 
@@ -256,18 +275,37 @@ const ReviewSubmit = () => {
                                 Edit
                             </button>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <ShieldCheckIcon className="h-8 w-8 text-green-500" />
-                            <div className="flex-1">
-                                <p className="text-sm text-gray-700">Documents submitted for review</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Your documents have been uploaded and are ready for verification
-                                </p>
+                        {/* FIX: show actual document submission state, not always "Submitted" */}
+                        {(formData.documents?.documents_submitted ?? formData.documents_submitted) ? (
+                            <div className="flex items-center space-x-3">
+                                <ShieldCheckIcon className="h-8 w-8 text-green-500" />
+                                <div className="flex-1">
+                                    <p className="text-sm text-gray-700">Documents submitted for review</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Your documents have been uploaded and are ready for verification
+                                    </p>
+                                </div>
+                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                    ✓ Submitted
+                                </span>
                             </div>
-                            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                ✓ Submitted
-                            </span>
-                        </div>
+                        ) : (
+                            <div className="flex items-center space-x-3">
+                                <ExclamationCircleIcon className="h-8 w-8 text-amber-500" />
+                                <div className="flex-1">
+                                    <p className="text-sm text-gray-700">Documents not yet submitted</p>
+                                    <p className="text-xs text-red-600 mt-1">
+                                        Please go back and complete the Documents step before submitting.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => handleEditSection('documents')}
+                                    className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-sm font-medium hover:bg-amber-200"
+                                >
+                                    Complete →
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

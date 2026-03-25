@@ -106,14 +106,17 @@ const StoreBasicInfo = () => {
             
             if (response.data.success) {
                 const { url, path } = response.data.data;
-                setStoreLogoPreview(url);
+                setStoreLogoPreview(url);   // keep full URL for <img> preview only
                 setLogoPath(path);
                 setLogoUploaded(true);
-                
-                // Store the URL in the form field
-                setValue('store_logo', url, { shouldValidate: true });
-                
-                return url;
+
+                // FIX: store the relative storage path, not the full URL.
+                // updateStoreBasic() receives this and stores it directly.
+                // The old code passed the full URL which required fragile
+                // string-stripping on the backend to recover the path.
+                setValue('store_logo', path, { shouldValidate: true });
+
+                return path;
             } else {
                 setError(response.data.message || 'Failed to upload logo');
             }
@@ -142,14 +145,14 @@ const StoreBasicInfo = () => {
             
             if (response.data.success) {
                 const { url, path } = response.data.data;
-                setStoreBannerPreview(url);
+                setStoreBannerPreview(url);  // keep full URL for <img> preview only
                 setBannerPath(path);
                 setBannerUploaded(true);
-                
-                // Store the URL in the form field
-                setValue('store_banner', url, { shouldValidate: true });
-                
-                return url;
+
+                // FIX: same as logo — store relative path, not full URL
+                setValue('store_banner', path, { shouldValidate: true });
+
+                return path;
             } else {
                 setError(response.data.message || 'Failed to upload banner');
             }
@@ -200,11 +203,13 @@ const StoreBasicInfo = () => {
             return;
         }
 
-        // Prepare data with logo/banner URLs
+        // FIX: pass the relative storage paths (set during upload) not the preview
+        // URLs. storeLogoPreview is a full https:// URL — the backend would need to
+        // strip it back to a path. logoPath / bannerPath already hold the relative path.
         const submitData = {
             ...data,
-            store_logo: storeLogoPreview, // Pass the URL
-            store_banner: storeBannerPreview // Pass the URL
+            store_logo:   logoPath,
+            store_banner: bannerPath,
         };
 
         const result = await saveStep('store-basic', submitData);

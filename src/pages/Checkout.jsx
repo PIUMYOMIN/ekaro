@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -10,19 +10,19 @@ import {
   MapPinIcon,
   UserIcon,
   PhoneIcon,
-  EnvelopeIcon,
   XCircleIcon,
   XMarkIcon,
   CheckCircleIcon,
-  QrCodeIcon
+  QrCodeIcon,
+  TicketIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 import MMQRPayment from "./MMQRPayment";
-import PaymentSuccess from './PaymentSuccess';
+import PaymentSuccess from "./PaymentSuccess";
 
-// Utility functions
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
@@ -31,9 +31,18 @@ function formatMMK(amount) {
   return new Intl.NumberFormat("en-MM", {
     style: "currency",
     currency: "MMK",
-    minimumFractionDigits: 0
-  }).format(amount);
+    minimumFractionDigits: 0,
+  }).format(amount ?? 0);
 }
+
+const PAYMENT_METHODS = [
+  { id: "mmqr",             name: "MMQR Payment",    description: "Scan QR code with any mobile banking app", icon: QrCodeIcon,       color: "bg-blue-500" },
+  { id: "kbz_pay",          name: "KBZ Pay",          description: "Pay with KBZ Pay mobile wallet",           icon: CreditCardIcon,   color: "bg-purple-500" },
+  { id: "wave_pay",         name: "Wave Pay",         description: "Pay with Wave Pay mobile wallet",          icon: CreditCardIcon,   color: "bg-green-500" },
+  { id: "cb_pay",           name: "CB Pay",           description: "Pay with CB Pay mobile wallet",            icon: CreditCardIcon,   color: "bg-red-500" },
+  { id: "aya_pay",          name: "AYA Pay",          description: "Pay with AYA Pay mobile wallet",           icon: CreditCardIcon,   color: "bg-orange-500" },
+  { id: "cash_on_delivery", name: "Cash on Delivery", description: "Pay when you receive your order",          icon: CurrencyDollarIcon, color: "bg-yellow-500" },
+];
 
 export default function Checkout() {
   const { t } = useTranslation();
@@ -41,324 +50,225 @@ export default function Checkout() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  // ── Order flow ─────────────────────────────────────────────────────────────
+  const [loading, setLoading]                   = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState(null);
-
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [successOrder, setSuccessOrder] = useState(null);
+  const [currentOrder, setCurrentOrder]         = useState(null);
+  const [paymentAttempts, setPaymentAttempts]   = useState(0);
+  const [paymentSuccess, setPaymentSuccess]     = useState(false);
+  const [successOrder, setSuccessOrder]         = useState(null);
   const [successPaymentData, setSuccessPaymentData] = useState(null);
 
-  const [paymentAttempts, setPaymentAttempts] = useState(0);
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
 
+  const showToast = useCallback((type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  // ── Shipping / payment ─────────────────────────────────────────────────────
   const [shippingAddress, setShippingAddress] = useState({
-    full_name: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country: "Myanmar"
+    full_name: "", phone: "", address: "",
+    city: "", state: "", postal_code: "", country: "Myanmar",
   });
   const [paymentMethod, setPaymentMethod] = useState("mmqr");
-  const [orderNotes, setOrderNotes] = useState("");
+  const [orderNotes, setOrderNotes]       = useState("");
 
-  const shippingFee = 5000;
-  const taxRate = 0.05;
-  const tax = subtotal * taxRate;
-  const total = subtotal + shippingFee + tax;
+  // ── Coupon ─────────────────────────────────────────────────────────────────
+  const [couponInput, setCouponInput]     = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);  // full API response data
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError]     = useState("");
 
-  // Fetch user profile data
+  // ── Totals ────────────────────────────────────────────────────────────────
+  const SHIPPING_FEE = 5000;
+  const TAX_RATE     = 0.05;
+  const tax          = subtotal * TAX_RATE;
+  // FIX: coupon discount subtracted from total
+  const total        = Math.max(0, subtotal + SHIPPING_FEE + tax - couponDiscount);
+
+  // ── Pre-fill shipping from user profile ──────────────────────────────────
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await api.get('/auth/me');
-        const userData = response.data.data || response.data;
-        setUserProfile(userData);
-
-        // Pre-fill shipping address with user data
-        setShippingAddress(prev => ({
-          ...prev,
-          full_name: userData.name || "",
-          phone: userData.phone || "",
-          address: userData.address || "",
-          city: userData.city || "",
-          state: userData.state || "",
-          postal_code: userData.postal_code || ""
-        }));
-      } catch (error) {
-        console.error("Failed to fetch user profile:", error);
-      }
-    };
-
-    if (user) {
-      fetchUserProfile();
-    }
+    if (!user) return;
+    api.get("/auth/me").then((res) => {
+      const u = res.data.data ?? res.data;
+      setShippingAddress((prev) => ({
+        ...prev,
+        full_name:   u.name          ?? "",
+        phone:       u.phone         ?? "",
+        address:     u.address       ?? "",
+        city:        u.city          ?? "",
+        state:       u.state         ?? "",
+        postal_code: u.postal_code   ?? "",
+      }));
+    }).catch(() => {});
   }, [user]);
 
-  const handleInputChange = (field, value) => {
-    setShippingAddress(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // ── Coupon: apply ─────────────────────────────────────────────────────────
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) { setCouponError("Please enter a coupon code"); return; }
+
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      const res = await api.post("/buyer/coupons/validate", {
+        code,
+        // FIX: send items with quantities so the backend can calculate
+        // the correct applicable subtotal (price × quantity per product).
+        // The old code sent product_ids without quantities, causing the
+        // discount to be calculated on unit price × 1 regardless of qty.
+        items: cartItems.map((item) => ({
+          product_id: item.product_id,
+          quantity:   item.quantity,
+        })),
+        subtotal,
+      });
+
+      const data = res.data.data;
+      setAppliedCoupon(data);
+      setCouponDiscount(data.discount_amount);
+      setCouponInput("");
+    } catch (err) {
+      setCouponError(err.response?.data?.message ?? "Invalid or inapplicable coupon code");
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
-  const createOrderWithPendingPayment = async () => {
+  // ── Coupon: remove ────────────────────────────────────────────────────────
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponError("");
+    setCouponInput("");
+  };
+
+  // ── Shared order payload builder ──────────────────────────────────────────
+  const buildOrderPayload = (paymentStatus, paymentData = null) => ({
+    items: cartItems.map((item) => ({
+      product_id: item.product_id,
+      quantity:   item.quantity,
+      price:      item.price,
+    })),
+    shipping_address:       shippingAddress,
+    payment_method:         paymentMethod,
+    payment_status:         paymentStatus,
+    payment_data:           paymentData,
+    notes:                  orderNotes,
+    total_amount:           total,
+    subtotal_amount:        subtotal,
+    shipping_fee:           SHIPPING_FEE,
+    tax_amount:             tax,
+    // FIX: include coupon data so backend can record usage and store on order
+    coupon_id:              appliedCoupon?.coupon?.id              ?? null,
+    coupon_code:            appliedCoupon?.coupon?.code            ?? null,
+    coupon_discount_amount: appliedCoupon?.discount_amount         ?? 0,
+  });
+
+  // ── Create order (single function replacing the two near-identical ones) ───
+  const createOrder = async ({ pendingPayment = false, paymentData = null } = {}) => {
     setLoading(true);
     try {
-      const orderData = {
-        items: cartItems.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        shipping_address: shippingAddress,
-        payment_method: paymentMethod,
-        payment_status: 'pending',
-        notes: orderNotes,
-        total_amount: total,
-        subtotal_amount: subtotal,
-        shipping_fee: shippingFee,
-        tax_amount: tax
-      };
+      const payload  = buildOrderPayload(paymentData ? "paid" : "pending", paymentData);
+      const response = await api.post("/orders", payload);
 
-      const response = await api.post('/orders', orderData);
+      if (!response.data.success) throw new Error("Order creation failed");
 
-      if (response.data.success) {
-        const order = response.data.data.orders?.[0] || response.data.data.order;
+      const order = response.data.data.orders?.[0] ?? response.data.data.order;
+
+      if (pendingPayment) {
+        // Show payment modal (MMQR etc.) — don't clear cart yet
         setCurrentOrder(order);
         setShowPaymentModal(true);
-        setPaymentAttempts(prev => prev + 1);
-        return true;
+        setPaymentAttempts((n) => n + 1);
+        return order;
       }
-      return false;
-    } catch (error) {
-      console.error("Failed to create order:", error);
-      setSuccessMessage({
-        type: 'error',
-        message: error.response?.data?.message || "Failed to create order. Please try again."
-      });
-      setShowSuccessPopup(true);
-      return false;
+
+      // COD / immediate success path
+      showToast("success", `Order #${order?.order_number ?? ""} placed successfully!`);
+      clearCart();
+      setTimeout(() => navigate("/buyer"), 2000);
+      return order;
+
+    } catch (err) {
+      showToast("error", err.response?.data?.message ?? "Failed to create order. Please try again.");
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  const createOrder = async (paymentData = null) => {
-    setLoading(true);
-    try {
-      const orderData = {
-        items: cartItems.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        shipping_address: shippingAddress,
-        payment_method: paymentMethod,
-        payment_status: paymentData ? 'paid' : 'pending',
-        payment_data: paymentData,
-        notes: orderNotes,
-        total_amount: total,
-        subtotal_amount: subtotal,
-        shipping_fee: shippingFee,
-        tax_amount: tax
-      };
-
-      const response = await api.post('/orders', orderData);
-
-      if (response.data.success) {
-        const order = response.data.data.orders?.[0] || response.data.data.order;
-        setSuccessMessage({
-          type: 'success',
-          message: `Order created successfully! Order #${order?.order_number || ''}`
-        });
-        setShowSuccessPopup(true);
-
-        // Clear cart on successful order
-        setTimeout(() => {
-          clearCart();
-          navigate("/buyer");
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Failed to create order:", error);
-      setSuccessMessage({
-        type: 'error',
-        message: error.response?.data?.message || "Failed to create order. Please try again."
-      });
-      setShowSuccessPopup(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // ── Confirm order button ───────────────────────────────────────────────────
   const handleConfirmOrder = async () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    if (!user) { navigate("/login"); return; }
 
-    // Validate shipping address
     if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
-      setSuccessMessage({
-        type: 'error',
-        message: 'Please fill in all required shipping information'
-      });
-      setShowSuccessPopup(true);
+      showToast("error", "Please fill in all required shipping fields");
       return;
     }
 
-    // For MMQR, show payment modal instead of immediately creating order
-    if (paymentMethod === 'mmqr') {
-      await createOrderWithPendingPayment();
-    } else if (paymentMethod === 'cash_on_delivery') {
-      await createOrder();
+    if (paymentMethod === "cash_on_delivery") {
+      await createOrder({ pendingPayment: false });
     } else {
-      // For other payment methods, create order with pending payment
-      await createOrderWithPendingPayment();
+      await createOrder({ pendingPayment: true });
     }
   };
 
+  // ── MMQR success ──────────────────────────────────────────────────────────
   const handleMMQRSuccess = async (paymentData) => {
-    console.log('Payment success called with:', { paymentData, currentOrder });
-
     try {
-      // Update order with successful payment
-      const updateResponse = await api.patch(`/orders/${currentOrder.id}/payment`, {
-        payment_status: 'paid',
-        payment_data: paymentData
+      await api.patch(`/orders/${currentOrder.id}/payment`, {
+        payment_status: "paid",
+        payment_data:   paymentData,
       });
-
-      console.log('Payment update response:', updateResponse.data);
 
       setShowPaymentModal(false);
 
-      // Fetch the complete order details with items
-      const orderResponse = await api.get(`/orders/${currentOrder.id}`);
-      console.log('Order details response:', orderResponse.data);
-
-      if (orderResponse.data.success) {
-        setSuccessOrder(orderResponse.data.data);
+      const orderRes = await api.get(`/orders/${currentOrder.id}`);
+      if (orderRes.data.success) {
+        setSuccessOrder(orderRes.data.data);
         setSuccessPaymentData(paymentData);
         setPaymentSuccess(true);
-
-        console.log('Setting payment success to true - user can now download receipt');
-
-        // Clear cart on successful payment
         clearCart();
-
-        // Reset payment attempts
         setPaymentAttempts(0);
-      } else {
-        throw new Error('Failed to fetch order details');
       }
-    } catch (error) {
-      console.error("Failed to update payment status:", error);
-      setSuccessMessage({
-        type: 'error',
-        message: 'Payment successful but failed to load order details. Please check your orders page.'
-      });
-      setShowSuccessPopup(true);
+    } catch {
+      showToast("error", "Payment recorded but failed to load order details. Check your orders page.");
     }
   };
 
+  // ── MMQR failure ──────────────────────────────────────────────────────────
   const handleMMQRFailed = async (error) => {
-    console.log('Payment failed called with:', error);
-
     try {
-      if (currentOrder && currentOrder.id) {
-        // Update order with failed payment
+      if (currentOrder?.id) {
         await api.patch(`/orders/${currentOrder.id}/payment`, {
-          payment_status: 'failed',
-          payment_data: { error }
+          payment_status: "failed",
+          payment_data:   { error },
         });
       }
+    } catch { /* best effort */ }
 
-      setShowPaymentModal(false);
-
-      // Don't clear cart on failed payment - allow retry
-      setSuccessMessage({
-        type: 'error',
-        message: `Payment failed: ${error}. Please try again.`
-      });
-      setShowSuccessPopup(true);
-
-    } catch (updateError) {
-      console.error("Failed to update payment status:", updateError);
-      setShowPaymentModal(false);
-      setSuccessMessage({
-        type: 'error',
-        message: `Payment failed: ${error}. Please try again.`
-      });
-      setShowSuccessPopup(true);
-    }
+    setShowPaymentModal(false);
+    showToast("error", `Payment failed: ${error}. Please try again.`);
   };
 
-  const paymentMethods = [
-    {
-      id: "mmqr",
-      name: "MMQR Payment",
-      description: "Scan QR code with any mobile banking app",
-      icon: QrCodeIcon,
-      color: "bg-blue-500"
-    },
-    {
-      id: "kbz_pay",
-      name: "KBZ Pay",
-      description: "Pay with KBZ Pay mobile wallet",
-      icon: CreditCardIcon,
-      color: "bg-purple-500"
-    },
-    {
-      id: "wave_pay",
-      name: "Wave Pay",
-      description: "Pay with Wave Pay mobile wallet",
-      icon: CreditCardIcon,
-      color: "bg-green-500"
-    },
-    {
-      id: "cb_pay",
-      name: "CB Pay",
-      description: "Pay with CB Pay mobile wallet",
-      icon: CreditCardIcon,
-      color: "bg-red-500"
-    },
-    {
-      id: "aya_pay",
-      name: "AYA Pay",
-      description: "Pay with AYA Pay mobile wallet",
-      icon: CreditCardIcon,
-      color: "bg-orange-500"
-    },
-    {
-      id: "cash_on_delivery",
-      name: "Cash on Delivery",
-      description: "Pay when you receive your order",
-      icon: CurrencyDollarIcon,
-      color: "bg-yellow-500"
-    }
-  ];
-
-  // If payment is successful, ONLY show PaymentSuccess component
+  // ── Guards ────────────────────────────────────────────────────────────────
   if (paymentSuccess && successOrder) {
     return (
       <PaymentSuccess
         order={successOrder}
         paymentData={successPaymentData}
-        onClose={() => {
-          setPaymentSuccess(false);
-          navigate('/buyer');
-        }}
+        onClose={() => { setPaymentSuccess(false); navigate("/buyer"); }}
       />
     );
   }
 
-  // If cart is empty and we're not in any payment process, show empty cart
   if (cartItems.length === 0 && !showPaymentModal && !loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
@@ -367,15 +277,11 @@ export default function Checkout() {
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CubeIcon className="h-12 w-12 text-gray-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Your cart is empty
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Add some products to your cart before checking out
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
+            <p className="text-gray-600 mb-8">Add some products before checking out</p>
             <button
               onClick={() => navigate("/products")}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
             >
               Continue Shopping
             </button>
@@ -385,27 +291,22 @@ export default function Checkout() {
     );
   }
 
-  // Otherwise, show the normal checkout page
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* MMQR Payment Modal */}
         {showPaymentModal && currentOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Complete Your Payment</h3>
-                  <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
-                </div>
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Complete Your Payment</h3>
+                <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
               </div>
+              {/* FIX: pass the coupon-adjusted total, not the pre-coupon total */}
               <MMQRPayment
                 key={paymentAttempts}
                 amount={total}
@@ -413,13 +314,11 @@ export default function Checkout() {
                 onPaymentSuccess={handleMMQRSuccess}
                 onPaymentFailed={handleMMQRFailed}
               />
-              <div className="p-4 border-t bg-gray-50">
-                <p className="text-sm text-gray-600 text-center">
-                  Having issues? <button
-                    onClick={() => {
-                      setShowPaymentModal(false);
-                      setCurrentOrder(null);
-                    }}
+              <div className="p-4 border-t bg-gray-50 text-center">
+                <p className="text-sm text-gray-600">
+                  Having issues?{" "}
+                  <button
+                    onClick={() => { setShowPaymentModal(false); setCurrentOrder(null); }}
                     className="text-green-600 hover:text-green-700 font-medium"
                   >
                     Try a different payment method
@@ -430,70 +329,57 @@ export default function Checkout() {
           </div>
         )}
 
-        {/* Success/Error Popup */}
-        {showSuccessPopup && (
+        {/* Toast */}
+        {toast && (
           <div className="fixed top-4 right-4 z-50 max-w-sm">
-            <div className={`rounded-lg shadow-lg p-4 ${successMessage.type === 'success'
-              ? 'bg-green-50 border border-green-200'
-              : 'bg-red-50 border border-red-200'
+            <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${
+              toast.type === "success"
+                ? "bg-green-50 border border-green-200"
+                : "bg-red-50 border border-red-200"
+            }`}>
+              {toast.type === "success"
+                ? <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+                : <XCircleIcon     className="h-5 w-5 text-red-500 flex-shrink-0" />
+              }
+              <p className={`text-sm font-medium flex-1 ${
+                toast.type === "success" ? "text-green-800" : "text-red-800"
               }`}>
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 ${successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                  {successMessage.type === 'success' ? (
-                    <CheckCircleIcon className="h-6 w-6" />
-                  ) : (
-                    <XCircleIcon className="h-6 w-6" />
-                  )}
-                </div>
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${successMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
-                    }`}>
-                    {successMessage.message}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowSuccessPopup(false)}
-                  className="ml-auto pl-3"
-                >
-                  <XMarkIcon className={`h-5 w-5 ${successMessage.type === 'success' ? 'text-green-400' : 'text-red-400'
-                    }`} />
-                </button>
-              </div>
+                {toast.message}
+              </p>
+              <button onClick={() => setToast(null)}>
+                <XMarkIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* Header */}
+        {/* Page header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
           <p className="text-gray-600 mt-2">Complete your purchase</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Order Details & Forms */}
+
+          {/* ── Left column ─────────────────────────────────────────────── */}
           <div className="space-y-6">
-            {/* Shipping Information */}
+
+            {/* Shipping information */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="flex items-center mb-6">
                 <MapPinIcon className="h-6 w-6 text-green-600 mr-3" />
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Shipping Information
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900">Shipping Information</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
-                      type="text"
-                      required
+                      type="text" required
                       value={shippingAddress.full_name}
-                      onChange={(e) => handleInputChange('full_name', e.target.value)}
+                      onChange={(e) => setShippingAddress((p) => ({ ...p, full_name: e.target.value }))}
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="Enter your full name"
                     />
@@ -501,16 +387,13 @@ export default function Checkout() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
                   <div className="relative">
-                    <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
-                      type="tel"
-                      required
+                      type="tel" required
                       value={shippingAddress.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e) => setShippingAddress((p) => ({ ...p, phone: e.target.value }))}
                       className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="09XXXXXXXXX"
                     />
@@ -518,99 +401,65 @@ export default function Checkout() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
                   <textarea
                     required
                     value={shippingAddress.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    onChange={(e) => setShippingAddress((p) => ({ ...p, address: e.target.value }))}
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Enter your complete address including township and city"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    value={shippingAddress.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="City"
-                  />
-                </div>
+                {[
+                  { key: "city",        label: "City",         placeholder: "City" },
+                  { key: "state",       label: "State/Region", placeholder: "State/Region" },
+                  { key: "postal_code", label: "Postal Code",  placeholder: "Postal Code" },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+                    <input
+                      type="text"
+                      value={shippingAddress[key]}
+                      onChange={(e) => setShippingAddress((p) => ({ ...p, [key]: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder={placeholder}
+                    />
+                  </div>
+                ))}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State/Region
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                   <input
-                    type="text"
-                    value={shippingAddress.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="State/Region"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Postal Code
-                  </label>
-                  <input
-                    type="text"
-                    value={shippingAddress.postal_code}
-                    onChange={(e) => handleInputChange('postal_code', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Postal Code"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    value={shippingAddress.country}
-                    disabled
+                    type="text" value={shippingAddress.country} disabled
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
-                    placeholder="Country"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Payment Method */}
+            {/* Payment method */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="flex items-center mb-6">
                 <CreditCardIcon className="h-6 w-6 text-green-600 mr-3" />
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Payment Method
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900">Payment Method</h2>
               </div>
 
               <div className="space-y-4">
-                {paymentMethods.map((method) => (
+                {PAYMENT_METHODS.map((method) => (
                   <div
                     key={method.id}
+                    onClick={() => setPaymentMethod(method.id)}
                     className={classNames(
                       "border-2 rounded-lg p-4 cursor-pointer transition-all",
                       paymentMethod === method.id
                         ? "border-green-500 bg-green-50"
                         : "border-gray-200 hover:border-gray-300"
                     )}
-                    onClick={() => setPaymentMethod(method.id)}
                   >
                     <div className="flex items-center">
-                      <div className={classNames(
-                        "w-10 h-10 rounded-full flex items-center justify-center mr-4",
-                        method.color
-                      )}>
+                      <div className={classNames("w-10 h-10 rounded-full flex items-center justify-center mr-4", method.color)}>
                         <method.icon className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1">
@@ -619,102 +468,151 @@ export default function Checkout() {
                       </div>
                       <div className={classNames(
                         "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                        paymentMethod === method.id
-                          ? "border-green-500 bg-green-500"
-                          : "border-gray-300"
+                        paymentMethod === method.id ? "border-green-500 bg-green-500" : "border-gray-300"
                       )}>
-                        {paymentMethod === method.id && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
+                        {paymentMethod === method.id && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Payment Method Instructions */}
-              {paymentMethod === 'mmqr' && (
+              {paymentMethod === "mmqr" && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>How MMQR works:</strong> After confirming your order, you'll see a QR code to scan with any mobile banking app that supports MMQR.
+                    <strong>How MMQR works:</strong> After confirming your order, you'll see a QR code to scan with any mobile banking app.
                   </p>
                 </div>
               )}
-
-              {paymentMethod === 'cash_on_delivery' && (
+              {paymentMethod === "cash_on_delivery" && (
                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    <strong>Cash on Delivery:</strong> You'll pay the delivery person when you receive your order. An additional verification call may be made.
+                    <strong>Cash on Delivery:</strong> Pay the delivery person when you receive your order.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Order Notes */}
+            {/* Order notes */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Order Notes (Optional)
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Order Notes (Optional)</h3>
               <textarea
                 value={orderNotes}
                 onChange={(e) => setOrderNotes(e.target.value)}
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Any special instructions for your order, delivery timing preferences, or additional information..."
+                placeholder="Any special instructions for your order…"
               />
             </div>
           </div>
 
-          {/* Right Column - Order Summary */}
+          {/* ── Right column — Order summary ─────────────────────────────── */}
           <div className="space-y-6">
-            {/* Order Summary */}
             <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Order Summary
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
 
-              {/* Order Items */}
+              {/* Cart items */}
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <img
                           src={item.image}
                           alt={item.name}
                           className="w-10 h-10 object-cover rounded"
-                          onError={(e) => {
-                            e.target.src = '/placeholder-product.jpg';
-                          }}
+                          onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
                         />
                       </div>
                       <div className="max-w-[180px]">
-                        <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
-                          {item.name}
-                        </h4>
-                        <p className="text-gray-500 text-sm">
-                          Qty: {item.quantity}
-                        </p>
+                        <h4 className="font-medium text-gray-900 text-sm line-clamp-2">{item.name}</h4>
+                        <p className="text-gray-500 text-sm">Qty: {item.quantity}</p>
                         {item.seller_name && (
-                          <p className="text-gray-400 text-xs">
-                            Sold by: {item.seller_name}
-                          </p>
+                          <p className="text-gray-400 text-xs">Sold by: {item.seller_name}</p>
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">
-                        {formatMMK(item.price * item.quantity)}
-                      </p>
-                      <p className="text-gray-500 text-sm">
-                        {formatMMK(item.price)} each
-                      </p>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-medium text-gray-900">{formatMMK(item.price * item.quantity)}</p>
+                      <p className="text-gray-500 text-sm">{formatMMK(item.price)} each</p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Price Breakdown */}
+              {/* ── Coupon section ─────────────────────────────────────── */}
+              <div className="border-t border-gray-200 pt-4 mb-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <TicketIcon className="h-4 w-4 text-green-600" />
+                  Coupon Code
+                </h3>
+
+                {appliedCoupon ? (
+                  // Applied coupon badge
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <TagIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <div>
+                        <span className="text-sm font-semibold text-green-800 font-mono tracking-wide">
+                          {appliedCoupon.coupon.code}
+                        </span>
+                        <p className="text-xs text-green-700 mt-0.5">
+                          {appliedCoupon.coupon.type === "percentage"
+                            ? `${appliedCoupon.coupon.value}% off`
+                            : `${formatMMK(appliedCoupon.coupon.value)} off`
+                          }
+                          {" · "}Saves {formatMMK(appliedCoupon.discount_amount)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="text-green-600 hover:text-red-600 transition-colors"
+                      title="Remove coupon"
+                    >
+                      <XCircleIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                ) : (
+                  // Coupon input
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => {
+                          setCouponInput(e.target.value.toUpperCase());
+                          if (couponError) setCouponError("");
+                        }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleApplyCoupon(); } }}
+                        className={classNames(
+                          "flex-1 px-4 py-2.5 border rounded-lg text-sm font-mono uppercase focus:ring-2 focus:ring-green-500 focus:border-transparent",
+                          couponError ? "border-red-300 bg-red-50" : "border-gray-300"
+                        )}
+                        placeholder="Enter coupon code"
+                        maxLength={50}
+                      />
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={couponLoading || !couponInput.trim()}
+                        className="px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      >
+                        {couponLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                        ) : "Apply"}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-red-600 flex items-center gap-1">
+                        <XCircleIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                        {couponError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Price breakdown */}
               <div className="space-y-3 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal ({totalItems} items)</span>
@@ -723,7 +621,7 @@ export default function Checkout() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="text-gray-900">{formatMMK(shippingFee)}</span>
+                  <span className="text-gray-900">{formatMMK(SHIPPING_FEE)}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
@@ -731,19 +629,31 @@ export default function Checkout() {
                   <span className="text-gray-900">{formatMMK(tax)}</span>
                 </div>
 
+                {/* FIX: show coupon discount row only when a coupon is applied */}
+                {appliedCoupon && couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-700 flex items-center gap-1">
+                      <TagIcon className="h-3.5 w-3.5" />
+                      Coupon ({appliedCoupon.coupon.code})
+                    </span>
+                    <span className="text-green-700 font-medium">− {formatMMK(couponDiscount)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-3">
                   <span className="text-gray-900">Total</span>
+                  {/* FIX: display the coupon-adjusted total */}
                   <span className="text-green-600">{formatMMK(total)}</span>
                 </div>
               </div>
 
-              {/* Security Badge */}
+              {/* Security badge */}
               <div className="mt-6 flex items-center justify-center space-x-2 text-sm text-gray-500">
                 <ShieldCheckIcon className="h-4 w-4" />
                 <span>Secure checkout · SSL encrypted</span>
               </div>
 
-              {/* Confirm Order Button */}
+              {/* Confirm button */}
               <button
                 onClick={handleConfirmOrder}
                 disabled={loading}
@@ -755,18 +665,16 @@ export default function Checkout() {
                 )}
               >
                 {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Processing Order...
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                    Processing Order…
                   </div>
-                ) : paymentMethod === 'cash_on_delivery' ? (
-                  `Confirm Cash Order - ${formatMMK(total)}`
-                ) : (
-                  `Proceed to Payment - ${formatMMK(total)}`
-                )}
+                ) : paymentMethod === "cash_on_delivery"
+                  ? `Confirm Cash Order · ${formatMMK(total)}`
+                  : `Proceed to Payment · ${formatMMK(total)}`
+                }
               </button>
 
-              {/* Continue Shopping */}
               <button
                 onClick={() => navigate("/products")}
                 className="w-full mt-3 py-3 px-6 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -775,13 +683,13 @@ export default function Checkout() {
               </button>
             </div>
 
-            {/* Trust Indicators */}
+            {/* Trust indicators */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
                   <TruckIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
                   <p className="text-sm font-medium text-gray-900">Fast Delivery</p>
-                  <p className="text-xs text-gray-600">2-5 business days</p>
+                  <p className="text-xs text-gray-600">2–5 business days</p>
                 </div>
                 <div>
                   <ShieldCheckIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
@@ -791,24 +699,14 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Delivery Information */}
+            {/* Delivery information */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Delivery Information
-              </h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <p>
-                  • Orders are processed within 24 hours
-                </p>
-                <p>
-                  • Suppliers may contact you for delivery details
-                </p>
-                <p>
-                  • Tracking information will be provided after shipment
-                </p>
-                <p>
-                  • Free returns within 7 days for eligible items
-                </p>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Delivery Information</h3>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>• Orders are processed within 24 hours</p>
+                <p>• Suppliers may contact you for delivery details</p>
+                <p>• Tracking information will be provided after shipment</p>
+                <p>• Free returns within 7 days for eligible items</p>
               </div>
             </div>
           </div>

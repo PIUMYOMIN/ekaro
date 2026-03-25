@@ -1,6 +1,6 @@
 // components/StepGuard.jsx
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
@@ -8,7 +8,6 @@ const StepGuard = ({ children, step }) => {
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -63,7 +62,10 @@ const StepGuard = ({ children, step }) => {
     };
 
     validateStep();
-  }, [user, navigate, step, location]);
+  // FIX: 'location' was in the dep array, causing the guard to re-run and flash
+  // the loading spinner on every navigation event within the onboarding flow.
+  // user, navigate, and step are the only values that should trigger re-validation.
+  }, [user, navigate, step]);
 
   if (loading) {
     return (

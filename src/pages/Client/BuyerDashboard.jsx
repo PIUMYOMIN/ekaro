@@ -1,5 +1,5 @@
 // src/pages/BuyerDashboard.jsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -124,7 +124,7 @@ const DeliveryStatusBadge = ({ status }) => {
 };
 
 // ---------- Order Card ----------
-const OrderCard = ({ order, onViewDetails }) => {
+const OrderCard = ({ order, onViewDetails, onCancel }) => {
   // Try to get product from either item.product or item.product_data
   const firstItem = order.items?.[0] || {};
   const product = firstItem.product || firstItem.product_data || {};
@@ -134,6 +134,8 @@ const OrderCard = ({ order, onViewDetails }) => {
   const primaryImage = images.find(img => img.is_primary)?.url ||
     images[0]?.url ||
     "/placeholder-product.jpg";
+
+  const canCancel = ['pending', 'confirmed'].includes(order.status);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition p-4">
@@ -153,18 +155,29 @@ const OrderCard = ({ order, onViewDetails }) => {
         </div>
         <StatusBadge status={order.status} />
       </div>
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between gap-2">
         <div>
           <span className="text-sm text-gray-600">Total:</span>
           <span className="ml-2 font-bold text-green-600">{formatMMK(order.total_amount)}</span>
         </div>
-        <button
-          onClick={() => onViewDetails(order)}
-          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
-        >
-          <EyeIcon className="h-4 w-4 mr-1" />
-          View Details
-        </button>
+        <div className="flex gap-2">
+          {canCancel && (
+            <button
+              onClick={() => onCancel(order)}
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100"
+            >
+              <XCircleIcon className="h-4 w-4 mr-1" />
+              Cancel
+            </button>
+          )}
+          <button
+            onClick={() => onViewDetails(order)}
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100"
+          >
+            <EyeIcon className="h-4 w-4 mr-1" />
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -514,18 +527,14 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
 // ---------- Personal Information Tab ----------
 const PersonalInfoTab = ({ user, onUpdate }) => {
-  const { updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name:          user?.name          || "",
-    email:         user?.email         || "",
-    phone:         user?.phone         || "",
-    address:       user?.address       || "",
-    city:          user?.city          || "",
-    state:         user?.state         || "",
-    country:       user?.country       || "",
-    postal_code:   user?.postal_code   || "",
-    date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || ""
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -539,14 +548,10 @@ const PersonalInfoTab = ({ user, onUpdate }) => {
     setLoading(true);
     setMessage(null);
     try {
-      // FIX: correct route is /users/profile (matches PUT / under prefix users/profile)
       const response = await api.put("/users/profile", formData);
       if (response.data.success) {
         setMessage({ type: "success", text: "Profile updated successfully" });
-        const updated = response.data.data;
-        onUpdate(updated);
-        // FIX: also update AuthContext so header/sidebar reflect new name/email immediately
-        updateUser(updated);
+        onUpdate(response.data.data); // update parent user state
         setIsEditing(false);
       }
     } catch (err) {
@@ -641,39 +646,6 @@ const PersonalInfoTab = ({ user, onUpdate }) => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-              <input
-                type="text"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                placeholder="Myanmar"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-              <input
-                type="text"
-                name="postal_code"
-                value={formData.postal_code}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-            <input
-              type="date"
-              name="date_of_birth"
-              value={formData.date_of_birth}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-            />
-          </div>
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -731,7 +703,7 @@ const PersonalInfoTab = ({ user, onUpdate }) => {
 };
 
 // ---------- Orders Tab ----------
-const OrdersTab = ({ orders, onViewDetails }) => {
+const OrdersTab = ({ orders, onViewDetails, onCancel }) => {
   const [filter, setFilter] = useState("all");
   const filteredOrders = orders.filter(order => filter === "all" || order.status === filter);
 
@@ -766,7 +738,7 @@ const OrdersTab = ({ orders, onViewDetails }) => {
         ) : (
           <div className="grid gap-4">
             {filteredOrders.map(order => (
-              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} />
+              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} onCancel={onCancel} />
             ))}
           </div>
         )}
@@ -798,7 +770,7 @@ const WishlistTab = ({ navigate }) => {
       await api.delete(`/wishlist/${productId}`);
       setWishlist(prev => prev.filter(item => item.id !== productId));
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to remove item");
+      alert("Failed to remove item");
     }
   };
 
@@ -969,7 +941,7 @@ const SettingsTab = () => {
 };
 
 // ---------- Dashboard Tab ----------
-const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
+const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
   const recentOrders = orders.slice(0, 4);
 
   return (
@@ -1069,7 +1041,7 @@ const DashboardTab = ({ user, orders, onViewDetails, navigate }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {recentOrders.map(order => (
-              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} />
+              <OrderCard key={order.id} order={order} onViewDetails={onViewDetails} onCancel={onCancel} />
             ))}
           </div>
         )}
@@ -1087,6 +1059,10 @@ const BuyerDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [resendMessage, setResendMessage] = useState(null);
+  // Cancel order
+  const [cancelModal, setCancelModal]   = useState(null);  // order | null
+  const [cancelling, setCancelling]     = useState(false);
+  const [cancelError, setCancelError]   = useState(null);
   const navigate = useNavigate();
 
   const { isEmailVerified, updateUser } = useAuth();
@@ -1105,15 +1081,33 @@ const BuyerDashboard = () => {
     }
   };
 
-  const fetchOrders = useCallback(async () => {
+  const handleCancelOrder = async () => {
+    if (!cancelModal) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await api.post(`/orders/${cancelModal.id}/cancel`);
+      setCancelModal(null);
+      // Refresh orders list to reflect cancelled status
+      const ordersRes = await api.get("/orders");
+      setOrders(ordersRes.data.data || []);
+    } catch (err) {
+      setCancelError(err.response?.data?.message || 'Failed to cancel order. Please try again.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const fetchOrders = async () => {
     try {
       const ordersRes = await api.get("/orders");
       setOrders(ordersRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
     }
-  }, []);
+  };
 
+  // Handle modal close and refresh orders
   const handleModalClose = () => {
     setIsModalOpen(false);
     fetchOrders();
@@ -1125,28 +1119,26 @@ const BuyerDashboard = () => {
       interval = setInterval(fetchOrders, 30000);
     }
     return () => clearInterval(interval);
-  }, [activeTab, fetchOrders]);
+  }, [activeTab]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const [userRes, ordersRes] = await Promise.all([
-        api.get("/auth/me"),
-        api.get("/orders"),
-      ]);
+      const userRes = await api.get("/auth/me");
       setUser(userRes.data.data || userRes.data);
+
+      const ordersRes = await api.get("/orders");
       setOrders(ordersRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch data:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  // FIX: single useEffect — was duplicated, causing two concurrent fetches on mount
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
@@ -1165,12 +1157,11 @@ const BuyerDashboard = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
+        return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} onCancel={(o) => { setCancelModal(o); setCancelError(null); }} navigate={navigate} />;
       case 'personal':
-        // FIX: also call updateUser so AuthContext stays in sync after profile save
         return <PersonalInfoTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
       case 'orders':
-        return <OrdersTab orders={orders} onViewDetails={handleViewDetails} />;
+        return <OrdersTab orders={orders} onViewDetails={handleViewDetails} onCancel={(o) => { setCancelModal(o); setCancelError(null); }} />;
       case 'cart':
         return <CartTab navigate={navigate} />;
       case 'wishlist':
@@ -1194,6 +1185,43 @@ const BuyerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* ── Cancel Order Confirmation Modal ── */}
+        {cancelModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancel Order</h3>
+              <p className="text-sm text-gray-600 mb-1">
+                Are you sure you want to cancel <strong>Order #{cancelModal.order_number}</strong>?
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                Stock will be restored. This cannot be undone.
+              </p>
+              {cancelError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  {cancelError}
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setCancelModal(null); setCancelError(null); }}
+                  disabled={cancelling}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Keep Order
+                </button>
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {cancelling ? 'Cancelling…' : 'Yes, Cancel Order'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!isEmailVerified() && (
           <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
             <div className="flex">
