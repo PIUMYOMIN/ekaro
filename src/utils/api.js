@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://api.pyonea.com/api/v1",
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -20,37 +20,56 @@ api.interceptors.request.use(
   error => Promise.reject(error)
 );
 
+// Call this once after React Router is ready to wire up navigation.
+// Usage in main.jsx or App.jsx:
+//   import { setNavigate } from './utils/api';
+//   import { useNavigate } from 'react-router-dom';
+//   const navigate = useNavigate();
+//   useEffect(() => setNavigate(navigate), [navigate]);
+let _navigate = null;
+export const setNavigate = (navigateFn) => {
+  _navigate = navigateFn;
+};
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   response => {
-    // Log successful responses for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`API Success [${response.config.method.toUpperCase()}] ${response.config.url}:`, response.data);
+    if (import.meta.env.DEV) {
+      console.log(
+        `API Success [${response.config.method.toUpperCase()}] ${response.config.url}:`,
+        response.data
+      );
     }
     return response;
   },
   error => {
-    // Log errors for debugging
-    if (process.env.NODE_ENV === 'development') {
-      console.error(`API Error [${error.config?.method?.toUpperCase() || 'GET'}] ${error.config?.url || 'unknown'}:`, {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
+    if (import.meta.env.DEV) {
+      console.error(
+        `API Error [${error.config?.method?.toUpperCase() ?? "GET"}] ${error.config?.url ?? "unknown"}:`,
+        {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        }
+      );
     }
 
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      
-      // Check if we're already on login page to avoid redirect loops
+
       const currentPath = window.location.pathname;
-      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-        // Use window.location.pathname for client-side routing compatible redirect
-        window.location.pathname = '/login';
+      if (!currentPath.includes("/login") && !currentPath.includes("/register")) {
+        if (_navigate) {
+          // Preferred: React Router navigation (no full page reload)
+          _navigate("/login", { replace: true });
+        } else {
+          // Fallback: only if setNavigate was never called
+          window.location.href = "/login";
+        }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

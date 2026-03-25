@@ -127,10 +127,10 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.put(`/buyer/cart/${cartItemId}`, { quantity: newQuantity });
-      await fetchCartItems();
+      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert on error
+      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setSubtotal(oldSubtotal);
       setTotalItems(oldTotalItems);
@@ -171,10 +171,10 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.delete(`/buyer/cart/${cartItemId}`);
-      await fetchCartItems();
+      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert on error
+      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setSubtotal(oldSubtotal);
       setTotalItems(oldTotalItems);
@@ -208,10 +208,10 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.post('/buyer/cart/clear');
-      await fetchCartItems();
+      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert on error
+      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setTotalItems(oldTotalItems);
       setSubtotal(oldSubtotal);

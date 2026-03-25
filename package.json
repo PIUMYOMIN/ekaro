@@ -6,15 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:staging": "VITE_APP_ENV=staging vite build",
+    "build:production": "VITE_APP_ENV=production vite build",
+    "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "react-scripts start",
-    "build:staging": "REACT_APP_ENV=staging react-scripts build",
-    "build:production": "REACT_APP_ENV=production react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
