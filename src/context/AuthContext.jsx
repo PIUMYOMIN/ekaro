@@ -142,6 +142,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * updateUser — call this after a successful profile save so the header,
+   * sidebar, and every other consumer of AuthContext reflects the new data
+   * immediately without a page refresh.
+   */
+  const updateUser = (updatedData) => {
+    const merged = normalizeUserRoles({ ...user, ...updatedData });
+    setUser(merged);
+    localStorage.setItem('user', JSON.stringify(merged));
+    return merged;
+  };
+
   const isEmailVerified = () => {
     return !!user?.email_verified_at;
   };
@@ -198,6 +210,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     refreshUser,
+    updateUser,
     canAddToCart: () => !!user,
     canAddToWishlist: () => !!user,
     isAuthenticated: !!user,

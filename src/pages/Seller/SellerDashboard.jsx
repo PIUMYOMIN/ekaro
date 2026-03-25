@@ -14,7 +14,9 @@ import {
   BuildingStorefrontIcon,
   ExclamationTriangleIcon,
   ArrowRightIcon,
-  PencilIcon
+  PencilIcon,
+  TicketIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
@@ -31,11 +33,95 @@ import api from "../../utils/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryManagement from "../../components/seller/DeliveryManagement";
 import DiscountManagement from "../../components/seller/DiscountManagement";
+import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+
+// ── Personal profile update tab for sellers ──────────────────────────────────
+const SellerProfileTab = () => {
+  const { user, updateUser } = useAuth();
+  const [formData, setFormData] = React.useState({
+    name:          user?.name          || "",
+    email:         user?.email         || "",
+    phone:         user?.phone         || "",
+    address:       user?.address       || "",
+    city:          user?.city          || "",
+    state:         user?.state         || "",
+    country:       user?.country       || "",
+    postal_code:   user?.postal_code   || "",
+    date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
+  });
+  const [loading, setLoading]   = React.useState(false);
+  const [message, setMessage]   = React.useState(null);
+
+  const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const { default: api } = await import("../../utils/api");
+      const res = await api.put("/users/profile", formData);
+      if (res.data.success) {
+        updateUser(res.data.data);
+        setMessage({ type: "success", text: "Profile updated successfully" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: err.response?.data?.message || "Update failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const field = (label, name, type = "text", placeholder = "") => (
+    <div key={name}>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <input
+        type={type} name={name} value={formData[name]} onChange={handleChange}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+      />
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-xl border p-6 max-w-2xl">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Profile</h3>
+      {message && (
+        <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+          {message.text}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {field("Full Name *", "name")}
+          {field("Phone *", "phone", "tel")}
+          {field("Email", "email", "email")}
+          {field("Date of Birth", "date_of_birth", "date")}
+        </div>
+        {field("Address", "address")}
+        <div className="grid grid-cols-2 gap-4">
+          {field("City", "city")}
+          {field("State", "state")}
+          {field("Country", "country", "text", "Myanmar")}
+          {field("Postal Code", "postal_code")}
+        </div>
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit" disabled={loading}
+            className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading ? "Saving…" : "Save Changes"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 const SellerDashboard = () => {
   const location = useLocation();
@@ -160,6 +246,11 @@ const SellerDashboard = () => {
       component: <DiscountManagement />
     },
     {
+      name: "Coupons",
+      icon: TicketIcon,
+      component: <CouponManagement />,
+    },
+    {
       name: t("seller.sales.title"),
       icon: CurrencyDollarIcon,
       component: <SalesReports />
@@ -183,6 +274,11 @@ const SellerDashboard = () => {
       name: t("seller.settings"),
       icon: CogIcon,
       component: <StoreSettings storeData={storeData} setStoreData={setStoreData} />
+    },
+    {
+      name: "My Profile",
+      icon: UserCircleIcon,
+      component: <SellerProfileTab />,
     }
   ], [t, storeData, stats, handleSetupClick, refreshGlobalData]);
 

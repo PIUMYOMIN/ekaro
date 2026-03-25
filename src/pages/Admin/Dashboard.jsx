@@ -15,10 +15,12 @@ import {
   ShieldCheckIcon,
   BriefcaseIcon,
   BellIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import Sidebar from "../../components/layout/Sidebar";
 import PlatformLogistics from "../../components/admin/PlatformLogistics";
@@ -36,6 +38,159 @@ import Notifications from "../../components/admin/Notifications";
 import Settings from "../../components/admin/Settings";
 import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
 import SEO from "../../components/SEO/seo";
+
+// ── Admin personal profile tab ────────────────────────────────────────────────
+const AdminProfileTab = () => {
+  const { user, updateUser } = useAuth();
+
+  const [profileData, setProfileData] = React.useState({
+    name:          user?.name          || "",
+    email:         user?.email         || "",
+    phone:         user?.phone         || "",
+    address:       user?.address       || "",
+    city:          user?.city          || "",
+    state:         user?.state         || "",
+    country:       user?.country       || "",
+    postal_code:   user?.postal_code   || "",
+    date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
+  });
+
+  const [passwordData, setPasswordData] = React.useState({
+    current_password: "", new_password: "", confirm_password: "",
+  });
+
+  const [profileLoading, setProfileLoading] = React.useState(false);
+  const [passwordLoading, setPasswordLoading] = React.useState(false);
+  const [profileMsg, setProfileMsg] = React.useState(null);
+  const [passwordMsg, setPasswordMsg] = React.useState(null);
+
+  const handleProfile = async (e) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    setProfileMsg(null);
+    try {
+      const res = await api.put("/users/profile", profileData);
+      if (res.data.success) {
+        updateUser(res.data.data);
+        setProfileMsg({ type: "success", text: "Profile updated successfully" });
+      }
+    } catch (err) {
+      setProfileMsg({ type: "error", text: err.response?.data?.message || "Update failed" });
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handlePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordMsg({ type: "error", text: "New passwords do not match" });
+      return;
+    }
+    setPasswordLoading(true);
+    setPasswordMsg(null);
+    try {
+      await api.put("/users/profile/password", {
+        current_password:          passwordData.current_password,
+        new_password:              passwordData.new_password,
+        new_password_confirmation: passwordData.confirm_password,
+      });
+      setPasswordMsg({ type: "success", text: "Password changed successfully" });
+      setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
+    } catch (err) {
+      setPasswordMsg({ type: "error", text: err.response?.data?.message || "Failed to change password" });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const msgClass = (msg) => msg?.type === "success"
+    ? "bg-green-50 text-green-700 border border-green-200"
+    : "bg-red-50 text-red-700 border border-red-200";
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      {/* Profile info */}
+      <div className="bg-white rounded-xl border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
+        {profileMsg && (
+          <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(profileMsg)}`}>{profileMsg.text}</div>
+        )}
+        <form onSubmit={handleProfile} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              ["Full Name *", "name", "text"],
+              ["Phone *",     "phone", "tel"],
+              ["Email",       "email", "email"],
+              ["Date of Birth", "date_of_birth", "date"],
+            ].map(([label, name, type]) => (
+              <div key={name}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <input type={type} name={name} value={profileData[name]}
+                  onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input type="text" name="address" value={profileData.address}
+              onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {[["City","city"],["State","state"],["Country","country"],["Postal Code","postal_code"]].map(([label, name]) => (
+              <div key={name}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <input type="text" name={name} value={profileData[name]}
+                  onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button type="submit" disabled={profileLoading}
+              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+              {profileLoading ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Password change */}
+      <div className="bg-white rounded-xl border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Change Password</h3>
+        {passwordMsg && (
+          <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(passwordMsg)}`}>{passwordMsg.text}</div>
+        )}
+        <form onSubmit={handlePassword} className="space-y-4 max-w-md">
+          {[
+            ["Current Password", "current_password"],
+            ["New Password",     "new_password"],
+            ["Confirm New Password", "confirm_password"],
+          ].map(([label, name]) => (
+            <div key={name}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <input type="password" name={name} value={passwordData[name]} required
+                onChange={(e) => setPasswordData(p => ({ ...p, [e.target.name]: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+              />
+            </div>
+          ))}
+          <div className="flex justify-end">
+            <button type="submit" disabled={passwordLoading}
+              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+              {passwordLoading ? "Changing…" : "Change Password"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
@@ -236,6 +391,11 @@ const AdminDashboard = () => {
       name: t("settings"),
       icon: CogIcon,
       component: <Settings />
+    },
+    {
+      name: "My Profile",
+      icon: UserCircleIcon,
+      component: <AdminProfileTab />,
     }
   ];
 

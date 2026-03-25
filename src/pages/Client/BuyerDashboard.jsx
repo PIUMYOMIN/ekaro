@@ -1,5 +1,5 @@
 // src/pages/BuyerDashboard.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -514,14 +514,18 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
 // ---------- Personal Information Tab ----------
 const PersonalInfoTab = ({ user, onUpdate }) => {
+  const { updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    address: user?.address || "",
-    city: user?.city || "",
-    state: user?.state || ""
+    name:          user?.name          || "",
+    email:         user?.email         || "",
+    phone:         user?.phone         || "",
+    address:       user?.address       || "",
+    city:          user?.city          || "",
+    state:         user?.state         || "",
+    country:       user?.country       || "",
+    postal_code:   user?.postal_code   || "",
+    date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -535,10 +539,14 @@ const PersonalInfoTab = ({ user, onUpdate }) => {
     setLoading(true);
     setMessage(null);
     try {
+      // FIX: correct route is /users/profile (matches PUT / under prefix users/profile)
       const response = await api.put("/users/profile", formData);
       if (response.data.success) {
         setMessage({ type: "success", text: "Profile updated successfully" });
-        onUpdate(response.data.data); // update parent user state
+        const updated = response.data.data;
+        onUpdate(updated);
+        // FIX: also update AuthContext so header/sidebar reflect new name/email immediately
+        updateUser(updated);
         setIsEditing(false);
       }
     } catch (err) {
@@ -632,6 +640,39 @@ const PersonalInfoTab = ({ user, onUpdate }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+              <input
+                type="text"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="Myanmar"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+              <input
+                type="text"
+                name="postal_code"
+                value={formData.postal_code}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+            <input
+              type="date"
+              name="date_of_birth"
+              value={formData.date_of_birth}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            />
           </div>
           <div className="flex justify-end space-x-3 pt-4">
             <button
@@ -757,7 +798,7 @@ const WishlistTab = ({ navigate }) => {
       await api.delete(`/wishlist/${productId}`);
       setWishlist(prev => prev.filter(item => item.id !== productId));
     } catch (err) {
-      alert("Failed to remove item");
+      setError(err.response?.data?.message || "Failed to remove item");
     }
   };
 
@@ -1045,33 +1086,34 @@ const BuyerDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [resendMessage, setResendMessage] = useState(null);
   const navigate = useNavigate();
 
-  const { isEmailVerified } = useAuth();
+  const { isEmailVerified, updateUser } = useAuth();
   const [resending, setResending] = useState(false);
 
   const handleResendVerification = async () => {
     setResending(true);
+    setResendMessage(null);
     try {
       await api.post('/email/resend');
-      alert('Verification email resent. Please check your inbox.');
+      setResendMessage({ type: 'success', text: 'Verification email resent. Please check your inbox.' });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to resend verification email.');
+      setResendMessage({ type: 'error', text: err.response?.data?.message || 'Failed to resend verification email.' });
     } finally {
       setResending(false);
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const ordersRes = await api.get("/orders");
       setOrders(ordersRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
     }
-  };
+  }, []);
 
-  // Handle modal close and refresh orders
   const handleModalClose = () => {
     setIsModalOpen(false);
     fetchOrders();
@@ -1083,27 +1125,28 @@ const BuyerDashboard = () => {
       interval = setInterval(fetchOrders, 30000);
     }
     return () => clearInterval(interval);
-  }, [activeTab]);
+  }, [activeTab, fetchOrders]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const userRes = await api.get("/auth/me");
+      const [userRes, ordersRes] = await Promise.all([
+        api.get("/auth/me"),
+        api.get("/orders"),
+      ]);
       setUser(userRes.data.data || userRes.data);
-
-      const ordersRes = await api.get("/orders");
       setOrders(ordersRes.data.data || []);
     } catch (err) {
       console.error("Failed to fetch data:", err);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
+  // FIX: single useEffect — was duplicated, causing two concurrent fetches on mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: HomeIcon },
@@ -1113,10 +1156,6 @@ const BuyerDashboard = () => {
     { id: 'wishlist', name: 'Wishlist', icon: HeartIcon },
     { id: 'settings', name: 'Settings', icon: CogIcon }
   ];
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
@@ -1128,7 +1167,8 @@ const BuyerDashboard = () => {
       case 'dashboard':
         return <DashboardTab user={user} orders={orders} onViewDetails={handleViewDetails} navigate={navigate} />;
       case 'personal':
-        return <PersonalInfoTab user={user} onUpdate={(updatedUser) => setUser(updatedUser)} />;
+        // FIX: also call updateUser so AuthContext stays in sync after profile save
+        return <PersonalInfoTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
       case 'orders':
         return <OrdersTab orders={orders} onViewDetails={handleViewDetails} />;
       case 'cart':
@@ -1160,10 +1200,15 @@ const BuyerDashboard = () => {
               <div className="flex-shrink-0">
                 <EnvelopeIcon className="h-5 w-5 text-yellow-400" />
               </div>
-              <div className="ml-3">
+              <div className="ml-3 flex-1">
                 <p className="text-sm text-yellow-700">
                   Your email is not verified. Please check your inbox for the verification link.
                 </p>
+                {resendMessage && (
+                  <p className={`text-sm mt-1 ${resendMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                    {resendMessage.text}
+                  </p>
+                )}
                 <div className="mt-2">
                   <button
                     onClick={handleResendVerification}

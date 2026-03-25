@@ -197,10 +197,12 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
     }
 
     try {
+      // FIX: field names must match UserController::changePassword() validation:
+      // 'new_password' and 'new_password_confirmation' (Laravel confirmed rule convention)
       const response = await api.put("/users/profile/password", {
-        current_password: passwordData.current_password,
-        password: passwordData.new_password,
-        password_confirmation: passwordData.confirm_password
+        current_password:      passwordData.current_password,
+        new_password:          passwordData.new_password,
+        new_password_confirmation: passwordData.confirm_password,
       });
 
       if (response.data.success) {
