@@ -34,11 +34,11 @@ const CategoryBrowser = () => {
         setLoading(true);
         // Fetch categories with necessary fields
         const response = await api.get("/categories?fields=id,name_en,image,products_count,children&with_products_only=true");
-        
+
         if (!isMounted) return;
 
         let categoriesData = response.data.data || [];
-        
+
         // Process each category to ensure consistent structure
         const processed = categoriesData.map(cat => ({
           ...cat,
@@ -66,13 +66,15 @@ const CategoryBrowser = () => {
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
     const query = searchQuery.toLowerCase();
-    return categories.filter(cat => 
+    return categories.filter(cat =>
       (cat.name_en || "").toLowerCase().includes(query)
     );
   }, [categories, searchQuery]);
 
-  // SEO is handled automatically by useSEO using i18n keys (seo.categories)
-  const SeoComponent = useSEO();
+  const SeoComponent = useSEO({
+    title: t("categories.title"),
+    description: t("categories.subtitle")
+  });
 
   if (error) {
     return (

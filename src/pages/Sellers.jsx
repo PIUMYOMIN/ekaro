@@ -137,8 +137,7 @@ const Sellers = () => {
 
   const SeoComponent = useSEO({
     title: t("sellers.title"),
-    description: t("sellers.subtitle"),
-    // Optionally add image of top sellers collage
+    description: t("sellers.subtitle")
   });
 
   if (loading) {
