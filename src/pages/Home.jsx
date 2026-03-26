@@ -142,8 +142,19 @@ const Home = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/products?featured=true&per_page=8&fields=id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
-      setProducts(res.data.data || res.data || []);
+      // FIX: send is_featured=true (matches the validation rule name in indexPublic)
+      const res = await api.get("/products?is_featured=true&per_page=8");
+
+      // FIX: ProductResource::collection($paginator) wraps the items in a nested
+      // `data` key, so the response shape is:
+      //   res.data = { success, data: { data: [...products], links, meta }, meta: {...} }
+      //
+      // Previously: res.data.data  → the ResourceCollection object {data:[],links,meta}
+      //             Array.isArray(object) === false → map() would throw / render nothing
+      //
+      // Correct:    res.data.data?.data  → the actual products array
+      const products = res.data.data?.data ?? [];
+      setProducts(Array.isArray(products) ? products : []);
     } catch (err) {
       console.error("Failed to fetch featured products:", err);
       setProducts([]);
