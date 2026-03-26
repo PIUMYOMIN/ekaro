@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// components/seller/OrderManagement.jsx
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CheckCircleIcon,
@@ -6,152 +7,632 @@ import {
   TruckIcon,
   XCircleIcon,
   EyeIcon,
-  ShoppingBagIcon
-} from "@heroicons/react/24/solid";
+  ShoppingBagIcon,
+  BuildingStorefrontIcon,
+  MapPinIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const formatMMK = (amount) =>
+  new Intl.NumberFormat("en-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 }).format(amount || 0);
+
+const formatDate = (d) =>
+  new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+const STATUS_COLOR = {
+  pending:    "bg-yellow-100 text-yellow-800",
+  confirmed:  "bg-blue-100 text-blue-800",
+  processing: "bg-blue-100 text-blue-800",
+  shipped:    "bg-indigo-100 text-indigo-800",
+  delivered:  "bg-green-100 text-green-800",
+  cancelled:  "bg-red-100 text-red-800",
+};
+
+const DELIVERY_STATUS_COLOR = {
+  pending:          "bg-gray-100 text-gray-700",
+  awaiting_pickup:  "bg-yellow-100 text-yellow-800",
+  picked_up:        "bg-blue-100 text-blue-800",
+  in_transit:       "bg-indigo-100 text-indigo-800",
+  out_for_delivery: "bg-orange-100 text-orange-800",
+  delivered:        "bg-green-100 text-green-800",
+  failed:           "bg-red-100 text-red-800",
+  cancelled:        "bg-gray-100 text-gray-700",
+};
+
+const formatStatus = (s) => (s || "").replaceAll("_", " ");
+
+const calculatePlatformFee = (weight = 5) => 5000 + weight * 100;
+
+// ─── Delivery Method Modal ─────────────────────────────────────────────────────
+// Shown inline inside the Order Details modal when the order is confirmed
+// and no delivery method has been set yet.
+const DeliveryMethodPanel = ({ order, onConfirm, loading }) => {
+  const [method, setMethod]             = useState("supplier");
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [addressError, setAddressError] = useState("");
+
+  const weight    = order.delivery?.package_weight ?? 5;
+  const platformFee = calculatePlatformFee(weight);
+
+  const handleConfirm = () => {
+    // Pickup address required for platform logistics; optional for self-delivery
+    if (method === "platform" && !pickupAddress.trim()) {
+      setAddressError("Pickup address is required for platform logistics");
+      return;
+    }
+    onConfirm(method, pickupAddress.trim());
+  };
+
+  return (
+    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-4">
+      <div className="flex items-start gap-2">
+        <ExclamationCircleIcon className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-medium text-amber-900">Choose Delivery Method</p>
+          <p className="text-xs text-amber-700 mt-0.5">
+            Select how this order will be delivered to the customer before marking it as shipped.
+          </p>
+        </div>
+      </div>
+
+      {/* Method cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Self Delivery */}
+        <button
+          type="button"
+          onClick={() => setMethod("supplier")}
+          className={`text-left p-4 rounded-xl border-2 transition-all ${
+            method === "supplier"
+              ? "border-green-500 bg-green-50"
+              : "border-gray-200 bg-white hover:border-gray-300"
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <TruckIcon className="h-5 w-5 text-gray-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Self Delivery</p>
+              <p className="text-xs text-green-600 font-medium">Free</p>
+            </div>
+          </div>
+          <ul className="text-xs text-gray-500 space-y-0.5 pl-1">
+            <li>• You arrange and track delivery</li>
+            <li>• No platform fee charged</li>
+            <li>• Full control over the process</li>
+          </ul>
+        </button>
+
+        {/* Platform Logistics */}
+        <button
+          type="button"
+          onClick={() => setMethod("platform")}
+          className={`text-left p-4 rounded-xl border-2 transition-all ${
+            method === "platform"
+              ? "border-blue-500 bg-blue-50"
+              : "border-gray-200 bg-white hover:border-gray-300"
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <BuildingStorefrontIcon className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Platform Logistics</p>
+              <p className="text-xs text-blue-600 font-medium">{formatMMK(platformFee)} fee</p>
+            </div>
+          </div>
+          <ul className="text-xs text-gray-500 space-y-0.5 pl-1">
+            <li>• Courier collects from your address</li>
+            <li>• Real-time tracking for customer</li>
+            <li>• Platform handles communication</li>
+          </ul>
+        </button>
+      </div>
+
+      {/* Pickup address */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {method === "platform" ? (
+            <>Pickup Address <span className="text-red-500">*</span>
+              <span className="text-xs text-gray-500 font-normal ml-1">
+                (where the courier collects the package)
+              </span>
+            </>
+          ) : (
+            <>Your Warehouse / Store Address
+              <span className="text-xs text-gray-500 font-normal ml-1">(optional)</span>
+            </>
+          )}
+        </label>
+        <div className="relative">
+          <MapPinIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            value={pickupAddress}
+            onChange={(e) => { setPickupAddress(e.target.value); setAddressError(""); }}
+            placeholder={
+              method === "platform"
+                ? "e.g. No. 12, Merchant St, Yangon"
+                : "e.g. Your store address (optional)"
+            }
+            className={`w-full pl-9 pr-3 py-2 border rounded-lg text-sm ${
+              addressError ? "border-red-400 focus:ring-red-400" : "border-gray-300 focus:ring-green-500"
+            } focus:outline-none focus:ring-2`}
+          />
+        </div>
+        {addressError && (
+          <p className="text-xs text-red-500 mt-1">{addressError}</p>
+        )}
+      </div>
+
+      <button
+        onClick={handleConfirm}
+        disabled={loading}
+        className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />Saving...</>
+        ) : (
+          <>Confirm {method === "supplier" ? "Self Delivery" : "Platform Logistics"}</>
+        )}
+      </button>
+    </div>
+  );
+};
+
+// ─── Platform Tracking Timeline ───────────────────────────────────────────────
+const DeliveryTracking = ({ delivery, onRefresh, refreshing }) => {
+  if (!delivery || delivery.delivery_method !== "platform") return null;
+
+  const TIMELINE = [
+    { status: "awaiting_pickup",  label: "Awaiting Pickup",    icon: "📦" },
+    { status: "picked_up",        label: "Picked Up",          icon: "🛵" },
+    { status: "in_transit",       label: "In Transit",         icon: "🚛" },
+    { status: "out_for_delivery", label: "Out for Delivery",   icon: "📍" },
+    { status: "delivered",        label: "Delivered",          icon: "✅" },
+  ];
+
+  const currentIdx = TIMELINE.findIndex((t) => t.status === delivery.status);
+
+  return (
+    <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+          <TruckIcon className="h-4 w-4" />
+          Platform Logistics Tracking
+        </p>
+        <button
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1 disabled:opacity-50"
+        >
+          <ArrowPathIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
+      {/* Status badge */}
+      <div className="mb-3">
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+          DELIVERY_STATUS_COLOR[delivery.status] ?? "bg-gray-100 text-gray-700"
+        }`}>
+          {formatStatus(delivery.status)}
+        </span>
+        {delivery.tracking_number && (
+          <span className="ml-2 text-xs text-blue-700 font-mono">#{delivery.tracking_number}</span>
+        )}
+      </div>
+
+      {/* Timeline */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        {TIMELINE.map((step, idx) => {
+          const done    = idx <= currentIdx;
+          const current = idx === currentIdx;
+          return (
+            <React.Fragment key={step.status}>
+              <div className={`flex flex-col items-center min-w-[60px] ${done ? "opacity-100" : "opacity-40"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base ${
+                  current ? "ring-2 ring-blue-500 ring-offset-1" : ""
+                } ${done ? "bg-blue-500" : "bg-gray-200"}`}>
+                  {done && !current
+                    ? <CheckCircleSolid className="h-5 w-5 text-white" />
+                    : <span>{step.icon}</span>
+                  }
+                </div>
+                <span className="text-[10px] text-center mt-1 text-gray-600 leading-tight max-w-[60px]">
+                  {step.label}
+                </span>
+              </div>
+              {idx < TIMELINE.length - 1 && (
+                <div className={`flex-1 h-0.5 min-w-[16px] ${idx < currentIdx ? "bg-blue-500" : "bg-gray-200"}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Courier info */}
+      {delivery.platformCourier && (
+        <div className="mt-3 pt-3 border-t border-blue-200 text-xs text-blue-800">
+          <span className="font-medium">Courier:</span> {delivery.platformCourier.name}
+          {delivery.assigned_driver_phone && (
+            <span className="ml-2">· {delivery.assigned_driver_phone}</span>
+          )}
+        </div>
+      )}
+
+      {delivery.pickup_address && (
+        <div className="mt-2 text-xs text-blue-700">
+          <span className="font-medium">Pickup from:</span> {delivery.pickup_address}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Order Details Modal ───────────────────────────────────────────────────────
+const OrderDetailsModal = ({
+  order,
+  isOpen,
+  onClose,
+  onStatusUpdate,
+  onDeliveryMethodSet,
+  actionLoading,
+}) => {
+  const { t } = useTranslation();
+  const [delivery, setDelivery]         = useState(order.delivery || null);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [error, setError]               = useState(null);
+
+  if (!isOpen) return null;
+
+  const shippingAddress =
+    typeof order.shipping_address === "string"
+      ? JSON.parse(order.shipping_address)
+      : order.shipping_address;
+
+  const needsDeliveryMethod =
+    order.status === "confirmed" &&
+    (!delivery || !delivery.delivery_method || delivery.delivery_method === "pending");
+
+  const isPlatform = delivery?.delivery_method === "platform";
+  const isSelfDelivery = delivery?.delivery_method === "supplier";
+
+  const handleDeliveryMethodConfirm = async (method, pickupAddress) => {
+    setError(null);
+    const success = await onDeliveryMethodSet(order.id, method, pickupAddress);
+    if (success) {
+      // Re-fetch delivery info to show tracking
+      try {
+        const res = await api.get(`/deliveries?order_id=${order.id}`);
+        const d = res.data.data?.data?.[0] ?? res.data.data?.[0] ?? null;
+        setDelivery(d);
+      } catch (e) { /* best-effort */ }
+    }
+  };
+
+  const refreshDelivery = async () => {
+    setRefreshing(true);
+    try {
+      const res = await api.get(`/deliveries?order_id=${order.id}`);
+      const d = res.data.data?.data?.[0] ?? res.data.data?.[0] ?? null;
+      setDelivery(d);
+    } catch (e) {
+      console.error("Failed to refresh delivery:", e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={onClose} />
+
+        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+
+          {/* Header */}
+          <div className="bg-white px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Order #{order.order_number || order.id}
+                </h3>
+                <span className={`inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOR[order.status] ?? "bg-gray-100 text-gray-800"}`}>
+                  <span className="capitalize">{order.status}</span>
+                </span>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+                <XCircleIcon className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white px-6 py-4 max-h-[75vh] overflow-y-auto space-y-6">
+
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              {/* Order Items */}
+              <div>
+                <h4 className="text-base font-semibold text-gray-900 mb-3">
+                  Items ({order.items?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {order.items?.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-12 h-12 bg-white rounded-lg border overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.product_data?.images?.[0]?.url || "/placeholder-product.png"}
+                          alt={item.product_name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { e.target.src = "/placeholder-product.png"; }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">{item.product_name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Qty: {item.quantity} · {formatMMK(item.price)} each</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 flex-shrink-0">{formatMMK(item.subtotal)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right column */}
+              <div className="space-y-4">
+
+                {/* Shipping address */}
+                <div>
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">Delivery Address</h4>
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 space-y-0.5">
+                    <p className="font-medium">{shippingAddress?.full_name}</p>
+                    {shippingAddress?.phone && <p>📞 {shippingAddress.phone}</p>}
+                    <p className="mt-1">{shippingAddress?.address}</p>
+                    {shippingAddress?.city && (
+                      <p>{shippingAddress.city}{shippingAddress.state ? `, ${shippingAddress.state}` : ""}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Order summary */}
+                <div>
+                  <h4 className="text-base font-semibold text-gray-900 mb-2">Order Summary</h4>
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1.5">
+                    <div className="flex justify-between text-gray-600">
+                      <span>Subtotal</span><span>{formatMMK(order.subtotal_amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Shipping</span><span>{formatMMK(order.shipping_fee)}</span>
+                    </div>
+                    {order.tax_amount > 0 && (
+                      <div className="flex justify-between text-gray-600">
+                        <span>Tax</span><span>{formatMMK(order.tax_amount)}</span>
+                      </div>
+                    )}
+                    {order.coupon_discount_amount > 0 && (
+                      <div className="flex justify-between text-red-600">
+                        <span>Coupon</span><span>-{formatMMK(order.coupon_discount_amount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-base pt-1.5 border-t">
+                      <span>Total</span>
+                      <span className="text-green-600">{formatMMK(order.total_amount)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── DELIVERY SECTION ── */}
+
+                {/* Step 1: Choose method (only when confirmed, no method set yet) */}
+                {needsDeliveryMethod && (
+                  <DeliveryMethodPanel
+                    order={order}
+                    onConfirm={handleDeliveryMethodConfirm}
+                    loading={actionLoading === `delivery-${order.id}`}
+                  />
+                )}
+
+                {/* Step 2a: Self delivery — show current status, seller can mark steps */}
+                {isSelfDelivery && delivery && (
+                  <div className="border border-green-200 bg-green-50 rounded-xl p-4">
+                    <p className="text-sm font-semibold text-green-900 flex items-center gap-2 mb-2">
+                      <TruckIcon className="h-4 w-4" />
+                      Self Delivery
+                    </p>
+                    <div className="space-y-1 text-xs text-green-800">
+                      <p>
+                        <span className="font-medium">Status:</span>{" "}
+                        <span className={`inline-flex px-2 py-0.5 rounded-full ${DELIVERY_STATUS_COLOR[delivery.status] ?? "bg-gray-100 text-gray-700"}`}>
+                          {formatStatus(delivery.status)}
+                        </span>
+                      </p>
+                      {delivery.pickup_address && (
+                        <p><span className="font-medium">Pickup:</span> {delivery.pickup_address}</p>
+                      )}
+                      {delivery.tracking_number && (
+                        <p><span className="font-medium">Tracking:</span> {delivery.tracking_number}</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-green-700 mt-2">
+                      You manage this delivery. Use the "Mark as Shipped" button below when dispatched.
+                    </p>
+                  </div>
+                )}
+
+                {/* Step 2b: Platform logistics — full tracking */}
+                {isPlatform && delivery && (
+                  <DeliveryTracking
+                    delivery={delivery}
+                    onRefresh={refreshDelivery}
+                    refreshing={refreshing}
+                  />
+                )}
+
+              </div>
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div className="bg-gray-50 px-6 py-3 flex justify-end gap-3 border-t border-gray-200">
+            {/* Confirm order */}
+            {order.status === "pending" && (
+              <button
+                onClick={() => { onStatusUpdate(order.id, "confirmed"); onClose(); }}
+                disabled={actionLoading === order.id}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                Confirm Order
+              </button>
+            )}
+
+            {/* Mark as shipped — only for self delivery after method is chosen */}
+            {order.status === "confirmed" && isSelfDelivery && (
+              <button
+                onClick={() => { onStatusUpdate(order.id, "shipped"); onClose(); }}
+                disabled={actionLoading === order.id}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              >
+                Mark as Shipped
+              </button>
+            )}
+
+            {/* Platform: no ship button — courier handles it */}
+            {order.status === "confirmed" && isPlatform && (
+              <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs">
+                Waiting for platform courier to collect
+              </div>
+            )}
+
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 const OrderManagement = () => {
   const { t } = useTranslation();
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [orders, setOrders]                 = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [selectedOrder, setSelectedOrder]   = useState(null);
+  const [isModalOpen, setIsModalOpen]       = useState(false);
+  const [error, setError]                   = useState(null);
+  // key: orderId for status updates, "delivery-{orderId}" for delivery method
+  const [actionLoading, setActionLoading]   = useState(null);
 
   const statuses = [
-    { id: "all", name: t("seller.order.all_orders") },
-    { id: "pending", name: t("seller.order.pending") },
-    { id: "confirmed", name: t("seller.order.confirmed") },
-    { id: "processing", name: t("seller.order.processing") },
-    { id: "shipped", name: t("seller.order.shipped") },
-    { id: "delivered", name: t("seller.order.delivered") },
-    { id: "cancelled", name: t("seller.order.cancelled") }
+    { id: "all",        name: t("seller.order.all_orders", "All Orders")  },
+    { id: "pending",    name: t("seller.order.pending",    "Pending")     },
+    { id: "confirmed",  name: t("seller.order.confirmed",  "Confirmed")   },
+    { id: "processing", name: t("seller.order.processing", "Processing")  },
+    { id: "shipped",    name: t("seller.order.shipped",    "Shipped")     },
+    { id: "delivered",  name: t("seller.order.delivered",  "Delivered")   },
+    { id: "cancelled",  name: t("seller.order.cancelled",  "Cancelled")   },
   ];
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await api.get("/orders");
       setOrders(response.data.data || []);
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+      setError(err.response?.data?.message || "Failed to load orders");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const updateOrderStatus = async (orderId, status) => {
     try {
-      let endpoint = "";
-      let data = {};
+      setActionLoading(orderId);
+      setError(null);
+      const endpoints = { confirmed: "confirm", processing: "process", shipped: "ship" };
+      const endpoint  = endpoints[status];
+      if (!endpoint) return;
 
-      switch (status) {
-        case "confirmed":
-          endpoint = `confirm`;
-          break;
-        case "processing":
-          endpoint = `process`;
-          break;
-        case "shipped":
-          endpoint = `ship`;
-          data = {
-            tracking_number: `TRK-${orderId}`,
-            shipping_carrier: "Standard Shipping"
-          };
-          break;
-        default:
-          return;
-      }
+      const data = status === "shipped"
+        ? { tracking_number: `TRK-${Date.now()}`, shipping_carrier: "Self Delivery" }
+        : {};
 
-      const response = await api.post(`/orders/${orderId}/${endpoint}`, data);
-
-      if (response.data.success) {
+      const res = await api.post(`/orders/${orderId}/${endpoint}`, data);
+      if (res.data.success) {
         await fetchOrders();
       } else {
-        alert(response.data.message);
+        setError(res.data.message || "Failed to update order");
       }
-    } catch (error) {
-      console.error(`Failed to update order status to ${status}:`, error);
-      const errorMessage = error.response?.data?.message || error.message;
-      alert(`Failed to update order: ${errorMessage}`);
+    } catch (err) {
+      setError(err.response?.data?.message || `Failed to update order status`);
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const filteredOrders =
-    selectedStatus === "all"
-      ? orders
-      : orders.filter((order) => order.status === selectedStatus);
+  // Returns true on success so the modal can refresh its delivery state
+  const handleDeliveryMethodSet = async (orderId, method, pickupAddress) => {
+    try {
+      setActionLoading(`delivery-${orderId}`);
+      setError(null);
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
-      case "confirmed":
-      case "processing":
-        return <ClockIcon className="h-5 w-5 text-blue-500" />;
-      case "shipped":
-        return <TruckIcon className="h-5 w-5 text-indigo-500" />;
-      case "delivered":
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case "cancelled":
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
-      default:
-        return null;
+      const weight      = orders.find((o) => o.id === orderId)?.delivery?.package_weight ?? 5;
+      const platformFee = method === "platform" ? calculatePlatformFee(weight) : 0;
+
+      const res = await api.post(`/seller/delivery/${orderId}/delivery-method`, {
+        delivery_method:       method,
+        platform_delivery_fee: platformFee,
+        pickup_address:        pickupAddress || undefined,
+      });
+
+      if (res.data.success) {
+        await fetchOrders();
+        // Also refresh the selectedOrder so the modal shows the updated delivery
+        const updated = (await api.get("/orders")).data.data?.find((o) => o.id === orderId);
+        if (updated) setSelectedOrder(updated);
+        return true;
+      } else {
+        setError(res.data.message || "Failed to set delivery method");
+        return false;
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to set delivery method");
+      return false;
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-indigo-100 text-indigo-800";
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "";
-    }
-  };
-
-  const formatMMK = (amount) => {
-    return new Intl.NumberFormat("en-MM", {
-      style: "currency",
-      currency: "MMK",
-      minimumFractionDigits: 0
-    }).format(amount || 0);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
-  };
-
-  const handleViewDetails = (order) => {
-    setSelectedOrder(order);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedOrder(null);
-  };
+  const filteredOrders = selectedStatus === "all"
+    ? orders
+    : orders.filter((o) => o.status === selectedStatus);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
       </div>
     );
   }
@@ -160,55 +641,57 @@ const OrderManagement = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900">
-          {t("seller.order.order_management")}
+          {t("seller.order.order_management", "Order Management")}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
-          {t("seller.order.manage_your_orders")}
+          Confirm orders and choose how each order will be delivered
         </p>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
+          {error}
+          <button onClick={() => setError(null)} className="ml-auto">
+            <XCircleIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Status filter pills */}
       <div className="flex flex-wrap gap-2">
-        {statuses.map((status) => (
+        {statuses.map((s) => (
           <button
-            key={status.id}
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              selectedStatus === status.id
+            key={s.id}
+            onClick={() => setSelectedStatus(s.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedStatus === s.id
                 ? "bg-green-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
-            onClick={() => setSelectedStatus(status.id)}
           >
-            {status.name}
+            {s.name}
+            {s.id !== "all" && (
+              <span className="ml-1.5 text-xs opacity-75">
+                ({orders.filter((o) => o.status === s.id).length})
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      {/* Table */}
+      <div className="bg-white shadow rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.order_id")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.date")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.customer")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.items")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.amount")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.status")}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t("order.action")}
-                </th>
+                {["Order ID", "Date", "Customer", "Items", "Amount", "Status", "Delivery", "Actions"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -218,56 +701,72 @@ const OrderManagement = () => {
                     ? JSON.parse(order.shipping_address)
                     : order.shipping_address;
 
+                const deliveryMethod = order.delivery?.delivery_method;
+                const deliveryStatus = order.delivery?.status;
+                const needsMethod = order.status === "confirmed" && (!deliveryMethod || deliveryMethod === "pending");
+
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                       #{order.order_number || order.id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(order.created_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {shippingAddress?.full_name || "N/A"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                       {order.items?.length || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                       {formatMMK(order.total_amount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {getStatusIcon(order.status)}
-                        <span className="ml-1 capitalize">{order.status}</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLOR[order.status] ?? "bg-gray-100 text-gray-800"}`}>
+                        <span className="capitalize">{order.status}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
+                    <td className="px-4 py-3 whitespace-nowrap text-xs">
+                      {needsMethod ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 gap-1">
+                          <ExclamationCircleIcon className="h-3.5 w-3.5" />
+                          Choose method
+                        </span>
+                      ) : deliveryMethod ? (
+                        <div className="space-y-0.5">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${
+                            deliveryMethod === "platform" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+                          }`}>
+                            {deliveryMethod === "platform" ? "Platform" : "Self"}
+                          </span>
+                          {deliveryStatus && (
+                            <div>
+                              <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] ${DELIVERY_STATUS_COLOR[deliveryStatus] ?? "bg-gray-100 text-gray-700"}`}>
+                                {formatStatus(deliveryStatus)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 space-x-2">
                       <button
-                        onClick={() => handleViewDetails(order)}
+                        onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
                         className="text-green-600 hover:text-green-900"
+                        title="View details"
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
                       {order.status === "pending" && (
                         <button
-                          onClick={() =>
-                            updateOrderStatus(order.id, "confirmed")
-                          }
-                          className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                          onClick={() => updateOrderStatus(order.id, "confirmed")}
+                          disabled={actionLoading === order.id}
+                          className="text-blue-600 hover:text-blue-900 text-xs font-medium disabled:opacity-50"
                         >
-                          Confirm
-                        </button>
-                      )}
-                      {order.status === "confirmed" && (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "shipped")}
-                          className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                        >
-                          Ship
+                          {actionLoading === order.id ? "..." : "Confirm"}
                         </button>
                       )}
                     </td>
@@ -280,24 +779,14 @@ const OrderManagement = () => {
 
         {filteredOrders.length === 0 && (
           <div className="text-center py-12">
-            <ShoppingBagIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Orders Found
-            </h3>
-            <p className="text-gray-600">
-              No orders match the selected criteria.
-            </p>
+            <ShoppingBagIcon className="h-14 w-14 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-base font-medium text-gray-900 mb-1">No orders found</h3>
+            <p className="text-sm text-gray-500">No orders match the selected status filter.</p>
           </div>
         )}
 
-        <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            {t("order.showing")}{" "}
-            <span className="font-medium">1-{filteredOrders.length}</span>{" "}
-            {t("order.of")}{" "}
-            <span className="font-medium">{filteredOrders.length}</span>{" "}
-            {t("order.results")}
-          </div>
+        <div className="bg-gray-50 px-4 py-3 text-sm text-gray-500 border-t border-gray-200">
+          Showing {filteredOrders.length} of {orders.length} orders
         </div>
       </div>
 
@@ -306,362 +795,12 @@ const OrderManagement = () => {
         <OrderDetailsModal
           order={selectedOrder}
           isOpen={isModalOpen}
-          onClose={handleCloseModal}
+          onClose={() => { setIsModalOpen(false); setSelectedOrder(null); }}
           onStatusUpdate={updateOrderStatus}
+          onDeliveryMethodSet={handleDeliveryMethodSet}
+          actionLoading={actionLoading}
         />
       )}
-    </div>
-  );
-};
-
-// Order Details Modal Component
-const OrderDetailsModal = ({ order, isOpen, onClose, onStatusUpdate }) => {
-  const { t } = useTranslation();
-  
-  if (!isOpen) return null;
-
-  const shippingAddress =
-    typeof order.shipping_address === "string"
-      ? JSON.parse(order.shipping_address)
-      : order.shipping_address;
-
-  const formatMMK = (amount) => {
-    return new Intl.NumberFormat("en-MM", {
-      style: "currency",
-      currency: "MMK",
-      minimumFractionDigits: 0
-    }).format(amount || 0);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
-      case "processing":
-        return "bg-blue-100 text-blue-800";
-      case "shipped":
-        return "bg-indigo-100 text-indigo-800";
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return <ClockIcon className="h-4 w-4" />;
-      case "confirmed":
-      case "processing":
-        return <ClockIcon className="h-4 w-4" />;
-      case "shipped":
-        return <TruckIcon className="h-4 w-4" />;
-      case "delivered":
-        return <CheckCircleIcon className="h-4 w-4" />;
-      case "cancelled":
-        return <XCircleIcon className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-          onClick={onClose}
-        ></div>
-
-        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-          {/* Modal Header */}
-          <div className="bg-white px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {t("order.order_details") || "Order Details"} - #{order.order_number || order.id}
-                </h3>
-                <span className={`inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                  {getStatusIcon(order.status)}
-                  <span className="capitalize">{order.status}</span>
-                </span>
-              </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 transition-colors"
-              >
-                <XCircleIcon className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white px-6 py-4 max-h-[70vh] overflow-y-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Order Items Section */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-                  <ShoppingBagIcon className="h-5 w-5 text-gray-500" />
-                  {t("order.items") || "Order Items"} ({order.items?.length || 0})
-                </h4>
-                <div className="space-y-3">
-                  {order.items?.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      {/* Product Image - Direct URL from backend */}
-                      <div className="flex-shrink-0 w-16 h-16 bg-white rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center">
-                        <img
-                          src={item.product_data?.images?.[0]?.url || '/placeholder-product.png'}
-                          alt={item.product_name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/placeholder-product.png';
-                          }}
-                        />
-                      </div>
-                      
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
-                          {item.product_name}
-                        </h5>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <span className="font-medium">Qty:</span> {item.quantity}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <span className="font-medium">Price:</span> {formatMMK(item.price)}
-                          </span>
-                          {item.product_sku && (
-                            <span className="flex items-center gap-1">
-                              <span className="font-medium">SKU:</span> {item.product_sku}
-                            </span>
-                          )}
-                        </div>
-                        {/* Show specifications if available */}
-                        {item.product_data?.specifications && Object.keys(item.product_data.specifications).length > 0 && (
-                          <div className="mt-1 text-xs text-gray-400">
-                            {Object.entries(item.product_data.specifications).slice(0, 2).map(([key, value]) => (
-                              <span key={key} className="inline-block mr-2">
-                                {key}: {value}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Subtotal */}
-                      <div className="flex-shrink-0 text-right">
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {formatMMK(item.subtotal)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Information Section */}
-              <div className="space-y-6">
-                {/* Shipping Information */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    <TruckIcon className="h-5 w-5 text-gray-500" />
-                    {t("order.shipping_info") || "Shipping Information"}
-                  </h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p className="font-medium text-gray-900">
-                        {shippingAddress?.full_name || t("order.na")}
-                      </p>
-                      {shippingAddress?.phone && (
-                        <p className="flex items-center gap-1">
-                          <span className="text-xs">📞</span> {shippingAddress.phone}
-                        </p>
-                      )}
-                      {shippingAddress?.email && (
-                        <p className="flex items-center gap-1">
-                          <span className="text-xs">✉️</span> {shippingAddress.email}
-                        </p>
-                      )}
-                      <div className="mt-2 pt-2 border-t border-gray-200">
-                        <p>{shippingAddress?.address || t("order.na")}</p>
-                        {shippingAddress?.city && (
-                          <p>
-                            {shippingAddress.city}
-                            {shippingAddress?.state && `, ${shippingAddress.state}`}
-                            {shippingAddress?.postal_code && ` ${shippingAddress.postal_code}`}
-                          </p>
-                        )}
-                        {shippingAddress?.country && <p>{shippingAddress.country}</p>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Order Summary */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    <ShoppingBagIcon className="h-5 w-5 text-gray-500" />
-                    {t("order.summary") || "Order Summary"}
-                  </h4>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t("order.subtotal") || "Subtotal"}:</span>
-                        <span className="font-medium">
-                          {formatMMK(order.subtotal_amount)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t("order.shipping_fee") || "Shipping Fee"}:</span>
-                        <span className="font-medium">
-                          {formatMMK(order.shipping_fee || 0)}
-                        </span>
-                      </div>
-                      {order.tax_amount > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">{t("order.tax") || "Tax"}:</span>
-                          <span className="font-medium">
-                            {formatMMK(order.tax_amount)}
-                          </span>
-                        </div>
-                      )}
-                      {order.discount_amount > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">{t("order.discount") || "Discount"}:</span>
-                          <span className="font-medium text-red-600">
-                            -{formatMMK(order.discount_amount)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                        <span className="text-base font-semibold text-gray-900">
-                          {t("order.total") || "Total"}:
-                        </span>
-                        <span className="text-lg font-semibold text-green-600">
-                          {formatMMK(order.total_amount)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Delivery Information */}
-                {order.delivery && (
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
-                      <TruckIcon className="h-5 w-5 text-gray-500" />
-                      {t("order.delivery_info") || "Delivery Information"}
-                    </h4>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Delivery Method:</span>
-                          <span className="font-medium capitalize">{order.delivery.delivery_method || 'N/A'}</span>
-                        </div>
-                        {order.delivery.tracking_number && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Tracking Number:</span>
-                            <span className="font-medium">{order.delivery.tracking_number}</span>
-                          </div>
-                        )}
-                        {order.delivery.estimated_delivery_date && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Est. Delivery:</span>
-                            <span className="font-medium">
-                              {new Date(order.delivery.estimated_delivery_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
-                        {order.delivery.carrier_name && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Carrier:</span>
-                            <span className="font-medium">{order.delivery.carrier_name}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Delivery Status:</span>
-                          <span className={`font-medium capitalize ${
-                            order.delivery.status === 'delivered' ? 'text-green-600' : 
-                            order.delivery.status === 'cancelled' ? 'text-red-600' : 'text-blue-600'
-                          }`}>
-                            {order.delivery.status || 'pending'}
-                          </span>
-                        </div>
-                        {/* Delivery Proof Image */}
-                        {order.delivery.delivery_proof_image && (
-                          <div className="mt-2 pt-2 border-t border-gray-200">
-                            <span className="text-gray-600 block mb-1">Delivery Proof:</span>
-                            <img
-                              src={order.delivery.delivery_proof_image}
-                              alt="Delivery Proof"
-                              className="max-w-full h-auto rounded-lg border border-gray-200"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Order Notes */}
-                {order.order_notes && (
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-3">
-                      {t("order.notes") || "Order Notes"}
-                    </h4>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm text-gray-600">{order.order_notes}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-3 border-t border-gray-200">
-            {order.status === "pending" && (
-              <button
-                onClick={() => {
-                  onStatusUpdate(order.id, "confirmed");
-                  onClose();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                {t("order.confirm_order") || "Confirm Order"}
-              </button>
-            )}
-            {order.status === "confirmed" && (
-              <button
-                onClick={() => {
-                  onStatusUpdate(order.id, "shipped");
-                  onClose();
-                }}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-              >
-                {t("order.mark_as_shipped") || "Mark as Shipped"}
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-            >
-              {t("common.close") || "Close"}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

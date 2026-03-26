@@ -328,6 +328,10 @@
       "title": "delivery",
       "subtitle": "Manage and update your delivery"
     },
+    "delivery_zones":{
+      "title": "Delivery Zones",
+      "subtitle": "Manage and update your delivery zone"
+    },
     "submit_review": "Submit Review",
     "no_products_found": "No products found",
     "about": "About",

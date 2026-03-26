@@ -25,7 +25,7 @@ import ProductManagement from "../../components/seller/ProductManagement";
 import SalesReports from "../../components/seller/SalesReports";
 import ProductReviewManagement from "../../components/seller/ProductReviewManagement";
 import Customers from "./Customers";
-import ShippingSettings from "../../components/seller/ShippingSettings.jsx";
+import DeliveryZones from "../../components/seller/DeliveryZones";
 import StoreSettings from "../../components/seller/StoreSettings";
 import MyStore from "../../components/seller/MyStore";
 import { useAuth } from "../../context/AuthContext";
@@ -201,8 +201,8 @@ const SellerDashboard = () => {
     console.log("Setup click:", step);
     if (step === 'my-store') {
       navigate('/seller/dashboard?tab=my-store&setup=true');
-    } else if (step === 'shipping') {
-      navigate('/seller/dashboard?tab=shipping');
+    } else if (step === 'delivery_zones') {
+      navigate('/seller/dashboard?tab=delivery_zones');
     } else if (step === 'settings') {
       navigate('/seller/dashboard?tab=settings');
     }
@@ -213,14 +213,14 @@ const SellerDashboard = () => {
     { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
     { name: "Edit Store",               icon: PencilIcon,             key: "edit_store" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
-    { name: t("seller.delivery.title"), icon: TruckIcon,              key: "delivery" },
+    { name: t("seller.delivery_zones.title"), icon: TruckIcon,        key: "delivery_zones" },
     { name: t("seller.product.title"),  icon: CubeIcon,               key: "products" },
     { name: t("seller.discount.title"), icon: CubeIcon,               key: "discounts" },
     { name: "Coupons",                  icon: TicketIcon,             key: "coupons" },
     { name: t("seller.sales.title"),    icon: CurrencyDollarIcon,     key: "sales" },
     { name: t("seller.reviews.title"),  icon: StarIcon,               key: "reviews" },
     { name: t("seller.customers"),      icon: UserGroupIcon,          key: "customers" },
-    { name: t("seller.shipping"),       icon: TruckIcon,              key: "shipping" },
+    { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
   ], [t]);
@@ -240,7 +240,7 @@ const SellerDashboard = () => {
       case "sales":       return <SalesReports />;
       case "reviews":     return <ProductReviewManagement />;
       case "customers":   return <Customers />;
-      case "shipping":    return <ShippingSettings storeData={storeData} />;
+      case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
       case "profile":     return <SellerProfileTab />;
       default:            return null;
@@ -317,7 +317,7 @@ const SellerDashboard = () => {
       setSetupNotificationData({
         title: "Store Pending Approval",
         message: "Your store is under review. You can add products and set up your store while waiting for approval.",
-        requiredActions: ["Complete store setup", "Add products", "Set up shipping"],
+        requiredActions: ["Complete store setup", "Add products", "Set up delivery zone"],
         nextStep: "my-store"
       });
       setShowSetupNotification(true);

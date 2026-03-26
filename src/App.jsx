@@ -43,7 +43,7 @@ import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import SellerDashboard from "./pages/Seller/SellerDashboard";
-import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 // Admin Management
 import CategoryCreate from "./pages/Admin/categories/CategoryCreate";
