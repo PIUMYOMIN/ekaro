@@ -39,32 +39,52 @@ const StoreBasicInfo = () => {
         formState: { errors },
         setValue,
         watch,
-        trigger
+        trigger,
+        reset,
     } = useForm({
-        defaultValues: formData.store_basic || {
+        defaultValues: {
             store_name: '',
             business_type_slug: '',
             contact_email: '',
             contact_phone: '',
-            description: ''
+            description: '',
         }
     });
-
-    const selectedBusinessSlug = watch('business_type_slug');
-    const selectedBusinessType = businessTypes.find(bt => bt.slug === selectedBusinessSlug);
+    useEffect(() => {
+        if (!formData.store_basic) return;
+        const saved = formData.store_basic;
+        const isDefaultStore = saved.store_name?.endsWith("'s Store");
+        reset({
+            store_name: isDefaultStore ? '' : (saved.store_name || ''),
+            business_type_slug: saved.business_type_slug === 'individual' && isDefaultStore
+                ? ''
+                : (saved.business_type_slug || ''),
+            contact_email:     saved.contact_email || '',
+            contact_phone:     saved.contact_phone || '',
+            description:       saved.store_description || saved.description || '',
+        });
+        // Restore logo/banner state if already uploaded
+        if (saved.store_logo) {
+            setStoreLogoPreview(saved.store_logo);
+            setLogoPath(saved.store_logo);
+            setLogoUploaded(true);
+        }
+        if (saved.store_banner) {
+            setStoreBannerPreview(saved.store_banner);
+            setBannerPath(saved.store_banner);
+            setBannerUploaded(true);
+        }
+    }, [formData.store_basic, reset]);
 
     useEffect(() => {
         fetchBusinessTypes();
-        // Load existing logo/banner if available
-        if (formData.store_logo) {
-            setStoreLogoPreview(formData.store_logo);
-            setLogoUploaded(true);
-        }
-        if (formData.store_banner) {
-            setStoreBannerPreview(formData.store_banner);
-            setBannerUploaded(true);
-        }
-    }, [formData]);
+    }, []);
+
+    const selectedBusinessSlug = watch('business_type_slug');
+    // FIX: match on both slug_en and legacy slug field
+    const selectedBusinessType = businessTypes.find(
+        bt => bt.slug_en === selectedBusinessSlug || bt.slug === selectedBusinessSlug
+    );
 
     const fetchBusinessTypes = async () => {
         try {
@@ -109,11 +129,6 @@ const StoreBasicInfo = () => {
                 setStoreLogoPreview(url);   // keep full URL for <img> preview only
                 setLogoPath(path);
                 setLogoUploaded(true);
-
-                // FIX: store the relative storage path, not the full URL.
-                // updateStoreBasic() receives this and stores it directly.
-                // The old code passed the full URL which required fragile
-                // string-stripping on the backend to recover the path.
                 setValue('store_logo', path, { shouldValidate: true });
 
                 return path;
@@ -203,9 +218,6 @@ const StoreBasicInfo = () => {
             return;
         }
 
-        // FIX: pass the relative storage paths (set during upload) not the preview
-        // URLs. storeLogoPreview is a full https:// URL — the backend would need to
-        // strip it back to a path. logoPath / bannerPath already hold the relative path.
         const submitData = {
             ...data,
             store_logo:   logoPath,

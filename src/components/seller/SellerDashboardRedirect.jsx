@@ -1,49 +1,56 @@
-// components/SellerDashboardRedirect.jsx
-import React, { useEffect } from 'react';
+// components/seller/SellerDashboardRedirect.jsx
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { invalidateOnboardingCache } from '../StepGuard';
 
 const SellerDashboardRedirect = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+    const navigate  = useNavigate();
+    const { user }  = useAuth();
+    const started   = useRef(false);
 
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!user) return;
+    useEffect(() => {
+        if (!user || started.current) return;
+        started.current = true;
 
-      try {
-        const response = await api.get('/seller/onboarding/status');
-        
-        if (response.data.success) {
-          const statusData = response.data.data;
-          
-          if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-            // Redirect to onboarding
-            navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
-          } else {
-            // Redirect to dashboard
-            navigate('/seller/dashboard');
-          }
-        }
-      } catch (error) {
-        console.error('Failed to check onboarding status:', error);
-        // Default to onboarding if there's an error
-        navigate('/seller/onboarding/store-basic');
-      }
-    };
+        const checkOnboardingStatus = async () => {
+            try {
+                // Invalidate the StepGuard cache so the next step page gets fresh data
+                invalidateOnboardingCache();
 
-    checkOnboardingStatus();
-  }, [user, navigate]);
+                const response = await api.get('/seller/onboarding/status');
 
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-        <p className="text-gray-600">Checking seller status...</p>
-      </div>
-    </div>
-  );
+                if (response.data.success) {
+                    const statusData = response.data.data;
+
+                    if (statusData.needs_onboarding || !statusData.onboarding_complete) {
+                        const step = statusData.current_step || 'store-basic';
+                        navigate(`/seller/onboarding/${step}`, { replace: true });
+                    } else {
+                        navigate('/seller/dashboard', { replace: true });
+                    }
+                } else {
+                    navigate('/seller/onboarding/store-basic', { replace: true });
+                }
+            } catch (error) {
+                console.error('Failed to check onboarding status:', error);
+                navigate('/seller/onboarding/store-basic', { replace: true });
+            }
+        };
+
+        checkOnboardingStatus();
+    }, [user, navigate]);
+
+    return (
+        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-green-50 to-blue-50">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
+                <p className="text-gray-700 font-medium">Setting up your seller account...</p>
+                <p className="text-gray-500 text-sm mt-1">Please wait</p>
+            </div>
+        </div>
+    );
 };
 
 export default SellerDashboardRedirect;

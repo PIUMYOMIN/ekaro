@@ -106,7 +106,7 @@ const Login = () => {
       if (userRoles.includes('admin') || userRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });
       } else if (userRoles.includes('seller') || userRole === 'seller') {
-        navigate('/seller/dashboard', { replace: true });
+        navigate('/seller', { replace: true });
       } else if (userRoles.includes('buyer') || userRole === 'buyer') {
         navigate('/buyer/dashboard', { replace: true });
       } else {

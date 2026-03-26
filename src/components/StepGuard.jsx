@@ -1,84 +1,109 @@
 // components/StepGuard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
+let _statusCache = null;
+let _statusCacheTime = 0;
+const CACHE_TTL_MS = 10_000;
+export const invalidateOnboardingCache = () => {
+    _statusCache = null;
+    _statusCacheTime = 0;
+};
+
 const StepGuard = ({ children, step }) => {
-  const [isValid, setIsValid] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const { user } = useAuth();
+    const [isValid, setIsValid]   = useState(false);
+    const [loading, setLoading]   = useState(true);
+    const navigate                = useNavigate();
+    const { user }                = useAuth();
+    const inflight                = useRef(false);
+    useEffect(() => {
+        if (inflight.current) return;
+        inflight.current = true;
 
-  useEffect(() => {
-    const validateStep = async () => {
-      if (!user) {
-        navigate('/login');
-        return;
-      }
+        const validateStep = async () => {
+            if (!user) {
+                navigate('/login');
+                return;
+            }
 
-      // Check if user is a seller
-      if (user.type !== 'seller' && !user.roles?.includes('seller')) {
-        navigate('/');
-        return;
-      }
+            if (user.type !== 'seller' && !user.roles?.includes('seller')) {
+                navigate('/');
+                return;
+            }
 
-      try {
-        const response = await api.get('/seller/onboarding/status');
-        
-        if (response.data.success) {
-          const statusData = response.data.data;
-          
-          // If onboarding is complete, redirect to dashboard
-          if (statusData.onboarding_complete && !statusData.needs_onboarding) {
-            navigate('/seller/dashboard');
-            return;
-          }
+            try {
+                let statusData;
 
-          // Check if user can access this step
-          const currentStep = statusData.current_step;
-          const stepOrder = ['store-basic', 'business-details', 'address', 'documents', 'review-submit'];
-          
-          const currentIndex = stepOrder.indexOf(currentStep);
-          const requestedIndex = stepOrder.indexOf(step);
+                // Use cached status if fresh enough — avoids one API call per step page
+                const now = Date.now();
+                if (_statusCache && now - _statusCacheTime < CACHE_TTL_MS) {
+                    statusData = _statusCache;
+                } else {
+                    const response = await api.get('/seller/onboarding/status');
+                    if (response.data.success) {
+                        _statusCache = response.data.data;
+                        _statusCacheTime = now;
+                        statusData = _statusCache;
+                    }
+                }
 
-          if (requestedIndex < 0) {
-            // Invalid step
-            navigate('/seller/onboarding/store-basic');
-          } else if (requestedIndex > currentIndex) {
-            // Trying to skip ahead - redirect to current step
-            navigate(`/seller/onboarding/${currentStep}`);
-          } else {
-            // Valid step
-            setIsValid(true);
-          }
-        }
-      } catch (error) {
-        console.error('Step validation failed:', error);
-        navigate('/seller/onboarding/store-basic');
-      } finally {
-        setLoading(false);
-      }
-    };
+                if (!statusData) {
+                    navigate('/seller/onboarding/store-basic');
+                    return;
+                }
 
-    validateStep();
-  // FIX: 'location' was in the dep array, causing the guard to re-run and flash
-  // the loading spinner on every navigation event within the onboarding flow.
-  // user, navigate, and step are the only values that should trigger re-validation.
-  }, [user, navigate, step]);
+                // Onboarding already complete — send to dashboard
+                if (statusData.onboarding_complete && !statusData.needs_onboarding) {
+                    navigate('/seller/dashboard');
+                    return;
+                }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Validating onboarding step...</p>
-        </div>
-      </div>
-    );
-  }
+                const stepOrder = [
+                    'store-basic',
+                    'business-details',
+                    'address',
+                    'documents',
+                    'review-submit',
+                ];
 
-  return isValid ? children : null;
+                const currentIndex   = stepOrder.indexOf(statusData.current_step);
+                const requestedIndex = stepOrder.indexOf(step);
+
+                if (requestedIndex < 0) {
+                    navigate('/seller/onboarding/store-basic');
+                } else if (requestedIndex > currentIndex) {
+                    // FIX: was silently redirecting — now preserves the current step
+                    navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+                } else {
+                    setIsValid(true);
+                }
+
+            } catch (error) {
+                console.error('Step validation failed:', error);
+                navigate('/seller/onboarding/store-basic');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        validateStep();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, step]); // navigate is stable; step + user are the only meaningful deps
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-gradient-to-br from-green-50 to-blue-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-3" />
+                    <p className="text-gray-600 text-sm">Validating step...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return isValid ? children : null;
 };
 
 export default StepGuard;
