@@ -1,5 +1,5 @@
 // pages/seller/ProductForm.js
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import api from "../../../utils/api";
@@ -61,12 +61,12 @@ const getImageUrl = (url) => {
   // Otherwise, construct the full URL using the image base URL
   const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL;
   if (imageBaseUrl) {
-    // Remove leading slash from url if baseUrl already ends with slash
+
     const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
     return `${imageBaseUrl}/${cleanUrl}`;
   }
   
-  // Fallback: use API URL + /storage
+
   const apiUrl = import.meta.env.VITE_API_URL;
   if (apiUrl) {
     const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
@@ -98,6 +98,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const isMounted   = useRef(true);  // guards success timer against post-unmount state update
+  const [cancelModal, setCancelModal] = useState(false); // replaces window.confirm
 
   // Default form data
   const defaultFormData = {
@@ -270,9 +272,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setIsUploadingImages(true);
     setUploadProgress(0);
 
-    // FIX: upload all valid files in parallel instead of one-by-one.
-    // The old sequential for-await loop was noticeably slow for 3+ images.
-    // Track total bytes uploaded across all files for an aggregate progress bar.
     const totalBytes = validFiles.reduce((sum, f) => sum + f.size, 0);
     const uploadedBytes = new Array(validFiles.length).fill(0);
 
@@ -319,8 +318,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     e.target.value = "";
   };
 
-  // FIX: replaced window.prompt() with inline urlInput state.
-  // The caller should render a small input + "Add" button bound to urlInput.
   const addImageFromUrl = () => {
     const url = urlInput.trim();
     if (!url) return;
@@ -337,14 +334,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   const clearAllImages = () => {
-    if (window.confirm("Are you sure you want to remove all images?")) {
-      imagePreviews.forEach((preview) => {
-        if (!preview.isExisting && preview.url && !preview.url.startsWith("http")) {
-          // No blob URL to revoke anymore; images are stored on server
-        }
-      });
-      setImagePreviews([]);
-    }
+
+    setCancelModal('clear-images');
+  };
+
+  const confirmClearImages = () => {
+    setImagePreviews([]);
+    setCancelModal(false);
   };
 
   // ----- Form handling -----
@@ -421,18 +417,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      // Build images payload.
-      // FIX: the original code had url: preview.isExisting ? preview.url : preview.url
-      // — both branches were identical, so existing images (full URLs from the API)
-      // were sent as-is. The backend update() checks whether a URL starts with the
-      // expected temp prefix to decide if it should be moved. Full https:// URLs
-      // don't match that prefix, so they fall through to the "existing image" path
-      // which validates them against the product's current images. That flow is
-      // correct, but the comment and the dead conditional were misleading.
-      // Now explicit: existing images send their stored relative path; new uploads
-      // send the relative path returned by the upload endpoint.
       const imagesPayload = imagePreviews.map((preview) => ({
-        url:        preview.url,   // relative path for both new and existing images
+        url:        preview.url,
         angle:      preview.angle,
         is_primary: preview.is_primary,
       }));
@@ -485,10 +471,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // Auto-save draft (only for new products)
-  // FIX: wrap setItem in try/catch — large form states (many specs, long descriptions)
-  // can exceed the 5MB localStorage quota, throwing a QuotaExceededError that
-  // would otherwise crash silently and wipe user input on next load.
   useEffect(() => {
     if (!product) {
       try {
@@ -582,11 +564,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     fetchCategories();
   }, [product]);
 
-  // Clean up no longer needed (no blob URLs to revoke)
-  // Keep for safety if any blob URLs are still used
   useEffect(() => {
+    isMounted.current = true;
     return () => {
-      // No blob URLs to revoke in this version
+      isMounted.current = false;
     };
   }, []);
 
@@ -594,6 +575,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
+
+        if (!isMounted.current) return;
         setShowSuccessPopup(false);
         if (onSuccess) {
           onSuccess();
@@ -605,14 +588,22 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   }, [showSuccessPopup, onSuccess, navigate]);
 
-  // Cancel handler
+
   const handleCancel = () => {
     if (!product) {
-      const confirmLeave = window.confirm(
-        "You have unsaved changes. Are you sure you want to leave? Your draft will be saved."
-      );
-      if (!confirmLeave) return;
+
+      setCancelModal('leave');
+      return;
     }
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate("/seller/dashboard");
+    }
+  };
+
+  const confirmCancel = () => {
+    setCancelModal(false);
     if (onCancel) {
       onCancel();
     } else {
@@ -1414,6 +1405,56 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <ImagePreviewModal />
+
+      {cancelModal === 'leave' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Leave without saving?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Your draft has been auto-saved. You can continue editing later.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setCancelModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Keep Editing
+              </button>
+              <button
+                onClick={confirmCancel}
+                className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelModal === 'clear-images' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Remove all images?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This will remove all uploaded images from the form. This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setCancelModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmClearImages}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+              >
+                Remove All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Popup */}
       {showSuccessPopup && (

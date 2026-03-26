@@ -31,11 +31,11 @@ const getImageUrl = (image) => {
   return DEFAULT_PLACEHOLDER;
 };
 
-const ProductCard = ({ product, className = "" }) => {
+const ProductCard = ({ product, className = "", onAddToCart: onAddToCartProp }) => {
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();
-  const [message, setMessage] = useState(null);
+  const [wishlistMessage, setWishlistMessage] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -83,23 +83,19 @@ const ProductCard = ({ product, className = "" }) => {
       navigate("/login", { state: { from: "wishlist-add", productId, returnTo: window.location.pathname } });
       return;
     }
-    if (!productId) {
-      setMessage({ type: "error", message: "Invalid product" });
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
+    if (!productId) return;
     try {
       if (isInWishlist) {
         await removeFromWishlist(productId);
-        setMessage({ type: "success", message: "Removed from wishlist" });
+        setWishlistMessage({ type: "success", message: "Removed from wishlist" });
       } else {
         await addToWishlist(productId);
-        setMessage({ type: "success", message: "Added to wishlist" });
+        setWishlistMessage({ type: "success", message: "Added to wishlist" });
       }
     } catch (error) {
-      setMessage({ type: "error", message: error.response?.data?.message || "Failed to update wishlist" });
+      setWishlistMessage({ type: "error", message: error.response?.data?.message || "Failed to update wishlist" });
     } finally {
-      setTimeout(() => setMessage(null), 3000);
+      setTimeout(() => setWishlistMessage(null), 3000);
     }
   };
 
@@ -111,11 +107,13 @@ const ProductCard = ({ product, className = "" }) => {
     if (!productId || !product.is_active || product.quantity <= 0) return;
     setIsInCart(true);
     try {
-      await addToCart(productId, 1);
+      if (onAddToCartProp) {
+        await onAddToCartProp(productId, 1);
+      } else {
+        await addToCart(productId, 1);
+      }
     } catch (error) {
       setIsInCart(false);
-      setMessage({ type: "error", message: error.message || "Failed to add to cart" });
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -129,19 +127,9 @@ const ProductCard = ({ product, className = "" }) => {
 
   return (
     <>
-      {message && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${message.type === "success" ? "bg-green-100 border-green-400 text-green-700" :
-            message.type === "error" ? "bg-red-100 border-red-400 text-red-700" :
-              "bg-blue-100 border-blue-400 text-blue-700"
-          }`}>
-          <span className="text-sm sm:text-base">{message.message}</span>
-          <button onClick={() => setMessage(null)} className="ml-4 text-xl font-bold hover:opacity-70">×</button>
-        </div>
-      )}
-
       <motion.div
         className={`
-          bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col h-full 
+          relative bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col h-full 
           transition-all duration-300 ease-out 
           hover:shadow-md hover:border-gray-300
           ${className}
@@ -152,6 +140,13 @@ const ProductCard = ({ product, className = "" }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
+        {wishlistMessage && (
+          <div className={`absolute top-10 right-2 z-20 px-2 py-1 rounded text-[11px] font-medium shadow ${
+            wishlistMessage.type === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}>
+            {wishlistMessage.message}
+          </div>
+        )}
         {/* Image Section */}
         <div className="relative flex-shrink-0 overflow-hidden bg-gray-50 aspect-square">
           <Link to={`/products/${slug}`} className="block w-full h-full">
@@ -288,10 +283,7 @@ const ProductCard = ({ product, className = "" }) => {
           </div>
 
           <div className="mt-2 text-[10px] sm:text-xs text-gray-400 truncate text-center">
-            {product.seller?.seller_profile?.store_name ||
-              product.seller?.store_name ||
-              product.seller?.name ||
-              "Seller"}
+            {product.seller?.store_name || "Seller"}
           </div>
         </div>
       </motion.div>

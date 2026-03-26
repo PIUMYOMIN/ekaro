@@ -102,7 +102,7 @@ const Home = () => {
       const processedCategories = rootCategories.map((category) => ({
         ...category,
         productCount: category.products_count || 0,
-        childrenCount: category.children ? category.children.length : 0
+        // children_count comes directly from the API response
       }));
 
       setCategories(processedCategories.slice(0, 6));
@@ -180,7 +180,7 @@ const Home = () => {
     return () => {
       isMounted = false;
     };
-  }, [t]);
+  }, [fetchCategories, fetchTopSellers, fetchProducts]);
 
   // Memoize derived values as functions
   const getCTAButtonText = useCallback(() => {

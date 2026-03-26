@@ -53,15 +53,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadUser = async () => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await api.get('/auth/me');
+          const response = await api.get('/auth/me', { signal: controller.signal });
           const normalizedUser = normalizeUserRoles(response.data.data);
           setUser(normalizedUser);
           localStorage.setItem('user', JSON.stringify(normalizedUser));
         } catch (err) {
+          if (err.name === 'CanceledError' || err.name === 'AbortError') return;
           console.error('Failed to load user from API', err);
           // Try to load from localStorage as fallback
           const savedUser = localStorage.getItem('user');
@@ -95,6 +98,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadUser();
+
+    return () => controller.abort();
   }, []);
 
   const login = async (credentials) => {

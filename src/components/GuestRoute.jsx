@@ -8,12 +8,13 @@ const GuestRoute = ({ children }) => {
   if (loading) return <div>Loading...</div>;
 
   if (user) {
-    const roles = user.roles?.map(r => r.name) || [];
 
-    if (roles.includes('admin')) return <Navigate to="/admin" replace />;
-    if (roles.includes('seller')) return <Navigate to="/seller" replace />;
-    if (roles.includes('buyer')) return <Navigate to="/buyer" replace />;
-    
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+
+    if (roles.includes('admin') || user.type === 'admin') return <Navigate to="/admin" replace />;
+    if (roles.includes('seller') || user.type === 'seller') return <Navigate to="/seller" replace />;
+    if (roles.includes('buyer') || user.type === 'buyer') return <Navigate to="/buyer" replace />;
+
     return <Navigate to="/" replace />;
   }
 

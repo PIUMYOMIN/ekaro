@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
@@ -7,6 +7,7 @@ import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
 import { HelmetProvider } from "react-helmet-async";
 import EmailVerification from './pages/Email/EmailVerification';
+import { setNavigate } from "./utils/api";
 
 // Layout
 import Header from "./components/layout/Header";
@@ -77,6 +78,14 @@ import ShippingSettings from "./components/seller/ShippingSettings_org"
 
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
+const NavigationWirer = () => {
+  const navigate = useNavigate();
+  React.useEffect(() => {
+    setNavigate(navigate);
+  }, [navigate]);
+  return null;
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -85,10 +94,11 @@ function App() {
           <AuthProvider>
             <CartProvider>
               <Router>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">
-                    <WishlistProvider>
+                <NavigationWirer />
+                <WishlistProvider>
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main className="flex-grow">
                       <Routes>
                         {/* Public Routes */}
                         <Route path="/" element={<Home />} />
@@ -229,10 +239,10 @@ function App() {
                         <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
                         <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
                       </Routes>
-                    </WishlistProvider>
-                  </main>
-                  <Footer />
-                </div>
+                    </main>
+                    <Footer />
+                  </div>
+                </WishlistProvider>
               </Router>
             </CartProvider>
           </AuthProvider>

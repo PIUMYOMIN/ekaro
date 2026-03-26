@@ -208,79 +208,44 @@ const SellerDashboard = () => {
     }
   }, [navigate]);
 
-  // ---------- Navigation tabs – note: refreshData is NOT passed ----------
   const navigation = useMemo(() => [
-    {
-      name: t("seller.dashboard"),
-      icon: ChartBarIcon,
-      component: <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />
-    },
-    {
-      name: t("seller.my_store"),
-      icon: BuildingStorefrontIcon,
-      component: <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />
-    },
-    {
-      name: "Edit Store",
-      icon: PencilIcon,
-      component: <EditStore storeData={storeData} refreshData={refreshGlobalData} />
-    },
-    {
-      name: t("seller.order.title"),
-      icon: ShoppingBagIcon,
-      component: <OrderManagement />
-    },
-    {
-      name: t("seller.delivery.title"),
-      icon: TruckIcon,
-      component: <DeliveryManagement />
-    },
-    {
-      name: t("seller.product.title"),
-      icon: CubeIcon,
-      component: <ProductManagement />
-    },
-    {
-      name: t("seller.discount.title"),
-      icon: CubeIcon,
-      component: <DiscountManagement />
-    },
-    {
-      name: "Coupons",
-      icon: TicketIcon,
-      component: <CouponManagement />,
-    },
-    {
-      name: t("seller.sales.title"),
-      icon: CurrencyDollarIcon,
-      component: <SalesReports />
-    },
-    {
-      name: t("seller.reviews.title"),
-      icon: StarIcon,
-      component: <ProductReviewManagement />
-    },
-    {
-      name: t("seller.customers"),
-      icon: UserGroupIcon,
-      component: <Customers />
-    },
-    {
-      name: t("seller.shipping"),
-      icon: TruckIcon,
-      component: <ShippingSettings storeData={storeData} />
-    },
-    {
-      name: t("seller.settings"),
-      icon: CogIcon,
-      component: <StoreSettings storeData={storeData} setStoreData={setStoreData} />
-    },
-    {
-      name: "My Profile",
-      icon: UserCircleIcon,
-      component: <SellerProfileTab />,
+    { name: t("seller.dashboard"),      icon: ChartBarIcon,           key: "dashboard" },
+    { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
+    { name: "Edit Store",               icon: PencilIcon,             key: "edit_store" },
+    { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
+    { name: t("seller.delivery.title"), icon: TruckIcon,              key: "delivery" },
+    { name: t("seller.product.title"),  icon: CubeIcon,               key: "products" },
+    { name: t("seller.discount.title"), icon: CubeIcon,               key: "discounts" },
+    { name: "Coupons",                  icon: TicketIcon,             key: "coupons" },
+    { name: t("seller.sales.title"),    icon: CurrencyDollarIcon,     key: "sales" },
+    { name: t("seller.reviews.title"),  icon: StarIcon,               key: "reviews" },
+    { name: t("seller.customers"),      icon: UserGroupIcon,          key: "customers" },
+    { name: t("seller.shipping"),       icon: TruckIcon,              key: "shipping" },
+    { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
+    { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
+  ], [t]);
+
+  // Render the active tab with current state — separated from the stable nav structure
+  const renderActiveTab = () => {
+    const key = navigation[selectedTab]?.key;
+    switch (key) {
+      case "dashboard":   return <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />;
+      case "my_store":    return <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />;
+      case "edit_store":  return <EditStore storeData={storeData} refreshData={refreshGlobalData} />;
+      case "orders":      return <OrderManagement />;
+      case "delivery":    return <DeliveryManagement />;
+      case "products":    return <ProductManagement />;
+      case "discounts":   return <DiscountManagement />;
+      case "coupons":     return <CouponManagement />;
+      case "sales":       return <SalesReports />;
+      case "reviews":     return <ProductReviewManagement />;
+      case "customers":   return <Customers />;
+      case "shipping":    return <ShippingSettings storeData={storeData} />;
+      case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
+      case "profile":     return <SellerProfileTab />;
+      default:            return null;
     }
-  ], [t, storeData, stats, handleSetupClick, refreshGlobalData]);
+  };
 
   // ---------- Handle URL parameters (tab selection) ----------
   useEffect(() => {
@@ -661,9 +626,9 @@ const SellerDashboard = () => {
               </div>
             </div>
 
-            {/* Content — direct render */}
+            {/* Content — direct render using renderActiveTab() */}
             <div className="mt-2">
-              {navigation[selectedTab]?.component}
+              {renderActiveTab()}
             </div>
           </div>
         </div>

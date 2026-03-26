@@ -61,8 +61,7 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Refs to prevent duplicate requests
-  const initialFetchDone = useRef(false);
+  // Ref to prevent duplicate requests on infinite scroll
   const isFetching = useRef(false);
 
   // Fetch categories once
@@ -145,19 +144,9 @@ const ProductList = () => {
     [searchQuery, selectedCategory, filters, page, t]
   );
 
-  // Initial fetch
+  // Fetch when URL parameters change (also covers initial mount)
   useEffect(() => {
-    if (!initialFetchDone.current) {
-      initialFetchDone.current = true;
-      fetchProducts(true);
-    }
-  }, [fetchProducts]);
-
-  // Fetch when URL parameters change
-  useEffect(() => {
-    if (initialFetchDone.current) {
-      fetchProducts(true);
-    }
+    fetchProducts(true);
   }, [searchQuery, selectedCategory, filters.minPrice, filters.maxPrice, filters.sortBy, filters.sortOrder]);
 
   // Infinite scroll
@@ -204,7 +193,7 @@ const ProductList = () => {
     e.preventDefault();
     const params = new URLSearchParams(location.search);
     if (searchInput.trim()) {
-      params.set("search", encodeURIComponent(searchInput.trim()));
+      params.set("search", searchInput.trim());
     } else {
       params.delete("search");
     }
@@ -219,7 +208,7 @@ const ProductList = () => {
         timeout = setTimeout(() => {
           const params = new URLSearchParams(location.search);
           if (value.trim()) {
-            params.set("search", encodeURIComponent(value.trim()));
+            params.set("search", value.trim());
           } else {
             params.delete("search");
           }
