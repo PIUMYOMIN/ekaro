@@ -34,7 +34,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/careers"
+                  to="/contact"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.careers")}
@@ -42,7 +42,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/blog"
+                  to="/contact"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.blog")}
@@ -75,7 +75,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/resources"
+                  to="/contact"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.resources")}
@@ -100,7 +100,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/faq"
+                  to="/help"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.faq")}
@@ -108,7 +108,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/shipping"
+                  to="/help"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.shipping")}
@@ -120,6 +120,14 @@ const Footer = () => {
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.returns")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/track-order"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  Track Your Order
                 </Link>
               </li>
             </ul>
@@ -149,7 +157,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/security"
+                  to="/legal"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.security")}
@@ -157,7 +165,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/compliance"
+                  to="/legal"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.compliance")}
@@ -190,25 +198,25 @@ const Footer = () => {
               </h4>
               <div className="flex space-x-4">
                 <a
-                  href="https://facebook.com/pyoneaofficial" target="_blank"
+                  href="https://facebook.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.facebook")}
                 </a>
                 <a
-                  href="https://twitter.com/pyoneaofficial" target="_blank"
+                  href="https://twitter.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.twitter")}
                 </a>
                 <a
-                  href="https://linkedin.com/company/pyoneaofficial" target="_blank"
+                  href="https://linkedin.com/company/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.linkedin")}
                 </a>
                 <a
-                  href="https://instagram.com/pyoneaofficial" target="_blank"
+                  href="https://instagram.com/pyoneaofficial"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.instagram")}

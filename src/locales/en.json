@@ -876,7 +876,8 @@
     }
   },
   "legal": {
-    "pageTitle": "Legal Information",
+    "title": "Legal Information",
+    "subtitle": "Legal terms, privacy policy, and other important information for Pyonea marketplace users.",
     "terms": {
       "title": "Terms of Service",
       "content": "By accessing or using Pyonea, you agree to comply with and be legally bound by our Terms of Service. All transactions conducted through the platform are subject to these terms and applicable laws. Pyonea reserves the right to update these terms at any time."

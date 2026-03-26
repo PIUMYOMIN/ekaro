@@ -7,6 +7,7 @@ import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
 import { HelmetProvider } from "react-helmet-async";
 import EmailVerification from './pages/Email/EmailVerification';
+import OrderTracking from "./pages/OrderTracking";
 import { setNavigate } from "./utils/api";
 
 // Layout
@@ -22,7 +23,6 @@ import Sellers from "./pages/Sellers";
 import SellerProfile from "./pages/SellerProfile";
 import ProductComparison from "./pages/ProductComparison";
 import BulkOrderTool from "./pages/BulkOrderTool";
-import OrderTracking from "./pages/OrderTracking";
 import Pricing from "./pages/Pricing";
 import AboutUs from "./pages/AboutUs";
 import Legal from "./pages/Legal";
@@ -111,6 +111,7 @@ function App() {
                         <Route path="/product-comparison" element={<ProductComparison />} />
                         <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
                         <Route path="/order-tracking" element={<OrderTracking />} />
+                        <Route path="/track-order" element={<OrderTracking />} />
                         <Route path="/pricing" element={<Pricing />} />
                         <Route path="/about-us" element={<AboutUs />} />
                         <Route path="/terms" element={<Legal />} />

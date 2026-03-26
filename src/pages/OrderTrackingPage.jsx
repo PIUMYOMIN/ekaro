@@ -1,7 +1,7 @@
 // src/pages/OrderTrackingPage.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import OrderTracking from '../pages/OrderTracking';
+import OrderTracking from './OrderTracking';
 import api from '../utils/api';
 
 const OrderTrackingPage = () => {

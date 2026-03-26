@@ -78,6 +78,7 @@ const Home = () => {
     title: "Pyonea | Myanmar B2B Marketplace",
     description: "Pyonea is a trusted Myanmar B2B marketplace connecting buyers with verified suppliers. Discover wholesale products, trusted sellers, and business opportunities.",
     image: ogImage,
+    url: "/"
   });
 
   // Memoize fetch functions to prevent unnecessary re-renders

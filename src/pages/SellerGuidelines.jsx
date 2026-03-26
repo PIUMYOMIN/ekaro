@@ -147,7 +147,7 @@ const SellerGuidelines = () => {
     title: "Seller Guidelines | Pyonea Myanmar B2B Marketplace",
     description:
       "Everything you need to know to sell successfully on Pyonea — eligibility, product standards, prohibited items, performance requirements, and fees.",
-    url: "/seller/guidelines",
+    url: "/seller-guidelines",
   });
 
   const scrollTo = (id) => {
@@ -428,18 +428,18 @@ const SellerGuidelines = () => {
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                     {[
-                      { label: "First response", value: "Within 24 hrs", color: "green" },
-                      { label: "Order updates",  value: "Proactively",   color: "blue"  },
-                      { label: "Dispute reply",  value: "Within 48 hrs", color: "amber" },
-                    ].map(({ label, value, color }) => (
+                      { label: "First response", value: "Within 24 hrs", bg: "bg-green-50 border-green-100", text: "text-green-700", bold: "text-green-800" },
+                      { label: "Order updates",  value: "Proactively",   bg: "bg-blue-50 border-blue-100",   text: "text-blue-700",  bold: "text-blue-800"  },
+                      { label: "Dispute reply",  value: "Within 48 hrs", bg: "bg-amber-50 border-amber-100", text: "text-amber-700", bold: "text-amber-800" },
+                    ].map(({ label, value, bg, text, bold }) => (
                       <div
                         key={label}
-                        className={`rounded-lg p-4 border bg-${color}-50 border-${color}-100`}
+                        className={`rounded-lg p-4 border ${bg}`}
                       >
-                        <p className={`text-xs font-semibold uppercase tracking-wide text-${color}-700 mb-1`}>
+                        <p className={`text-xs font-semibold uppercase tracking-wide ${text} mb-1`}>
                           {label}
                         </p>
-                        <p className={`text-lg font-bold text-${color}-800`}>{value}</p>
+                        <p className={`text-lg font-bold ${bold}`}>{value}</p>
                       </div>
                     ))}
                   </div>
@@ -629,7 +629,7 @@ const SellerGuidelines = () => {
 
             {/* ── Last updated ── */}
             <p className="text-xs text-gray-400 text-center pb-4">
-              Last updated: January 2025 · Questions?{" "}
+              Last updated: March 2026 · Questions?{" "}
               <Link to="/contact" className="text-green-600 hover:underline">
                 Contact us
               </Link>

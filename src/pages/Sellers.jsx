@@ -136,7 +136,8 @@ const Sellers = () => {
 
   const SeoComponent = useSEO({
     title: t("sellers.title"),
-    description: t("sellers.subtitle")
+    description: t("sellers.subtitle"),
+    url: "/sellers"
   });
 
   if (loading) {

@@ -1,13 +1,12 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import SEO from "../components/SEO/seo";
 import useSEO from "../hooks/useSEO";
 
 const Legal = () => {
   const { t } = useTranslation();
   const SeoComponent = useSEO({
-    title: t("legal.pageTitle"),
-    description: "Legal terms, privacy policy, and other important information for Pyonea marketplace users.",
+    title: t("legal.title"),
+    description: t("legal.description"),
     url: "/legal",
   });
 
@@ -41,7 +40,7 @@ const Legal = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-center">
-          {t("legal.pageTitle")}
+          {t("legal.title")}
         </h1>
         <p className="text-center text-gray-600 mb-8">{t("legal.subtitle")}</p>
 

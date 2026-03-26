@@ -294,16 +294,10 @@ const DeliveryZones = () => {
     setWholeMyanmar((prev) => {
       const next = !prev;
       if (next) {
-        // Select everything
-        const all = new Set();
-        MYANMAR_LOCATIONS.forEach((loc) => {
-          all.add(`state|Myanmar|${loc.state}`);
-          loc.cities.forEach((c) => {
-            all.add(`city|Myanmar|${loc.state}|${c.city}`);
-            c.townships.forEach((t) => all.add(`township|Myanmar|${loc.state}|${c.city}|${t}`));
-          });
-        });
-        setSelected(all);
+        // Store only the country-level key — the backend stores a single country zone.
+        // Individual state/city/township selections are cleared.
+        setSelected(new Set(['country|Myanmar']));
+        if (!fees['country|Myanmar']) setFees((f) => ({ ...f, 'country|Myanmar': defaultFee() }));
       } else {
         setSelected(new Set());
       }
@@ -315,15 +309,17 @@ const DeliveryZones = () => {
     const keys     = stateKeys(stateName);
     const stateKey = `state|Myanmar|${stateName}`;
     const isOn     = selected.has(stateKey);
+    if (!isOn) {
+      // Initialise fees for new keys outside the state updater
+      const toInit = keys.filter((k) => !fees[k]);
+      if (toInit.length) setFees((f) => Object.assign({}, f, Object.fromEntries(toInit.map((k) => [k, defaultFee()]))));
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       if (isOn) {
         keys.forEach((k) => next.delete(k));
       } else {
-        keys.forEach((k) => {
-          next.add(k);
-          if (!fees[k]) setFees((f) => ({ ...f, [k]: defaultFee() }));
-        });
+        keys.forEach((k) => next.add(k));
       }
       return next;
     });
@@ -334,16 +330,17 @@ const DeliveryZones = () => {
     const keys    = cityKeys(stateName, cityName);
     const cityKey = `city|Myanmar|${stateName}|${cityName}`;
     const isOn    = selected.has(cityKey);
+    if (!isOn) {
+      const toInit = keys.filter((k) => !fees[k]);
+      if (toInit.length) setFees((f) => Object.assign({}, f, Object.fromEntries(toInit.map((k) => [k, defaultFee()]))));
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       if (isOn) {
         keys.forEach((k) => next.delete(k));
       } else {
-        keys.forEach((k) => {
-          next.add(k);
-          if (!fees[k]) setFees((f) => ({ ...f, [k]: defaultFee() }));
-        });
-        // Auto-check state if all cities in it are selected
+        keys.forEach((k) => next.add(k));
+        // Auto-check state if all cities in it are now selected
         const loc = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
         const allCitiesSelected = loc?.cities.every((c) =>
           next.has(`city|Myanmar|${stateName}|${c.city}`)
@@ -357,6 +354,9 @@ const DeliveryZones = () => {
 
   const toggleTownship = (stateName, cityName, township) => {
     const tKey = `township|Myanmar|${stateName}|${cityName}|${township}`;
+    if (!selected.has(tKey) && !fees[tKey]) {
+      setFees((f) => ({ ...f, [tKey]: defaultFee() }));
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(tKey)) {
@@ -366,7 +366,6 @@ const DeliveryZones = () => {
         next.delete(`state|Myanmar|${stateName}`);
       } else {
         next.add(tKey);
-        if (!fees[tKey]) setFees((f) => ({ ...f, [tKey]: defaultFee() }));
         // Auto-check city if all its townships are selected
         const loc  = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
         const city = loc?.cities.find((c) => c.city === cityName);
@@ -411,24 +410,41 @@ const DeliveryZones = () => {
     setError(null);
     setSuccess(false);
 
-    // Build zone array from selected keys
-    const zones = Array.from(selected).map((key) => {
-      const parts    = key.split('|');
-      const areaType = parts[0];
-      const f        = fees[key] || defaultFee();
-      return {
-        area_type:                   areaType,
+    let zones;
+    if (wholeMyanmar) {
+      // One country-level zone rather than hundreds of individual rows.
+      const f = fees['country|Myanmar'] || defaultFee();
+      zones = [{
+        area_type:                   'country',
         country:                     'Myanmar',
-        state:                       parts[2] || null,
-        city:                        parts[3] || null,
-        township:                    parts[4] || null,
+        state:                       null,
+        city:                        null,
+        township:                    null,
         shipping_fee:                f.fee,
         free_shipping_threshold:     f.freeThreshold || null,
         estimated_delivery_days_min: f.daysMin,
         estimated_delivery_days_max: f.daysMax,
         is_active:                   true,
-      };
-    });
+      }];
+    } else {
+      zones = Array.from(selected).map((key) => {
+        const parts    = key.split('|');
+        const areaType = parts[0];
+        const f        = fees[key] || defaultFee();
+        return {
+          area_type:                   areaType,
+          country:                     'Myanmar',
+          state:                       parts[2] || null,
+          city:                        parts[3] || null,
+          township:                    parts[4] || null,
+          shipping_fee:                f.fee,
+          free_shipping_threshold:     f.freeThreshold || null,
+          estimated_delivery_days_min: f.daysMin,
+          estimated_delivery_days_max: f.daysMax,
+          is_active:                   true,
+        };
+      });
+    }
 
     try {
       const res = await api.post('/seller/delivery-areas/sync', { zones });
@@ -498,7 +514,7 @@ const DeliveryZones = () => {
       {success && (
         <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
           <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
-          Delivery zones saved successfully.
+          Delivery zones saved.
         </div>
       )}
 
