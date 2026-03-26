@@ -440,7 +440,7 @@ const SellerProfile = () => {
   const SeoComponent = useSEO({
     title: seller?.store_name || "Seller Profile",
     description: seller?.store_description?.slice(0, 150) || "View seller information on Pyonea marketplace.",
-    image: seller?.store_logo,
+    image: seller?.store_logo ?? undefined,
     schema: sellerSchema,
   });
 

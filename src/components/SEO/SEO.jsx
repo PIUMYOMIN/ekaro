@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 const SEO = ({
   title,
   description,
-  image = "/og-image.png",
+  image,
   url = "",
   type = "website",
   schema = null,
@@ -14,19 +14,22 @@ const SEO = ({
   const siteUrl =
     import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
+  const safeImage = (image != null && image !== "") ? image : "/og-image.png";
+  const safeUrl   = url ?? "";
+
   const fullTitle = title
     ? title.includes("Pyonea")
       ? title
       : `${title} | Pyonea`
     : "Pyonea Marketplace";
 
-  const absoluteImage = image.startsWith("http")
-    ? image
-    : `${siteUrl}${image}`;
+  const absoluteImage = safeImage.startsWith("http")
+    ? safeImage
+    : `${siteUrl}${safeImage}`;
 
-  const absoluteUrl = url.startsWith("http")
-    ? url
-    : `${siteUrl}${url}`;
+  const absoluteUrl = safeUrl.startsWith("http")
+    ? safeUrl
+    : `${siteUrl}${safeUrl}`;
 
   return (
     <Helmet>

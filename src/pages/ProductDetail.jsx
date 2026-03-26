@@ -214,8 +214,6 @@ const ProductDetail = () => {
 
     setSubmittingReview(true);
     try {
-      // ✅ Fix 1: Use correct endpoint (singular 'product')
-      // ✅ Fix 2: Send 'comment: reviewText' instead of 'comment' (which is undefined)
       const response = await api.post(`/buyer/reviews/product/${product.id}`, {
         product_id: product.id,
         rating,

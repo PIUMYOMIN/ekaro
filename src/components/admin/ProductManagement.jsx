@@ -34,6 +34,7 @@ const ProductManagement = () => {
 
   // Modal state — replaces alert/confirm/prompt
   const [deleteModal, setDeleteModal]   = useState(null);  // productId | null
+  const [approveModal, setApproveModal] = useState(null);  // productId | null — FIX: was window.confirm
   const [rejectModal, setRejectModal]   = useState(null);  // productId | null
   const [rejectReason, setRejectReason] = useState("");
   const [bulkModal, setBulkModal]       = useState(false);
@@ -111,13 +112,15 @@ const ProductManagement = () => {
     }
   };
 
-  // Approve product
-  const handleApprove = async (productId) => {
-    if (!window.confirm("Are you sure you want to approve this product?")) return;
+  // Approve product — FIX: was using window.confirm, now uses approveModal state
+  const handleApprove = async () => {
+    if (!approveModal) return;
     try {
-      await api.post(`/admin/products/${productId}/approve`);
+      await api.post(`/admin/products/${approveModal}/approve`);
+      setApproveModal(null);
       await fetchProducts();
     } catch (error) {
+      setApproveModal(null);
       setError(error.response?.data?.message || "Failed to approve product");
     }
   };
@@ -515,15 +518,23 @@ const ProductManagement = () => {
         </span>
       ),
       approvalStatus: (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${approvalBadge.bg} ${approvalBadge.text}`}>
-          {ApprovalIcon && <ApprovalIcon className="h-3 w-3 mr-1" />}
-          {approvalBadge.label}
-          {product.approved_at && (
-            <span className="ml-1 text-xs opacity-75">
-              ({new Date(product.approved_at).toLocaleDateString()})
+        <div className="flex flex-col gap-1">
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${approvalBadge.bg} ${approvalBadge.text}`}>
+            {ApprovalIcon && <ApprovalIcon className="h-3 w-3 mr-1" />}
+            {approvalBadge.label}
+            {product.approved_at && (
+              <span className="ml-1 text-xs opacity-75">
+                ({new Date(product.approved_at).toLocaleDateString()})
+              </span>
+            )}
+          </span>
+          {/* FIX: show rejection reason when present so admin can see reason at a glance */}
+          {product.rejection_reason && (
+            <span className="text-xs text-red-600 max-w-[180px] truncate" title={product.rejection_reason}>
+              ↳ {product.rejection_reason}
             </span>
           )}
-        </span>
+        </div>
       ),
       status: (
         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -569,11 +580,11 @@ const ProductManagement = () => {
             <TrashIcon className="h-4 w-4" />
           </button>
 
-          {/* Approval actions for pending products */}
+          {/* Approval actions — pending products can be approved or rejected */}
           {product.status === 'pending' && (
             <>
               <button
-                onClick={() => handleApprove(product.id)}
+                onClick={() => setApproveModal(product.id)}
                 className="inline-flex items-center p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded"
                 title="Approve"
               >
@@ -587,6 +598,17 @@ const ProductManagement = () => {
                 <XCircleIcon className="h-4 w-4" />
               </button>
             </>
+          )}
+
+          {/* FIX: rejected products can now be re-approved (backend updated to allow it) */}
+          {product.status === 'rejected' && (
+            <button
+              onClick={() => setApproveModal(product.id)}
+              className="inline-flex items-center px-2 py-1 text-xs text-green-700 bg-green-50 hover:bg-green-100 rounded border border-green-200"
+              title="Re-approve this rejected product"
+            >
+              Re-approve
+            </button>
           )}
 
           {/* Active/Inactive toggle only for approved products */}
@@ -607,6 +629,32 @@ const ProductManagement = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Approve confirmation modal ── */}
+      {approveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Approve Product</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to approve this product? It will become visible to buyers immediately.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setApproveModal(null)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApprove}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Delete confirmation modal ── */}
       {deleteModal && (
