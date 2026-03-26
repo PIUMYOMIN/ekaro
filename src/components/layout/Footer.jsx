@@ -59,7 +59,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/seller/guidelines"
+                  to="/seller-guidelines"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.seller_guidelines")}

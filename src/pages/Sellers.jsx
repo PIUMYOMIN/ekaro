@@ -8,7 +8,6 @@ import { StarIcon, ChevronDownIcon, FunnelIcon, MagnifyingGlassIcon } from "@her
 import SellerCard from "../components/ui/SellerCard";
 import Pagination from "../components/ui/Pagination";
 import api from "../utils/api";
-import SEO from "../components/SEO/SEO";
 import useSEO from "../hooks/useSEO";
 
 const Sellers = () => {

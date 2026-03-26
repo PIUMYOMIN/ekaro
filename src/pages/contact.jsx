@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import api from '../utils/api';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import SEO from "../components/SEO/seo";
+import useSEO from "../hooks/useSEO";
 
 const Contact = () => {
   const { t } = useTranslation();
@@ -45,13 +45,14 @@ const Contact = () => {
     }
   };
 
+  const SeoComponent = useSEO({
+      title: t("contact.title"),
+      description: t("contact.subtitle")
+    });
+
   return (
     <>
-      <SEO
-        title={t('contact.title')}
-        description={t('contact.subtitle')}
-        url="/contact"
-      />
+      {SeoComponent}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-2 text-center">{t('contact.title')}</h1>
@@ -77,7 +78,7 @@ const Contact = () => {
                   </svg>
                   <div>
                     <p className="font-medium">{t('contact.info.email')}</p>
-                    <p className="text-gray-600">contact.pyonea@gmail.com</p>
+                    <p className="text-gray-600">contact@pyonea.com</p>
                   </div>
                 </div>
                 <div className="flex items-start">
