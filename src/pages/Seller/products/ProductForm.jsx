@@ -169,6 +169,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [draggedImage, setDraggedImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  // FIX: tracks whether the seller changed images in this session.
+  // When editing, if images were not touched we skip sending `images` in the
+  // payload so the backend preserves existing images unchanged.
+  const [imagesModified, setImagesModified] = useState(false);
   // FIX: replaces window.prompt() in addImageFromUrl
   const [urlInput, setUrlInput] = useState("");
 
@@ -210,6 +214,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   // ----- Image management functions -----
   const setPrimaryImage = (index) => {
+    setImagesModified(true);
     setImagePreviews((prev) =>
       prev.map((img, i) => ({
         ...img,
@@ -219,6 +224,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   const removeImage = (index) => {
+    setImagesModified(true);
     setImagePreviews((prev) => {
       const newPreviews = prev.filter((_, i) => i !== index);
       // If primary image was removed, set first remaining as primary
@@ -233,6 +239,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const handleDragOver = (e) => e.preventDefault();
   const handleDrop = (index) => {
     if (draggedImage === null || draggedImage === index) return;
+    setImagesModified(true);
     const newPreviews = [...imagePreviews];
     const draggedItem = newPreviews[draggedImage];
     newPreviews.splice(draggedImage, 1);
@@ -242,6 +249,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   const updateImageAngle = (index, angle) => {
+    setImagesModified(true);
     setImagePreviews((prev) =>
       prev.map((img, i) => (i === index ? { ...img, angle } : img))
     );
@@ -292,8 +300,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
         if (response.data.success) {
           const imageData = response.data.data;
+          // FIX: store both the display url (absolute) AND the submission path
+          // (relative temp path). On submit we send `path` not `url` so the
+          // backend receives the relative temp path it can move to permanent storage.
           return {
-            url:        imageData.url,
+            url:        imageData.url,   // relative temp path — getImageUrl() builds the display URL
+            path:       imageData.url,   // same value; named clearly for submit logic
             file:       null,
             is_primary: imagePreviews.length === 0 && index === 0,
             angle:      imageData.angle,
@@ -313,6 +325,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     const results = await Promise.all(validFiles.map((file, i) => uploadOne(file, i)));
     const newPreviews = results.filter(Boolean);
 
+    setImagesModified(true);
     setImagePreviews((prev) => [...prev, ...newPreviews]);
     setIsUploadingImages(false);
     e.target.value = "";
@@ -323,12 +336,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     if (!url) return;
     const newPreview = {
       url,
+      path:       url,   // external URL used as-is by backend
       is_primary: imagePreviews.length === 0,
       angle:      "default",
       isExisting: false,
       name:       "External Image",
       size:       "External",
     };
+    setImagesModified(true);
     setImagePreviews((prev) => [...prev, newPreview]);
     setUrlInput("");
   };
@@ -340,6 +355,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
   const confirmClearImages = () => {
     setImagePreviews([]);
+    setImagesModified(true);
     setCancelModal(false);
   };
 
@@ -417,35 +433,46 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      const imagesPayload = imagePreviews.map((preview) => ({
-        url:        preview.url,
-        angle:      preview.angle,
-        is_primary: preview.is_primary,
-      }));
-
       const payload = {
         ...formData,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity, 10),
-        moq: parseInt(formData.moq, 10),
-        category_id: parseInt(formData.category_id, 10),
+        price:        parseFloat(formData.price),
+        quantity:     parseInt(formData.quantity, 10),
+        moq:          parseInt(formData.moq, 10),
+        category_id:  parseInt(formData.category_id, 10),
         specifications: formData.specifications,
-        images: imagesPayload,
         discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
-        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+        weight_kg:    formData.weight_kg    ? parseFloat(formData.weight_kg)    : null,
         shipping_cost: formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
-        is_featured: formData.is_featured || false,
-        is_new: formData.is_new !== undefined ? formData.is_new : true,
-        condition: formData.condition,
+        is_featured:  formData.is_featured  || false,
+        is_new:       formData.is_new       !== undefined ? formData.is_new : true,
+        condition:    formData.condition,
       };
+
+      // FIX: only include `images` in the payload if the seller actually changed them.
+      //
+      // On create:  always send images (required for a new product).
+      // On edit:    send images ONLY when imagesModified is true.
+      //             If images were not touched the backend preserves the existing
+      //             images column unchanged — nothing is deleted, nothing is renamed.
+      //
+      // When we DO send images, use `path` (the relative storage path) not `url`
+      // (which is the absolute display URL). The backend matches existing images by
+      // their stored relative path and moves temp images from products/temp/{uid}/
+      // to products/{uid}/.
+      if (!product || imagesModified) {
+        payload.images = imagePreviews.map((preview) => ({
+          url:        preview.path || preview.url,  // relative path takes priority
+          angle:      preview.angle,
+          is_primary: preview.is_primary,
+        }));
+      }
+      // else: no `images` key → backend preserves existing images
 
       let response;
       if (product) {
-        // Update using seller endpoint
         response = await api.put(`/seller/products/${product.id}`, payload);
         setSuccessMessage("Product updated successfully!");
       } else {
-        // Create using seller endpoint
         response = await api.post("/seller/products", payload);
         setSuccessMessage("Product created successfully!");
       }
@@ -525,17 +552,22 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         // Sanitize null values
         const sanitizedData = sanitizeProductData(productData);
 
-        // Process images
+        // FIX: getProductForEdit now returns both `url` (absolute, for display)
+        // and `path` (relative, for submission). We store both so:
+        //   - <img src={getImageUrl(image.url)}> works immediately
+        //   - handleFinalSubmit sends image.path (relative) to the backend
         const images = productData.images || [];
         const previews = images.map((img, idx) => ({
-          url: img.url,
+          url:        img.url,              // absolute URL for display
+          path:       img.path || img.url,  // relative path for submission (backend provides `path`)
           is_primary: img.is_primary || idx === 0,
-          angle: img.angle || "default",
+          angle:      img.angle || "default",
           isExisting: true,
-          name: img.url.split("/").pop(),
-          size: "Existing",
+          name:       img.url.split("/").pop(),
+          size:       "Existing",
         }));
         setImagePreviews(previews);
+        // imagesModified stays false — seller hasn't touched images yet
 
         // Set form data, remove images field
         const { images: _, ...rest } = sanitizedData;

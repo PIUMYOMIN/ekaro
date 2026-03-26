@@ -20,12 +20,7 @@ api.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Call this once after React Router is ready to wire up navigation.
-// Usage in main.jsx or App.jsx:
-//   import { setNavigate } from './utils/api';
-//   import { useNavigate } from 'react-router-dom';
-//   const navigate = useNavigate();
-//   useEffect(() => setNavigate(navigate), [navigate]);
+
 let _navigate = null;
 export const setNavigate = (navigateFn) => {
   _navigate = navigateFn;
