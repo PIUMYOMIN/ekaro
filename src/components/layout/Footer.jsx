@@ -190,25 +190,25 @@ const Footer = () => {
               </h4>
               <div className="flex space-x-4">
                 <a
-                  href="https://facebook.com/pyoneaofficial"
+                  href="https://facebook.com/pyoneaofficial" target="_blank"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.facebook")}
                 </a>
                 <a
-                  href="https://twitter.com/pyoneaofficial"
+                  href="https://twitter.com/pyoneaofficial" target="_blank"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.twitter")}
                 </a>
                 <a
-                  href="https://linkedin.com/company/pyoneaofficial"
+                  href="https://linkedin.com/company/pyoneaofficial" target="_blank"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.linkedin")}
                 </a>
                 <a
-                  href="https://instagram.com/pyoneaofficial"
+                  href="https://instagram.com/pyoneaofficial" target="_blank"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.instagram")}

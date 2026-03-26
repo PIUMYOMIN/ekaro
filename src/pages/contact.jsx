@@ -88,7 +88,7 @@ const Contact = () => {
                   </svg>
                   <div>
                     <p className="font-medium">{t('contact.info.address')}</p>
-                    <p className="text-gray-600">အမှတ် ၁၂၃၊ စီးပွားရေးလမ်း၊ ရန်ကုန်မြို့</p>
+                    <p className="text-gray-600">Bet 59-60, 19 Street, Mandalay, Myanmar</p>
                   </div>
                 </div>
               </div>
