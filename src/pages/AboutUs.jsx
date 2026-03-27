@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import SEO from "../components/SEO/seo";
 import useSEO from "../hooks/useSEO";
 
 const AboutUs = () => {
@@ -8,7 +7,7 @@ const AboutUs = () => {
 
   const SeoComponent = useSEO({
     title: t("about.title"),
-    description: "Learn about Pyonea, Myanmar's trusted B2B marketplace connecting buyers and sellers.",
+    description: "Pyonea is Myanmar's trusted B2B marketplace connecting verified suppliers with business buyers. Learn about our mission and commitment to Myanmar commerce.",
     url: "/about-us",
   });
 

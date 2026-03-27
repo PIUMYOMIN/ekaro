@@ -9,10 +9,11 @@ const SEO = ({
   schema = null,
   alternateUrls = {},
   noindex = false,
+  locale = "en_US",
 }) => {
 
   const siteUrl =
-    import.meta.env.VITE_APP_URL || "http://localhost:5173";
+    import.meta.env.VITE_APP_URL || "https://pyonea.com";
 
   const safeImage = (image != null && image !== "") ? image : "/og-image.png";
   const safeUrl   = url ?? "";
@@ -62,10 +63,11 @@ const SEO = ({
       <meta property="og:image" content={absoluteImage} />
       <meta property="og:url" content={absoluteUrl} />
       <meta property="og:site_name" content="Pyonea" />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content={locale} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@PyoneaMarket" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={absoluteImage} />

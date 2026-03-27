@@ -63,7 +63,7 @@ const HelpCenter = () => {
 
   const SeoComponent = useSEO({
     title: t('helpCenter.title', 'Help Center | Pyonea'),
-    description: t('helpCenter.description', 'Find answers to common questions about buying, selling, and payments on Pyonea.'),
+    description: t('helpCenter.description', 'Find answers to common questions about buying, selling, payments, delivery, and account management on Pyonea — Myanmar\'s leading B2B marketplace.'),
   });
 
   return (

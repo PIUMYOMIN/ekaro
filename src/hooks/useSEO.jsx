@@ -56,6 +56,8 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
     };
   }
 
+  const locale = i18n.language === 'my' ? 'my_MM' : 'en_US';
+
   return (
     <SEO
       title={finalTitle}
@@ -66,6 +68,7 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
       schema={schemaData}
       alternateUrls={alternateUrls}
       noindex={noindex}
+      locale={locale}
     />
   );
 };

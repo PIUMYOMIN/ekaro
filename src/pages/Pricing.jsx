@@ -1,6 +1,13 @@
 import React from "react";
+import useSEO from "../hooks/useSEO";
 
 const Pricing = () => {
+  const SeoComponent = useSEO({
+    title: "Pricing & Plans | Pyonea Myanmar B2B Marketplace",
+    description: "Choose the right plan for your business. Pyonea offers free and premium tiers for buyers and sellers on Myanmar's leading B2B marketplace.",
+    url: "/pricing",
+  });
+
   const plans = [
     {
       name: "Basic",
@@ -44,7 +51,9 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <>
+      {SeoComponent}
+      <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Pricing Plans</h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -153,6 +162,7 @@ const Pricing = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

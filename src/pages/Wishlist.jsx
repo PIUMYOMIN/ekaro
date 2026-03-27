@@ -1,7 +1,15 @@
 import React,{useState} from "react";
+import useSEO from "../hooks/useSEO";
 import ProductCard from "../components/ui/ProductCard";
 
 const Wishlist = () => {
+  const SeoComponent = useSEO({
+    title: "My Wishlist | Pyonea",
+    description: "Your saved products on Pyonea — Myanmar's trusted B2B marketplace.",
+    url: "/wishlist",
+    noindex: true,
+  });
+
   const [wishlistItems] = useState([
     { id: 1, name: "Premium Rice", price: 12000, moq: 50, stock: 500 },
     { id: 2, name: "Construction Cement", price: 8500, moq: 100, stock: 2000 },
@@ -10,7 +18,9 @@ const Wishlist = () => {
   ]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      {SeoComponent}
+      <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Your Wishlist</h1>
 
       {wishlistItems.length === 0
@@ -46,6 +56,7 @@ const Wishlist = () => {
             )}
           </div>}
     </div>
+    </>
   );
 };
 

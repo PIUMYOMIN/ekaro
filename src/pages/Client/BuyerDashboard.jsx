@@ -1009,7 +1009,7 @@ const SettingsTab = () => {
     if (pwd.new_password !== pwd.confirm_password) { setMsg({ type:"error", text:"Passwords do not match" }); return; }
     setL(true); setMsg(null);
     try {
-      await api.put("/users/password", { current_password: pwd.current_password, new_password: pwd.new_password, new_password_confirmation: pwd.confirm_password });
+      await api.put("/users/profile/password", { current_password: pwd.current_password, new_password: pwd.new_password, new_password_confirmation: pwd.confirm_password });
       setMsg({ type:"success", text:"Password changed successfully" });
       setPwd({ current_password:"", new_password:"", confirm_password:"" });
     } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || "Failed to change password" }); }

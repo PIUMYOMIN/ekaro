@@ -275,6 +275,11 @@ const ProductDetail = () => {
         availability: product.quantity > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
+        url: `https://pyonea.com/products/${product.slug || product.id}`,
+        seller: product.seller ? {
+          "@type": "Organization",
+          name: product.seller.store_name || product.seller.name,
+        } : undefined,
       },
       aggregateRating: product.review_count > 0 ? {
         "@type": "AggregateRating",
@@ -285,9 +290,10 @@ const ProductDetail = () => {
   }, [product]);
 
   const SeoComponent = useSEO({
-    title: product?.name_en || product?.name_mm || "Product",
-    description: product?.description_en || product?.description_mm || "View product details",
+    title: pageTitle,
+    description: pageDescription.slice(0, 155) || "View product details on Pyonea — Myanmar's trusted B2B marketplace.",
     image: product?.images?.[0] ? getImageUrl(product.images[0]) : undefined,
+    url: pageUrl,
     schema: productSchema,
   });
 

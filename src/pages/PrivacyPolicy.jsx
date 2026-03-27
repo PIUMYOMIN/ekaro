@@ -4,11 +4,12 @@ import useSEO from '../hooks/useSEO';
 
 const PrivacyPolicy = () => {
   const { t } = useTranslation();
-  const lastUpdated = '27 March 2026'; // Update this when the policy changes
+  const lastUpdated = new Date().toLocaleDateString('en-GB');
 
   const SeoComponent = useSEO({
     title: t('privacyPolicy.title'),
     description: t('privacyPolicy.subtitle'),
+    url: '/privacy-policy',
   });
 
   return (
@@ -90,8 +91,8 @@ const PrivacyPolicy = () => {
             <address className="not-italic text-gray-700">
               <p>
                 <strong>Email:</strong>{' '}
-                <a href="mailto:contact.pyonea@gmail.com" className="text-blue-600 hover:underline">
-                  contact.pyonea@gmail.com
+                <a href="mailto:contact@pyonea.com" className="text-blue-600 hover:underline">
+                  {t('privacyPolicy.contact.email')}
                 </a>
               </p>
               <p>

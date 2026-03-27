@@ -424,11 +424,20 @@ const SellerProfile = () => {
     if (!seller) return null;
     return {
       "@context": "https://schema.org",
-      "@type": "Store",
+      "@type": "LocalBusiness",
       name: seller.store_name,
       description: seller.store_description,
       image: seller.store_logo,
-      address: seller.address ? { "@type": "PostalAddress", streetAddress: seller.address } : undefined,
+      url: `https://pyonea.com/sellers/${seller.store_slug || seller.id}`,
+      telephone: seller.contact_phone || undefined,
+      email: seller.contact_email || undefined,
+      address: seller.address ? {
+        "@type": "PostalAddress",
+        streetAddress: seller.address,
+        addressLocality: seller.city || undefined,
+        addressRegion: seller.state || undefined,
+        addressCountry: seller.country || "MM",
+      } : undefined,
       aggregateRating: seller.reviews_count > 0 ? {
         "@type": "AggregateRating",
         ratingValue: seller.reviews_avg_rating,

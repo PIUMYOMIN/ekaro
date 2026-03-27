@@ -9,7 +9,7 @@ const ReturnPolicy = () => {
   const SeoComponent = useSEO({
     title: t('returnPolicy.title'),
     description: t('returnPolicy.subtitle'),
-    noindex: true,
+    url: '/return-policy',
   });
 
   return (
@@ -39,7 +39,7 @@ const ReturnPolicy = () => {
         <div className="mb-6">
           <h3 className="text-xl font-medium mb-2">{t('returnPolicy.platformPolicy.minimumRequirements.title')}</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-700">
-            {Array.isArray(t('returnPolicy.platformPolicy.minimumRequirements.items', { returnObjects: true })) && t('returnPolicy.platformPolicy.minimumRequirements.items', { returnObjects: true }).map((item, idx) => (
+            {t('returnPolicy.platformPolicy.minimumRequirements.items', { returnObjects: true }).map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
           </ul>
@@ -49,7 +49,7 @@ const ReturnPolicy = () => {
         <div className="mb-6">
           <h3 className="text-xl font-medium mb-2">{t('returnPolicy.platformPolicy.consumerRights.title')}</h3>
           <ul className="list-disc list-inside space-y-1 text-gray-700">
-            {Array.isArray(t('returnPolicy.platformPolicy.consumerRights.items', { returnObjects: true })) && t('returnPolicy.platformPolicy.consumerRights.items', { returnObjects: true }).map((item, idx) => (
+            {t('returnPolicy.platformPolicy.consumerRights.items', { returnObjects: true }).map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
           </ul>

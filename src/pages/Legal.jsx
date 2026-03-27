@@ -5,8 +5,8 @@ import useSEO from "../hooks/useSEO";
 const Legal = () => {
   const { t } = useTranslation();
   const SeoComponent = useSEO({
-    title: t("legal.title"),
-    description: t("legal.description"),
+    title: t("legal.pageTitle"),
+    description: "Pyonea's legal centre — terms of service, privacy policy, return policy, and platform guidelines for buyers and sellers on Myanmar's leading B2B marketplace.",
     url: "/legal",
   });
 
@@ -40,7 +40,7 @@ const Legal = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-center">
-          {t("legal.title")}
+          {t("legal.pageTitle")}
         </h1>
         <p className="text-center text-gray-600 mb-8">{t("legal.subtitle")}</p>
 
