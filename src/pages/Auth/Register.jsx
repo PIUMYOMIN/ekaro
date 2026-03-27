@@ -8,7 +8,6 @@ import { EnvelopeIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import SEO from "../../components/SEO/seo";
 import useSEO from '../../hooks/useSEO';
 
 const Register = () => {
@@ -20,9 +19,6 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('buyer');
   const { executeRecaptcha } = useGoogleReCaptcha();
-
-  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const {
     register,
@@ -101,10 +97,8 @@ const Register = () => {
       });
 
       if (result.success) {
-        const user = result.user;
-        setRegisteredEmail(user.email || data.email);
-        setShowVerificationMessage(true);
-        // No automatic navigation – user needs to verify email
+        // Navigate to the dedicated verification page — user must verify before continuing
+        navigate('/verify-email');
       } else {
         setError(result.message || t('register.error'));
       }
@@ -116,14 +110,6 @@ const Register = () => {
     }
   };
 
-  const handleResendVerification = async () => {
-    try {
-      await api.post('/email/resend', { email: registeredEmail });
-      alert('Verification email resent. Please check your inbox.');
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to resend verification email.');
-    }
-  };
 
   const SeoComponent = useSEO({
     title: t('register.title'),
@@ -134,36 +120,7 @@ const Register = () => {
   return (
     <>
       {SeoComponent}
-      {showVerificationMessage ? (
-        <AuthLayout title="Verify Your Email" subtitle="Almost there!">
-          <div className="text-center">
-            <EnvelopeIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Inbox</h2>
-            <p className="text-gray-600 mb-6">
-              We've sent a verification email to <strong>{registeredEmail}</strong>.
-              Please click the link in the email to verify your account.
-            </p>
-            <p className="text-sm text-gray-500 mb-8">
-              If you don't see the email, check your spam folder or click the button below to resend.
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={handleResendVerification}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition"
-              >
-                Resend Verification Email
-              </button>
-              <Link
-                to="/"
-                className="block w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition"
-              >
-                Go to Home
-              </Link>
-            </div>
-          </div>
-        </AuthLayout>
-      ) : (
-        <AuthLayout
+              <AuthLayout
           title={t('register.title')}
           subtitle={t('register.subtitle')}
         >
@@ -384,7 +341,6 @@ const Register = () => {
             </div>
           </form>
         </AuthLayout>
-      )}
     </>
   );
 };

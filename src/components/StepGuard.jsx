@@ -33,6 +33,14 @@ const StepGuard = ({ children, step }) => {
                 return;
             }
 
+            // ── Email must be verified before any onboarding step ──────────
+            if (!user.email_verified_at) {
+                navigate('/verify-email', {
+                    state: { returnTo: `/seller/onboarding/${step}` }
+                });
+                return;
+            }
+
             try {
                 let statusData;
 

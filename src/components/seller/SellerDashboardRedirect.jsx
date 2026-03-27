@@ -15,6 +15,13 @@ const SellerDashboardRedirect = () => {
         started.current = true;
 
         const checkOnboardingStatus = async () => {
+            // ── Email verification gate ────────────────────────────────────────
+            // All users must verify email before accessing seller onboarding
+            if (!user.email_verified_at) {
+                navigate('/verify-email', { replace: true });
+                return;
+            }
+
             try {
                 // Invalidate the StepGuard cache so the next step page gets fresh data
                 invalidateOnboardingCache();

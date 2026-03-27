@@ -6,7 +6,6 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
 import { HelmetProvider } from "react-helmet-async";
-import EmailVerification from './pages/Email/EmailVerification';
 import OrderTracking from "./pages/OrderTracking";
 import { setNavigate } from "./utils/api";
 
@@ -75,9 +74,11 @@ import StepGuard from "./components/StepGuard";
 import Error from "./pages/Errors/404";
 import SellerRouteGuard from "./components/SellerRouteGuard";
 import MyStore from "./components/seller/MyStore";
-import ShippingSettings from "./components/seller/ShippingSettings_org"
 
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+
+const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
+const EmailVerification = React.lazy(() => import("./pages/Email/EmailVerification"));
 
 const NavigationWirer = () => {
   const navigate = useNavigate();
@@ -124,6 +125,9 @@ function App() {
                         <Route path="/page-not-found" element={<Error />} />
                         <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/verify-email" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
+                        <Route path="/verify-email/:id/:hash" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
+                      <Route path="/unsubscribe" element={<Unsubscribe />} />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
 
@@ -199,12 +203,6 @@ function App() {
                             <SellerRouteGuard>
                               <MyStore />
                             </SellerRouteGuard>
-                          </ProtectedRoute>
-                        } />
-
-                        <Route path="/seller/shipping" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <ShippingSettings />
                           </ProtectedRoute>
                         } />
 

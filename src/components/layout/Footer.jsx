@@ -1,5 +1,6 @@
 // src/components/layout/Footer.jsx
 import React from "react";
+import NewsletterWidget from "../ui/NewsletterWidget";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -34,7 +35,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/careers"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.careers")}
@@ -42,7 +43,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/blog"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.blog")}
@@ -59,7 +60,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/seller-guidelines"
+                  to=""
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.seller_guidelines")}
@@ -75,7 +76,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/contact"
+                  to="/resources"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.resources")}
@@ -100,7 +101,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/help"
+                  to="/faq"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.faq")}
@@ -108,7 +109,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/help"
+                  to="/shipping"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.shipping")}
@@ -157,7 +158,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/legal"
+                  to="/security"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.security")}
@@ -165,13 +166,20 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/legal"
+                  to="/compliance"
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.compliance")}
                 </Link>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* Newsletter */}
+        <div className="mt-10 pt-8 border-t border-gray-700">
+          <div className="max-w-md mx-auto lg:mx-0">
+            <NewsletterWidget variant="footer" source="footer" />
           </div>
         </div>
 

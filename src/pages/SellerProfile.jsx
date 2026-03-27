@@ -1,917 +1,627 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
-import { Tab } from "@headlessui/react";
-import useSEO from "../hooks/useSEO";
+// src/pages/SellerProfile.jsx
+// Public seller profile page — fully structured with SEO, tabs, live data.
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Tab } from '@headlessui/react';
 import {
-  StarIcon,
-  CheckCircleIcon,
-  ShoppingBagIcon,
-  PlusIcon,
-  MapPinIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  GlobeAltIcon,
-  ChatBubbleLeftIcon,
-  ChevronLeftIcon,
-  UserIcon,
-  XMarkIcon,
-  CheckBadgeIcon,
-  ExclamationTriangleIcon,
-  ShareIcon
-} from "@heroicons/react/24/outline";
+  StarIcon, MapPinIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon,
+  ShoppingBagIcon, UserGroupIcon, ChatBubbleLeftIcon,
+  CheckBadgeIcon, ShareIcon, ClockIcon, BuildingStorefrontIcon,
+  ArrowUpIcon, ArrowLeftIcon,
+} from '@heroicons/react/24/outline';
 import {
-  FacebookShareButton,
-  TwitterShareButton,
-  LinkedinShareButton,
-  FacebookIcon,
-  TwitterIcon,
-  LinkedinIcon
-} from "react-share";
-import ProductCard from "../components/ui/ProductCard";
-import ReviewCard from "../components/ui/ReviewCard";
-import Pagination from "../components/ui/Pagination";
-import api from "../utils/api";
-import { DEFAULT_PLACEHOLDER } from "../config";
+  StarIcon as StarSolid,
+  CheckBadgeIcon as CheckBadgeSolid,
+} from '@heroicons/react/24/solid';
+import useSEO from '../hooks/useSEO';
+import api from '../utils/api';
+import ProductCard from '../components/ui/ProductCard';
+import { DEFAULT_PLACEHOLDER } from '../config';
 
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmtK = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (v >= 1_000)     return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return v.toLocaleString();
+};
 
-const SellerProfile = () => {
-  const { t } = useTranslation();
-  const { slug } = useParams();
-  const [seller, setSeller] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [stats, setStats] = useState({});
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState({
-    seller: true,
-    products: true,
-  });
+const DAY_LABELS = {
+  monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday',
+  thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday',
+};
 
-  // Reviews state
-  const [reviewsData, setReviewsData] = useState({
-    data: [],
-    current_page: 1,
-    last_page: 1,
-    per_page: 5,
-    total: 0,
-  });
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [reviewsPage, setReviewsPage] = useState(1);
-  const reviewsPerPage = 5; // matches pagination setting
+const SOCIAL_META = {
+  social_facebook:  { label:'Facebook',  color:'#1877F2', icon:'f' },
+  social_instagram: { label:'Instagram', color:'#E1306C', icon:'📷' },
+  social_twitter:   { label:'X',         color:'#000',    icon:'𝕏' },
+  social_linkedin:  { label:'LinkedIn',  color:'#0A66C2', icon:'in' },
+  social_youtube:   { label:'YouTube',   color:'#FF0000', icon:'▶' },
+};
 
-  const [error, setError] = useState(null);
-
-  // Fallback values for SEO
-  const fallbackTitle = "Seller Profile";
-  const fallbackDescription = "View seller information on Pyonea marketplace.";
-
-  // Follow state
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followersCount, setFollowersCount] = useState(0);
-
-  // Review form state
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState("");
-  const [submittingReview, setSubmittingReview] = useState(false);
-
-  // Popup notification state
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupMessage, setPopupMessage] = useState("");
-  const [popupType, setPopupType] = useState("success");
-
-  // Share modal state
-  const [showShareModal, setShowShareModal] = useState(false);
-
-  const [logoError, setLogoError] = useState(false);
-
-  // ----- Fetch seller data (store, products, stats) -----
-  useEffect(() => {
-    const fetchSellerData = async () => {
-      try {
-        setLoading({ seller: true, products: true });
-        setError(null);
-
-        const sellerRes = await api.get(`/sellers/${slug}`);
-        if (sellerRes.data.success && sellerRes.data.data) {
-          const sellerData = sellerRes.data.data.seller;
-          setSeller(sellerData);
-
-          setIsFollowing(sellerRes.data.data.is_following || false);
-          setFollowersCount(sellerRes.data.data.stats?.followers_count || 0);
-
-          if (sellerRes.data.data.products && sellerRes.data.data.products.data) {
-            setProducts(sellerRes.data.data.products.data);
-          }
-
-          if (sellerRes.data.data.stats) {
-            setStats(sellerRes.data.data.stats);
-          }
-        } else {
-          throw new Error('Invalid seller data structure');
-        }
-      } catch (err) {
-        console.error("Failed to fetch seller:", err);
-        setError("Failed to load seller information.");
-      } finally {
-        setLoading(prev => ({ ...prev, seller: false, products: false }));
-      }
-    };
-
-    fetchSellerData();
-  }, [slug]);
-
-  // ----- Fetch seller reviews (separate, paginated) -----
-  const fetchReviews = async (page = 1) => {
-    if (!slug) return;
-    setReviewsLoading(true);
-    try {
-      const response = await api.get(`/reviews/sellers/${slug}`, {
-        params: { page, per_page: reviewsPerPage }
-      });
-      if (response.data.success) {
-        setReviewsData(response.data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch reviews:', error);
-      // Optionally show error message
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchReviews(reviewsPage);
-  }, [slug, reviewsPage]);
-
-  // Handle page change in reviews tab
-  const handleReviewsPageChange = (page) => {
-    setReviewsPage(page);
-  };
-
-  // ----- Helper functions -----
-  const showNotification = (message, type = "success") => {
-    setPopupMessage(message);
-    setPopupType(type);
-    setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 5000);
-  };
-
-  // ----- Follow toggle -----
-  const handleFollowToggle = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      // Redirect to login page
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await api.post(`/follow/seller/${seller.user_id}/toggle`);
-      if (response.data.success) {
-        setIsFollowing(response.data.data.is_following);
-        setFollowersCount(response.data.data.followers_count);
-        showNotification(
-          response.data.data.is_following ? 'Successfully followed seller' : 'Successfully unfollowed seller',
-          'success'
-        );
-      }
-    } catch (error) {
-      console.error('Error toggling follow:', error);
-      if (error.response?.status === 401) {
-        navigate('/login');
-      } else {
-        showNotification('Failed to update follow status', 'error');
-      }
-    }
-  };
-
-  // ----- Submit review -----
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-
-    if (!reviewRating) {
-      showNotification("Please select a rating", "error");
-      return;
-    }
-
-    setSubmittingReview(true);
-    try {
-      // Use seller.id (numeric) for the endpoint
-      const response = await api.post(`/sellers/${seller.id}/reviews`, {
-        rating: reviewRating,
-        comment: reviewComment,
-      });
-
-      if (response.data.success) {
-        // Reset form
-        setReviewRating(0);
-        setReviewComment("");
-        setShowReviewForm(false);
-        // Refetch reviews (reset to page 1)
-        setReviewsPage(1);
-        fetchReviews(1);
-        showNotification("Review submitted successfully!", "success");
-      }
-    } catch (err) {
-      console.error("Failed to submit review:", err);
-      const errorMessage = err.response?.data?.message || "Failed to submit review. Please try again.";
-      showNotification(errorMessage, "error");
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-
-  // ----- Share actions -----
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
-    const shareTitle = seller.store_name;
-    const shareText = seller.store_description || `Check out ${seller.store_name} on our marketplace`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        showNotification('Shared successfully!', 'success');
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Share failed:', err);
-          setShowShareModal(true);
-        }
-      }
-    } else {
-      setShowShareModal(true);
-    }
-  };
-
-  const handleCopyLink = async () => {
-    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      showNotification('Store link copied to clipboard!', 'success');
-      setShowShareModal(false);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-      showNotification('Failed to copy link', 'error');
-    }
-  };
-
-  // ----- Render stars -----
-  const renderStars = (rating, size = "h-5 w-5") => {
-    if (!rating) {
-      return (
-        <div className="flex items-center">
-          {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} className={`${size} text-gray-300`} />
-          ))}
-          <span className="ml-2 text-sm text-gray-500">No ratings</span>
-        </div>
-      );
-    }
-
-    const stars = [];
-    const numericRating = parseFloat(rating);
-    const fullStars = Math.floor(numericRating);
-    const hasHalfStar = numericRating % 1 >= 0.5;
-
-    for (let i = 1; i <= 5; i++) {
-      if (i <= fullStars) {
-        stars.push(<StarIcon key={i} className={`${size} text-yellow-400`} fill="currentColor" />);
-      } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(<StarIcon key={i} className={`${size} text-yellow-400`} fill="currentColor" />);
-      } else {
-        stars.push(<StarIcon key={i} className={`${size} text-gray-300`} />);
-      }
-    }
-    return stars;
-  };
-
-  const renderInteractiveStars = () => (
-    <div className="flex space-x-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => setReviewRating(star)}
-          className="focus:outline-none transition-transform hover:scale-110"
-        >
-          <StarIcon
-            className={`h-8 w-8 ${star <= reviewRating ? "text-yellow-400" : "text-gray-300"}`}
-            fill={star <= reviewRating ? "currentColor" : "none"}
-          />
-        </button>
+const Stars = ({ rating = 0, size = 'h-4 w-4', count }) => {
+  const r = parseFloat(rating) || 0;
+  return (
+    <div className="flex items-center gap-1">
+      {[1,2,3,4,5].map(i => (
+        <StarSolid key={i} className={`${size} ${i <= Math.round(r) ? 'text-yellow-400' : 'text-gray-200'}`}/>
       ))}
+      {count != null && <span className="text-xs text-gray-500 ml-1">({count})</span>}
     </div>
   );
+};
 
-  // ----- Popup notification component -----
-  const PopupNotification = () => (
-    <AnimatePresence>
-      {showPopup && (
-        <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.9 }}
-          className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full px-4"
-        >
-          <div className={`rounded-lg shadow-lg border-l-4 ${popupType === "success" ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"}`}>
-            <div className="p-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  {popupType === "success" ? (
-                    <CheckBadgeIcon className="h-6 w-6 text-green-500" />
-                  ) : (
-                    <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
-                  )}
-                </div>
-                <div className="ml-3 w-0 flex-1">
-                  <p className={`text-sm font-medium ${popupType === "success" ? "text-green-800" : "text-red-800"}`}>
-                    {popupMessage}
-                  </p>
-                </div>
-                <div className="ml-4 flex-shrink-0 flex">
-                  <button
-                    onClick={() => setShowPopup(false)}
-                    className={`inline-flex rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${popupType === "success" ? "focus:ring-green-500 text-green-400 hover:text-green-500" : "focus:ring-red-500 text-red-400 hover:text-red-500"}`}
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+const TodayHours = ({ hours, enabled }) => {
+  if (!enabled || !hours) return null;
+  const day = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()];
+  const today = hours[day];
+  if (!today) return null;
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      <ClockIcon className="h-3.5 w-3.5 text-gray-400 flex-shrink-0"/>
+      {today.closed
+        ? <span className="text-red-600 font-medium">Closed today</span>
+        : <span className="text-green-600 font-medium">Open: {today.open} – {today.close}</span>}
+    </div>
   );
+};
 
-  // ----- Share Modal -----
-  const ShareModal = () => {
-    const shareUrl = `${window.location.origin}/sellers/${seller.store_slug}`;
-    const shareTitle = seller.store_name;
-    return (
-      <AnimatePresence>
-        {showShareModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-            onClick={() => setShowShareModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-2xl max-w-md w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Share this store</h3>
-                <button onClick={() => setShowShareModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <XMarkIcon className="h-6 w-6" />
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <FacebookShareButton url={shareUrl} quote={shareTitle}>
-                  <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                    <FacebookIcon size={40} round />
-                    <span className="text-xs mt-1 font-medium">Facebook</span>
-                  </div>
-                </FacebookShareButton>
-                <TwitterShareButton url={shareUrl} title={shareTitle}>
-                  <div className="flex flex-col items-center p-3 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors">
-                    <TwitterIcon size={40} round />
-                    <span className="text-xs mt-1 font-medium">Twitter</span>
-                  </div>
-                </TwitterShareButton>
-                <LinkedinShareButton url={shareUrl} title={shareTitle}>
-                  <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                    <LinkedinIcon size={40} round />
-                    <span className="text-xs mt-1 font-medium">LinkedIn</span>
-                  </div>
-                </LinkedinShareButton>
-              </div>
-              <button
-                onClick={handleCopyLink}
-                className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
-              >
-                <ShareIcon className="h-5 w-5 mr-2" />
-                Copy Link
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
+// ── Main Component ────────────────────────────────────────────────────────────
+const SellerProfile = () => {
+  const { slug }    = useParams();
+  const [seller,    setSeller]    = useState(null);
+  const [products,  setProducts]  = useState([]);
+  const [stats,     setStats]     = useState({});
+  const [reviews,   setReviews]   = useState({ data:[], meta:{} });
+  const [loading,   setLoading]   = useState(true);
+  const [revLoading,setRevLoading]= useState(false);
+  const [revPage,   setRevPage]   = useState(1);
+  const [error,     setError]     = useState(null);
+  const [following, setFollowing] = useState(false);
+  const [followers, setFollowers] = useState(0);
+  const [fwLoading, setFwLoading] = useState(false);
+  const [reviewForm,setReviewForm]= useState({ open:false, rating:0, comment:'', submitting:false });
+  const [activeTab, setActiveTab] = useState(0);
+  const [copied,    setCopied]    = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  // ── Fetch ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const r = await api.get(`/sellers/${slug}`);
+        if (!r.data.success) throw new Error();
+        const d = r.data.data;
+        setSeller(d.seller);
+        setProducts(d.products?.data || []);
+        setStats(d.stats || {});
+        setFollowing(d.is_following || false);
+        setFollowers(d.stats?.followers_count || 0);
+      } catch { setError('Could not load this seller profile.'); }
+      finally { setLoading(false); }
+    })();
+  }, [slug]);
+
+  const loadReviews = useCallback(async (page = 1) => {
+    if (!slug) return;
+    setRevLoading(true);
+    try {
+      const r = await api.get(`/reviews/sellers/${slug}`, { params: { page, per_page: 5 } });
+      if (r.data.success) setReviews(r.data.data || { data:[], meta:{} });
+    } catch {}
+    finally { setRevLoading(false); }
+  }, [slug]);
+
+  useEffect(() => { loadReviews(revPage); }, [slug, revPage]);
+
+  // ── Follow ─────────────────────────────────────────────────────────────
+  const toggleFollow = async () => {
+    setFwLoading(true);
+    try {
+      await api.post(`/seller/${seller.store_slug}/toggle`);
+      setFollowing(v => !v);
+      setFollowers(v => following ? v - 1 : v + 1);
+    } catch {}
+    finally { setFwLoading(false); }
   };
 
-  // ----- Computed values -----
-  const rating = parseFloat(seller?.reviews_avg_rating) || 0;
-  const reviewCount = seller?.reviews_count || 0;
-  const productCount = products.length || stats.active_products || 0;
-  const memberSince = seller?.created_at ? new Date(seller.created_at).getFullYear() : 'N/A';
+  // ── Submit review ──────────────────────────────────────────────────────
+  const submitReview = async () => {
+    if (!reviewForm.rating) return;
+    setReviewForm(f => ({ ...f, submitting:true }));
+    try {
+      await api.post(`/${seller.store_slug}/reviews`, {
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+      });
+      setReviewForm({ open:false, rating:0, comment:'', submitting:false });
+      setRevPage(1);
+      loadReviews(1);
+    } catch { setReviewForm(f => ({ ...f, submitting:false })); }
+  };
 
-  const pageTitle = seller?.store_name || fallbackTitle;
-  const pageDescription = seller?.store_description?.slice(0, 150) || fallbackDescription;
-  const pageImage = seller?.store_logo || DEFAULT_PLACEHOLDER;
-  const pageUrl = seller ? `/sellers/${seller.store_slug || seller.id}` : `/sellers/${slug}`;
+  // ── Share ──────────────────────────────────────────────────────────────
+  const handleShare = async () => {
+    const url = `${window.location.origin}/sellers/${slug}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: seller?.store_name, url }); return; } catch {}
+    }
+    await navigator.clipboard.writeText(url).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
-  const sellerSchema = useMemo(() => {
-    if (!seller) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+  // ── SEO ────────────────────────────────────────────────────────────────
+  const SeoComponent = useSEO({
+    title: seller ? `${seller.store_name} | Pyonea Marketplace` : 'Seller Profile | Pyonea',
+    description: seller?.store_description?.slice(0, 155) || 'View products and information from this verified seller on Pyonea.',
+    image: seller?.store_logo || undefined,
+    url: `/sellers/${slug}`,
+    schema: seller ? {
+      '@context': 'https://schema.org',
+      '@type': 'LocalBusiness',
       name: seller.store_name,
       description: seller.store_description,
       image: seller.store_logo,
-      url: `https://pyonea.com/sellers/${seller.store_slug || seller.id}`,
+      url: `https://pyonea.com/sellers/${slug}`,
       telephone: seller.contact_phone || undefined,
       email: seller.contact_email || undefined,
       address: seller.address ? {
-        "@type": "PostalAddress",
+        '@type': 'PostalAddress',
         streetAddress: seller.address,
-        addressLocality: seller.city || undefined,
-        addressRegion: seller.state || undefined,
-        addressCountry: seller.country || "MM",
+        addressLocality: seller.city,
+        addressRegion: seller.state,
+        addressCountry: seller.country || 'MM',
       } : undefined,
-      aggregateRating: seller.reviews_count > 0 ? {
-        "@type": "AggregateRating",
+      aggregateRating: (reviews?.meta?.total || 0) > 0 ? {
+        '@type': 'AggregateRating',
         ratingValue: seller.reviews_avg_rating,
         reviewCount: seller.reviews_count,
       } : undefined,
-    };
-  }, [seller]);
-
-  const SeoComponent = useSEO({
-    title: seller?.store_name || "Seller Profile",
-    description: seller?.store_description?.slice(0, 150) || "View seller information on Pyonea marketplace.",
-    image: seller?.store_logo ?? undefined,
-    schema: sellerSchema,
+    } : null,
   });
 
+  // ── States ─────────────────────────────────────────────────────────────
+  if (loading) return (
+    <>
+      {SeoComponent}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"/>
+      </div>
+    </>
+  );
 
+  if (error || !seller) return (
+    <>
+      {SeoComponent}
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 text-center px-4">
+        <BuildingStorefrontIcon className="h-14 w-14 text-gray-300"/>
+        <h1 className="text-lg font-semibold text-gray-700">{error || 'Seller not found'}</h1>
+        <Link to="/sellers" className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
+          <ArrowLeftIcon className="h-4 w-4"/> Browse all sellers
+        </Link>
+      </div>
+    </>
+  );
+
+  const rating      = parseFloat(seller.reviews_avg_rating) || 0;
+  const reviewCount = seller.reviews_count || 0;
+  const memberSince = new Date(seller.created_at).toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+  const isVerified  = seller.is_verified || seller.verification_status === 'verified';
+  const socialLinks = Object.entries(SOCIAL_META)
+    .filter(([k]) => seller[k])
+    .map(([k, meta]) => ({ key:k, url: seller[k], ...meta }));
+  const hasPolicies = seller.return_policy || seller.shipping_policy || seller.warranty_policy || seller.privacy_policy || seller.terms_of_service;
+
+  const tabs = [
+    { label:`Products (${products.length})` },
+    { label:`Reviews (${reviewCount})` },
+    { label:'About' },
+    ...(hasPolicies ? [{ label:'Policies' }] : []),
+  ];
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <>
       {SeoComponent}
 
-      {loading.seller && !seller && (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-4 text-gray-700">Loading seller information...</p>
-          </div>
+      {/* ── Vacation banner ─────────────────────────────────────────────── */}
+      {seller.vacation_mode && (
+        <div className="bg-amber-500 text-white text-center text-sm py-2.5 px-4 font-medium">
+          🌴 {seller.vacation_message || 'This store is currently on vacation. Orders may be delayed.'}
         </div>
       )}
 
-      {error && !seller && (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-            </div>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">Error loading seller</h3>
-            <p className="mt-1 text-sm text-gray-500">{error}</p>
-            <div className="mt-6">
-              <Link
-                to="/sellers"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-              >
-                Back to Sellers
-              </Link>
-            </div>
-          </div>
+      <div className="bg-gray-50 min-h-screen">
+
+        {/* ── Banner ──────────────────────────────────────────────────── */}
+        <div className="relative h-44 sm:h-60 bg-gradient-to-r from-green-700 to-green-500 overflow-hidden">
+          {seller.store_banner && (
+            <img src={seller.store_banner} alt="Store banner"
+              className="w-full h-full object-cover" onError={e => e.target.style.display='none'}/>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>
         </div>
-      )}
 
-      {!seller && !loading.seller && !error && (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
-              <UserIcon className="h-6 w-6 text-gray-400" />
-            </div>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">Seller not found</h3>
-            <p className="mt-1 text-sm text-gray-500">The seller you're looking for doesn't exist.</p>
-            <div className="mt-6">
-              <Link
-                to="/sellers"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-              >
-                Back to Sellers
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* ── Store header ────────────────────────────────────────────── */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="relative -mt-14 sm:-mt-16 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
 
-      {seller && (
-        <div className="min-h-screen bg-gray-50">
-          <PopupNotification />
-          <ShareModal />
-
-          {/* Back Button */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <Link to="/sellers" className="inline-flex items-center text-green-600 hover:text-green-800 transition-colors duration-200">
-              <ChevronLeftIcon className="h-5 w-5 mr-1" />
-              {t("seller.back_to_sellers") || "Back to Sellers"}
-            </Link>
-          </div>
-
-          {/* Seller Header */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-              <div className="flex flex-col md:flex-row">
-                <div className="md:w-1/4 mb-6 md:mb-0 flex justify-center md:justify-start">
+              {/* Logo + name */}
+              <div className="flex items-end gap-4">
+                <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl border-4 border-white shadow-lg bg-white overflow-hidden flex-shrink-0">
                   {!logoError && seller.store_logo ? (
-                    <img
-                      src={seller.store_logo}
-                      alt={seller.store_name}
-                      className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
-                      onError={() => setLogoError(true)}
-                    />
+                    <img src={seller.store_logo} alt={seller.store_name}
+                      className="w-full h-full object-cover"
+                      onError={() => setLogoError(true)}/>
                   ) : (
-                    <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                      <span className="text-gray-600 text-xl font-bold">
-                        {seller.store_name?.charAt(0)?.toUpperCase() || 'S'}
+                    <div className="w-full h-full flex items-center justify-center bg-green-50">
+                      <span className="text-3xl font-bold text-green-600">
+                        {seller.store_name?.[0]?.toUpperCase() || 'S'}
                       </span>
                     </div>
                   )}
                 </div>
-
-                <div className="md:w-3/4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                    <div>
-                      <div className="flex items-center mb-2 flex-wrap gap-2">
-                        <h1 className="text-2xl font-bold">
-                          {seller.store_name}
-                        </h1>
-                        {(seller.status === "approved" || seller.status === "active") && (
-                          <CheckCircleIcon className="h-6 w-6 text-green-500" title="Verified Seller" />
-                        )}
-                      </div>
-
-                      <div className="flex items-center mb-4 flex-wrap gap-2">
-                        <div className="flex text-yellow-400">
-                          {renderStars(rating, "h-5 w-5")}
-                        </div>
-                        <span className="text-gray-600">
-                          {rating.toFixed(1)} ({stats.total_sales || 0} sales)
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {/* Share button */}
-                      <button
-                        onClick={handleShare}
-                        className="p-3 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200"
-                        title="Share store"
-                      >
-                        <ShareIcon className="h-5 w-5" />
-                      </button>
-                      {/* Follow button */}
-                      <button
-                        onClick={handleFollowToggle}
-                        disabled={!seller.user_id}
-                        className={`px-6 py-3 rounded-lg transition-all duration-200 font-medium whitespace-nowrap ${isFollowing
-                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
-                          : "bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg"
-                          } ${!seller.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {isFollowing ? (
-                          <div className="flex items-center space-x-2">
-                            <CheckCircleIcon className="h-5 w-5" />
-                            <span>Following</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center space-x-2">
-                            <PlusIcon className="h-5 w-5" />
-                            <span>Follow</span>
-                          </div>
-                        )}
-                      </button>
-                      <div className="text-center hidden sm:block">
-                        <div className="text-2xl font-bold text-gray-900">{followersCount}</div>
-                        <div className="text-xs text-gray-500">Followers</div>
-                      </div>
-                    </div>
+                <div className="pb-1">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{seller.store_name}</h1>
+                    {isVerified && (
+                      <CheckBadgeSolid className="h-5 w-5 text-green-500 flex-shrink-0" title="Verified seller"/>
+                    )}
                   </div>
-
-                  <p className="text-gray-700 mb-4 leading-relaxed">
-                    {seller.store_description || "No description available."}
-                  </p>
-
-                  {/* Categories and Business Type */}
-                  {seller.business_type && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200">
-                        {seller.business_type}
-                      </span>
-                      {seller.categories && seller.categories.map((category, index) => (
-                        <span
-                          key={index}
-                          className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm border border-gray-200"
-                        >
-                          {category}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Products, Rating, Sales, Since Stats - responsive grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                      <div className="font-bold text-lg text-gray-900">{productCount}</div>
-                      <div className="text-gray-600 text-sm">Products</div>
-                    </div>
-                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                      <div className="font-bold text-lg text-gray-900">{rating.toFixed(1)}</div>
-                      <div className="text-gray-600 text-sm">Rating</div>
-                    </div>
-                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                      <div className="font-bold text-lg text-gray-900">{stats.total_sales || 0}</div>
-                      <div className="text-gray-600 text-sm">Sales</div>
-                    </div>
-                    <div className="border border-gray-200 p-3 rounded-lg bg-gray-50">
-                      <div className="font-bold text-lg text-gray-900">{followersCount}</div>
-                      <div className="text-gray-600 text-sm">Followers</div>
-                    </div>
-                  </div>
+                  <Stars rating={rating} count={reviewCount}/>
+                  <TodayHours hours={seller.business_hours} enabled={seller.business_hours_enabled}/>
                 </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 pb-1">
+                <button onClick={handleShare}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition-colors">
+                  <ShareIcon className="h-4 w-4"/>
+                  {copied ? 'Copied!' : 'Share'}
+                </button>
+                <button onClick={toggleFollow} disabled={fwLoading}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50
+                    ${following ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-green-600 text-white hover:bg-green-700'}`}>
+                  <UserGroupIcon className="h-4 w-4"/>
+                  {following ? 'Following' : 'Follow'} · {fmtK(followers)}
+                </button>
               </div>
             </div>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-5 mt-4 text-sm text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <ShoppingBagIcon className="h-4 w-4 text-gray-400"/>
+                <strong className="text-gray-900">{fmtK(stats.total_products || products.length)}</strong> Products
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ShoppingBagIcon className="h-4 w-4 text-gray-400"/>
+                <strong className="text-gray-900">{fmtK(stats.total_orders || 0)}</strong> Orders
+              </span>
+              <span className="flex items-center gap-1.5">
+                <UserGroupIcon className="h-4 w-4 text-gray-400"/>
+                <strong className="text-gray-900">{fmtK(followers)}</strong> Followers
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ClockIcon className="h-4 w-4 text-gray-400"/>
+                Member since {memberSince}
+              </span>
+            </div>
+
+            {/* Description */}
+            {seller.store_description && (
+              <p className="mt-3 text-sm text-gray-600 max-w-2xl leading-relaxed">
+                {seller.store_description}
+              </p>
+            )}
           </div>
 
-          {/* Main Content (Tabs) */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-            <Tab.Group>
-              <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden">
-                <Tab.List className="-mb-px flex space-x-8 min-w-max px-1">
-                  <Tab className={({ selected }) => classNames(
-                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )}>
-                    {t("sellers.products.title") || "Products"} ({productCount})
-                  </Tab>
-                  <Tab className={({ selected }) => classNames(
-                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )}>
-                    {t("sellers.reviews.title") || "Reviews"} ({reviewCount})
-                  </Tab>
-                  <Tab className={({ selected }) => classNames(
-                    selected ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200'
-                  )}>
-                    {t("sellers.about.title") || "About"}
-                  </Tab>
-                </Tab.List>
-              </div>
+          {/* ── Social links ─────────────────────────────────────────── */}
+          {socialLinks.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {socialLinks.map(s => (
+                <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  <span style={{ color: s.color }}>{s.icon}</span>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          )}
 
-              <Tab.Panels className="mt-6">
-                {/* Products Tab */}
-                <Tab.Panel>
-                  {loading.products ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {Array.from({ length: 8 }).map((_, index) => (
-                        <div key={index} className="animate-pulse bg-gray-200 rounded-lg h-80"></div>
-                      ))}
-                    </div>
-                  ) : products.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow p-12 text-center">
-                      <ShoppingBagIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-lg font-medium text-gray-900">{t("seller.no_products_found")}</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        This seller hasn't added any products yet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {products.map(product => (
-                        <ProductCard key={product.id} product={product} />
-                      ))}
-                    </div>
-                  )}
-                </Tab.Panel>
+          {/* ── Tabs ─────────────────────────────────────────────────── */}
+          <Tab.Group selectedIndex={activeTab} onChange={setActiveTab}>
+            <Tab.List className="flex border-b border-gray-200 mb-6 overflow-x-auto scrollbar-hide">
+              {tabs.map(t => (
+                <Tab key={t.label}
+                  className={({ selected }) =>
+                    `px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors focus:outline-none
+                    ${selected ? 'border-green-600 text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                  {t.label}
+                </Tab>
+              ))}
+            </Tab.List>
 
-                {/* Reviews Tab */}
-                <Tab.Panel>
-                  <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <div className="p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg font-medium text-gray-900">{t("seller.customers_reviews")}</h3>
-                          <div className="mt-1 flex items-center">
-                            {renderStars(rating)}
-                            <span className="ml-2 text-sm font-medium text-gray-900">
-                              {rating.toFixed(1)} out of 5
-                            </span>
+            <Tab.Panels>
+
+              {/* ── Products ───────────────────────────────────────── */}
+              <Tab.Panel>
+                {products.length === 0 ? (
+                  <div className="text-center py-16 text-gray-400">
+                    <ShoppingBagIcon className="h-12 w-12 mx-auto mb-3 opacity-40"/>
+                    <p className="text-sm">No products listed yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-10">
+                    {products.map(p => <ProductCard key={p.id} product={p}/>)}
+                  </div>
+                )}
+              </Tab.Panel>
+
+              {/* ── Reviews ────────────────────────────────────────── */}
+              <Tab.Panel>
+                <div className="max-w-2xl space-y-6 pb-10">
+                  {/* Rating summary */}
+                  <div className="bg-white rounded-2xl border border-gray-100 p-6 flex items-center gap-8">
+                    <div className="text-center flex-shrink-0">
+                      <div className="text-5xl font-bold text-gray-900">{rating.toFixed(1)}</div>
+                      <Stars rating={rating} size="h-5 w-5"/>
+                      <div className="text-xs text-gray-400 mt-1">{reviewCount} reviews</div>
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      {[5,4,3,2,1].map(star => {
+                        const pct = reviewCount > 0 && stats[`star_${star}`]
+                          ? Math.round((stats[`star_${star}`] / reviewCount) * 100) : 0;
+                        return (
+                          <div key={star} className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 w-3">{star}</span>
+                            <StarSolid className="h-3 w-3 text-yellow-400 flex-shrink-0"/>
+                            <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width:`${pct}%` }}/>
+                            </div>
+                            <span className="text-xs text-gray-400 w-6 text-right">{pct}%</span>
                           </div>
-                        </div>
-                        <button
-                          onClick={() => setShowReviewForm(true)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
-                        >
-                          {t("seller.write_review") || "Write a Review"}
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Write review */}
+                  {!reviewForm.open && (
+                    <button onClick={() => setReviewForm(f => ({ ...f, open:true }))}
+                      className="flex items-center gap-2 text-sm font-medium text-green-600 hover:text-green-700">
+                      <ChatBubbleLeftIcon className="h-4 w-4"/> Write a Review
+                    </button>
+                  )}
+
+                  {reviewForm.open && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <p className="text-sm font-semibold text-gray-900">Your Review</p>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map(s => (
+                          <button key={s} onClick={() => setReviewForm(f => ({ ...f, rating:s }))}
+                            className="focus:outline-none transition-transform hover:scale-110">
+                            <StarSolid className={`h-7 w-7 ${s <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-200'}`}/>
+                          </button>
+                        ))}
+                      </div>
+                      <textarea rows={3} value={reviewForm.comment}
+                        onChange={e => setReviewForm(f => ({ ...f, comment:e.target.value }))}
+                        placeholder="Share your experience with this seller…"
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none"/>
+                      <div className="flex gap-2">
+                        <button onClick={submitReview} disabled={!reviewForm.rating || reviewForm.submitting}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors">
+                          {reviewForm.submitting ? 'Submitting…' : 'Submit Review'}
+                        </button>
+                        <button onClick={() => setReviewForm({ open:false, rating:0, comment:'', submitting:false })}
+                          className="px-4 py-2 border border-gray-200 text-sm text-gray-600 rounded-xl hover:bg-gray-50">
+                          Cancel
                         </button>
                       </div>
+                    </div>
+                  )}
 
-                      {/* Review Form */}
-                      {showReviewForm && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200"
-                        >
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-medium text-gray-900">{t("seller.write_review") || "Write a Review"}</h4>
-                            <button onClick={() => setShowReviewForm(false)} className="text-gray-400 hover:text-gray-500 transition-colors">
-                              <XMarkIcon className="h-5 w-5" />
-                            </button>
+                  {/* Review list */}
+                  {revLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-green-500"/>
+                    </div>
+                  ) : reviews.data?.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-8">No reviews yet. Be the first!</p>
+                  ) : (
+                    reviews.data?.map(r => (
+                      <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{r.reviewer_name || r.user?.name || 'Anonymous'}</p>
+                            <p className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</p>
                           </div>
-                          <form onSubmit={handleSubmitReview}>
-                            <div className="mb-4">
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                              {renderInteractiveStars()}
-                              <p className="text-sm text-gray-500 mt-1">
-                                {reviewRating > 0 ? `You selected ${reviewRating} star${reviewRating > 1 ? 's' : ''}` : 'Select a rating'}
-                              </p>
-                            </div>
-                            <div className="mb-4">
-                              <label htmlFor="reviewComment" className="block text-sm font-medium text-gray-700 mb-2">
-                                {t("seller.write_review") || "Your Review"}
-                              </label>
-                              <textarea
-                                id="reviewComment"
-                                rows={4}
-                                value={reviewComment}
-                                onChange={(e) => setReviewComment(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                                placeholder={t("seller.rating.placeholder") || "Write your review here..."}
-                              />
-                            </div>
-                            <div className="flex space-x-3">
-                              <button
-                                type="submit"
-                                disabled={submittingReview}
-                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
-                              >
-                                {submittingReview ? (
-                                  <>
-                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2 inline-block"></div>
-                                    {t("seller.submitting") || "Submitting..."}
-                                  </>
-                                ) : (
-                                  t("seller.submit_review") || "Submit Review"
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setShowReviewForm(false)}
-                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
-                              >
-                                {t("seller.cancel") || "Cancel"}
-                              </button>
-                            </div>
-                          </form>
-                        </motion.div>
-                      )}
+                          <Stars rating={r.rating} size="h-4 w-4"/>
+                        </div>
+                        {r.comment && <p className="text-sm text-gray-700 leading-relaxed">{r.comment}</p>}
+                      </div>
+                    ))
+                  )}
 
-                      {reviewsLoading ? (
-                        <div className="mt-6 space-y-6">
-                          {Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="animate-pulse bg-gray-200 rounded-lg h-24"></div>
+                  {/* Pagination */}
+                  {reviews.meta?.last_page > 1 && (
+                    <div className="flex justify-center gap-2">
+                      {[...Array(reviews.meta.last_page)].map((_, i) => (
+                        <button key={i} onClick={() => setRevPage(i + 1)}
+                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors
+                            ${revPage === i + 1 ? 'bg-green-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                          {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Tab.Panel>
+
+              {/* ── About ──────────────────────────────────────────── */}
+              <Tab.Panel>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-10">
+
+                  {/* Left: description + business info */}
+                  <div className="lg:col-span-2 space-y-6">
+
+                    {seller.store_description && (
+                      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                        <h2 className="text-base font-semibold text-gray-900 mb-3">About {seller.store_name}</h2>
+                        <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{seller.store_description}</p>
+                      </div>
+                    )}
+
+                    {/* Business info */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <h2 className="text-base font-semibold text-gray-900 mb-4">Business Information</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                        {seller.business_type && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Business Type</p>
+                            <p className="text-gray-900 mt-0.5 capitalize">{seller.business_type}</p>
+                          </div>
+                        )}
+                        {seller.year_established && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Established</p>
+                            <p className="text-gray-900 mt-0.5">{seller.year_established}</p>
+                          </div>
+                        )}
+                        {seller.employees_count && (
+                          <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Team Size</p>
+                            <p className="text-gray-900 mt-0.5">{seller.employees_count} employees</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Member Since</p>
+                          <p className="text-gray-900 mt-0.5">{memberSince}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Business hours */}
+                    {seller.business_hours_enabled && seller.business_hours && (
+                      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                        <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                          <ClockIcon className="h-5 w-5 text-gray-400"/> Business Hours
+                        </h2>
+                        <div className="space-y-2">
+                          {Object.entries(DAY_LABELS).map(([key, label]) => {
+                            const h = seller.business_hours[key];
+                            if (!h) return null;
+                            const isToday = key === ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()];
+                            return (
+                              <div key={key} className={`flex justify-between items-center py-1.5 px-3 rounded-lg text-sm ${isToday ? 'bg-green-50' : ''}`}>
+                                <span className={`font-medium ${isToday ? 'text-green-700' : 'text-gray-700'}`}>
+                                  {label}{isToday && <span className="ml-1 text-xs text-green-500">(today)</span>}
+                                </span>
+                                {h.closed
+                                  ? <span className="text-red-500">Closed</span>
+                                  : <span className="text-gray-600">{h.open} – {h.close}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: contact + social */}
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <h2 className="text-base font-semibold text-gray-900 mb-4">Contact</h2>
+                      <div className="space-y-3 text-sm">
+                        {seller.address && (
+                          <div className="flex gap-2.5">
+                            <MapPinIcon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5"/>
+                            <span className="text-gray-600">
+                              {[seller.address, seller.city, seller.state, seller.country].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        {seller.contact_phone && (
+                          <a href={`tel:${seller.contact_phone}`} className="flex gap-2.5 hover:text-green-600 group">
+                            <PhoneIcon className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-green-500"/>
+                            <span className="text-gray-600 group-hover:text-green-600">{seller.contact_phone}</span>
+                          </a>
+                        )}
+                        {seller.contact_email && (
+                          <a href={`mailto:${seller.contact_email}`} className="flex gap-2.5 hover:text-green-600 group">
+                            <EnvelopeIcon className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-green-500"/>
+                            <span className="text-gray-600 group-hover:text-green-600 break-all">{seller.contact_email}</span>
+                          </a>
+                        )}
+                        {seller.website && (
+                          <a href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex gap-2.5 hover:text-green-600 group">
+                            <GlobeAltIcon className="h-4 w-4 text-gray-400 flex-shrink-0 group-hover:text-green-500"/>
+                            <span className="text-green-600 break-all">{seller.website}</span>
+                          </a>
+                        )}
+                      </div>
+                      <a href={`mailto:${seller.contact_email}`}
+                        className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl transition-colors">
+                        <ChatBubbleLeftIcon className="h-4 w-4"/> Contact Seller
+                      </a>
+                    </div>
+
+                    {socialLinks.length > 0 && (
+                      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                        <h2 className="text-base font-semibold text-gray-900 mb-4">Follow Us</h2>
+                        <div className="flex flex-wrap gap-2">
+                          {socialLinks.map(s => (
+                            <a key={s.key} href={s.url} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-2 border border-gray-100 rounded-xl text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                              <span style={{ color:s.color }}>{s.icon}</span> {s.label}
+                            </a>
                           ))}
                         </div>
-                      ) : reviewsData.data.length === 0 ? (
-                        <div className="mt-8 text-center py-12">
-                          <ChatBubbleLeftIcon className="mx-auto h-12 w-12 text-gray-400" />
-                          <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
-                          <p className="mt-1 text-sm text-gray-500">This seller doesn't have any reviews yet.</p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="mt-6 space-y-6">
-                            {reviewsData.data.map(review => (
-                              <ReviewCard key={review.id} review={review} />
-                            ))}
-                          </div>
-                          {reviewsData.last_page > 1 && (
-                            <div className="mt-8">
-                              <Pagination
-                                itemsPerPage={reviewsData.per_page}
-                                totalItems={reviewsData.total}
-                                currentPage={reviewsData.current_page}
-                                paginate={handleReviewsPageChange}
-                              />
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                </Tab.Panel>
+                </div>
+              </Tab.Panel>
 
-                {/* About Tab */}
+              {/* ── Policies (conditional) ─────────────────────────── */}
+              {hasPolicies && (
                 <Tab.Panel>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                      <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="p-6">
-                          <h3 className="text-lg font-medium text-gray-900">{t("seller.about_seller") || "About the Seller"}</h3>
-                          <p className="mt-4 text-gray-600 leading-relaxed">
-                            {t("seller.no_description") || "No additional information provided."}
-                          </p>
-
-                          <h4 className="mt-6 text-md font-medium text-gray-900">{t("seller.business_information") || "Business Information"}</h4>
-                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">{t("seller.business_type") || "Business Type"}</p>
-                              <p className="mt-1 text-gray-900">{seller.business_type || "Not specified"}</p>
-                            </div>
-                            {seller.business_registration_number && (
-                              <div>
-                                <p className="text-sm font-medium text-gray-500">{t("seller.registration_number") || "Registration Number"}</p>
-                                <p className="mt-1 text-gray-900">{seller.business_registration_number}</p>
-                              </div>
-                            )}
-                            {seller.tax_id && (
-                              <div>
-                                <p className="text-sm font-medium text-gray-500">Tax ID</p>
-                                <p className="mt-1 text-gray-900">{seller.tax_id}</p>
-                              </div>
-                            )}
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Member Since</p>
-                              <p className="mt-1 text-gray-900">{memberSince}</p>
-                            </div>
-                          </div>
+                  <div className="max-w-2xl space-y-4 pb-10">
+                    {[
+                      { key:'return_policy',   label:'Return & Refund Policy' },
+                      { key:'shipping_policy', label:'Shipping Policy' },
+                      { key:'warranty_policy', label:'Warranty Policy' },
+                      { key:'privacy_policy',  label:'Privacy Policy' },
+                      { key:'terms_of_service',label:'Terms of Service' },
+                    ].filter(p => seller[p.key]).map(p => (
+                      <details key={p.key} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
+                        <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none list-none">
+                          <h3 className="text-sm font-semibold text-gray-900">{p.label}</h3>
+                          <ArrowUpIcon className="h-4 w-4 text-gray-400 group-open:rotate-180 transition-transform flex-shrink-0"/>
+                        </summary>
+                        <div className="px-6 pb-5 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap border-t border-gray-50">
+                          {seller[p.key]}
                         </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="bg-white rounded-lg shadow overflow-hidden">
-                        <div className="p-6">
-                          <h3 className="text-lg font-medium text-gray-900">{t("seller.contact_information") || "Contact Information"}</h3>
-
-                          <div className="mt-4 space-y-4">
-                            {seller.address && (
-                              <div className="flex">
-                                <MapPinIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                                <p className="ml-3 text-gray-600">{seller.address}</p>
-                              </div>
-                            )}
-
-                            {seller.contact_phone && (
-                              <div className="flex">
-                                <PhoneIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                                <p className="ml-3 text-gray-600">{seller.contact_phone}</p>
-                              </div>
-                            )}
-
-                            {seller.contact_email && (
-                              <div className="flex">
-                                <EnvelopeIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                                <p className="ml-3 text-gray-600">{seller.contact_email}</p>
-                              </div>
-                            )}
-
-                            {seller.website && (
-                              <div className="flex">
-                                <GlobeAltIcon className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                                <a
-                                  href={seller.website.startsWith('http') ? seller.website : `https://${seller.website}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="ml-3 text-green-600 hover:text-green-800 transition-colors duration-200 break-all"
-                                >
-                                  {seller.website}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="mt-6">
-                            <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
-                              <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />
-                              Contact Seller
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      </details>
+                    ))}
                   </div>
                 </Tab.Panel>
-              </Tab.Panels>
-            </Tab.Group>
-          </div>
-        </div >
-      )}
+              )}
+
+            </Tab.Panels>
+          </Tab.Group>
+        </div>
+      </div>
     </>
   );
 };

@@ -32,6 +32,8 @@ import ProductManagement from "../../components/admin/ProductManagement";       
 import ReviewManagement from "../../components/admin/ReviewManagement";
 import OrderManagement from "../../components/admin/OrderManagement";
 import AnalyticsManagement from "../../components/admin/AnalyticsManagement";
+import CommissionRulesManagement from "../../components/admin/CommissionRulesManagement";
+import EmailCampaigns from "../../components/admin/EmailCampaigns";
 import CategoryManagement from "../../components/admin/CategoryManagement";        // self‑contained
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
 import Notifications from "../../components/admin/Notifications";
@@ -381,6 +383,16 @@ const AdminDashboard = () => {
       name: "Business Types",
       icon: BriefcaseIcon,
       component: <BusinessTypeManagement />
+    },
+    {
+      name: "Email Campaigns",
+      icon: EnvelopeIcon,
+      component: <EmailCampaigns />,
+    },
+    {
+      name: "Commission Rules",
+      icon: CurrencyDollarIcon,
+      component: <CommissionRulesManagement />,
     },
     {
       name: t("analytics"),

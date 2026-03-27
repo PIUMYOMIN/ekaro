@@ -35,6 +35,7 @@ import DeliveryManagement from "../../components/seller/DeliveryManagement";
 import DiscountManagement from "../../components/seller/DiscountManagement";
 import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
+import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -211,7 +212,7 @@ const SellerDashboard = () => {
   const navigation = useMemo(() => [
     { name: t("seller.dashboard"),      icon: ChartBarIcon,           key: "dashboard" },
     { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
-    { name: "Edit Store",               icon: PencilIcon,             key: "edit_store" },
+    { name: "Store Profile",            icon: PencilIcon,             key: "store_profile" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
     { name: t("seller.delivery_zones.title"), icon: TruckIcon,        key: "delivery_zones" },
     { name: t("seller.product.title"),  icon: CubeIcon,               key: "products" },
@@ -232,6 +233,7 @@ const SellerDashboard = () => {
       case "dashboard":   return <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />;
       case "my_store":    return <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />;
       case "edit_store":  return <EditStore storeData={storeData} refreshData={refreshGlobalData} />;
+      case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
       case "orders":      return <OrderManagement />;
       case "delivery":    return <DeliveryManagement />;
       case "products":    return <ProductManagement />;
@@ -242,6 +244,7 @@ const SellerDashboard = () => {
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
+      case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
       case "profile":     return <SellerProfileTab />;
       default:            return null;
     }

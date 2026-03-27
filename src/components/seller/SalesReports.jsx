@@ -19,6 +19,17 @@ import {
   ResponsiveContainer
 } from "recharts";
 import api from "../../utils/api";
+import { exportToExcel, mmkCell, todayStr } from "../../utils/exportExcel";
+
+
+const fmtK = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  return v.toLocaleString();
+};
+const fmtMMK = (n) => `${fmtK(n)} MMK`;
 
 const SalesReports = ({ refreshData }) => {
   const { t } = useTranslation();
@@ -35,6 +46,53 @@ const SalesReports = ({ refreshData }) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportSalesTrend = async () => {
+    setExporting(true);
+    try {
+      const rows = [
+        ["Date", "Revenue (MMK)", "Orders"],
+        ...data.map(d => [d.month, mmkCell(d.sales), d.orders]),
+      ];
+      await exportToExcel(rows, "Sales Trend", `pyonea-sales-trend-${todayStr()}.xlsx`);
+    } catch (e) { alert(e.message); } finally { setExporting(false); }
+  };
+
+  const handleExportTopProducts = async () => {
+    setExporting(true);
+    try {
+      const rows = [
+        ["Product Name", "Units Sold", "Revenue (MMK)"],
+        ...salesData.topProducts.map(p => [p.name, p.sales, mmkCell(p.revenue)]),
+      ];
+      await exportToExcel(rows, "Top Products", `pyonea-top-products-${todayStr()}.xlsx`);
+    } catch (e) { alert(e.message); } finally { setExporting(false); }
+  };
+
+  const handleExportFull = async () => {
+    setExporting(true);
+    try {
+      const summary = [
+        ["Pyonea Seller Revenue Report", `Exported: ${new Date().toLocaleString()}`],
+        [],
+        ["SUMMARY"],
+        ["Total Sales (MMK)", mmkCell(salesData.summary.totalSales)],
+        ["Total Orders", salesData.summary.totalOrders],
+        ["New Customers", salesData.summary.newCustomers],
+        [],
+        ["SALES TREND"],
+        ["Date", "Revenue (MMK)", "Orders"],
+        ...data.map(d => [d.month, mmkCell(d.sales), d.orders]),
+        [],
+        ["TOP PRODUCTS"],
+        ["Product Name", "Units Sold", "Revenue (MMK)"],
+        ...salesData.topProducts.map(p => [p.name, p.sales, mmkCell(p.revenue)]),
+      ];
+      await exportToExcel(summary, "Full Report", `pyonea-full-report-${todayStr()}.xlsx`);
+    } catch (e) { alert(e.message); } finally { setExporting(false); }
+  };
+
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -178,10 +236,31 @@ const SalesReports = ({ refreshData }) => {
               </svg>
             </div>
           </div>
-          <button className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center transition-colors">
-            <LocalDownloadIcon className="h-5 w-5 mr-1" />
-            {t("seller.sales.export_report")}
-          </button>
+          <div className="relative group">
+            <button
+              disabled={exporting}
+              className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-60"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              {exporting ? "Exporting…" : "Export"}
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-10 hidden group-hover:block">
+              <button onClick={handleExportFull} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                Full Report (.xlsx)
+              </button>
+              <button onClick={handleExportSalesTrend} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                Sales Trend only
+              </button>
+              <button onClick={handleExportTopProducts} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
+                Top Products only
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,7 +276,7 @@ const SalesReports = ({ refreshData }) => {
                 {t("seller.sales.total_sales")}
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {salesData.summary.totalSales.toLocaleString()} MMK
+                {fmtMMK(salesData.summary.totalSales)}
               </p>
             </div>
           </div>

@@ -1,236 +1,367 @@
-// src/components/seller/Customers.jsx
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { UserIcon, CreditCardIcon, ShoppingBagIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  UserGroupIcon,
+  ShoppingBagIcon,
+  CurrencyDollarIcon,
+  ArrowTrendingUpIcon,
+  MagnifyingGlassIcon,
+  ChevronUpDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
+import api from '../../utils/api';
+import { exportToExcel, mmkCell, todayStr } from '../../utils/exportExcel';
 
+// ── Formatters ─────────────────────────────────────────────────────────────
+const fmtK = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return v.toLocaleString();
+};
+const fmtMMK  = (n) => `${fmtK(n)} MMK`;
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+// ── Avatar initials ────────────────────────────────────────────────────────
+const AVATAR_COLORS = [
+  'bg-green-100 text-green-700',
+  'bg-blue-100 text-blue-700',
+  'bg-purple-100 text-purple-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-teal-100 text-teal-700',
+];
+const avatarColor = (name) => AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+const initials    = (name) => (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+// ── Stat card ──────────────────────────────────────────────────────────────
+const StatCard = ({ icon: Icon, label, value, sub, color }) => (
+  <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-start gap-3">
+    <div className={`p-2.5 rounded-lg flex-shrink-0 ${color}`}>
+      <Icon className="h-5 w-5 text-white" />
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs text-gray-500 font-medium">{label}</p>
+      <p className="text-lg font-bold text-gray-900 truncate">{value}</p>
+      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    </div>
+  </div>
+);
+
+// ── Main Component ─────────────────────────────────────────────────────────
 const Customers = () => {
-  const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Sample customer data
-  const customers = [
-    {
-      id: 1,
-      name: 'Ko Min Aung',
-      email: 'min.aung@example.com',
-      phone: '+959123456789',
-      orders: 12,
-      totalSpent: 245000,
-      lastOrder: '2023-06-15',
-      status: 'active'
-    },
-    {
-      id: 2,
-      name: 'Ma Hla Hla',
-      email: 'hla.hla@example.com',
-      phone: '+959987654321',
-      orders: 8,
-      totalSpent: 156000,
-      lastOrder: '2023-06-10',
-      status: 'active'
-    },
-    {
-      id: 3,
-      name: 'U Ba Shwe',
-      email: 'ba.shwe@example.com',
-      phone: '+959112233445',
-      orders: 5,
-      totalSpent: 98000,
-      lastOrder: '2023-05-28',
-      status: 'inactive'
-    },
-    {
-      id: 4,
-      name: 'Daw Mya Mya',
-      email: 'mya.mya@example.com',
-      phone: '+959556677889',
-      orders: 18,
-      totalSpent: 367000,
-      lastOrder: '2023-06-14',
-      status: 'active'
-    },
-    {
-      id: 5,
-      name: 'Ko Zaw Zaw',
-      email: 'zaw.zaw@example.com',
-      phone: '+959998877665',
-      orders: 3,
-      totalSpent: 72000,
-      lastOrder: '2023-04-15',
-      status: 'inactive'
-    }
-  ];
-  
-  // Filter customers based on search query
-  const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.phone.includes(searchQuery)
-  );
+  const [customers,  setCustomers]  = useState([]);
+  const [stats,      setStats]      = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
+  const [search,     setSearch]     = useState('');
+  const [sort,       setSort]       = useState('last_order');
+  const [page,       setPage]       = useState(1);
+  const [meta,       setMeta]       = useState({ total: 0, last_page: 1 });
+  const [exporting,  setExporting]  = useState(false);
+  const searchTimer = useRef(null);
 
+  const fetchCustomers = useCallback(async (pg = 1, q = search, s = sort) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get('/seller/customers', {
+        params: { page: pg, per_page: 15, search: q || undefined, sort: s },
+      });
+      if (res.data.success) {
+        setCustomers(res.data.data || []);
+        setMeta(res.data.meta || { total: 0, last_page: 1 });
+        if (res.data.stats) setStats(res.data.stats);
+      } else {
+        setError(res.data.message || 'Failed to load customers.');
+      }
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to load customers.');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, sort]);
+
+  // Initial load
+  useEffect(() => { fetchCustomers(1, '', sort); }, [sort]);
+
+  // Debounced search
+  const handleSearch = (val) => {
+    setSearch(val);
+    setPage(1);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => fetchCustomers(1, val, sort), 400);
+  };
+
+  const handleSort = (val) => { setSort(val); setPage(1); };
+
+  const handlePage = (pg) => {
+    setPage(pg);
+    fetchCustomers(pg, search, sort);
+  };
+
+  // ── Export ─────────────────────────────────────────────────────────────
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Fetch all pages for export
+      const all = [];
+      let pg = 1;
+      while (true) {
+        const res = await api.get('/seller/customers', {
+          params: { page: pg, per_page: 100, search: search || undefined, sort },
+        });
+        const items = res.data.data || [];
+        all.push(...items);
+        if (pg >= (res.data.meta?.last_page || 1)) break;
+        pg++;
+      }
+
+      const rows = [
+        ['Pyonea — My Customers', `Exported: ${new Date().toLocaleString()}`],
+        [],
+        ['Name', 'Email', 'Phone', 'Total Orders', 'Total Spent (MMK)',
+          'Avg Order (MMK)', 'Delivered Orders', 'First Order', 'Last Order'],
+        ...all.map(c => [
+          c.name,
+          c.email,
+          c.phone || '',
+          c.total_orders,
+          mmkCell(c.total_spent),
+          mmkCell(c.avg_order_value),
+          c.delivered_count,
+          fmtDate(c.first_order_at),
+          fmtDate(c.last_order_at),
+        ]),
+      ];
+
+      if (stats) {
+        rows.push(
+          [],
+          ['SUMMARY'],
+          ['Total Customers',  stats.total_customers],
+          ['Total Orders',     stats.total_orders],
+          ['Total Revenue',    mmkCell(stats.total_revenue)],
+          ['Avg Order Value',  mmkCell(stats.avg_order_value)],
+          ['Active (30 days)', stats.active_30d],
+        );
+      }
+
+      await exportToExcel(rows, 'Customers', `pyonea-customers-${todayStr()}.xlsx`);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">{t('seller.customers')}</h2>
-        <div className="mt-4 md:mt-0 flex space-x-3">
-          <div className="relative rounded-md shadow-sm">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {/* Inline SVG for search icon */}
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 py-2 border-gray-300 rounded-md"
-              placeholder={t('seller.search_customers')}
-            />
-          </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-            {t('seller.new_customer')}
-          </button>
+    <div className="space-y-5">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <UserGroupIcon className="h-5 w-5 text-green-600" />
+            My Customers
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Buyers who have ordered from your store
+          </p>
+        </div>
+        <button
+          onClick={handleExport}
+          disabled={exporting || loading}
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          {exporting ? 'Exporting…' : 'Export Excel'}
+        </button>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard icon={UserGroupIcon}       label="Total Customers" value={stats.total_customers.toLocaleString()} sub={`${stats.active_30d} active (30d)`}     color="bg-green-500" />
+          <StatCard icon={ShoppingBagIcon}     label="Total Orders"    value={stats.total_orders.toLocaleString()}    sub="across all customers"                     color="bg-blue-500"  />
+          <StatCard icon={CurrencyDollarIcon}  label="Total Revenue"   value={fmtMMK(stats.total_revenue)}            sub="from your store"                          color="bg-purple-500"/>
+          <StatCard icon={ArrowTrendingUpIcon} label="Avg Order Value" value={fmtMMK(stats.avg_order_value)}          sub="per transaction"                          color="bg-amber-500" />
+        </div>
+      )}
+
+      {/* Search + Sort */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name, email or phone…"
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none"
+          />
+        </div>
+        <div className="relative">
+          <ChevronUpDownIcon className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <select
+            value={sort}
+            onChange={e => handleSort(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none bg-white"
+          >
+            <option value="last_order">Sort: Recent Order</option>
+            <option value="orders">Sort: Most Orders</option>
+            <option value="spent">Sort: Highest Spend</option>
+          </select>
         </div>
       </div>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="bg-blue-100 p-3 rounded-full">
-              <UserIcon className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">{t('seller.total_customers')}</p>
-              <p className="text-xl font-bold text-gray-900">142</p>
-            </div>
-          </div>
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
+          {error}
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="bg-green-100 p-3 rounded-full">
-              <ShoppingBagIcon className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">{t('seller.active_customers')}</p>
-              <p className="text-xl font-bold text-gray-900">98</p>
-            </div>
-          </div>
+      )}
+
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        {/* Desktop header */}
+        <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide border-b border-gray-100">
+          <span className="col-span-4">Customer</span>
+          <span className="col-span-2 text-right">Orders</span>
+          <span className="col-span-2 text-right">Total Spent</span>
+          <span className="col-span-2 text-right">Avg Order</span>
+          <span className="col-span-2 text-right">Last Order</span>
         </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="bg-purple-100 p-3 rounded-full">
-              <CreditCardIcon className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">{t('seller.avg_order_value')}</p>
-              <p className="text-xl font-bold text-gray-900">24,500 MMK</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="bg-yellow-100 p-3 rounded-full">
-              <CalendarIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-600">{t('seller.new_this_month')}</p>
-              <p className="text-xl font-bold text-gray-900">24</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Customers Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.customer')}
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.contact')}
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.orders')}
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.total_spent')}
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.last_order')}
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('seller.status')}
-              </th>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">{t('seller.edit')}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredCustomers.map((customer) => (
-              <tr key={customer.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="bg-gray-200 border-2 border-dashed rounded-full w-8 h-8" />
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{customer.email}</div>
-                  <div className="text-sm text-gray-500">{customer.phone}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{customer.orders}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{customer.totalSpent.toLocaleString()} MMK</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{customer.lastOrder}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    customer.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {customer.status === 'active' ? t('seller.active') : t('seller.inactive')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" className="text-blue-600 hover:text-blue-900">
-                    {t('seller.view')}
-                  </a>
-                </td>
-              </tr>
+
+        {loading ? (
+          <div className="divide-y divide-gray-50">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse">
+                <div className="h-10 w-10 rounded-full bg-gray-200 flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3.5 bg-gray-200 rounded w-1/3" />
+                  <div className="h-3 bg-gray-100 rounded w-1/4" />
+                </div>
+                <div className="hidden md:flex gap-6">
+                  {[...Array(4)].map((_, j) => (
+                    <div key={j} className="h-3 bg-gray-100 rounded w-16" />
+                  ))}
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : customers.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <UserGroupIcon className="h-12 w-12 mx-auto mb-3 opacity-40" />
+            <p className="text-sm font-medium">
+              {search ? 'No customers match your search.' : 'No customers yet.'}
+            </p>
+            {!search && (
+              <p className="text-xs mt-1">Customers will appear here once they place an order.</p>
+            )}
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {customers.map((c) => (
+              <div key={c.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-5 py-4 hover:bg-gray-50/60 transition-colors">
+
+                {/* Avatar + name */}
+                <div className="col-span-4 flex items-center gap-3 min-w-0">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0 ${avatarColor(c.name)}`}>
+                    {initials(c.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{c.email}</p>
+                    {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                  </div>
+                </div>
+
+                {/* Mobile: key stats inline */}
+                <div className="md:hidden flex gap-4 text-xs text-gray-500 pl-13">
+                  <span><span className="font-semibold text-gray-900">{c.total_orders}</span> orders</span>
+                  <span><span className="font-semibold text-gray-900">{fmtMMK(c.total_spent)}</span></span>
+                  <span>Last: {fmtDate(c.last_order_at)}</span>
+                </div>
+
+                {/* Desktop columns */}
+                <div className="hidden md:flex col-span-2 items-center justify-end">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-gray-900">
+                    {c.total_orders}
+                    {c.delivered_count > 0 && (
+                      <span className="text-xs font-normal text-green-600">
+                        ({c.delivered_count}✓)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="hidden md:flex col-span-2 items-center justify-end">
+                  <span className="text-sm font-semibold text-gray-900">{fmtMMK(c.total_spent)}</span>
+                </div>
+                <div className="hidden md:flex col-span-2 items-center justify-end">
+                  <span className="text-sm text-gray-600">{fmtMMK(c.avg_order_value)}</span>
+                </div>
+                <div className="hidden md:flex col-span-2 items-center justify-end">
+                  <span className="text-xs text-gray-500">{fmtDate(c.last_order_at)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      
+
       {/* Pagination */}
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          {t('seller.showing')} <span className="font-medium">1</span> {t('seller.to')} <span className="font-medium">5</span> {t('seller.of')} <span className="font-medium">142</span> {t('seller.customers')}
+      {meta.last_page > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-gray-500 text-xs">
+            {((page - 1) * 15) + 1}–{Math.min(page * 15, meta.total)} of {meta.total} customers
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handlePage(page - 1)}
+              disabled={page <= 1}
+              className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeftIcon className="h-4 w-4 text-gray-600" />
+            </button>
+            {[...Array(meta.last_page)].map((_, i) => {
+              const pg = i + 1;
+              if (meta.last_page > 7 && Math.abs(pg - page) > 2 && pg !== 1 && pg !== meta.last_page) {
+                if (pg === 2 || pg === meta.last_page - 1) return <span key={pg} className="px-1 text-gray-400">…</span>;
+                return null;
+              }
+              return (
+                <button
+                  key={pg}
+                  onClick={() => handlePage(pg)}
+                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                    pg === page
+                      ? 'bg-green-600 text-white'
+                      : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {pg}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => handlePage(page + 1)}
+              disabled={page >= meta.last_page}
+              className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRightIcon className="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            {t('seller.previous')}
-          </button>
-          <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            {t('seller.next')}
-          </button>
-        </div>
-      </div>
+      )}
+
     </div>
   );
 };

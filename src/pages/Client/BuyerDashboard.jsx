@@ -12,6 +12,7 @@ import {
   ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon,
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
+import NotificationPreferences from "../../components/Shared/NotificationPreferences";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -999,10 +1000,11 @@ const ProfileTab = ({ user, onUpdate }) => {
 };
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
-const SettingsTab = () => {
-  const [pwd, setPwd]   = useState({ current_password: "", new_password: "", confirm_password: "" });
-  const [loading, setL] = useState(false);
-  const [msg, setMsg]   = useState(null);
+const SettingsTab = ({ user }) => {
+  const [pwd, setPwd]     = useState({ current_password: "", new_password: "", confirm_password: "" });
+  const [loading, setL]   = useState(false);
+  const [msg, setMsg]     = useState(null);
+  const [section, setSection] = useState("notifications");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1016,31 +1018,62 @@ const SettingsTab = () => {
     finally { setL(false); }
   };
 
+  const subTabs = [
+    { id:"notifications", label:"Notifications" },
+    { id:"password",      label:"Password"      },
+    { id:"account",       label:"Account"       },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Change Password</h2>
-        {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-          {[["Current Password","current_password"],["New Password","new_password"],["Confirm New Password","confirm_password"]].map(([label,name]) => (
-            <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-              <input type="password" name={name} value={pwd[name]} required minLength={name!=="current_password"?6:undefined}
-                onChange={(e) => setPwd({...pwd,[name]:e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
-            </div>
-          ))}
-          <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
-            {loading ? "Updating…" : "Update Password"}
+      <div className="flex gap-1 border-b border-gray-100">
+        {subTabs.map(t => (
+          <button key={t.id} onClick={() => setSection(t.id)}
+            className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors
+              ${section === t.id ? "bg-white border border-gray-100 text-green-700" : "text-gray-500 hover:text-gray-700"}`}>
+            {t.label}
           </button>
-        </form>
+        ))}
       </div>
-      <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Account</h2>
-        <button className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700">
-          <ExclamationTriangleIcon className="h-4 w-4" />Deactivate Account
-        </button>
-      </div>
+
+      {section === "notifications" && (
+        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+          <NotificationPreferences
+            userType="buyer"
+            initialPrefs={user?.notification_preferences || {}}
+          />
+        </div>
+      )}
+
+      {section === "password" && (
+        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Change Password</h2>
+          {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+            {[["Current Password","current_password"],["New Password","new_password"],["Confirm New Password","confirm_password"]].map(([label,name]) => (
+              <div key={name}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <input type="password" name={name} value={pwd[name]} required minLength={name!=="current_password"?8:undefined}
+                  onChange={(e) => setPwd({...pwd,[name]:e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+              </div>
+            ))}
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
+              {loading ? "Updating…" : "Update Password"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {section === "account" && (
+        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Account</h2>
+          <p className="text-sm text-gray-500 mb-4">Deactivating your account will remove your access. Your order history will be preserved.</p>
+          <button className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors">
+            <ExclamationTriangleIcon className="h-4 w-4" />Request Account Deactivation
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1117,7 +1150,7 @@ const BuyerDashboard = () => {
       case "cart":      return <CartTab navigate={navigate} />;
       case "wishlist":  return <WishlistTab navigate={navigate} />;
       case "profile":   return <ProfileTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
-      case "settings":  return <SettingsTab />;
+      case "settings":  return <SettingsTab user={user} />;
       default:          return null;
     }
   };

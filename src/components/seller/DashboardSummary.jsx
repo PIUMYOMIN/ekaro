@@ -14,6 +14,86 @@ import {
 } from "@heroicons/react/24/solid";
 import { Bar, Doughnut } from "react-chartjs-2";
 import api from "../../utils/api";
+
+const fmtK = (n) => {
+  const v = Number(n) || 0;
+  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return v.toLocaleString();
+};
+const fmtMMK = (n) => `${fmtK(n)} MMK`;
+
+const TIER_CONFIG = {
+  bronze: { label: 'Bronze',  rate: '6%', next: 'Silver', threshold: 50,  color: 'from-amber-600 to-amber-500',   bg: 'bg-amber-50',  border: 'border-amber-200', text: 'text-amber-700', emoji: '🥉' },
+  silver: { label: 'Silver',  rate: '5%', next: 'Gold',   threshold: 500, color: 'from-slate-400 to-slate-500',   bg: 'bg-slate-50',  border: 'border-slate-200', text: 'text-slate-700', emoji: '🥈' },
+  gold:   { label: 'Gold',    rate: '4%', next: null,      threshold: null, color: 'from-yellow-500 to-yellow-400', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', emoji: '🥇' },
+};
+
+// ── Tier Card ──────────────────────────────────────────────────────────────────
+const TierCard = ({ storeData }) => {
+  const tier   = storeData?.seller_tier || 'bronze';
+  const cfg    = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
+  const completed  = storeData?.completed_orders_count || 0;
+  const promoted   = storeData?.tier_promoted_at
+    ? new Date(storeData.tier_promoted_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+    : null;
+
+  const progress = cfg.threshold
+    ? Math.min(100, Math.round((completed / cfg.threshold) * 100))
+    : 100;
+
+  return (
+    <div className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 sm:p-5`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Your Tier</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-2xl">{cfg.emoji}</span>
+            <span className={`text-xl font-bold ${cfg.text}`}>{cfg.label}</span>
+          </div>
+          {promoted && (
+            <p className="text-xs text-gray-400 mt-0.5">Since {promoted}</p>
+          )}
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-xs font-medium text-gray-500">Commission Rate</p>
+          <p className={`text-2xl font-bold ${cfg.text} mt-1`}>{cfg.rate}</p>
+          <p className="text-xs text-gray-400">per order</p>
+        </div>
+      </div>
+
+      {cfg.threshold && (
+        <div className="mt-4">
+          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+            <span>{completed} completed orders</span>
+            <span>{cfg.threshold} for {cfg.next}</span>
+          </div>
+          <div className="w-full bg-white rounded-full h-2 border border-gray-200">
+            <div
+              className={`h-2 rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-500`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">
+            {cfg.threshold - completed > 0
+              ? `${cfg.threshold - completed} more orders to reach ${cfg.next}`
+              : `Ready to be promoted to ${cfg.next}!`}
+          </p>
+        </div>
+      )}
+
+      {!cfg.threshold && (
+        <div className="mt-3 flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-yellow-400" />
+          <p className="text-xs text-yellow-700 font-medium">Highest tier — lowest commission rate</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -253,7 +333,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     {
       id: 1,
       name: "Total Revenue",
-      value: `${metrics.totalRevenue?.toLocaleString() || 0} MMK`,
+      value: `${fmtMMK(metrics.totalRevenue)}`,
       icon: CurrencyDollarIcon,
       change: "+12.5%", // This could be dynamic later
       changeType: "positive",
@@ -461,6 +541,9 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         </div>
       )}
 
+      {/* Tier & Commission */}
+      {storeData && <TierCard storeData={storeData} />}
+
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {statsCards.map((stat) => {
@@ -574,7 +657,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">
-                      {order.total_amount_formatted || `${order.total_amount?.toLocaleString()} MMK`}
+                      {order.total_amount_formatted || fmtMMK(order.total_amount)}
                     </p>
                     <p className="text-sm text-gray-500 capitalize">
                       {order.status}
@@ -606,7 +689,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Avg. Order Value</span>
               <span className="font-semibold text-gray-900">
-                {metrics.averageOrderValue?.toLocaleString()} MMK
+                {fmtMMK(metrics.averageOrderValue)}
               </span>
             </div>
             <div className="flex justify-between items-center">
