@@ -71,6 +71,11 @@ export default function Checkout() {
   // ── Toast ──────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
 
+  // ── Seller policy agreement ────────────────────────────────────────────────
+  const [sellerPolicies, setSellerPolicies] = useState([]); // [{ seller_id, seller_name, slug, return_policy, shipping_policy }]
+  const [agreedSellers, setAgreedSellers] = useState({}); // { seller_id: true }
+  const [policyError, setPolicyError] = useState('');
+
   const showToast = useCallback((type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
@@ -96,6 +101,36 @@ export default function Checkout() {
   const TAX_RATE     = 0.05;
   const tax          = subtotal * TAX_RATE;
   const total        = Math.max(0, subtotal + SHIPPING_FEE + tax - couponDiscount);
+
+  // ── Fetch seller policies for items in cart ──────────────────────────────
+  useEffect(() => {
+    if (!cartItems || cartItems.length === 0) return;
+    // Get unique seller IDs from cart items
+    const slugs = [...new Set(cartItems.map(i => i.seller_slug).filter(Boolean))];
+    if (slugs.length === 0) return;
+
+    Promise.allSettled(
+      slugs.map(slug =>
+        api.get(`/sellers/${slug}`).then(r => {
+          const s = r.data?.data?.seller;
+          if (!s) return null;
+          return {
+            seller_id:       s.id,
+            seller_name:     s.store_name,
+            slug:            s.store_slug,
+            return_policy:   s.return_policy,
+            shipping_policy: s.shipping_policy,
+          };
+        })
+      )
+    ).then(results => {
+      const policies = results
+        .filter(r => r.status === 'fulfilled' && r.value)
+        .map(r => r.value)
+        .filter(p => p.return_policy || p.shipping_policy);
+      setSellerPolicies(policies);
+    });
+  }, [cartItems]);
 
   // ── Pre-fill shipping from user profile ──────────────────────────────────
   useEffect(() => {
@@ -211,7 +246,16 @@ export default function Checkout() {
   const handleConfirmOrder = async () => {
     if (!user) { navigate("/login"); return; }
 
-    if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
+    // ── Seller policy agreement check ────────────────────────────────────────
+    const unagreed = sellerPolicies.filter(p => !agreedSellers[p.seller_id]);
+    if (unagreed.length > 0) {
+      setPolicyError(`Please agree to the policies of: ${unagreed.map(p => p.seller_name).join(', ')}`);
+      document.getElementById('seller-policies')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setPolicyError('');
+
+        if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
       showToast("error", "Please fill in all required shipping fields");
       return;
     }
@@ -654,6 +698,80 @@ export default function Checkout() {
                 </div>
 
                 {/* Confirm button */}
+                {/* ── Seller Policy Agreement ── */}
+                {sellerPolicies.length > 0 && (
+                  <div id="seller-policies" className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3 mt-4">
+                    <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
+                      <svg className="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Seller Policies — Please Review &amp; Agree
+                    </p>
+                    {sellerPolicies.map(p => (
+                      <div key={p.seller_id} className="bg-white rounded-lg border border-amber-100 p-3 space-y-2">
+                        <p className="text-sm font-semibold text-gray-900">{p.seller_name}</p>
+                        {p.return_policy && (
+                          <details className="group">
+                            <summary className="text-xs font-medium text-green-700 cursor-pointer list-none flex items-center gap-1 hover:text-green-800">
+                              <svg className="h-3.5 w-3.5 group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                              Return &amp; Refund Policy
+                            </summary>
+                            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed whitespace-pre-wrap pl-4">{p.return_policy}</p>
+                          </details>
+                        )}
+                        {p.shipping_policy && (
+                          <details className="group">
+                            <summary className="text-xs font-medium text-green-700 cursor-pointer list-none flex items-center gap-1 hover:text-green-800">
+                              <svg className="h-3.5 w-3.5 group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                              Shipping Policy
+                            </summary>
+                            <p className="mt-1.5 text-xs text-gray-600 leading-relaxed whitespace-pre-wrap pl-4">{p.shipping_policy}</p>
+                          </details>
+                        )}
+                        <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                          <div className="relative flex-shrink-0 mt-0.5">
+                            <input
+                              type="checkbox"
+                              checked={!!agreedSellers[p.seller_id]}
+                              onChange={e => {
+                                setAgreedSellers(prev => ({ ...prev, [p.seller_id]: e.target.checked }));
+                                setPolicyError('');
+                              }}
+                              className="sr-only"
+                            />
+                            <div className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-colors ${
+                              agreedSellers[p.seller_id]
+                                ? 'bg-green-600 border-green-600'
+                                : 'border-gray-300 hover:border-green-400'
+                            }`}>
+                              {agreedSellers[p.seller_id] && (
+                                <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-700 leading-snug">
+                            I have read and agree to {p.seller_name}'s return and shipping policies
+                          </span>
+                        </label>
+                      </div>
+                    ))}
+                    {policyError && (
+                      <p className="text-sm text-red-600 flex items-center gap-1.5">
+                        <svg className="h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {policyError}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <button
                   onClick={handleConfirmOrder}
                   disabled={loading}

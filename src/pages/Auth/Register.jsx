@@ -18,6 +18,8 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('buyer');
+  const [agreed, setAgreed] = useState(false);
+  const [agreedError, setAgreedError] = useState('');
   const { executeRecaptcha } = useGoogleReCaptcha();
 
   const {
@@ -71,6 +73,11 @@ const Register = () => {
   };
 
   const onSubmit = async (data) => {
+    if (!agreed) {
+      setAgreedError('You must agree to the Terms & Conditions and Privacy Policy.');
+      return;
+    }
+    setAgreedError('');
     if (!executeRecaptcha) {
       setError('reCAPTCHA not ready');
       return;
@@ -308,6 +315,42 @@ const Register = () => {
                   <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* ── Terms & Conditions ── */}
+            <div className="space-y-1.5">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={e => { setAgreed(e.target.checked); if (e.target.checked) setAgreedError(''); }}
+                    className="sr-only"
+                  />
+                  <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    agreed ? 'bg-green-600 border-green-600' : agreedError ? 'border-red-400' : 'border-gray-300 group-hover:border-green-400'
+                  }`}>
+                    {agreed && (
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-gray-600 leading-snug">
+                  I agree to Pyonea's{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    className="font-medium text-green-600 hover:underline">Terms &amp; Conditions</a>
+                  {' and '}
+                  <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                    className="font-medium text-green-600 hover:underline">Privacy Policy</a>
+                  {userType === 'seller' && (<>{' and the '}
+                    <a href="/seller-guidelines" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                      className="font-medium text-green-600 hover:underline">Seller Guidelines</a>
+                  </>)}
+                </span>
+              </label>
+              {agreedError && <p className="text-sm text-red-600 pl-8">{agreedError}</p>}
             </div>
 
             <div>
