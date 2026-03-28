@@ -78,6 +78,7 @@ import MyStore from "./components/seller/MyStore";
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
+const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
 const EmailVerification = React.lazy(() => import("./pages/Email/EmailVerification"));
 
 const NavigationWirer = () => {
@@ -128,6 +129,7 @@ function App() {
                         <Route path="/verify-email" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
                         <Route path="/verify-email/:id/:hash" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
+                      <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
 
