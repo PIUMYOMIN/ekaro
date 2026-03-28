@@ -124,12 +124,25 @@ function App() {
                         <Route path="/seller-guidelines" element={<SellerGuidelines />} />
                         <Route path="/contact" element={<Contact />} />
                         <Route path="/page-not-found" element={<Error />} />
-                        <Route path="/verify-email/:id/:hash" element={<EmailVerification />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/verify-email" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
-                        <Route path="/verify-email/:id/:hash" element={<React.Suspense fallback={null}><EmailVerification /></React.Suspense>} />
-                      <Route path="/unsubscribe" element={<Unsubscribe />} />
-                      <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
+                        <Route
+                          path="/verify-email/:id/:hash"
+                          element={
+                            <React.Suspense fallback={null}>
+                              <EmailVerification />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route
+                          path="/verify-email"
+                          element={
+                            <React.Suspense fallback={null}>
+                              <EmailVerification />
+                            </React.Suspense>
+                          }
+                        />
+                        <Route path="/unsubscribe" element={<Unsubscribe />} />
+                        <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
 

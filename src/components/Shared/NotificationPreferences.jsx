@@ -1,6 +1,3 @@
-// src/components/shared/NotificationPreferences.jsx
-// Used in both BuyerDashboard and SellerDashboard settings.
-// Props: userType ('buyer'|'seller'), initialPrefs, onSaved
 import React, { useState } from 'react';
 import { CheckCircleIcon, BellIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
