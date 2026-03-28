@@ -142,7 +142,14 @@ function App() {
                           }
                         />
                         <Route path="/unsubscribe" element={<Unsubscribe />} />
-                        <Route path="/newsletter/confirm" element={<NewsletterConfirm />} />
+                        <Route
+                          path="/newsletter/confirm"
+                          element={
+                            <React.Suspense fallback={<div>Loading…</div>}>
+                              <NewsletterConfirm />
+                            </React.Suspense>
+                          }
+                        />
                         {/* Catch-all route for 404 */}
                         <Route path="*" element={<Error />} />
 
