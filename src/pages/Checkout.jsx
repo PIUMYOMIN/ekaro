@@ -68,6 +68,16 @@ export default function Checkout() {
   const [successOrder, setSuccessOrder]         = useState(null);
   const [successPaymentData, setSuccessPaymentData] = useState(null);
 
+  // ── OTP ────────────────────────────────────────────────────────────────────
+  const [showOtpModal, setShowOtpModal]   = useState(false);
+  const [otpValue, setOtpValue]           = useState('');
+  const [otpEmailHint, setOtpEmailHint]   = useState('');
+  const [otpLoading, setOtpLoading]       = useState(false);
+  const [otpError, setOtpError]           = useState('');
+  const [otpCountdown, setOtpCountdown]   = useState(0);
+  const [otpVerified, setOtpVerified]     = useState(false);
+  const otpCountdownRef                   = React.useRef(null);
+
   // ── Toast ──────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
 
@@ -242,11 +252,24 @@ export default function Checkout() {
     }
   };
 
-  // ── Confirm order button ───────────────────────────────────────────────────
-  const handleConfirmOrder = async () => {
-    if (!user) { navigate("/login"); return; }
+  // ── OTP: start countdown timer ────────────────────────────────────────────
+  const startOtpCountdown = (seconds = 600) => {
+    setOtpCountdown(seconds);
+    clearInterval(otpCountdownRef.current);
+    otpCountdownRef.current = setInterval(() => {
+      setOtpCountdown(prev => {
+        if (prev <= 1) { clearInterval(otpCountdownRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
-    // ── Seller policy agreement check ────────────────────────────────────────
+  // ── OTP: request (send email) ─────────────────────────────────────────────
+  const handleRequestOtp = async () => {
+    if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
+      showToast('error', 'Please fill in all required shipping fields');
+      return;
+    }
     const unagreed = sellerPolicies.filter(p => !agreedSellers[p.seller_id]);
     if (unagreed.length > 0) {
       setPolicyError(`Please agree to the policies of: ${unagreed.map(p => p.seller_name).join(', ')}`);
@@ -254,13 +277,56 @@ export default function Checkout() {
       return;
     }
     setPolicyError('');
-
-        if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
-      showToast("error", "Please fill in all required shipping fields");
-      return;
+    setLoading(true);
+    setOtpError('');
+    try {
+      const res = await api.post('/orders/request-otp', {
+        items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+        shipping_address: shippingAddress,
+        payment_method:   paymentMethod,
+      });
+      setOtpEmailHint(res.data.email_hint || '');
+      setOtpValue('');
+      setOtpVerified(false);
+      setShowOtpModal(true);
+      startOtpCountdown(res.data.expires_in || 600);
+    } catch (err) {
+      showToast('error', err.response?.data?.message ?? 'Failed to send confirmation code. Please try again.');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (paymentMethod === "cash_on_delivery") {
+  // ── OTP: verify then place order ──────────────────────────────────────────
+  const handleVerifyOtp = async () => {
+    if (otpValue.length !== 6) { setOtpError('Please enter the 6-digit code.'); return; }
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      await api.post('/orders/verify-otp', { otp: otpValue });
+      setOtpVerified(true);
+      clearInterval(otpCountdownRef.current);
+      // Small delay so user sees the green tick before modal closes
+      setTimeout(() => {
+        setShowOtpModal(false);
+        placeOrder();
+      }, 800);
+    } catch (err) {
+      setOtpError(err.response?.data?.message ?? 'Incorrect code. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // ── Confirm order button ───────────────────────────────────────────────────
+  const handleConfirmOrder = async () => {
+    if (!user) { navigate('/login'); return; }
+    await handleRequestOtp();
+  };
+
+  // ── Place the actual order (called after OTP verified) ────────────────────
+  const placeOrder = async () => {
+    if (paymentMethod === 'cash_on_delivery') {
       await createOrder({ pendingPayment: false });
     } else {
       await createOrder({ pendingPayment: true });
@@ -344,6 +410,152 @@ export default function Checkout() {
       {SeoComponent}
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          {/* ── OTP Confirmation Modal ─────────────────────────────────── */}
+          {showOtpModal && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl">
+
+                {/* Header */}
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <ShieldCheckIcon className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900">Confirm Your Order</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">Enter the code sent to your email</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setShowOtpModal(false); setOtpValue(''); setOtpError(''); clearInterval(otpCountdownRef.current); }}
+                      className="text-gray-400 hover:text-gray-600 p-1"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-6 space-y-5">
+                  {otpVerified ? (
+                    <div className="text-center py-4">
+                      <div className="h-14 w-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                      </div>
+                      <p className="text-base font-semibold text-green-700">Verified! Placing your order…</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-600 text-center">
+                        We sent a <strong>6-digit code</strong> to{' '}
+                        <span className="font-medium text-gray-900">{otpEmailHint}</span>
+                      </p>
+
+                      {/* OTP input — 6 separate boxes */}
+                      <div className="flex justify-center gap-2">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <input
+                            key={i}
+                            id={`otp-input-${i}`}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={otpValue[i] || ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\D/, '');
+                              const arr = otpValue.split('');
+                              arr[i] = val;
+                              const next = arr.join('').slice(0, 6);
+                              setOtpValue(next);
+                              setOtpError('');
+                              if (val && i < 5) {
+                                document.getElementById(`otp-input-${i + 1}`)?.focus();
+                              }
+                            }}
+                            onKeyDown={e => {
+                              if (e.key === 'Backspace' && !otpValue[i] && i > 0) {
+                                document.getElementById(`otp-input-${i - 1}`)?.focus();
+                              }
+                              if (e.key === 'Enter' && otpValue.length === 6) handleVerifyOtp();
+                            }}
+                            onPaste={e => {
+                              e.preventDefault();
+                              const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                              setOtpValue(pasted);
+                              setOtpError('');
+                              const nextIdx = Math.min(pasted.length, 5);
+                              document.getElementById(`otp-input-${nextIdx}`)?.focus();
+                            }}
+                            className={classNames(
+                              'w-11 h-12 text-center text-xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors',
+                              otpError ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-green-500'
+                            )}
+                          />
+                        ))}
+                      </div>
+
+                      {otpError && (
+                        <p className="text-sm text-red-600 text-center flex items-center justify-center gap-1.5">
+                          <XCircleIcon className="h-4 w-4 flex-shrink-0" />
+                          {otpError}
+                        </p>
+                      )}
+
+                      {/* Countdown */}
+                      <p className="text-xs text-gray-400 text-center">
+                        {otpCountdown > 0 ? (
+                          <>Code expires in <span className="font-semibold text-gray-600">{Math.floor(otpCountdown / 60)}:{String(otpCountdown % 60).padStart(2, '0')}</span></>
+                        ) : (
+                          <span className="text-red-500 font-medium">Code expired.</span>
+                        )}
+                      </p>
+
+                      {/* Verify button */}
+                      <button
+                        onClick={handleVerifyOtp}
+                        disabled={otpLoading || otpValue.length !== 6 || otpCountdown === 0}
+                        className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                      >
+                        {otpLoading ? (
+                          <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Verifying…</>
+                        ) : 'Confirm Order'}
+                      </button>
+
+                      {/* Resend */}
+                      <div className="text-center">
+                        <button
+                          onClick={async () => {
+                            setOtpValue('');
+                            setOtpError('');
+                            setLoading(true);
+                            try {
+                              const res = await api.post('/orders/request-otp', {
+                                items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+                                shipping_address: shippingAddress,
+                                payment_method: paymentMethod,
+                              });
+                              startOtpCountdown(res.data.expires_in || 600);
+                              showToast('success', 'A new code has been sent to your email.');
+                            } catch {
+                              showToast('error', 'Failed to resend code. Please try again.');
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+                          disabled={otpCountdown > 540}
+                          className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Didn't receive it? Resend code
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* MMQR Payment Modal */}
           {showPaymentModal && currentOrder && (
