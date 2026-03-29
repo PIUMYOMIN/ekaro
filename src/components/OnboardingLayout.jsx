@@ -165,7 +165,7 @@ const OnboardingLayout = ({
                             <button
                                 onClick={onNext}
                                 disabled={nextDisabled || loading}
-                                className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                                className="flex flex-1 min-w-0 items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                             >
                                 {loading ? (
                                     <>
