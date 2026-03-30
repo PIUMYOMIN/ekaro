@@ -37,11 +37,11 @@ function formatMMK(amount) {
 }
 
 const PAYMENT_METHODS = [
-  { id: "mmqr",             name: "MMQR Payment",    description: "Scan QR code with any mobile banking app", icon: QrCodeIcon,       color: "bg-blue-500" },
-  { id: "kbz_pay",          name: "KBZ Pay",          description: "Pay with KBZ Pay mobile wallet",           icon: CreditCardIcon,   color: "bg-purple-500" },
-  { id: "wave_pay",         name: "Wave Pay",         description: "Pay with Wave Pay mobile wallet",          icon: CreditCardIcon,   color: "bg-green-500" },
-  { id: "cb_pay",           name: "CB Pay",           description: "Pay with CB Pay mobile wallet",            icon: CreditCardIcon,   color: "bg-red-500" },
-  { id: "aya_pay",          name: "AYA Pay",          description: "Pay with AYA Pay mobile wallet",           icon: CreditCardIcon,   color: "bg-orange-500" },
+  { id: "mmqr",             name: "MMQR Payment",    description: "Scan QR code with any mobile banking app", icon: QrCodeIcon,        color: "bg-blue-500" },
+  { id: "kbz_pay",          name: "KBZ Pay",          description: "Pay with KBZ Pay mobile wallet",           icon: CreditCardIcon,    color: "bg-purple-500" },
+  { id: "wave_pay",         name: "Wave Pay",         description: "Pay with Wave Pay mobile wallet",          icon: CreditCardIcon,    color: "bg-green-500" },
+  { id: "cb_pay",           name: "CB Pay",           description: "Pay with CB Pay mobile wallet",            icon: CreditCardIcon,    color: "bg-red-500" },
+  { id: "aya_pay",          name: "AYA Pay",          description: "Pay with AYA Pay mobile wallet",           icon: CreditCardIcon,    color: "bg-orange-500" },
   { id: "cash_on_delivery", name: "Cash on Delivery", description: "Pay when you receive your order",          icon: CurrencyDollarIcon, color: "bg-yellow-500" },
 ];
 
@@ -51,7 +51,6 @@ export default function Checkout() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // SEO – moved to top level (correct placement)
   const SeoComponent = useSEO({
     title: "Checkout | Pyonea",
     description: "Complete your purchase securely on Pyonea.",
@@ -59,39 +58,39 @@ export default function Checkout() {
     noindex: true,
   });
 
-  // ── Order flow ─────────────────────────────────────────────────────────────
-  const [loading, setLoading]                   = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [currentOrder, setCurrentOrder]         = useState(null);
-  const [paymentAttempts, setPaymentAttempts]   = useState(0);
-  const [paymentSuccess, setPaymentSuccess]     = useState(false);
-  const [successOrder, setSuccessOrder]         = useState(null);
+  // ── Order flow ──────────────────────────────────────────────────────────────
+  const [loading, setLoading]                       = useState(false);
+  const [showPaymentModal, setShowPaymentModal]     = useState(false);
+  const [currentOrder, setCurrentOrder]             = useState(null);
+  const [paymentAttempts, setPaymentAttempts]       = useState(0);
+  const [paymentSuccess, setPaymentSuccess]         = useState(false);
+  const [successOrder, setSuccessOrder]             = useState(null);
   const [successPaymentData, setSuccessPaymentData] = useState(null);
 
-  // ── OTP ────────────────────────────────────────────────────────────────────
-  const [showOtpModal, setShowOtpModal]   = useState(false);
-  const [otpValue, setOtpValue]           = useState('');
-  const [otpEmailHint, setOtpEmailHint]   = useState('');
-  const [otpLoading, setOtpLoading]       = useState(false);
-  const [otpError, setOtpError]           = useState('');
-  const [otpCountdown, setOtpCountdown]   = useState(0);
-  const [otpVerified, setOtpVerified]     = useState(false);
-  const otpCountdownRef                   = React.useRef(null);
+  // ── OTP ─────────────────────────────────────────────────────────────────────
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpValue, setOtpValue]         = useState('');
+  const [otpEmailHint, setOtpEmailHint] = useState('');
+  const [otpLoading, setOtpLoading]     = useState(false);
+  const [otpError, setOtpError]         = useState('');
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [otpVerified, setOtpVerified]   = useState(false);
+  const otpCountdownRef                 = React.useRef(null);
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
-  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+  // ── Toast ────────────────────────────────────────────────────────────────────
+  const [toast, setToast] = useState(null);
 
-  // ── Seller policy agreement ────────────────────────────────────────────────
-  const [sellerPolicies, setSellerPolicies] = useState([]); // [{ seller_id, seller_name, slug, return_policy, shipping_policy }]
-  const [agreedSellers, setAgreedSellers] = useState({}); // { seller_id: true }
-  const [policyError, setPolicyError] = useState('');
+  // ── Seller policy agreement ──────────────────────────────────────────────────
+  const [sellerPolicies, setSellerPolicies] = useState([]);
+  const [agreedSellers, setAgreedSellers]   = useState({});
+  const [policyError, setPolicyError]       = useState('');
 
   const showToast = useCallback((type, message) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ── Shipping / payment ─────────────────────────────────────────────────────
+  // ── Shipping / payment ───────────────────────────────────────────────────────
   const [shippingAddress, setShippingAddress] = useState({
     full_name: "", phone: "", address: "",
     city: "", state: "", postal_code: "", country: "Myanmar",
@@ -99,23 +98,47 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("mmqr");
   const [orderNotes, setOrderNotes]       = useState("");
 
-  // ── Coupon ─────────────────────────────────────────────────────────────────
-  const [couponInput, setCouponInput]     = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);  // full API response data
+  // ── Coupon ───────────────────────────────────────────────────────────────────
+  const [couponInput, setCouponInput]       = useState("");
+  const [appliedCoupon, setAppliedCoupon]   = useState(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [couponError, setCouponError]     = useState("");
+  const [couponLoading, setCouponLoading]   = useState(false);
+  const [couponError, setCouponError]       = useState("");
 
-  // ── Totals ────────────────────────────────────────────────────────────────
-  const SHIPPING_FEE = 5000;
-  const TAX_RATE     = 0.05;
-  const tax          = subtotal * TAX_RATE;
-  const total        = Math.max(0, subtotal + SHIPPING_FEE + tax - couponDiscount);
+  // ── Fees — fetched live from /orders/checkout-fees ───────────────────────────
+  // Replaces the previous hardcoded `SHIPPING_FEE = 5000` and `TAX_RATE = 0.05`.
+  // The platform fee rate comes from the commission_rules table via
+  // CommissionRateResolver (tier → business_type → category → default).
+  // The label is also corrected: this is a "Platform Fee", not a "Tax".
+  const [feesLoading, setFeesLoading]   = useState(true);
+  const [shippingFee, setShippingFee]   = useState(5000);       // safe default while loading
+  const [platformFeeRate, setPlatformFeeRate] = useState(0.05); // safe default while loading
+  const [platformFeePct, setPlatformFeePct]   = useState(5.0);
 
-  // ── Fetch seller policies for items in cart ──────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    api.get("/orders/checkout-fees")
+      .then(res => {
+        if (res.data.success) {
+          const d = res.data.data;
+          setShippingFee(d.shipping_fee);
+          setPlatformFeeRate(d.platform_fee_rate);
+          setPlatformFeePct(d.platform_fee_pct);
+        }
+      })
+      .catch(() => {
+        // Network error — keep safe defaults so checkout still works
+      })
+      .finally(() => setFeesLoading(false));
+  }, [user]);
+
+  // Derived totals — recalculate whenever fees or cart change
+  const platformFee = subtotal * platformFeeRate;
+  const total       = Math.max(0, subtotal + shippingFee + platformFee - couponDiscount);
+
+  // ── Fetch seller policies ────────────────────────────────────────────────────
   useEffect(() => {
     if (!cartItems || cartItems.length === 0) return;
-    // Get unique seller IDs from cart items
     const slugs = [...new Set(cartItems.map(i => i.seller_slug).filter(Boolean))];
     if (slugs.length === 0) return;
 
@@ -142,12 +165,12 @@ export default function Checkout() {
     });
   }, [cartItems]);
 
-  // ── Pre-fill shipping from user profile ──────────────────────────────────
+  // ── Pre-fill shipping from user profile ──────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    api.get("/auth/me").then((res) => {
+    api.get("/auth/me").then(res => {
       const u = res.data.data ?? res.data;
-      setShippingAddress((prev) => ({
+      setShippingAddress(prev => ({
         ...prev,
         full_name:   u.name          ?? "",
         phone:       u.phone         ?? "",
@@ -159,24 +182,18 @@ export default function Checkout() {
     }).catch(() => {});
   }, [user]);
 
-  // ── Coupon: apply ─────────────────────────────────────────────────────────
+  // ── Coupon ───────────────────────────────────────────────────────────────────
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
     if (!code) { setCouponError("Please enter a coupon code"); return; }
-
     setCouponLoading(true);
     setCouponError("");
-
     try {
       const res = await api.post("/buyer/coupons/validate", {
         code,
-        items: cartItems.map((item) => ({
-          product_id: item.product_id,
-          quantity:   item.quantity,
-        })),
+        items: cartItems.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
         subtotal,
       });
-
       const data = res.data.data;
       setAppliedCoupon(data);
       setCouponDiscount(data.discount_amount);
@@ -190,7 +207,6 @@ export default function Checkout() {
     }
   };
 
-  // ── Coupon: remove (fixed – no hook call inside) ─────────────────────────
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponDiscount(0);
@@ -198,9 +214,9 @@ export default function Checkout() {
     setCouponInput("");
   };
 
-  // ── Shared order payload builder ──────────────────────────────────────────
+  // ── Order payload builder ────────────────────────────────────────────────────
   const buildOrderPayload = (paymentStatus, paymentData = null) => ({
-    items: cartItems.map((item) => ({
+    items: cartItems.map(item => ({
       product_id: item.product_id,
       quantity:   item.quantity,
       price:      item.price,
@@ -212,38 +228,31 @@ export default function Checkout() {
     notes:                  orderNotes,
     total_amount:           total,
     subtotal_amount:        subtotal,
-    shipping_fee:           SHIPPING_FEE,
-    tax_amount:             tax,
-    coupon_id:              appliedCoupon?.coupon?.id              ?? null,
-    coupon_code:            appliedCoupon?.coupon?.code            ?? null,
-    coupon_discount_amount: appliedCoupon?.discount_amount         ?? 0,
+    shipping_fee:           shippingFee,
+    tax_amount:             platformFee,
+    coupon_id:              appliedCoupon?.coupon?.id      ?? null,
+    coupon_code:            appliedCoupon?.coupon?.code    ?? null,
+    coupon_discount_amount: appliedCoupon?.discount_amount ?? 0,
   });
 
-  // ── Create order (single function replacing the two near-identical ones) ───
+  // ── Create order ─────────────────────────────────────────────────────────────
   const createOrder = async ({ pendingPayment = false, paymentData = null } = {}) => {
     setLoading(true);
     try {
       const payload  = buildOrderPayload(paymentData ? "paid" : "pending", paymentData);
       const response = await api.post("/orders", payload);
-
       if (!response.data.success) throw new Error("Order creation failed");
-
       const order = response.data.data.orders?.[0] ?? response.data.data.order;
-
       if (pendingPayment) {
-        // Show payment modal (MMQR etc.) — don't clear cart yet
         setCurrentOrder(order);
         setShowPaymentModal(true);
-        setPaymentAttempts((n) => n + 1);
+        setPaymentAttempts(n => n + 1);
         return order;
       }
-
-      // COD / immediate success path
       showToast("success", `Order #${order?.order_number ?? ""} placed successfully!`);
       clearCart();
       setTimeout(() => navigate("/buyer"), 2000);
       return order;
-
     } catch (err) {
       showToast("error", err.response?.data?.message ?? "Failed to create order. Please try again.");
       return null;
@@ -252,7 +261,7 @@ export default function Checkout() {
     }
   };
 
-  // ── OTP: start countdown timer ────────────────────────────────────────────
+  // ── OTP countdown ────────────────────────────────────────────────────────────
   const startOtpCountdown = (seconds = 600) => {
     setOtpCountdown(seconds);
     clearInterval(otpCountdownRef.current);
@@ -264,7 +273,7 @@ export default function Checkout() {
     }, 1000);
   };
 
-  // ── OTP: request (send email) ─────────────────────────────────────────────
+  // ── OTP: request ─────────────────────────────────────────────────────────────
   const handleRequestOtp = async () => {
     if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
       showToast('error', 'Please fill in all required shipping fields');
@@ -281,7 +290,7 @@ export default function Checkout() {
     setOtpError('');
     try {
       const res = await api.post('/orders/request-otp', {
-        items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+        items:            cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
         shipping_address: shippingAddress,
         payment_method:   paymentMethod,
       });
@@ -297,7 +306,7 @@ export default function Checkout() {
     }
   };
 
-  // ── OTP: verify then place order ──────────────────────────────────────────
+  // ── OTP: verify ──────────────────────────────────────────────────────────────
   const handleVerifyOtp = async () => {
     if (otpValue.length !== 6) { setOtpError('Please enter the 6-digit code.'); return; }
     setOtpLoading(true);
@@ -306,7 +315,6 @@ export default function Checkout() {
       await api.post('/orders/verify-otp', { otp: otpValue });
       setOtpVerified(true);
       clearInterval(otpCountdownRef.current);
-      // Small delay so user sees the green tick before modal closes
       setTimeout(() => {
         setShowOtpModal(false);
         placeOrder();
@@ -318,13 +326,11 @@ export default function Checkout() {
     }
   };
 
-  // ── Confirm order button ───────────────────────────────────────────────────
   const handleConfirmOrder = async () => {
     if (!user) { navigate('/login'); return; }
     await handleRequestOtp();
   };
 
-  // ── Place the actual order (called after OTP verified) ────────────────────
   const placeOrder = async () => {
     if (paymentMethod === 'cash_on_delivery') {
       await createOrder({ pendingPayment: false });
@@ -333,16 +339,14 @@ export default function Checkout() {
     }
   };
 
-  // ── MMQR success ──────────────────────────────────────────────────────────
+  // ── MMQR ─────────────────────────────────────────────────────────────────────
   const handleMMQRSuccess = async (paymentData) => {
     try {
       await api.patch(`/orders/${currentOrder.id}/payment`, {
         payment_status: "paid",
         payment_data:   paymentData,
       });
-
       setShowPaymentModal(false);
-
       const orderRes = await api.get(`/orders/${currentOrder.id}`);
       if (orderRes.data.success) {
         setSuccessOrder(orderRes.data.data);
@@ -365,11 +369,11 @@ export default function Checkout() {
         });
       }
     } catch { /* best effort */ }
-
     setShowPaymentModal(false);
     showToast("error", `Payment failed: ${error}. Please try again.`);
   };
 
+  // ── Early returns ─────────────────────────────────────────────────────────────
   if (paymentSuccess && successOrder) {
     return (
       <>
@@ -411,12 +415,10 @@ export default function Checkout() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* ── OTP Confirmation Modal ─────────────────────────────────── */}
+          {/* ── OTP Modal ──────────────────────────────────────────────────── */}
           {showOtpModal && (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl">
-
-                {/* Header */}
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -437,7 +439,6 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                {/* Body */}
                 <div className="p-6 space-y-5">
                   {otpVerified ? (
                     <div className="text-center py-4">
@@ -453,7 +454,6 @@ export default function Checkout() {
                         <span className="font-medium text-gray-900">{otpEmailHint}</span>
                       </p>
 
-                      {/* OTP input — 6 separate boxes */}
                       <div className="flex justify-center gap-2">
                         {Array.from({ length: 6 }).map((_, i) => (
                           <input
@@ -470,9 +470,7 @@ export default function Checkout() {
                               const next = arr.join('').slice(0, 6);
                               setOtpValue(next);
                               setOtpError('');
-                              if (val && i < 5) {
-                                document.getElementById(`otp-input-${i + 1}`)?.focus();
-                              }
+                              if (val && i < 5) document.getElementById(`otp-input-${i + 1}`)?.focus();
                             }}
                             onKeyDown={e => {
                               if (e.key === 'Backspace' && !otpValue[i] && i > 0) {
@@ -485,8 +483,7 @@ export default function Checkout() {
                               const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
                               setOtpValue(pasted);
                               setOtpError('');
-                              const nextIdx = Math.min(pasted.length, 5);
-                              document.getElementById(`otp-input-${nextIdx}`)?.focus();
+                              document.getElementById(`otp-input-${Math.min(pasted.length, 5)}`)?.focus();
                             }}
                             className={classNames(
                               'w-11 h-12 text-center text-xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors',
@@ -503,7 +500,6 @@ export default function Checkout() {
                         </p>
                       )}
 
-                      {/* Countdown */}
                       <p className="text-xs text-gray-400 text-center">
                         {otpCountdown > 0 ? (
                           <>Code expires in <span className="font-semibold text-gray-600">{Math.floor(otpCountdown / 60)}:{String(otpCountdown % 60).padStart(2, '0')}</span></>
@@ -512,7 +508,6 @@ export default function Checkout() {
                         )}
                       </p>
 
-                      {/* Verify button */}
                       <button
                         onClick={handleVerifyOtp}
                         disabled={otpLoading || otpValue.length !== 6 || otpCountdown === 0}
@@ -523,7 +518,6 @@ export default function Checkout() {
                         ) : 'Confirm Order'}
                       </button>
 
-                      {/* Resend */}
                       <div className="text-center">
                         <button
                           onClick={async () => {
@@ -532,9 +526,9 @@ export default function Checkout() {
                             setLoading(true);
                             try {
                               const res = await api.post('/orders/request-otp', {
-                                items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+                                items:            cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
                                 shipping_address: shippingAddress,
-                                payment_method: paymentMethod,
+                                payment_method:   paymentMethod,
                               });
                               startOtpCountdown(res.data.expires_in || 600);
                               showToast('success', 'A new code has been sent to your email.');
@@ -557,7 +551,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {/* MMQR Payment Modal */}
+          {/* ── MMQR Payment Modal ─────────────────────────────────────────── */}
           {showPaymentModal && currentOrder && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -589,7 +583,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {/* Toast */}
+          {/* ── Toast ──────────────────────────────────────────────────────── */}
           {toast && (
             <div className="fixed top-4 right-4 z-50 max-w-sm">
               <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${
@@ -613,7 +607,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {/* Page header */}
+          {/* ── Page header ────────────────────────────────────────────────── */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
             <p className="text-gray-600 mt-2">Complete your purchase</p>
@@ -621,7 +615,7 @@ export default function Checkout() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            {/* ── Left column ─────────────────────────────────────────────── */}
+            {/* ── Left column ──────────────────────────────────────────────── */}
             <div className="space-y-6">
 
               {/* Shipping information */}
@@ -639,7 +633,7 @@ export default function Checkout() {
                       <input
                         type="text" required
                         value={shippingAddress.full_name}
-                        onChange={(e) => setShippingAddress((p) => ({ ...p, full_name: e.target.value }))}
+                        onChange={e => setShippingAddress(p => ({ ...p, full_name: e.target.value }))}
                         className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="Enter your full name"
                       />
@@ -653,7 +647,7 @@ export default function Checkout() {
                       <input
                         type="tel" required
                         value={shippingAddress.phone}
-                        onChange={(e) => setShippingAddress((p) => ({ ...p, phone: e.target.value }))}
+                        onChange={e => setShippingAddress(p => ({ ...p, phone: e.target.value }))}
                         className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="09XXXXXXXXX"
                       />
@@ -665,7 +659,7 @@ export default function Checkout() {
                     <textarea
                       required
                       value={shippingAddress.address}
-                      onChange={(e) => setShippingAddress((p) => ({ ...p, address: e.target.value }))}
+                      onChange={e => setShippingAddress(p => ({ ...p, address: e.target.value }))}
                       rows={3}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder="Enter your complete address including township and city"
@@ -682,7 +676,7 @@ export default function Checkout() {
                       <input
                         type="text"
                         value={shippingAddress[key]}
-                        onChange={(e) => setShippingAddress((p) => ({ ...p, [key]: e.target.value }))}
+                        onChange={e => setShippingAddress(p => ({ ...p, [key]: e.target.value }))}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder={placeholder}
                       />
@@ -707,7 +701,7 @@ export default function Checkout() {
                 </div>
 
                 <div className="space-y-4">
-                  {PAYMENT_METHODS.map((method) => (
+                  {PAYMENT_METHODS.map(method => (
                     <div
                       key={method.id}
                       onClick={() => setPaymentMethod(method.id)}
@@ -758,7 +752,7 @@ export default function Checkout() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Order Notes (Optional)</h3>
                 <textarea
                   value={orderNotes}
-                  onChange={(e) => setOrderNotes(e.target.value)}
+                  onChange={e => setOrderNotes(e.target.value)}
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Any special instructions for your order…"
@@ -766,14 +760,14 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* ── Right column — Order summary ─────────────────────────────── */}
+            {/* ── Right column — Order summary ──────────────────────────────── */}
             <div className="space-y-6">
               <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
 
                 {/* Cart items */}
                 <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
-                  {cartItems.map((item) => (
+                  {cartItems.map(item => (
                     <div key={item.id} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -781,7 +775,7 @@ export default function Checkout() {
                             src={item.image}
                             alt={item.name}
                             className="w-10 h-10 object-cover rounded"
-                            onError={(e) => { e.target.src = "/placeholder-product.jpg"; }}
+                            onError={e => { e.target.src = "/placeholder-product.jpg"; }}
                           />
                         </div>
                         <div className="max-w-[180px]">
@@ -800,7 +794,7 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                {/* Coupon section */}
+                {/* Coupon */}
                 <div className="border-t border-gray-200 pt-4 mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                     <TicketIcon className="h-4 w-4 text-green-600" />
@@ -838,11 +832,8 @@ export default function Checkout() {
                         <input
                           type="text"
                           value={couponInput}
-                          onChange={(e) => {
-                            setCouponInput(e.target.value.toUpperCase());
-                            if (couponError) setCouponError("");
-                          }}
-                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleApplyCoupon(); } }}
+                          onChange={e => { setCouponInput(e.target.value.toUpperCase()); if (couponError) setCouponError(""); }}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleApplyCoupon(); } }}
                           className={classNames(
                             "flex-1 px-4 py-2.5 border rounded-lg text-sm font-mono uppercase focus:ring-2 focus:ring-green-500 focus:border-transparent",
                             couponError ? "border-red-300 bg-red-50" : "border-gray-300"
@@ -855,9 +846,10 @@ export default function Checkout() {
                           disabled={couponLoading || !couponInput.trim()}
                           className="px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                         >
-                          {couponLoading ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                          ) : "Apply"}
+                          {couponLoading
+                            ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                            : "Apply"
+                          }
                         </button>
                       </div>
                       {couponError && (
@@ -879,12 +871,21 @@ export default function Checkout() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
-                    <span className="text-gray-900">{formatMMK(SHIPPING_FEE)}</span>
+                    {feesLoading
+                      ? <span className="text-gray-400 animate-pulse">Calculating…</span>
+                      : <span className="text-gray-900">{formatMMK(shippingFee)}</span>
+                    }
                   </div>
 
+                  {/* Platform Fee — fetched from commission_rules table, correctly labelled */}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax (5%)</span>
-                    <span className="text-gray-900">{formatMMK(tax)}</span>
+                    <span className="text-gray-600">
+                      Platform Fee ({feesLoading ? '…' : `${platformFeePct}%`})
+                    </span>
+                    {feesLoading
+                      ? <span className="text-gray-400 animate-pulse">Calculating…</span>
+                      : <span className="text-gray-900">{formatMMK(platformFee)}</span>
+                    }
                   </div>
 
                   {appliedCoupon && couponDiscount > 0 && (
@@ -899,7 +900,10 @@ export default function Checkout() {
 
                   <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-3">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-green-600">{formatMMK(total)}</span>
+                    {feesLoading
+                      ? <span className="text-gray-400 animate-pulse">Calculating…</span>
+                      : <span className="text-green-600">{formatMMK(total)}</span>
+                    }
                   </div>
                 </div>
 
@@ -909,8 +913,7 @@ export default function Checkout() {
                   <span>Secure checkout · SSL encrypted</span>
                 </div>
 
-                {/* Confirm button */}
-                {/* ── Seller Policy Agreement ── */}
+                {/* Seller Policy Agreement */}
                 {sellerPolicies.length > 0 && (
                   <div id="seller-policies" className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3 mt-4">
                     <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
@@ -986,10 +989,10 @@ export default function Checkout() {
 
                 <button
                   onClick={handleConfirmOrder}
-                  disabled={loading}
+                  disabled={loading || feesLoading}
                   className={classNames(
                     "w-full mt-6 py-4 px-6 rounded-lg font-semibold text-white transition-all",
-                    loading
+                    loading || feesLoading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl"
                   )}
