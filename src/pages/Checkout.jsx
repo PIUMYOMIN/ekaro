@@ -37,12 +37,12 @@ function formatMMK(amount) {
 }
 
 const PAYMENT_METHODS = [
-  { id: "mmqr",             name: "MMQR Payment",    description: "Scan QR code with any mobile banking app", icon: QrCodeIcon,        color: "bg-blue-500" },
-  { id: "kbz_pay",          name: "KBZ Pay",          description: "Pay with KBZ Pay mobile wallet",           icon: CreditCardIcon,    color: "bg-purple-500" },
-  { id: "wave_pay",         name: "Wave Pay",         description: "Pay with Wave Pay mobile wallet",          icon: CreditCardIcon,    color: "bg-green-500" },
-  { id: "cb_pay",           name: "CB Pay",           description: "Pay with CB Pay mobile wallet",            icon: CreditCardIcon,    color: "bg-red-500" },
-  { id: "aya_pay",          name: "AYA Pay",          description: "Pay with AYA Pay mobile wallet",           icon: CreditCardIcon,    color: "bg-orange-500" },
-  { id: "cash_on_delivery", name: "Cash on Delivery", description: "Pay when you receive your order",          icon: CurrencyDollarIcon, color: "bg-yellow-500" },
+  { id: "mmqr", name: "MMQR Payment", description: "Scan QR code with any mobile banking app", icon: QrCodeIcon, color: "bg-blue-500" },
+  { id: "kbz_pay", name: "KBZ Pay", description: "Pay with KBZ Pay mobile wallet", icon: CreditCardIcon, color: "bg-purple-500" },
+  { id: "wave_pay", name: "Wave Pay", description: "Pay with Wave Pay mobile wallet", icon: CreditCardIcon, color: "bg-green-500" },
+  { id: "cb_pay", name: "CB Pay", description: "Pay with CB Pay mobile wallet", icon: CreditCardIcon, color: "bg-red-500" },
+  { id: "aya_pay", name: "AYA Pay", description: "Pay with AYA Pay mobile wallet", icon: CreditCardIcon, color: "bg-orange-500" },
+  { id: "cash_on_delivery", name: "Cash on Delivery", description: "Pay when you receive your order", icon: CurrencyDollarIcon, color: "bg-yellow-500" },
 ];
 
 export default function Checkout() {
@@ -59,31 +59,31 @@ export default function Checkout() {
   });
 
   // ── Order flow ──────────────────────────────────────────────────────────────
-  const [loading, setLoading]                       = useState(false);
-  const [showPaymentModal, setShowPaymentModal]     = useState(false);
-  const [currentOrder, setCurrentOrder]             = useState(null);
-  const [paymentAttempts, setPaymentAttempts]       = useState(0);
-  const [paymentSuccess, setPaymentSuccess]         = useState(false);
-  const [successOrder, setSuccessOrder]             = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [paymentAttempts, setPaymentAttempts] = useState(0);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState(null);
   const [successPaymentData, setSuccessPaymentData] = useState(null);
 
   // ── OTP ─────────────────────────────────────────────────────────────────────
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpValue, setOtpValue]         = useState('');
+  const [otpValue, setOtpValue] = useState('');
   const [otpEmailHint, setOtpEmailHint] = useState('');
-  const [otpLoading, setOtpLoading]     = useState(false);
-  const [otpError, setOtpError]         = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
-  const [otpVerified, setOtpVerified]   = useState(false);
-  const otpCountdownRef                 = React.useRef(null);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const otpCountdownRef = React.useRef(null);
 
   // ── Toast ────────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState(null);
 
   // ── Seller policy agreement ──────────────────────────────────────────────────
   const [sellerPolicies, setSellerPolicies] = useState([]);
-  const [agreedSellers, setAgreedSellers]   = useState({});
-  const [policyError, setPolicyError]       = useState('');
+  const [agreedSellers, setAgreedSellers] = useState({});
+  const [policyError, setPolicyError] = useState('');
 
   const showToast = useCallback((type, message) => {
     setToast({ type, message });
@@ -96,24 +96,24 @@ export default function Checkout() {
     city: "", state: "", postal_code: "", country: "Myanmar",
   });
   const [paymentMethod, setPaymentMethod] = useState("mmqr");
-  const [orderNotes, setOrderNotes]       = useState("");
+  const [orderNotes, setOrderNotes] = useState("");
 
   // ── Coupon ───────────────────────────────────────────────────────────────────
-  const [couponInput, setCouponInput]       = useState("");
-  const [appliedCoupon, setAppliedCoupon]   = useState(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponLoading, setCouponLoading]   = useState(false);
-  const [couponError, setCouponError]       = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   // ── Fees — fetched live from /orders/checkout-fees ───────────────────────────
   // Replaces the previous hardcoded `SHIPPING_FEE = 5000` and `TAX_RATE = 0.05`.
   // The platform fee rate comes from the commission_rules table via
   // CommissionRateResolver (tier → business_type → category → default).
   // The label is also corrected: this is a "Platform Fee", not a "Tax".
-  const [feesLoading, setFeesLoading]   = useState(true);
-  const [shippingFee, setShippingFee]   = useState(5000);       // safe default while loading
+  const [feesLoading, setFeesLoading] = useState(true);
+  const [shippingFee, setShippingFee] = useState(5000);       // safe default while loading
   const [platformFeeRate, setPlatformFeeRate] = useState(0.05); // safe default while loading
-  const [platformFeePct, setPlatformFeePct]   = useState(5.0);
+  const [platformFeePct, setPlatformFeePct] = useState(5.0);
 
   useEffect(() => {
     if (!user) return;
@@ -134,7 +134,7 @@ export default function Checkout() {
 
   // Derived totals — recalculate whenever fees or cart change
   const platformFee = subtotal * platformFeeRate;
-  const total       = Math.max(0, subtotal + shippingFee + platformFee - couponDiscount);
+  const total = Math.max(0, subtotal + shippingFee + platformFee - couponDiscount);
 
   // ── Fetch seller policies ────────────────────────────────────────────────────
   useEffect(() => {
@@ -148,10 +148,10 @@ export default function Checkout() {
           const s = r.data?.data?.seller;
           if (!s) return null;
           return {
-            seller_id:       s.id,
-            seller_name:     s.store_name,
-            slug:            s.store_slug,
-            return_policy:   s.return_policy,
+            seller_id: s.id,
+            seller_name: s.store_name,
+            slug: s.store_slug,
+            return_policy: s.return_policy,
             shipping_policy: s.shipping_policy,
           };
         })
@@ -172,14 +172,14 @@ export default function Checkout() {
       const u = res.data.data ?? res.data;
       setShippingAddress(prev => ({
         ...prev,
-        full_name:   u.name          ?? "",
-        phone:       u.phone         ?? "",
-        address:     u.address       ?? "",
-        city:        u.city          ?? "",
-        state:       u.state         ?? "",
-        postal_code: u.postal_code   ?? "",
+        full_name: u.name ?? "",
+        phone: u.phone ?? "",
+        address: u.address ?? "",
+        city: u.city ?? "",
+        state: u.state ?? "",
+        postal_code: u.postal_code ?? "",
       }));
-    }).catch(() => {});
+    }).catch(() => { });
   }, [user]);
 
   // ── Coupon ───────────────────────────────────────────────────────────────────
@@ -218,20 +218,20 @@ export default function Checkout() {
   const buildOrderPayload = (paymentStatus, paymentData = null) => ({
     items: cartItems.map(item => ({
       product_id: item.product_id,
-      quantity:   item.quantity,
-      price:      item.price,
+      quantity: item.quantity,
+      price: item.price,
     })),
-    shipping_address:       shippingAddress,
-    payment_method:         paymentMethod,
-    payment_status:         paymentStatus,
-    payment_data:           paymentData,
-    notes:                  orderNotes,
-    total_amount:           total,
-    subtotal_amount:        subtotal,
-    shipping_fee:           shippingFee,
-    tax_amount:             platformFee,
-    coupon_id:              appliedCoupon?.coupon?.id      ?? null,
-    coupon_code:            appliedCoupon?.coupon?.code    ?? null,
+    shipping_address: shippingAddress,
+    payment_method: paymentMethod,
+    payment_status: paymentStatus,
+    payment_data: paymentData,
+    notes: orderNotes,
+    total_amount: total,
+    subtotal_amount: subtotal,
+    shipping_fee: shippingFee,
+    tax_amount: platformFee,
+    coupon_id: appliedCoupon?.coupon?.id ?? null,
+    coupon_code: appliedCoupon?.coupon?.code ?? null,
     coupon_discount_amount: appliedCoupon?.discount_amount ?? 0,
   });
 
@@ -239,7 +239,7 @@ export default function Checkout() {
   const createOrder = async ({ pendingPayment = false, paymentData = null } = {}) => {
     setLoading(true);
     try {
-      const payload  = buildOrderPayload(paymentData ? "paid" : "pending", paymentData);
+      const payload = buildOrderPayload(paymentData ? "paid" : "pending", paymentData);
       const response = await api.post("/orders", payload);
       if (!response.data.success) throw new Error("Order creation failed");
       const order = response.data.data.orders?.[0] ?? response.data.data.order;
@@ -290,9 +290,9 @@ export default function Checkout() {
     setOtpError('');
     try {
       const res = await api.post('/orders/request-otp', {
-        items:            cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+        items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
         shipping_address: shippingAddress,
-        payment_method:   paymentMethod,
+        payment_method: paymentMethod,
       });
       setOtpEmailHint(res.data.email_hint || '');
       setOtpValue('');
@@ -344,7 +344,7 @@ export default function Checkout() {
     try {
       await api.patch(`/orders/${currentOrder.id}/payment`, {
         payment_status: "paid",
-        payment_data:   paymentData,
+        payment_data: paymentData,
       });
       setShowPaymentModal(false);
       const orderRes = await api.get(`/orders/${currentOrder.id}`);
@@ -365,7 +365,7 @@ export default function Checkout() {
       if (currentOrder?.id) {
         await api.patch(`/orders/${currentOrder.id}/payment`, {
           payment_status: "failed",
-          payment_data:   { error },
+          payment_data: { error },
         });
       }
     } catch { /* best effort */ }
@@ -521,14 +521,16 @@ export default function Checkout() {
                       <div className="text-center">
                         <button
                           onClick={async () => {
+                            // Reset OTP state
                             setOtpValue('');
                             setOtpError('');
+                            setOtpVerified(false);
                             setLoading(true);
                             try {
                               const res = await api.post('/orders/request-otp', {
-                                items:            cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+                                items: cartItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
                                 shipping_address: shippingAddress,
-                                payment_method:   paymentMethod,
+                                payment_method: paymentMethod,
                               });
                               startOtpCountdown(res.data.expires_in || 600);
                               showToast('success', 'A new code has been sent to your email.');
@@ -538,7 +540,7 @@ export default function Checkout() {
                               setLoading(false);
                             }
                           }}
-                          disabled={otpCountdown > 540}
+                          disabled={otpCountdown > 0}  // <-- Fixed
                           className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           Didn't receive it? Resend code
@@ -586,18 +588,16 @@ export default function Checkout() {
           {/* ── Toast ──────────────────────────────────────────────────────── */}
           {toast && (
             <div className="fixed top-4 right-4 z-50 max-w-sm">
-              <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${
-                toast.type === "success"
+              <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${toast.type === "success"
                   ? "bg-green-50 border border-green-200"
                   : "bg-red-50 border border-red-200"
-              }`}>
+                }`}>
                 {toast.type === "success"
                   ? <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  : <XCircleIcon     className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  : <XCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
                 }
-                <p className={`text-sm font-medium flex-1 ${
-                  toast.type === "success" ? "text-green-800" : "text-red-800"
-                }`}>
+                <p className={`text-sm font-medium flex-1 ${toast.type === "success" ? "text-green-800" : "text-red-800"
+                  }`}>
                   {toast.message}
                 </p>
                 <button onClick={() => setToast(null)}>
@@ -667,9 +667,9 @@ export default function Checkout() {
                   </div>
 
                   {[
-                    { key: "city",        label: "City",         placeholder: "City" },
-                    { key: "state",       label: "State/Region", placeholder: "State/Region" },
-                    { key: "postal_code", label: "Postal Code",  placeholder: "Postal Code" },
+                    { key: "city", label: "City", placeholder: "City" },
+                    { key: "state", label: "State/Region", placeholder: "State/Region" },
+                    { key: "postal_code", label: "Postal Code", placeholder: "Postal Code" },
                   ].map(({ key, label, placeholder }) => (
                     <div key={key}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
@@ -958,11 +958,10 @@ export default function Checkout() {
                               }}
                               className="sr-only"
                             />
-                            <div className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-colors ${
-                              agreedSellers[p.seller_id]
+                            <div className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-colors ${agreedSellers[p.seller_id]
                                 ? 'bg-green-600 border-green-600'
                                 : 'border-gray-300 hover:border-green-400'
-                            }`}>
+                              }`}>
                               {agreedSellers[p.seller_id] && (
                                 <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={3}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
