@@ -1,6 +1,7 @@
 // src/pages/Client/BuyerDashboard.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import {
@@ -28,29 +29,30 @@ function classNames(...cls) { return cls.filter(Boolean).join(" "); }
 
 // ─── Status Badges ────────────────────────────────────────────────────────────
 const ORDER_STATUS = {
-  pending:    { color: "bg-yellow-100 text-yellow-800 border-yellow-200", Icon: ClockIcon,        label: "Pending"      },
-  confirmed:  { color: "bg-blue-100 text-blue-800 border-blue-200",       Icon: CheckCircleIcon,  label: "Confirmed"    },
-  processing: { color: "bg-indigo-100 text-indigo-800 border-indigo-200", Icon: ClockIcon,        label: "Processing"   },
-  shipped:    { color: "bg-purple-100 text-purple-800 border-purple-200", Icon: TruckIcon,        label: "Shipped"      },
-  delivered:  { color: "bg-green-100 text-green-800 border-green-200",    Icon: CheckCircleIcon,  label: "Delivered"    },
-  cancelled:  { color: "bg-red-100 text-red-800 border-red-200",          Icon: XCircleIcon,      label: "Cancelled"    },
+  pending:    { color: "bg-yellow-100 text-yellow-800 border-yellow-200", Icon: ClockIcon,        key: "pending"     },
+  confirmed:  { color: "bg-blue-100 text-blue-800 border-blue-200",       Icon: CheckCircleIcon,  key: "confirmed"   },
+  processing: { color: "bg-indigo-100 text-indigo-800 border-indigo-200", Icon: ClockIcon,        key: "processing"  },
+  shipped:    { color: "bg-purple-100 text-purple-800 border-purple-200", Icon: TruckIcon,        key: "shipped"     },
+  delivered:  { color: "bg-green-100 text-green-800 border-green-200",    Icon: CheckCircleIcon,  key: "delivered"   },
+  cancelled:  { color: "bg-red-100 text-red-800 border-red-200",          Icon: XCircleIcon,      key: "cancelled"   },
 };
 const DELIVERY_STATUS = {
-  pending:          { color: "bg-gray-100 text-gray-700",       label: "Pending"          },
-  awaiting_pickup:  { color: "bg-yellow-100 text-yellow-800",   label: "Awaiting Pickup"  },
-  picked_up:        { color: "bg-blue-100 text-blue-800",       label: "Picked Up"        },
-  in_transit:       { color: "bg-purple-100 text-purple-800",   label: "In Transit"       },
-  out_for_delivery: { color: "bg-orange-100 text-orange-800",   label: "Out for Delivery" },
-  delivered:        { color: "bg-green-100 text-green-800",     label: "Delivered"        },
-  failed:           { color: "bg-red-100 text-red-800",         label: "Failed"           },
-  cancelled:        { color: "bg-gray-100 text-gray-700",       label: "Cancelled"        },
+  pending:          { color: "bg-gray-100 text-gray-700",       key: "pending"          },
+  awaiting_pickup:  { color: "bg-yellow-100 text-yellow-800",   key: "awaiting_pickup"  },
+  picked_up:        { color: "bg-blue-100 text-blue-800",       key: "picked_up"        },
+  in_transit:       { color: "bg-purple-100 text-purple-800",   key: "in_transit"       },
+  out_for_delivery: { color: "bg-orange-100 text-orange-800",   key: "out_for_delivery" },
+  delivered:        { color: "bg-green-100 text-green-800",     key: "delivered"        },
+  failed:           { color: "bg-red-100 text-red-800",         key: "failed"           },
+  cancelled:        { color: "bg-gray-100 text-gray-700",       key: "cancelled"        },
 };
 
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const cfg = ORDER_STATUS[status] || ORDER_STATUS.pending;
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${cfg.color}`}>
-      <cfg.Icon className="h-3 w-3" />{cfg.label}
+      <cfg.Icon className="h-3 w-3" />{t(`buyer_dashboard.order_status.${cfg.key}`, cfg.key)}
     </span>
   );
 };
@@ -64,8 +66,12 @@ const generatePaySlipHTML = (order) => {
     ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
 
   const payMethodLabel = {
-    kbz_pay: "KBZ Pay", wave_pay: "Wave Money", cb_pay: "CB Pay",
-    aya_pay: "AYA Pay", mmqr: "MMQR", cash_on_delivery: "Cash on Delivery",
+    kbz_pay: "KBZ Pay",
+    wave_pay: "Wave Money",
+    cb_pay: "CB Pay",
+    aya_pay: "AYA Pay",
+    mmqr: "MMQR",
+    cash_on_delivery: "Cash on Delivery",
   };
 
   const itemRows = (order.items || []).map((item) => `
@@ -267,11 +273,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
     ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
 
   const STEPS = [
-    { key: "awaiting_pickup",  label: "Awaiting Pickup",  Icon: ClockIcon },
-    { key: "picked_up",        label: "Picked Up",        Icon: TruckIcon },
-    { key: "in_transit",       label: "In Transit",       Icon: ArrowPathIcon },
-    { key: "out_for_delivery", label: "Out for Delivery", Icon: MapPinIcon },
-    { key: "delivered",        label: "Delivered",        Icon: CheckCircleIcon },
+    { key: "awaiting_pickup",  labelKey: "buyer_dashboard.delivery_status.awaiting_pickup", Icon: ClockIcon },
+    { key: "picked_up",        labelKey: "buyer_dashboard.delivery_status.picked_up", Icon: TruckIcon },
+    { key: "in_transit",       labelKey: "buyer_dashboard.delivery_status.in_transit", Icon: ArrowPathIcon },
+    { key: "out_for_delivery", labelKey: "buyer_dashboard.delivery_status.out_for_delivery", Icon: MapPinIcon },
+    { key: "delivered",        labelKey: "buyer_dashboard.delivery_status.delivered", Icon: CheckCircleIcon },
   ];
   const stepMap  = { awaiting_pickup:0, picked_up:1, in_transit:2, out_for_delivery:3, delivered:4 };
   const curStep  = stepMap[delivery?.status] ?? -1;
@@ -601,7 +607,7 @@ const PurchaseHistoryTab = ({ orders }) => {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {["Order #", "Date", "Store", "Items", "Amount", "Payment", "Status", "Pay Slip"].map((h) => (
+                  {[t("buyer_dashboard.order_number"), t("buyer_dashboard.date"), t("buyer_dashboard.store"), t("buyer_dashboard.items"), t("buyer_dashboard.amount"), t("buyer_dashboard.payment"), t("buyer_dashboard.status"), t("buyer_dashboard.pay_slip")].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -677,7 +683,7 @@ const WishlistTab = ({ navigate }) => {
   const fetchWishlist = async () => {
     setLoading(true);
     try { setWishlist((await api.get("/wishlist")).data.data || []); }
-    catch { setError("Failed to load wishlist"); }
+    catch { setError(t("buyer_dashboard.failed_load_wishlist")); }
     finally { setLoading(false); }
   };
 
@@ -690,7 +696,7 @@ const WishlistTab = ({ navigate }) => {
       await api.delete(`/wishlist/${removeModal}`);
       setWishlist((p) => p.filter((i) => i.id !== removeModal));
       setRemoveModal(null);
-    } catch { setError("Failed to remove item"); }
+    } catch { setError(t("buyer_dashboard.failed_remove_item")); }
     finally { setRemoving(false); }
   };
 
@@ -707,7 +713,7 @@ const WishlistTab = ({ navigate }) => {
               <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
               <button onClick={confirmRemove} disabled={removing}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50">
-                {removing ? "Removing…" : "Remove"}
+                {removing ? t("buyer_dashboard.removing") : t("buyer_dashboard.remove")}
               </button>
             </div>
           </div>
@@ -800,7 +806,7 @@ const CartTab = ({ navigate }) => {
               <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
               <button onClick={confirmRemove} disabled={!!removingId}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50">
-                {removingId ? "Removing…" : "Remove"}
+                {removingId ? t("buyer_dashboard.removing") : t("buyer_dashboard.remove")}
               </button>
             </div>
           </div>
@@ -939,8 +945,8 @@ const ProfileTab = ({ user, onUpdate }) => {
     e.preventDefault(); setLoading(true); setMsg(null);
     try {
       const res = await api.put("/users/profile", form);
-      if (res.data.success) { setMsg({ type:"success", text:"Profile updated" }); onUpdate(res.data.data); setEditing(false); }
-    } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || "Update failed" }); }
+      if (res.data.success) { setMsg({ type:"success", text:t("buyer_dashboard.profile_updated") }); onUpdate(res.data.data); setEditing(false); }
+    } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || t("buyer_dashboard.update_failed") }); }
     finally { setLoading(false); }
   };
 
@@ -976,17 +982,17 @@ const ProfileTab = ({ user, onUpdate }) => {
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
             <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
-              {loading ? "Saving…" : "Save Changes"}
+              {loading ? t("buyer_dashboard.saving") : t("buyer_dashboard.save_changes")}
             </button>
           </div>
         </form>
       ) : (
         <div className="space-y-4">
           {[
-            [UserIcon,    "Full Name", user?.name],
-            [EnvelopeIcon,"Email",     user?.email],
-            [PhoneIcon,   "Phone",     user?.phone],
-            [MapPinIcon,  "Address",   [user?.address, user?.city, user?.state].filter(Boolean).join(", ") || "—"],
+            [UserIcon,    t("buyer_dashboard.full_name"), user?.name],
+            [EnvelopeIcon, t("buyer_dashboard.email"), user?.email],
+            [PhoneIcon,   t("buyer_dashboard.phone"), user?.phone],
+            [MapPinIcon,  t("buyer_dashboard.address"), [user?.address, user?.city, user?.state].filter(Boolean).join(", ") || "—"],
           ].map(([Icon, label, value]) => (
             <div key={label} className="flex items-start gap-3">
               <Icon className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
@@ -1008,20 +1014,20 @@ const SettingsTab = ({ user }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (pwd.new_password !== pwd.confirm_password) { setMsg({ type:"error", text:"Passwords do not match" }); return; }
+    if (pwd.new_password !== pwd.confirm_password) { setMsg({ type:"error", text:t("buyer_dashboard.passwords_no_match") }); return; }
     setL(true); setMsg(null);
     try {
       await api.put("/users/profile/password", { current_password: pwd.current_password, new_password: pwd.new_password, new_password_confirmation: pwd.confirm_password });
-      setMsg({ type:"success", text:"Password changed successfully" });
+      setMsg({ type:"success", text:t("buyer_dashboard.password_changed") });
       setPwd({ current_password:"", new_password:"", confirm_password:"" });
-    } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || "Failed to change password" }); }
+    } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || t("buyer_dashboard.failed_change_password") }); }
     finally { setL(false); }
   };
 
   const subTabs = [
-    { id:"notifications", label:"Notifications" },
-    { id:"password",      label:"Password"      },
-    { id:"account",       label:"Account"       },
+    { id:"notifications", label:t("buyer_dashboard.notifications") },
+    { id:"password",      label:t("buyer_dashboard.password") },
+    { id:"account",       label:t("buyer_dashboard.account") },
   ];
 
   return (
@@ -1050,7 +1056,7 @@ const SettingsTab = ({ user }) => {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Change Password</h2>
           {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-            {[["Current Password","current_password"],["New Password","new_password"],["Confirm New Password","confirm_password"]].map(([label,name]) => (
+            {[[t("buyer_dashboard.current_password"),"current_password"],[t("buyer_dashboard.new_password"),"new_password"],[t("buyer_dashboard.confirm_new_password"),"confirm_password"]].map(([label,name]) => (
               <div key={name}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
                 <input type="password" name={name} value={pwd[name]} required minLength={name!=="current_password"?8:undefined}
@@ -1059,7 +1065,7 @@ const SettingsTab = ({ user }) => {
               </div>
             ))}
             <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
-              {loading ? "Updating…" : "Update Password"}
+              {loading ? t("buyer_dashboard.updating") : t("buyer_dashboard.update_password")}
             </button>
           </form>
         </div>
@@ -1080,6 +1086,7 @@ const SettingsTab = ({ user }) => {
 
 // ─── Main BuyerDashboard ──────────────────────────────────────────────────────
 const BuyerDashboard = () => {
+  const { t } = useTranslation();
   const [user, setUser]                 = useState(null);
   const [orders, setOrders]             = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -1094,14 +1101,14 @@ const BuyerDashboard = () => {
   const { isEmailVerified, updateUser } = useAuth();
 
   const TABS = useMemo(() => [
-    { id: "dashboard",  label: "Dashboard",        Icon: HomeIcon          },
-    { id: "orders",     label: "My Orders",         Icon: ShoppingBagIcon   },
-    { id: "history",    label: "Purchase History",  Icon: ReceiptRefundIcon  },
-    { id: "cart",       label: "My Cart",           Icon: ShoppingCartIcon  },
-    { id: "wishlist",   label: "Wishlist",          Icon: HeartIcon         },
-    { id: "profile",    label: "Profile",           Icon: UserIcon          },
-    { id: "settings",   label: "Settings",          Icon: CogIcon           },
-  ], []);
+    { id: "dashboard",  label: t("sidebar.dashboard"),             Icon: HomeIcon          },
+    { id: "orders",     label: t("buyer_dashboard.my_orders"),     Icon: ShoppingBagIcon   },
+    { id: "history",    label: t("buyer_dashboard.purchase_history"), Icon: ReceiptRefundIcon },
+    { id: "cart",       label: t("buyer_dashboard.my_cart"),       Icon: ShoppingCartIcon  },
+    { id: "wishlist",   label: t("buyer_dashboard.wishlist"),      Icon: HeartIcon         },
+    { id: "profile",    label: t("buyer_dashboard.profile"),       Icon: UserIcon          },
+    { id: "settings",   label: t("buyer_dashboard.settings"),      Icon: CogIcon           },
+  ], [t]);
 
   const fetchOrders = useCallback(async () => {
     try { setOrders((await api.get("/orders")).data.data || []); }
@@ -1134,7 +1141,7 @@ const BuyerDashboard = () => {
       await api.post(`/orders/${cancelModal.id}/cancel`);
       setCancelModal(null);
       await fetchOrders();
-    } catch (e) { setCancelError(e.response?.data?.message || "Failed to cancel order"); }
+    } catch (e) { setCancelError(e.response?.data?.message || t("buyer_dashboard.cancel_order")); }
     finally { setCancelling(false); }
   };
 
@@ -1182,7 +1189,7 @@ const BuyerDashboard = () => {
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 disabled:opacity-50">Keep Order</button>
               <button onClick={handleCancelOrder} disabled={cancelling}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
-                {cancelling ? "Cancelling…" : "Cancel Order"}
+                {cancelling ? t("buyer_dashboard.cancelling") : t("buyer_dashboard.cancel_order")}
               </button>
             </div>
           </div>

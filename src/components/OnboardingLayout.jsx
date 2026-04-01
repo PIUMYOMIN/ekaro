@@ -1,6 +1,7 @@
 // components/OnboardingLayout.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     ArrowLeftIcon,
     CheckCircleIcon,
@@ -23,6 +24,7 @@ const OnboardingLayout = ({
     loading = false
 }) => {
     const { progress, steps, currentStep, isLoading } = useOnboardingState();
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -34,7 +36,7 @@ const OnboardingLayout = ({
             <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
-                    <p className="text-gray-600 text-sm">Loading onboarding...</p>
+                    <p className="text-gray-600 text-sm">{t('onboarding_layout.loading')}</p>
                 </div>
             </div>
         );
@@ -53,10 +55,10 @@ const OnboardingLayout = ({
                                 className="flex items-center text-gray-600 hover:text-gray-900 text-sm"
                             >
                                 <HomeIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
-                                <span className="hidden xs:inline">Dashboard</span>
+                                <span className="hidden xs:inline">{t('buyer_dashboard.my_orders') ? t('sidebar.dashboard') : 'Dashboard'}</span>
                             </button>
                             <div className="text-xs sm:text-sm text-gray-600 font-medium">
-                                Seller Onboarding
+                                {t('onboarding_layout.seller_onboarding')}
                             </div>
                             {/* Step counter — visible on mobile where step labels hide */}
                             <div className="text-xs text-gray-500 sm:hidden">
@@ -124,9 +126,9 @@ const OnboardingLayout = ({
                                 <span className="text-xs text-gray-500">
                                     {/* Show current step name on mobile since labels are hidden */}
                                     <span className="sm:hidden">{steps[currentStepIndex]?.title}</span>
-                                    <span className="hidden sm:inline">Step {currentStepIndex + 1} of {steps.length}</span>
+                                    <span className="hidden sm:inline">{t('onboarding_layout.step_of', { current: currentStepIndex + 1, total: steps.length })}</span>
                                 </span>
-                                <span className="text-xs text-gray-600">{Math.round(progress)}% complete</span>
+                                <span className="text-xs text-gray-600">{t('onboarding_layout.pct_complete', { pct: Math.round(progress) })}</span>
                             </div>
                         </div>
                     </div>
@@ -158,7 +160,7 @@ const OnboardingLayout = ({
                             className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                         >
                             <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                            <span>{backLabel}</span>
+                            <span>{backLabel || t('onboarding_layout.back')}</span>
                         </button>
 
                         {onNext && (
@@ -192,9 +194,9 @@ const OnboardingLayout = ({
                             <span className="text-blue-600 text-sm">💡</span>
                         </div>
                         <div className="min-w-0">
-                            <h4 className="font-medium text-blue-900 text-sm">Need Help?</h4>
+                            <h4 className="font-medium text-blue-900 text-sm">{t('onboarding_layout.need_help')}</h4>
                             <p className="text-xs sm:text-sm text-blue-700 mt-0.5">
-                                Contact our support team at{' '}
+                                {t('onboarding_layout.contact_support')}{' '}
                                 <a href="mailto:support@pyonea.com" className="font-medium underline">
                                     support@pyonea.com
                                 </a>

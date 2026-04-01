@@ -2,15 +2,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import useSEO from "../hooks/useSEO";
 import { useSearchParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../utils/api";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const ORDER_STEPS = [
-  { key: "pending",    label: "Order Placed",    icon: "🛍️" },
-  { key: "confirmed",  label: "Confirmed",        icon: "✅" },
-  { key: "processing", label: "Processing",       icon: "⚙️" },
-  { key: "shipped",    label: "Shipped",          icon: "🚚" },
-  { key: "delivered",  label: "Delivered",        icon: "📦" },
+  { key: "pending",    labelKey: "buyer_dashboard.order_status.pending",    icon: "🛍️" },
+  { key: "confirmed",  labelKey: "buyer_dashboard.order_status.confirmed",        icon: "✅" },
+  { key: "processing", labelKey: "buyer_dashboard.order_status.processing",       icon: "⚙️" },
+  { key: "shipped",    labelKey: "buyer_dashboard.order_status.shipped",          icon: "🚚" },
+  { key: "delivered",  labelKey: "buyer_dashboard.order_status.delivered",        icon: "📦" },
 ];
 
 const DELIVERY_STEPS = [
@@ -18,7 +19,7 @@ const DELIVERY_STEPS = [
   { key: "awaiting_pickup",  label: "Ready for Pickup",  icon: "📍" },
   { key: "picked_up",        label: "Picked Up",         icon: "✋" },
   { key: "in_transit",       label: "In Transit",        icon: "🚛" },
-  { key: "out_for_delivery", label: "Out for Delivery",  icon: "🏃" },
+  { key: "out_for_delivery", labelKey: "order_tracking.out_for_delivery",  icon: "🏃" },
   { key: "delivered",        label: "Delivered",         icon: "🎉" },
 ];
 
@@ -114,7 +115,7 @@ const StepBar = ({ steps, current }) => {
                 active ? "text-green-700" : done ? "text-gray-700" : "text-gray-400"
               }`}
             >
-              {step.label}
+              {t(step.labelKey, step.key)}
             </p>
           </div>
         );
@@ -125,6 +126,7 @@ const StepBar = ({ steps, current }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const OrderTracking = () => {
+  const { t } = useTranslation();
   // ✅ Hook moved to top level of component
   const SeoComponent = useSEO({
     title: "Order Tracking | Pyonea",
@@ -307,7 +309,7 @@ const OrderTracking = () => {
                 <div className="mt-4 flex items-center gap-3 p-3 bg-green-50 border border-green-100 rounded-xl">
                   <span className="text-2xl">📅</span>
                   <div>
-                    <p className="text-xs text-green-600 font-medium">Estimated Delivery</p>
+                    <p className="text-xs text-green-600 font-medium">{t("order_tracking.estimated_delivery")}</p>
                     <p className="text-sm font-semibold text-green-800">{fmtDateShort(order.estimated_delivery)}</p>
                   </div>
                 </div>
@@ -348,11 +350,11 @@ const OrderTracking = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <span className="w-1.5 h-4 bg-blue-500 rounded-full block" />
-                    Delivery Tracking
+                    t("order_tracking.delivery_tracking")
                   </h3>
                   {order.delivery.tracking_number && (
                     <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
-                      <span className="text-xs text-gray-500">Tracking #</span>
+                      <span className="text-xs text-gray-500">{t("order_tracking.tracking_number")}</span>
                       <span className="text-xs font-mono font-bold text-gray-800">{order.delivery.tracking_number}</span>
                     </div>
                   )}
