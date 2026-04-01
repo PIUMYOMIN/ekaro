@@ -78,8 +78,7 @@ import MyStore from "./components/seller/MyStore";
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
-// const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
-import NewsletterConfirm from "./pages/NewsletterConfirm";
+const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
 const EmailVerification = React.lazy(() => import("./pages/Email/EmailVerification"));
 
 const NavigationWirer = () => {

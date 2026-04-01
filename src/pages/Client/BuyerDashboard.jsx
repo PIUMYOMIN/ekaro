@@ -549,6 +549,7 @@ const OrdersTab = ({ orders, onViewDetails, onCancel }) => {
 
 // ─── Purchase History Tab ─────────────────────────────────────────────────────
 const PurchaseHistoryTab = ({ orders }) => {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const history = useMemo(() =>
@@ -936,6 +937,7 @@ const CartTab = ({ navigate }) => {
 
 // ─── Profile Tab ──────────────────────────────────────────────────────────────
 const ProfileTab = ({ user, onUpdate }) => {
+  const { t } = useTranslation();
   const [editing, setEditing]   = useState(false);
   const [form, setForm]         = useState({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "", address: user?.address || "", city: user?.city || "", state: user?.state || "" });
   const [loading, setLoading]   = useState(false);
@@ -1007,6 +1009,7 @@ const ProfileTab = ({ user, onUpdate }) => {
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 const SettingsTab = ({ user }) => {
+  const { t } = useTranslation();
   const [pwd, setPwd]     = useState({ current_password: "", new_password: "", confirm_password: "" });
   const [loading, setL]   = useState(false);
   const [msg, setMsg]     = useState(null);
