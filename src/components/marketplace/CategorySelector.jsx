@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobile = false }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Helper: pick display name based on current locale
+  const displayName = (cat) =>
+    i18n.language === 'my'
+      ? (cat.name_mm || cat.name_en || cat.name)
+      : (cat.name_en || cat.name);
 
   // Filter out categories with zero products (including recursively)
   const filterZeroProductCategories = (cats) => {
@@ -17,7 +23,6 @@ const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobi
 
   const filteredCategories = filterZeroProductCategories(categories);
 
-  // Recursive render function
   const renderCategory = (category, depth = 0) => {
     const isSelected = selectedCategory === String(category.id);
     const hasChildren = category.children && category.children.length > 0;
@@ -33,7 +38,7 @@ const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobi
           onClick={() => onCategorySelect(category.id)}
         >
           <span className="text-sm truncate pr-2">
-            {category.name_en || category.name}
+            {displayName(category)}
           </span>
           <div className="flex items-center space-x-2">
             {category.products_count > 0 && (
@@ -46,7 +51,6 @@ const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobi
             )}
           </div>
         </div>
-        {/* Recursively render children */}
         {hasChildren &&
           category.children.map((child) => renderCategory(child, depth + 1))}
       </div>
@@ -57,7 +61,6 @@ const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobi
 
   return (
     <div className={`space-y-1 ${mobile ? 'px-1' : ''}`}>
-      {/* All Categories option */}
       <div
         className={`flex items-center justify-between py-2 px-2 rounded-md cursor-pointer transition-colors ${
           isAllSelected
@@ -69,7 +72,6 @@ const CategorySelector = ({ categories, selectedCategory, onCategorySelect, mobi
         <span className="text-sm">{t('categories.all_categories')}</span>
       </div>
 
-      {/* Render filtered root categories */}
       {filteredCategories
         .filter((cat) => !cat.parent_id)
         .map((rootCat) => renderCategory(rootCat))}

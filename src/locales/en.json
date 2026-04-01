@@ -281,7 +281,9 @@
       "price_high_low": "Price: High to Low",
       "name_a_z": "Name: A-Z",
       "name_z_a": "Name: Z-A"
-    }
+    },
+    "from": "From",
+    "under": "Under"
   },
   "seller": {
     "profile": "Seller Profile",

@@ -94,10 +94,12 @@ const sanitizeProductData = (data) => {
 };
 
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  // Show Myanmar name when locale is 'my'
+  const catName = (c) => i18n.language === 'my' ? (c.name_mm || c.name_en) : c.name_en;
   const isMounted   = useRef(true);  // guards success timer against post-unmount state update
   const [cancelModal, setCancelModal] = useState(false); // replaces window.confirm
 
@@ -751,11 +753,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   >
                     <option value="">Select a category</option>
                     {categories.map((parentCategory) => (
-                      <optgroup key={parentCategory.id} label={parentCategory.name_en}>
+                      <optgroup key={parentCategory.id} label={catName(parentCategory)}>
                         {parentCategory.children && parentCategory.children.length > 0 ? (
                           parentCategory.children.map((child) => (
                             <option key={child.id} value={child.id}>
-                              {child.name_en}
+                              {catName(child)}
                             </option>
                           ))
                         ) : (
@@ -992,7 +994,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             {/* Image Upload Section */}
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Product Images *
                   <span className="ml-2 text-xs font-normal text-gray-500">
@@ -1008,7 +1010,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       onChange={(e) => setUrlInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageFromUrl(); } }}
                       placeholder="https://example.com/image.jpg"
-                      className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 w-56 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                     <button
                       type="button"
@@ -1507,7 +1509,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with progress */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
-          <div className="px-8 py-6 border-b border-gray-200">
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
@@ -1550,13 +1552,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   </button>
                   <div className="ml-3 flex-1">
                     <div
-                      className={`text-sm font-medium ${
+                      className={`font-medium ${
                         currentStep === step.id
                           ? "text-green-600"
                           : completedSteps.has(step.id)
                           ? "text-gray-900"
                           : "text-gray-500"
-                      }`}
+                      } truncate max-w-[56px] sm:max-w-none text-xs sm:text-sm`}
                     >
                       {step.title}
                     </div>
@@ -1576,16 +1578,16 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
           {error && (
-            <div className="mx-8 mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
+            <div className="mx-4 sm:mx-8 mt-4 sm:mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
               <ExclamationCircleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <div className="p-8">{renderStepContent()}</div>
+          <div className="p-4 sm:p-8">{renderStepContent()}</div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center px-8 py-6 border-t border-gray-200">
+          <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 border-t border-gray-200">
             <div className="flex space-x-3">
               {currentStep > 1 && (
                 <button

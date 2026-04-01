@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
+import { useTranslation } from "react-i18next";
 
 const getImageUrl = (image) => {
   if (!image) return DEFAULT_PLACEHOLDER;
@@ -32,7 +33,10 @@ const getImageUrl = (image) => {
 };
 
 const ProductCard = ({ product, className = "" }) => {
+  const { i18n } = useTranslation();
   const { user } = useAuth();
+  // Pick localised field: show _mm when locale is my, fall back to _en
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : en;
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();
   const [message, setMessage] = useState(null);
@@ -158,7 +162,7 @@ const ProductCard = ({ product, className = "" }) => {
             {imageUrl && !imageError ? (
               <LazyLoadImage
                 src={imageUrl}
-                alt={product.name_en || "Product"}
+                alt={loc(product.name_en, product.name_mm) || "Product"}
                 effect="blur"
                 className={`
                   w-full h-full object-contain transition-transform duration-500 ease-out
@@ -205,10 +209,10 @@ const ProductCard = ({ product, className = "" }) => {
           </button>
 
           {/* Bottom‑left category badge – text only */}
-          {product.category?.name_en && (
+          {(product.category?.name_en || product.category?.name_mm) && (
             <div className="absolute bottom-2 left-2">
               <span className="text-[11px] sm:text-xs text-gray-500 font-medium">
-                {product.category.name_en}
+                {loc(product.category?.name_en, product.category?.name_mm)}
               </span>
             </div>
           )}
@@ -219,7 +223,7 @@ const ProductCard = ({ product, className = "" }) => {
           <div className="flex-grow space-y-1.5 sm:space-y-2">
             <Link to={`/products/${slug}`} className="block group">
               <h3 className="text-sm sm:text-base font-medium text-gray-900 group-hover:text-green-700 line-clamp-2 transition-colors">
-                {product.name_en || product.name || "Unnamed Product"}
+{loc(product.name_en, product.name_mm) || product.name || "Unnamed Product"}
               </h3>
             </Link>
 
@@ -235,9 +239,9 @@ const ProductCard = ({ product, className = "" }) => {
               )}
             </div>
 
-            {product.description_en && (
+            {(product.description_en || product.description_mm) && (
               <p className="text-[11px] sm:text-xs text-gray-500 line-clamp-2">
-                {product.description_en}
+                {loc(product.description_en, product.description_mm)}
               </p>
             )}
           </div>

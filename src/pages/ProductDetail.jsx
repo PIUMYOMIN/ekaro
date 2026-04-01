@@ -16,7 +16,9 @@ import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER } from "../config";
 
 const ProductDetail = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Pick localised field: show _mm when locale is my, fall back to _en
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -247,9 +249,9 @@ const ProductDetail = () => {
     setSuccessMessage(null);
   };
 
-  const pageTitle = product ? (product.name_en || product.name_mm || "Product") : fallbackTitle;
+  const pageTitle = product ? (loc(product.name_en, product.name_mm) || "Product") : fallbackTitle;
   const pageDescription = product
-    ? (product.description_en || product.description_mm || "").slice(0, 150)
+    ? (loc(product.description_en, product.description_mm) || "").slice(0, 150)
     : fallbackDescription;
   const pageImage = product?.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
   const pageUrl = product ? `/products/${product.slug || slug}` : `/products/${slug}`;
@@ -372,7 +374,7 @@ const ProductDetail = () => {
                       ? product.images[activeImage]
                       : product.images[activeImage]?.url
                   )}
-                  alt={product.name_en || product.name_mm || "Product"}
+                  alt={loc(product.name_en, product.name_mm) || "Product"}
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => {
                     e.target.src = DEFAULT_PLACEHOLDER;
@@ -407,10 +409,10 @@ const ProductDetail = () => {
             <div className="space-y-6">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                  {product.name_en || product.name_mm || "Product"}
+                  {loc(product.name_en, product.name_mm) || "Product"}
                 </h1>
                 {product.name_en && product.name_mm && (
-                  <p className="text-lg text-gray-600 mt-1">{product.name_en}</p>
+                  <p className="text-lg text-gray-600 mt-1">{loc(product.name_en, product.name_mm)}</p>
                 )}
               </div>
 
@@ -445,7 +447,7 @@ const ProductDetail = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Description</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  {product.description_en || product.description_mm || "No description"}
+                  {loc(product.description_en, product.description_mm) || "No description"}
                 </p>
               </div>
 

@@ -20,7 +20,7 @@ const CategoryCardSkeleton = () => (
 );
 
 const CategoryBrowser = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +43,7 @@ const CategoryBrowser = () => {
         const processed = categoriesData.map(cat => ({
           ...cat,
           name_en: cat.name_en || cat.name,
+          name_mm: cat.name_mm || null,
           products_count: cat.products_count || 0,
           children_count: cat.children?.length || 0,
           image: cat.image || null,
@@ -66,9 +67,15 @@ const CategoryBrowser = () => {
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
     const query = searchQuery.toLowerCase();
-    return categories.filter(cat =>
-      (cat.name_en || "").toLowerCase().includes(query)
-    );
+    const name = i18n.language === 'my'
+      ? (cat.name_mm || cat.name_en || '')
+      : (cat.name_en || '');
+    return categories.filter(cat => {
+      const n = i18n.language === 'my'
+        ? (cat.name_mm || cat.name_en || '')
+        : (cat.name_en || '');
+      return n.toLowerCase().includes(query);
+    });
   }, [categories, searchQuery]);
 
   const SeoComponent = useSEO({
