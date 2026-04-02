@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import {
   ChartBarIcon,
+  BellIcon,
   ShoppingBagIcon,
   CubeIcon,
   CurrencyDollarIcon,
@@ -36,7 +37,6 @@ import DiscountManagement from "../../components/seller/DiscountManagement";
 import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
 import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
-import ShippingSettings from "../../components/seller/ShippingSettings";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -216,7 +216,6 @@ const SellerDashboard = () => {
     { name: "Store Profile",            icon: PencilIcon,             key: "store_profile" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
     { name: t("seller.delivery_zones.title"), icon: TruckIcon,        key: "delivery_zones" },
-    { name: "Shipping Settings",                icon: TruckIcon,          key: "shipping" },
     { name: t("seller.product.title"),  icon: CubeIcon,               key: "products" },
     { name: t("seller.discount.title"), icon: CubeIcon,               key: "discounts" },
     { name: "Coupons",                  icon: TicketIcon,             key: "coupons" },
@@ -226,6 +225,7 @@ const SellerDashboard = () => {
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
+    { name: "Notifications",              icon: BellIcon,               key: "notifications" },
   ], [t]);
 
   // Render the active tab with current state — separated from the stable nav structure
@@ -245,11 +245,11 @@ const SellerDashboard = () => {
       case "reviews":     return <ProductReviewManagement />;
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
-      case "shipping":         return <ShippingSettings storeData={storeData} />;
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
       case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
-      case "profile":     return <SellerProfileTab />;
-      default:            return null;
+      case "profile":        return <SellerProfileTab />;
+      case "notifications":  return <NotificationsPanel />;
+      default:               return null;
     }
   };
 

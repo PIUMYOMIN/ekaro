@@ -1,68 +1,129 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useTranslation } from "react-i18next";
-import { PhotoIcon } from "@heroicons/react/24/outline";
 import { DEFAULT_PLACEHOLDER } from "../../config";
 
+// Deterministic gradient from category name — consistent across renders
+const gradientFromName = (name = "") => {
+  const gradients = [
+    "from-green-400 to-emerald-600",
+    "from-blue-400 to-cyan-600",
+    "from-purple-400 to-violet-600",
+    "from-orange-400 to-amber-600",
+    "from-pink-400 to-rose-600",
+    "from-teal-400 to-green-600",
+    "from-indigo-400 to-blue-600",
+    "from-yellow-400 to-orange-500",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return gradients[Math.abs(hash) % gradients.length];
+};
+
+// Auto-cycles through items with a swipe-up animation
+const SlidingText = ({ items }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const id = setInterval(() => {
+      setIndex((prev) => (prev + 1) % items.length);
+    }, 2200);
+    return () => clearInterval(id);
+  }, [items.length]);
+
+  if (!items.length) return null;
+
+  return (
+    <div className="relative h-5 overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={index}
+          className="absolute inset-0 flex items-center text-xs text-green-700 font-medium"
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0,  opacity: 1 }}
+          exit={{    y: -16, opacity: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
+          {items[index]}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const CategoryCard = ({ category }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
 
-  if (!category || category.products_count === 0) {
-    return null;
-  }
+  if (!category || category.products_count === 0) return null;
 
-  const imageSrc = category.image || DEFAULT_PLACEHOLDER;
-  const hasImage = imageSrc !== DEFAULT_PLACEHOLDER;
+  const loc = (en, mm) =>
+    i18n.language === "my" ? (mm || en) : (en || mm);
+
+  const displayName = loc(category.name_en, category.name_mm);
+  const gradient    = gradientFromName(displayName);
+
+  // Only children that have products
+  const activeChildren = (category.children || []).filter(
+    (c) => (c.products_count || 0) > 0
+  );
+
+  // e.g. ["2 Power Banks", "1 Bluetooth Speaker"]
+  const slidingItems = activeChildren.map(
+    (c) => `${c.products_count} ${loc(c.name_en, c.name_mm)}`
+  );
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
     >
       <Link to={`/products?category=${category.id}`} className="block">
-        {/* Image container – square aspect ratio */}
-        <div className="aspect-square bg-gray-100 overflow-hidden">
-          {hasImage ? (
+
+        {/* ── Image / Gradient placeholder ────────────── */}
+        <div className="aspect-square overflow-hidden">
+          {category.image ? (
             <LazyLoadImage
-              src={imageSrc}
-              alt={category.name_en}
+              src={category.image}
+              alt={displayName}
               effect="blur"
               className="w-full h-full object-cover"
-              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E"
+              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 300 300'%3E%3Crect width='300' height='300'
+                fill='%23f3f4f6'/%3E%3C/svg%3E"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100">
-              <PhotoIcon className="h-10 w-10 text-gray-400" />
-              <span className="mt-1 text-xs text-gray-500">No image</span>
+            // Colourful gradient tile used until an image is uploaded via admin
+            <div className={`w-full h-full bg-gradient-to-br ${gradient}
+                             flex items-center justify-center`}>
+              <span className="text-white text-center font-bold text-sm px-3 leading-snug
+                               drop-shadow-sm line-clamp-3">
+                {displayName}
+              </span>
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-2 sm:p-4">
-          {/* Category name – visible on all screens */}
-          <h3 className="text-sm sm:text-base font-medium text-gray-900 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
-            {category.name_en}
+        {/* ── Parent category name ─────────────────────── */}
+        <div className="px-2 pt-2 sm:px-3 sm:pt-3">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
+            {displayName}
           </h3>
-          
-          {/* Product count badge – hidden on mobile, visible on sm+ */}
-          <div className="hidden sm:flex sm:items-center mt-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              {category.products_count} {t("category.products")}
-            </span>
-          </div>
-
-          {/* Subcategories count – hidden on mobile, visible on sm+ */}
-          {category.children_count > 0 && (
-            <p className="hidden sm:block mt-1 text-xs text-gray-500">
-              {category.children_count} {t("category.subcategories")}
-            </p>
-          )}
         </div>
+
+        {/* ── Swipe-up child category + count ─────────── */}
+        {slidingItems.length > 0 && (
+          <div className="bg-green-300 px-2 py-2 sm:px-3 sm:py-3 mt-1">
+            <SlidingText items={slidingItems} />
+          </div>
+        )}
+
       </Link>
     </motion.div>
   );

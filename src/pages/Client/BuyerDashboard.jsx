@@ -14,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import NotificationPreferences from "../../components/Shared/NotificationPreferences";
+import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -1111,6 +1112,7 @@ const BuyerDashboard = () => {
     { id: "wishlist",   label: t("buyer_dashboard.wishlist"),      Icon: HeartIcon         },
     { id: "profile",    label: t("buyer_dashboard.profile"),       Icon: UserIcon          },
     { id: "settings",   label: t("buyer_dashboard.settings"),      Icon: CogIcon           },
+    { id: "notifications", label: "Notifications",                     Icon: BellIcon          },
   ], [t]);
 
   const fetchOrders = useCallback(async () => {
@@ -1160,8 +1162,9 @@ const BuyerDashboard = () => {
       case "cart":      return <CartTab navigate={navigate} />;
       case "wishlist":  return <WishlistTab navigate={navigate} />;
       case "profile":   return <ProfileTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
-      case "settings":  return <SettingsTab user={user} />;
-      default:          return null;
+      case "settings":      return <SettingsTab user={user} />;
+      case "notifications": return <NotificationsPanel />;
+      default:              return null;
     }
   };
 

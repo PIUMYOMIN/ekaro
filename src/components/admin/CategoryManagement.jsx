@@ -23,7 +23,7 @@ const CategoryManagement = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/categories");
+      const response = await api.get("/admin/categories");
       if (response.data.success) {
         setCategories(response.data.data);
       } else {

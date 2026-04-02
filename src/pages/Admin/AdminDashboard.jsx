@@ -36,7 +36,7 @@ import CommissionRulesManagement from "../../components/admin/CommissionRulesMan
 import EmailCampaigns from "../../components/admin/EmailCampaigns";
 import CategoryManagement from "../../components/admin/CategoryManagement";        // self‑contained
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
-import Notifications from "../../components/admin/Notifications";
+import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import Settings from "../../components/admin/Settings";
 import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
 import SEO from "../../components/SEO/seo";
@@ -325,7 +325,7 @@ const AdminDashboard = () => {
     {
       name: "Notifications",
       icon: BellIcon,
-      component: <Notifications />
+      component: <NotificationsPanel />
     },
     {
       name: "Contact Messages",

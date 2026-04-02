@@ -22,7 +22,8 @@ import api from "../../utils/api";
 import ProductDiscountModal from "./ProductDiscountModal";
 
 const ProductManagement = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -300,8 +301,8 @@ const ProductManagement = () => {
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
       if (sortConfig.key === "category" && a.category && b.category) {
-        aValue = a.category.name_en;
-        bValue = b.category.name_en;
+        aValue = loc(a.category?.name_en, a.category?.name_mm);
+        bValue = loc(b.category?.name_en, b.category?.name_mm);
       }
       if (sortConfig.key === "name") {
         aValue = aValue?.toLowerCase() || "";
@@ -501,7 +502,7 @@ const ProductManagement = () => {
             >
               <option value="all">All Categories</option>
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name_en}</option>
+                <option key={category.id} value={category.id}>{loc(category.name_en, category.name_mm)}</option>
               ))}
             </select>
           </div>
@@ -627,7 +628,7 @@ const ProductManagement = () => {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name_en || product.name_mm || "Unnamed Product"}</div>
+                            <div className="text-sm font-medium text-gray-900">{loc(product.name_en, product.name_mm) || "Unnamed Product"}</div>
                             <div className="flex items-center space-x-2">
                               {isProductOnSale(product) ? (
                                 <>
@@ -642,7 +643,7 @@ const ProductManagement = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{product.category?.name_en || "Uncategorized"}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{loc(product.category?.name_en, product.category?.name_mm) || "Uncategorized"}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">
                         {isProductOnSale(product) ? (
                           <div className="space-y-1">

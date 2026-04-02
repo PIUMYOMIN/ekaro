@@ -19,7 +19,8 @@ import { useOnboardingState } from '../../hooks/useOnboardingState';
 import api from '../../utils/api';
 
 const StoreBasicInfo = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
     const navigate = useNavigate();
     const { formData, saveStep, isLoading, businessTypeInfo } = useOnboardingState();
     const [businessTypes, setBusinessTypes] = useState([]);
@@ -459,7 +460,7 @@ const StoreBasicInfo = () => {
                                 <option value="">Select business type</option>
                                 {businessTypes.map((type) => (
                                     <option key={type.slug_en} value={type.slug_en}>
-                                        {type.name_en}
+                                        {loc(type.name_en, type.name_mm)}
                                     </option>
                                 ))}
                             </select>
