@@ -37,6 +37,7 @@ import DiscountManagement from "../../components/seller/DiscountManagement";
 import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
 import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
+import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -211,7 +212,8 @@ const SellerDashboard = () => {
   }, [navigate]);
 
   const navigation = useMemo(() => [
-    { name: t("seller.dashboard"),      icon: ChartBarIcon,           key: "dashboard" },
+    { name: t("seller.dashboard"), icon: ChartBarIcon, key: "dashboard" },
+    { name: "Notifications",              icon: BellIcon,               key: "notifications" },
     { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
     { name: "Store Profile",            icon: PencilIcon,             key: "store_profile" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
@@ -225,14 +227,14 @@ const SellerDashboard = () => {
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
-    { name: "Notifications",              icon: BellIcon,               key: "notifications" },
   ], [t]);
 
   // Render the active tab with current state — separated from the stable nav structure
   const renderActiveTab = () => {
     const key = navigation[selectedTab]?.key;
     switch (key) {
-      case "dashboard":   return <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />;
+      case "dashboard": return <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />;
+      case "notifications":  return <NotificationsPanel />;
       case "my_store":    return <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />;
       case "edit_store":  return <EditStore storeData={storeData} refreshData={refreshGlobalData} />;
       case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
@@ -248,7 +250,6 @@ const SellerDashboard = () => {
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
       case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
       case "profile":        return <SellerProfileTab />;
-      case "notifications":  return <NotificationsPanel />;
       default:               return null;
     }
   };
