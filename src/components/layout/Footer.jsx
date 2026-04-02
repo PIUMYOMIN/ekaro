@@ -3,9 +3,11 @@ import React from "react";
 import NewsletterWidget from "../ui/NewsletterWidget";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useCookies } from "../../context/CookieContext";
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { openBanner } = useCookies();
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -131,6 +133,15 @@ const Footer = () => {
                 >
                   {t("footer.privacy")}
                 </Link>
+              </li>
+            
+              <li>
+                <button
+                  onClick={openBanner}
+                  className="text-gray-300 hover:text-white transition-colors text-left"
+                >
+                  🍪 Cookie Settings
+                </button>
               </li>
             </ul>
           </div>
