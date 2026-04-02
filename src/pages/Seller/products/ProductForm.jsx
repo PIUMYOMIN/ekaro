@@ -160,6 +160,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [catError, setCatError] = useState(false);
   const [error, setError] = useState("");
   const [specInput, setSpecInput] = useState({ key: "", value: "" });
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -529,23 +530,27 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   }, [imagePreviews, product]);
 
+  // Hoisted so retry button can call it
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    setCatError(false);
+    try {
+      const response = await api.get("/categories/all");
+      if (response.data.success && Array.isArray(response.data.data)) {
+        setCategories(response.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+      setCatError(true);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   // Load categories and existing images for edit
    useEffect(() => {
-    const fetchCategories = async () => {
-      setLoadingCategories(true);
-      try {
-        const response = await api.get("/categories");
-        if (response.data.success && Array.isArray(response.data.data)) {
-          setCategories(response.data.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
 
-    const fetchProductForEdit = async () => {
+    const _fetchProductForEdit = async () => {
       if (!product || !product.id) return;
       try {
         const response = await api.get(`/seller/products/${product.id}/edit`);
@@ -581,7 +586,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     };
 
     if (product && product.id) {
-      fetchProductForEdit();
+      _fetchProductForEdit();
     } else {
       // New product: load draft from local storage
       const savedPreviews = localStorage.getItem(STORAGE_KEYS.IMAGE_PREVIEWS);
@@ -768,7 +773,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   </select>
                 ) : (
                   <div className="text-center py-4 bg-gray-50 rounded-lg border border-gray-300">
-                    <p className="text-gray-600">No categories available</p>
+                    <p className="text-gray-500 text-sm mb-2">
+                      {catError ? 'Failed to load categories.' : 'No categories available.'}
+                    </p>
+                    <button type="button" onClick={fetchCategories}
+                      className="text-xs text-green-700 underline hover:text-green-900">
+                      Try again
+                    </button>
                   </div>
                 )}
                 <p className="text-xs text-gray-500 mt-1">Select a sub-category for your product.</p>

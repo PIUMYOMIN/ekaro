@@ -38,6 +38,7 @@ import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
 import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
+import ShippingSettings from "../../components/seller/ShippingSettings";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -226,6 +227,7 @@ const SellerDashboard = () => {
     { name: t("seller.customers"),      icon: UserGroupIcon,          key: "customers" },
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
+    { name: "Shipping Settings",          icon: TruckIcon,              key: "shipping" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
   ], [t]);
 
@@ -248,6 +250,7 @@ const SellerDashboard = () => {
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
+      case "shipping":    return <ShippingSettings />;
       case "profile":        return <SellerProfileTab />;
       default:               return null;
     }

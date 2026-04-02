@@ -10,6 +10,7 @@ import {
   TrashIcon, XMarkIcon, EyeIcon, BellIcon
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import { useTranslation } from 'react-i18next';
 import NotificationPreferences from '../Shared/NotificationPreferences';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -186,6 +187,8 @@ const TABS = [
 const StoreProfileEditor = ({ storeData, refreshData }) => {
   const [tab, setTab]         = useState('basic');
   const [data, setData]       = useState(null);
+  const { i18n } = useTranslation();
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const [businessTypes, setBT] = useState([]);
   const [saving, setSaving]   = useState('');
   const [uploading, setUploading] = useState('');
@@ -432,9 +435,9 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
               <Input value={data.store_name} onChange={e => set('store_name', e.target.value)} placeholder="Your store name"/>
             </FieldRow>
             <FieldRow label="Business Type">
-              <Select value={data.business_type_id} onChange={e => set('business_type_id', e.target.value)}>
+              <Select key={`bt-${businessTypes.length}`} value={data.business_type} onChange={e => { set('business_type', e.target.value); const bt = businessTypes.find(b => b.slug_en === e.target.value); if (bt) set('business_type_id', bt.id); }}>
                 <option value="">Select type…</option>
-                {businessTypes.map(bt => <option key={bt.id} value={bt.id}>{bt.name}</option>)}
+                {businessTypes.map(bt => <option key={bt.slug_en} value={bt.slug_en}>{loc(bt.name_en, bt.name_mm)}</option>)}
               </Select>
             </FieldRow>
             <FieldRow label="Contact Email" required>

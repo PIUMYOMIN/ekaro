@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 
 import {
   ChartBarIcon,
+  MegaphoneIcon,
   UserGroupIcon,
   ShoppingBagIcon,
   CubeIcon,
@@ -37,9 +38,10 @@ import EmailCampaigns from "../../components/admin/EmailCampaigns";
 import CategoryManagement from "../../components/admin/CategoryManagement";        // self‑contained
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
+import AnnouncementManagement from "../../components/admin/AnnouncementManagement";
 import Settings from "../../components/admin/Settings";
 import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
-import SEO from "../../components/SEO/seo";
+import SEO from "../../components/SEO/SEO";
 
 // ── Admin personal profile tab ────────────────────────────────────────────────
 const AdminProfileTab = () => {
@@ -388,6 +390,11 @@ const AdminDashboard = () => {
       name: "Email Campaigns",
       icon: EnvelopeIcon,
       component: <EmailCampaigns />,
+    },
+    {
+      name: "Announcements",
+      icon: MegaphoneIcon,
+      component: <AnnouncementManagement />,
     },
     {
       name: "Commission Rules",

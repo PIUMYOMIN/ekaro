@@ -1,5 +1,6 @@
 // Home.jsx (fixed)
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import AnnouncementModal from "../components/ui/AnnouncementModal";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -64,6 +65,8 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
   const [transformedSellers, setTransformedSellers] = useState([]);
+  const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+  const announcementFetched = useRef(false);
   const [loading, setLoading] = useState({
     categories: true,
     products: true,
@@ -382,8 +385,41 @@ const Home = () => {
     </section>
   ), [loading.sellers, transformedSellers, t]);
 
+  // ── Announcement modal fetch ──────────────────────────────────────────
+  useEffect(() => {
+    if (announcementFetched.current) return;
+    announcementFetched.current = true;
+
+    const fetchAnnouncement = async () => {
+      try {
+        const res = await api.get('/announcements');
+        const list = res.data.data ?? [];
+        // Pick first eligible one (not already dismissed today)
+        const eligible = list.find(a => {
+          if (!a.show_once) return true;
+          const key = `ann_seen_${a.id}_${new Date().toDateString()}`;
+          return !localStorage.getItem(key);
+        });
+        if (eligible) {
+          const delay = (eligible.delay_seconds ?? 1) * 1000;
+          setTimeout(() => setActiveAnnouncement(eligible), delay);
+        }
+      } catch {
+        // silently ignore — announcement is non-critical
+      }
+    };
+
+    fetchAnnouncement();
+  }, []);
+
   return (
     <>
+      {activeAnnouncement && (
+        <AnnouncementModal
+          announcement={activeAnnouncement}
+          onClose={() => setActiveAnnouncement(null)}
+        />
+      )}
       {SeoComponent}
       <div className="bg-gray-50">
         {renderHeroSection}

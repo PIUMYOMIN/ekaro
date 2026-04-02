@@ -27,7 +27,8 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart from server
   const fetchCartItems = useCallback(async () => {
-    if (!user) {
+    // Cart is only for buyers — sellers/admins get 403
+    if (!user || (user.type && user.type !== 'buyer')) {
       resetCart();
       return;
     }

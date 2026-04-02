@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/solid';
 import useSEO from '../hooks/useSEO';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ui/ProductCard';
 import { DEFAULT_PLACEHOLDER } from '../config';
 
@@ -70,6 +71,8 @@ const TodayHours = ({ hours, enabled }) => {
 // ── Main Component ────────────────────────────────────────────────────────────
 const SellerProfile = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({});
@@ -120,13 +123,24 @@ const SellerProfile = () => {
 
   // ── Follow ─────────────────────────────────────────────────────────────
   const toggleFollow = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
     setFwLoading(true);
     try {
-      await api.post(`/follow/seller/${seller.store_slug}/toggle`);
-      setFollowing(v => !v);
-      setFollowers(v => following ? v - 1 : v + 1);
-    } catch { }
-    finally { setFwLoading(false); }
+      const res = await api.post(`/follow/seller/${seller.store_slug}/toggle`);
+      if (res.data.success) {
+        const nowFollowing = res.data.data?.is_following ?? !following;
+        setFollowing(nowFollowing);
+        setFollowers(res.data.data?.followers_count ?? (nowFollowing ? followers + 1 : followers - 1));
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to update follow status';
+      console.error('Follow error:', msg);
+    } finally {
+      setFwLoading(false);
+    }
   };
 
   // ── Submit review ──────────────────────────────────────────────────────
@@ -286,12 +300,15 @@ const SellerProfile = () => {
                   <ShareIcon className="h-4 w-4" />
                   {copied ? 'Copied!' : 'Share'}
                 </button>
-                <button onClick={toggleFollow} disabled={fwLoading}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50
-                    ${following ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-                  <UserGroupIcon className="h-4 w-4" />
-                  {following ? 'Following' : 'Follow'} · {fmtK(followers)}
-                </button>
+                {/* Follow button — buyers + guests only */}
+                {(!user || user.type === 'buyer') && (
+                  <button onClick={toggleFollow} disabled={fwLoading}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50
+                      ${following ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-green-600 text-white hover:bg-green-700'}`}>
+                    <UserGroupIcon className="h-4 w-4" />
+                    {!user ? 'Follow' : following ? 'Following' : 'Follow'} · {fmtK(followers)}
+                  </button>
+                )}
               </div>
             </div>
 
