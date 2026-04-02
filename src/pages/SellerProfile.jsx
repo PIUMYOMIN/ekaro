@@ -1,7 +1,7 @@
 // src/pages/SellerProfile.jsx
 // Public seller profile page — fully structured with SEO, tabs, live data.
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tab } from '@headlessui/react';
 import {
