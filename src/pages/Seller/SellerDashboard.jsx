@@ -248,7 +248,6 @@ const SellerDashboard = () => {
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
       case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
-      case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
       case "profile":        return <SellerProfileTab />;
       default:               return null;
     }
