@@ -6,6 +6,7 @@
 // Different from DiscountManagement, which applies price reductions
 // directly to product listings without any buyer code entry.
 
+import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect, useCallback } from "react";
 import {
   PlusIcon,
@@ -49,6 +50,8 @@ const EMPTY_FORM = {
 // ─────────────────────────────────────────────────────────────────────────────
 const CouponManagement = () => {
   const [coupons, setCoupons]           = useState([]);
+  const { i18n } = useTranslation();
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState("");
   const [showForm, setShowForm]         = useState(false);
@@ -460,7 +463,7 @@ const CouponManagement = () => {
                             onChange={() => toggleProductSelection(p.id)}
                             className="h-4 w-4 text-green-600"
                           />
-                          <span className="text-sm flex-1">{p.name_en}</span>
+                          <span className="text-sm flex-1">{loc(p.name_en, p.name_mm)}</span>
                           <span className="text-xs text-gray-400">{formatMMK(p.price)}</span>
                         </label>
                       ))

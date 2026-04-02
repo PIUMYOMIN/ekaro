@@ -68,7 +68,7 @@ const ProductManagement = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await api.get("/categories");
+      const response = await api.get("/categories/all");
       if (response.data.success) {
         setCategories(response.data.data || []);
       }
@@ -301,8 +301,8 @@ const ProductManagement = () => {
       let aValue = a[sortConfig.key];
       let bValue = b[sortConfig.key];
       if (sortConfig.key === "category" && a.category && b.category) {
-        aValue = loc(a.category?.name_en, a.category?.name_mm);
-        bValue = loc(b.category?.name_en, b.category?.name_mm);
+        aValue = loc(a.category?.name_en, a.category?.name_mm) || "";
+        bValue = loc(b.category?.name_en, b.category?.name_mm) || "";
       }
       if (sortConfig.key === "name") {
         aValue = aValue?.toLowerCase() || "";

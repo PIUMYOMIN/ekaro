@@ -17,7 +17,8 @@ import api from "../../utils/api";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 
 const EditStore = ({ storeData, refreshData }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -84,7 +85,7 @@ const EditStore = ({ storeData, refreshData }) => {
       setFormData({
         store_name: storeData.store_name || "",
         store_description: storeData.store_description || storeData.description || "",
-        business_type: storeData.business_type || "",
+        business_type: storeData.business_type_slug || storeData.business_type || "",
         business_registration_number: storeData.business_registration_number || "",
         tax_id: storeData.tax_id || "",
         contact_email: storeData.contact_email || "",
@@ -275,7 +276,7 @@ const EditStore = ({ storeData, refreshData }) => {
                   <option value="">Select business type</option>
                   {businessTypes.map((type) => (
                     <option key={type.slug_en} value={type.slug_en}>
-                      {type.name_en}
+                      {loc(type.name_en, type.name_mm)}
                     </option>
                   ))}
                 </select>

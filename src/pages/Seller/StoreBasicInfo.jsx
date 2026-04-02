@@ -48,7 +48,7 @@ const StoreBasicInfo = () => {
             business_type_slug: '',
             contact_email: '',
             contact_phone: '',
-            description: '',
+            store_description: '',
         }
     });
     useEffect(() => {
@@ -536,10 +536,10 @@ const StoreBasicInfo = () => {
                         </label>
                         <textarea
                             rows={3}
-                            name="description"
+                            name="store_description"
                             className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             placeholder="Describe your store and what you offer..."
-                            {...register("description", {
+                            {...register("store_description", {
                                 maxLength: {
                                     value: 2000,
                                     message: "Description must be less than 2000 characters"
@@ -563,8 +563,8 @@ const StoreBasicInfo = () => {
                                 {getBusinessTypeIcon(selectedBusinessType.icon)}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-medium text-blue-900">{selectedBusinessType.name}</h4>
-                                <p className="text-sm text-blue-700 mt-1">{selectedBusinessType.description}</p>
+                                <h4 className="font-medium text-blue-900">{loc(selectedBusinessType.name_en, selectedBusinessType.name_mm)}</h4>
+                                <p className="text-sm text-blue-700 mt-1">{loc(selectedBusinessType.description_en, selectedBusinessType.description_mm)}</p>
                                 <div className="mt-3">
                                     <p className="text-xs font-medium text-blue-800">Document Requirements:</p>
                                     <ul className="mt-1 text-xs text-blue-700 space-y-1">

@@ -52,7 +52,8 @@ const EMPTY_FORM = (isAdmin) => ({
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 const DiscountManagement = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const loc = (en, mm) => i18n.language === 'my' ? (mm || en) : (en || mm);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.roles?.includes("admin");
 
@@ -105,8 +106,19 @@ const DiscountManagement = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await api.get("/categories");
-      setCategories(res.data.data ?? []);
+      const res = await api.get("/categories/all");
+      // /categories/all returns root categories with children array
+      // Flatten to a single list of leaf + parent categories for discount selection
+      const raw = res.data.data ?? [];
+      const flat = [];
+      raw.forEach(root => {
+        if (root.children && root.children.length > 0) {
+          root.children.forEach(child => flat.push(child));
+        } else {
+          flat.push(root);
+        }
+      });
+      setCategories(flat);
     } catch {
       console.error("Failed to fetch categories");
     }
@@ -456,7 +468,7 @@ const DiscountManagement = () => {
                           onChange={() => toggleSelection("applicable_product_ids", p.id)}
                           className="h-4 w-4 text-green-600"
                         />
-                        <span className="text-sm flex-1">{p.name_en}</span>
+                        <span className="text-sm flex-1">{loc(p.name_en, p.name_mm)}</span>
                         <span className="text-xs text-gray-400">{formatMMK(p.price)}</span>
                       </label>
                     ))
@@ -482,7 +494,7 @@ const DiscountManagement = () => {
                           onChange={() => toggleSelection("applicable_category_ids", c.id)}
                           className="h-4 w-4 text-green-600"
                         />
-                        <span className="text-sm">{c.name_en}</span>
+                        <span className="text-sm">{loc(c.name_en, c.name_mm)}</span>
                       </label>
                     ))
                   }

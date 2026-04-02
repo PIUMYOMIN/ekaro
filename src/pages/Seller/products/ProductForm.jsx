@@ -1530,48 +1530,82 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           </div>
 
           {/* Step indicators */}
-          <div className="px-8 py-6">
-            <div className="flex items-center justify-between">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center flex-1">
+          <div className="px-4 sm:px-8 py-4 sm:py-5">
+
+            {/* ── Mobile: segmented pill strip ─────────────────────────── */}
+            <div className="sm:hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-800">
+                  {steps[currentStep - 1]?.title}
+                </span>
+                <span className="text-xs font-bold text-green-700">
+                  Step {currentStep} of {steps.length}
+                </span>
+              </div>
+              <div className="flex gap-1.5">
+                {steps.map((step) => (
                   <button
+                    key={step.id}
                     onClick={() => goToStep(step.id)}
-                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold text-sm transition-all ${
+                    className={`flex-1 h-2 rounded-full transition-all duration-300 ${
                       currentStep === step.id
-                        ? "border-green-500 bg-green-500 text-white"
+                        ? 'bg-green-500'
                         : completedSteps.has(step.id)
-                        ? "border-green-500 bg-green-500 text-white"
-                        : "border-gray-300 text-gray-500"
+                        ? 'bg-green-400'
+                        : 'bg-gray-200'
                     }`}
-                  >
-                    {completedSteps.has(step.id) ? (
-                      <CheckCircleIcon className="h-5 w-5" />
-                    ) : (
-                      step.id
-                    )}
-                  </button>
-                  <div className="ml-3 flex-1">
-                    <div
-                      className={`font-medium ${
-                        currentStep === step.id
-                          ? "text-green-600"
-                          : completedSteps.has(step.id)
-                          ? "text-gray-900"
-                          : "text-gray-500"
-                      } truncate max-w-[56px] sm:max-w-none text-xs sm:text-sm`}
-                    >
-                      {step.title}
-                    </div>
-                    <div className="text-xs text-gray-500 hidden sm:block">{step.description}</div>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div
-                      className={`flex-1 h-0.5 mx-4 ${completedSteps.has(step.id) ? "bg-green-500" : "bg-gray-300"}`}
-                    />
-                  )}
-                </div>
-              ))}
+                    aria-label={step.title}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">
+                {steps[currentStep - 1]?.description}
+              </p>
             </div>
+
+            {/* ── Desktop: circles + connectors + labels ───────────────── */}
+            <div className="hidden sm:flex items-start">
+              {steps.map((step, index) => {
+                const done    = completedSteps.has(step.id);
+                const current = currentStep === step.id;
+                const last    = index === steps.length - 1;
+                return (
+                  <React.Fragment key={step.id}>
+                    {/* Node */}
+                    <button
+                      onClick={() => goToStep(step.id)}
+                      className="flex flex-col items-center flex-shrink-0 group"
+                    >
+                      <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center
+                                       font-semibold text-sm transition-all duration-200
+                                       ${current ? 'border-green-500 bg-green-500 text-white shadow shadow-green-200'
+                                       : done    ? 'border-green-400 bg-green-400 text-white'
+                                       :           'border-gray-300 text-gray-400 group-hover:border-gray-400'}`}>
+                        {done
+                          ? <CheckCircleIcon className="h-5 w-5" />
+                          : step.id}
+                      </div>
+                      <span className={`mt-1.5 text-[11px] font-medium text-center leading-tight w-16 break-words
+                                        ${current ? 'text-green-700' : done ? 'text-gray-600' : 'text-gray-400'}`}>
+                        {step.title}
+                      </span>
+                      <span className="text-[10px] text-gray-400 text-center w-16 leading-tight">
+                        {step.description}
+                      </span>
+                    </button>
+
+                    {/* Connector */}
+                    {!last && (
+                      <div className="flex-1 mt-4 mx-2">
+                        <div className={`h-0.5 rounded-full transition-colors duration-300
+                                         ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+
           </div>
         </div>
 
