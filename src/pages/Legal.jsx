@@ -5,7 +5,7 @@ import useSEO from "../hooks/useSEO";
 const Legal = () => {
   const { t } = useTranslation();
   const SeoComponent = useSEO({
-    title: t("legal.pageTitle"),
+    title: t("legal.title"),
     description: "Pyonea's legal centre — terms of service, privacy policy, return policy, and platform guidelines for buyers and sellers on Myanmar's leading B2B marketplace.",
     url: "/legal",
   });
@@ -40,7 +40,7 @@ const Legal = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8 text-center">
-          {t("legal.pageTitle")}
+          {t("legal.title")}
         </h1>
         <p className="text-center text-gray-600 mb-8">{t("legal.subtitle")}</p>
 
@@ -68,7 +68,7 @@ const Legal = () => {
             {t("legal.contact.description")}
           </p>
           <p className="text-gray-700">
-            <strong>{t("legal.contact.emailLabel")}</strong> contact.pyonea@gmail.com
+            <strong>{t("legal.contact.emailLabel")}</strong> <a href="mailto:contact@pyonea.com">contact@pyonea.com</a>
             <br />
             <strong>{t("legal.contact.addressLabel")}</strong>{" "}
             {t("legal.contact.address")}

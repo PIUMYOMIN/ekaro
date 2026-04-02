@@ -33,22 +33,6 @@ const Footer = () => {
                   {t("footer.contact")}
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/careers"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.careers")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/blog"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.blog")}
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -72,14 +56,6 @@ const Footer = () => {
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.pricing")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/resources"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.resources")}
                 </Link>
               </li>
             </ul>
@@ -156,22 +132,6 @@ const Footer = () => {
                   {t("footer.privacy")}
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/security"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.security")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/compliance"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.compliance")}
-                </Link>
-              </li>
             </ul>
           </div>
         </div>
@@ -197,7 +157,7 @@ const Footer = () => {
                 {t("footer.address")}
               </p>
               <p className="text-gray-300">
-                <a href="mailto:contact.pyonea@gmail.com">{t("footer.email")}</a>
+                <a href="mailto:contact@pyonea.com">{t("footer.email")}</a>
               </p>
             </div>
             <div>
