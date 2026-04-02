@@ -1,192 +1,174 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Disclosure, Menu } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import {
+  Bars3Icon, XMarkIcon, ShoppingCartIcon,
+  UserIcon, MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
 import Logo from '../../assets/images/logo.png';
 
 const Header = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n }         = useTranslation();
   const { user, logout, hasRole } = useAuth();
-  const { totalItems } = useCart();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { totalItems }      = useCart();
+  const navigate            = useNavigate();
+  const location            = useLocation();
 
-  // Get current search query from URL (works for any page, not just product list)
-  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const urlSearchQuery = searchParams.get('search') || '';
+  // ── Active link helper ────────────────────────────────────────────────
+  // Exact match for '/', prefix match for everything else
+  const isActive = (href) =>
+    href === '/'
+      ? location.pathname === '/'
+      : location.pathname.startsWith(href);
 
-  const [searchTerm, setSearchTerm] = useState(urlSearchQuery);
-  const [showMobileSearch, setShowMobileSearch] = useState(false);
-
-  // Ref to track if the current change came from URL sync to avoid loops
-  const isSyncingFromUrl = useRef(false);
-
-  // Sync local search term when URL changes (e.g., back/forward navigation)
-  useEffect(() => {
-    isSyncingFromUrl.current = true;
-    setSearchTerm(urlSearchQuery);
-    // Reset flag after state update
-    setTimeout(() => {
-      isSyncingFromUrl.current = false;
-    }, 0);
-  }, [urlSearchQuery]);
-
-  // Debounced navigation – only updates URL after user stops typing
-  const debouncedNavigate = useCallback(
-    (() => {
-      let timeout;
-      return (value) => {
-        if (isSyncingFromUrl.current) return; // skip if sync from URL
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          const params = new URLSearchParams(location.search);
-          if (value.trim()) {
-            params.set('search', encodeURIComponent(value.trim()));
-          } else {
-            params.delete('search');
-          }
-          // Preserve other params (like category) if any
-          const newSearch = params.toString();
-          navigate(`${location.pathname}?${newSearch}`, { replace: true });
-        }, 500);
-      };
-    })(),
-    [location.pathname, location.search, navigate]
+  // ── Search ────────────────────────────────────────────────────────────
+  const urlSearchQuery = useMemo(
+    () => new URLSearchParams(location.search).get('search') || '',
+    [location.search]
   );
 
-  // Update URL when searchTerm changes (via typing)
+  const [searchTerm, setSearchTerm]           = useState(urlSearchQuery);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
+  // Stable ref so the debounce timeout survives re-renders
+  const debounceRef    = useRef(null);
+  const isSyncingRef   = useRef(false);
+
+  // Sync input when URL changes (back/forward navigation)
+  useEffect(() => {
+    isSyncingRef.current = true;
+    setSearchTerm(urlSearchQuery);
+    requestAnimationFrame(() => { isSyncingRef.current = false; });
+  }, [urlSearchQuery]);
+
+  // FIX: stable debounce — timeout stored in a ref, not inside useCallback closure
+  const debouncedNavigate = useCallback((value) => {
+    if (isSyncingRef.current) return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(location.search);
+      // FIX: don't double-encode — URLSearchParams.set() encodes automatically
+      if (value.trim()) {
+        params.set('search', value.trim());
+      } else {
+        params.delete('search');
+      }
+      navigate(`/products?${params.toString()}`, { replace: true });
+    }, 500);
+  }, [location.search, navigate]);
+
   useEffect(() => {
     debouncedNavigate(searchTerm);
   }, [searchTerm, debouncedNavigate]);
 
-  // Immediate search on form submit (no debounce)
+  // Immediate navigation on form submit
   const handleSearch = (e) => {
-    e.preventDefault();
-    const params = new URLSearchParams(location.search);
-    if (searchTerm.trim()) {
-      params.set('search', encodeURIComponent(searchTerm.trim()));
-    } else {
-      params.delete('search');
-    }
-    navigate(`/products?${params.toString()}`);
+    e?.preventDefault();
+    clearTimeout(debounceRef.current);
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set('search', searchTerm.trim());
+    navigate(`/products${params.toString() ? '?' + params.toString() : ''}`);
     setShowMobileSearch(false);
   };
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
+  // ── Auth helpers ──────────────────────────────────────────────────────
+  const changeLanguage = (lng) => i18n.changeLanguage(lng);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
-  const handleDashboardNavigation = () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    if (hasRole('admin') || user.role === 'admin' || user.type === 'admin') {
-      navigate('/admin/dashboard');
-    } else if (hasRole('seller') || user.role === 'seller' || user.type === 'seller') {
-      navigate('/seller/dashboard');
-    } else {
-      navigate('/buyer/dashboard');
-    }
+  const handleDashboard = () => {
+    if (!user) { navigate('/login'); return; }
+    if (hasRole('admin') || user.type === 'admin')   { navigate('/admin/dashboard');  return; }
+    if (hasRole('seller') || user.type === 'seller') { navigate('/seller/dashboard'); return; }
+    navigate('/buyer/dashboard');
   };
 
   const getDisplayRole = () => {
     if (!user) return '';
-
-    let displayRoles = [];
-
-    if (user.roles && Array.isArray(user.roles)) {
-      displayRoles = user.roles.map(role => {
-        if (typeof role === 'string') {
-          return t(`roles.${role}`, role);
-        } else if (typeof role === 'object' && role !== null) {
-          const roleName = role.name || role.role || role.title;
-          return roleName ? t(`roles.${roleName}`, roleName) : JSON.stringify(role);
-        }
-        return String(role);
-      });
-    } else if (user.type) {
-      displayRoles = [t(`roles.${user.type}`, user.type)];
-    } else if (user.role) {
-      displayRoles = [t(`roles.${user.role}`, user.role)];
+    if (user.roles?.length) {
+      return user.roles
+        .map(r => t(`roles.${typeof r === 'string' ? r : r.name}`, typeof r === 'string' ? r : r.name))
+        .join(', ');
     }
-
-    if (displayRoles.length === 0) {
-      displayRoles = [t('roles.buyer', 'Buyer')];
-    }
-
-    return displayRoles.join(', ');
+    return t(`roles.${user.type || user.role || 'buyer'}`, user.type || user.role || 'Buyer');
   };
 
+  // Only show cart to buyers (or guests who might be buyers)
+  const showCart = !user || user.type === 'buyer';
+
+  // ── Nav items ─────────────────────────────────────────────────────────
   const navigation = [
-    { name: t('header.home'), href: '/' },
-    { name: t('header.products'), href: '/products' },
-    { name: t('header.sellers'), href: '/sellers' },
+    { name: t('header.home'),       href: '/' },
+    { name: t('header.products'),   href: '/products' },
+    { name: t('header.sellers'),    href: '/sellers' },
     { name: t('header.categories'), href: '/categories' },
   ];
 
   const userNavigation = [
-    { name: t('header.profile'), onClick: handleDashboardNavigation },
-    { name: t('header.logout'), onClick: handleLogout }
+    { name: t('header.profile'), onClick: handleDashboard },
+    { name: t('header.logout'),  onClick: handleLogout },
   ];
 
+  // ── Shared class builders ─────────────────────────────────────────────
+  const desktopLinkClass = (href) =>
+    `px-2 py-1 lg:px-3 lg:py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+      isActive(href)
+        ? 'text-green-700 bg-green-50 font-semibold'
+        : 'text-gray-700 hover:text-green-700 hover:bg-green-50'
+    }`;
+
+  const mobileLinkClass = (href) =>
+    `block px-3 py-2.5 rounded-md text-base font-medium transition-colors duration-150 ${
+      isActive(href)
+        ? 'text-green-700 bg-green-50 font-semibold border-l-4 border-green-600 pl-2'
+        : 'text-gray-700 hover:text-green-700 hover:bg-green-50'
+    }`;
+
   return (
-    <Disclosure as="nav" className="bg-white shadow-lg sticky top-0 z-50">
-      {({ open }) => (
+    <Disclosure as="nav" className="bg-white shadow-md sticky top-0 z-50">
+      {({ open, close }) => (
         <>
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-            <div className="flex justify-between h-16">
-              {/* Left side - Logo and mobile menu button */}
-              <div className="flex items-center">
-                <div className="flex-shrink-0 flex items-center">
-                  <Link to="/" className="flex items-center">
-                    <div className="relative w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                      <img
-                        src={Logo}
-                        className="rounded-lg absolute inset-0 w-full h-full object-contain"
-                        alt="Logo"
-                      />
-                    </div>
-                    <span className="ml-2 text-lg sm:text-2xl font-torus font-semibold text-green-800">
-                      {t('header.logo_text')}
-                    </span>
-                  </Link>
-                </div>
+            <div className="flex items-center h-16 gap-2">
 
-                {/* Desktop navigation */}
-                <div className="hidden md:ml-4 md:flex md:space-x-2 lg:space-x-4">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="px-2 py-1 lg:px-3 lg:py-2 text-gray-700 hover:text-green-700 hover:bg-green-50 rounded-md text-sm font-medium transition-colors duration-200"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
+              {/* ── Logo ───────────────────────────────────────────── */}
+              <div className="flex-shrink-0 flex items-center">
+                <Link to="/" className="flex items-center gap-2">
+                  <img
+                    src={Logo}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-contain"
+                    alt="Pyonea"
+                  />
+                  <span className="text-lg sm:text-xl font-semibold text-green-800 hidden xs:block">
+                    {t('header.logo_text')}
+                  </span>
+                </Link>
               </div>
 
-              {/* Center - Search bar (desktop) */}
-              <div className="flex-1 flex items-center justify-end px-2 lg:px-4 lg:ml-6 max-w-lg">
+              {/* ── Desktop nav ────────────────────────────────────── */}
+              <div className="hidden md:flex md:items-center md:gap-1 lg:gap-2 ml-2">
+                {navigation.map((item) => (
+                  <Link key={item.href} to={item.href} className={desktopLinkClass(item.href)}>
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+
+              {/* ── Search (desktop) ───────────────────────────────── */}
+              <div className="flex-1 flex justify-center px-2 lg:px-4 max-w-md mx-auto">
                 <form onSubmit={handleSearch} className="w-full hidden sm:block">
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                    </div>
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     <input
-                      id="search"
-                      name="search"
-                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
+                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg
+                                 bg-white placeholder-gray-400 text-sm
+                                 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       placeholder={t('header.search_placeholder')}
                       type="search"
                       value={searchTerm}
@@ -194,238 +176,224 @@ const Header = () => {
                     />
                   </div>
                 </form>
+              </div>
+
+              {/* ── Right controls ─────────────────────────────────── */}
+              <div className="flex items-center gap-1 sm:gap-2">
+
+                {/* Language switcher — desktop only */}
+                <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-0.5">
+                  {['en', 'my'].map((lng) => (
+                    <button
+                      key={lng}
+                      onClick={() => changeLanguage(lng)}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        i18n.language === lng
+                          ? 'bg-white text-green-700 shadow-sm font-medium'
+                          : 'text-gray-600 hover:text-green-600'
+                      }`}
+                    >
+                      {lng === 'en' ? 'ENG' : t('header.burmese')}
+                    </button>
+                  ))}
+                </div>
 
                 {/* Mobile search button */}
                 <button
                   type="button"
-                  className="sm:hidden p-2 text-gray-500 hover:text-green-600 focus:outline-none"
+                  className="sm:hidden p-2 text-gray-500 hover:text-green-600 rounded-lg hover:bg-gray-100"
                   onClick={() => setShowMobileSearch(true)}
                   aria-label={t('header.search')}
                 >
                   <MagnifyingGlassIcon className="h-5 w-5" />
                 </button>
-              </div>
 
-              {/* Right side - User controls */}
-              <div className="flex items-center">
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  {/* Language switcher */}
-                  <div className="hidden sm:flex items-center bg-gray-100 rounded-md p-1">
-                    <button
-                      onClick={() => changeLanguage('en')}
-                      className={`px-2 py-1 text-xs rounded-md ${i18n.language === 'en' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-700 hover:text-green-600'}`}
-                    >
-                      ENG
-                    </button>
-                    <button
-                      onClick={() => changeLanguage('my')}
-                      className={`px-2 py-1 text-xs rounded-md ${i18n.language === 'my' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-700 hover:text-green-600'}`}
-                    >
-                      {t('header.burmese')}
-                    </button>
-                  </div>
-
-                  {/* Cart */}
-                  <Link to="/cart" className="relative p-1 text-gray-700 hover:text-green-600">
+                {/* Cart — buyers and guests only */}
+                {showCart && (
+                  <Link
+                    to="/cart"
+                    className="relative p-2 text-gray-700 hover:text-green-600 rounded-lg hover:bg-gray-100"
+                    aria-label="Cart"
+                  >
                     <ShoppingCartIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     {totalItems > 0 && (
-                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform bg-red-600 rounded-full">
-                        {totalItems}
+                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white
+                                       text-[10px] font-bold w-4 h-4 flex items-center
+                                       justify-center rounded-full leading-none">
+                        {totalItems > 9 ? '9+' : totalItems}
                       </span>
                     )}
                   </Link>
+                )}
 
-                  {/* User profile */}
-                  {user ? (
-                    <Menu as="div" className="ml-1 relative">
-                      <Menu.Button className="flex items-center space-x-1 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-full p-1">
-                        <div className="flex-shrink-0">
-                          <div className="bg-gray-200 border-2 border-dashed rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-xs text-gray-500">
-                            {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                          </div>
+                {/* User menu */}
+                {user ? (
+                  <Menu as="div" className="relative">
+                    <Menu.Button className="flex items-center gap-1.5 rounded-full
+                                            focus:outline-none focus:ring-2 focus:ring-green-500
+                                            focus:ring-offset-2 p-1">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-green-100 border-2
+                                      border-green-200 flex items-center justify-center
+                                      text-green-700 font-semibold text-sm flex-shrink-0">
+                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <div className="hidden lg:block text-left">
+                        <div className="text-sm font-medium text-gray-900 max-w-[120px] truncate">
+                          {user.name}
                         </div>
-                        <div className="hidden lg:block text-left">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-xs">{user.name}</div>
-                          <div className="text-xs text-gray-500 capitalize">
-                            {getDisplayRole()}
-                          </div>
-                        </div>
-                      </Menu.Button>
+                        <div className="text-xs text-gray-500 capitalize">{getDisplayRole()}</div>
+                      </div>
+                    </Menu.Button>
 
-                      <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 focus:outline-none">
-                        <div className="py-1">
-                          {userNavigation.map((item) => (
-                            <Menu.Item key={item.name}>
-                              {({ active }) => (
-                                <button
-                                  onClick={item.onClick}
-                                  className={`${active ? 'bg-gray-100' : ''} block w-full text-left px-4 py-2 text-sm text-gray-700`}
-                                >
-                                  {item.name}
-                                </button>
-                              )}
-                            </Menu.Item>
-                          ))}
-                        </div>
-                      </Menu.Items>
-                    </Menu>
-                  ) : (
-                    <Link to="/login" className="ml-1 flex items-center text-gray-700 hover:text-green-600 p-1 sm:p-1.5">
-                      <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </Link>
-                  )}
-                </div>
-              </div>
+                    <Menu.Items className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg
+                                           bg-white ring-1 ring-black ring-opacity-5
+                                           z-50 focus:outline-none overflow-hidden">
+                      <div className="py-1">
+                        {userNavigation.map((item) => (
+                          <Menu.Item key={item.name}>
+                            {({ active }) => (
+                              <button
+                                onClick={item.onClick}
+                                className={`w-full text-left px-4 py-2 text-sm text-gray-700 ${
+                                  active ? 'bg-gray-50 text-green-700' : ''
+                                }`}
+                              >
+                                {item.name}
+                              </button>
+                            )}
+                          </Menu.Item>
+                        ))}
+                      </div>
+                    </Menu.Items>
+                  </Menu>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="p-2 text-gray-700 hover:text-green-600 rounded-lg hover:bg-gray-100"
+                    aria-label="Login"
+                  >
+                    <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </Link>
+                )}
 
-              {/* Mobile menu button */}
-              <div className="flex items-center md:hidden">
-                <Disclosure.Button className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
-                  <span className="sr-only">{t('header.open_menu')}</span>
-                  {open ? (
-                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                  )}
+                {/* ── Hamburger — INSIDE right controls, always last ── */}
+                <Disclosure.Button
+                  className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700
+                             hover:bg-gray-100 focus:outline-none focus:ring-2
+                             focus:ring-inset focus:ring-green-500"
+                  aria-label={t('header.open_menu')}
+                >
+                  {open
+                    ? <XMarkIcon  className="h-6 w-6" aria-hidden />
+                    : <Bars3Icon  className="h-6 w-6" aria-hidden />}
                 </Disclosure.Button>
               </div>
             </div>
           </div>
 
-          {/* Mobile search overlay */}
+          {/* ── Mobile search overlay ─────────────────────────────── */}
           {showMobileSearch && (
-            <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-start justify-center md:hidden pt-16">
-              <div className="bg-white w-full p-3 shadow-lg flex items-center">
-                <form onSubmit={handleSearch} className="flex-1 flex items-center">
-                  <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      id="mobile-search"
-                      name="mobile-search"
-                      className="block w-full pl-9 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
-                      placeholder={t('header.search_placeholder')}
-                      type="search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="ml-2 p-2 text-gray-500 hover:text-red-600 focus:outline-none"
-                    onClick={() => setShowMobileSearch(false)}
-                    aria-label={t('header.close_search')}
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
+            <div className="fixed inset-0 z-[60] bg-black/40 flex items-start md:hidden">
+              <div className="w-full bg-white shadow-lg px-3 py-3 flex items-center gap-2 mt-0">
+                <form onSubmit={handleSearch} className="flex-1 relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2
+                                                   h-4 w-4 text-gray-400 pointer-events-none" />
+                  <input
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm
+                               focus:outline-none focus:ring-2 focus:ring-green-500
+                               focus:border-transparent"
+                    placeholder={t('header.search_placeholder')}
+                    type="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    autoFocus
+                  />
                 </form>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="p-2 text-gray-500 hover:text-red-500 flex-shrink-0"
+                  aria-label={t('header.close_search')}
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
               </div>
             </div>
           )}
 
-          {/* Mobile menu */}
-          <Disclosure.Panel className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {/* Mobile search bar */}
-              <div className="px-2 pb-2 border-b border-gray-200">
-                <form onSubmit={handleSearch} className="flex">
-                  <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input
-                      id="mobile-menu-search"
-                      name="mobile-menu-search"
-                      className="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 text-sm"
-                      placeholder={t('header.search_placeholder')}
-                      type="search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="ml-2 px-3 py-2 bg-green-600 text-white rounded-md text-sm font-medium"
-                  >
-                    {t('header.search')}
-                  </button>
-                </form>
-              </div>
-
-              {/* Navigation links */}
+          {/* ── Mobile menu panel ─────────────────────────────────── */}
+          <Disclosure.Panel className="md:hidden border-t border-gray-100">
+            {/* Nav links */}
+            <nav className="px-2 pt-2 pb-1 space-y-0.5">
               {navigation.map((item) => (
                 <Disclosure.Button
-                  key={item.name}
+                  key={item.href}
                   as={Link}
                   to={item.href}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-green-700 hover:bg-green-50"
+                  onClick={() => close()}
+                  className={mobileLinkClass(item.href)}
                 >
                   {item.name}
                 </Disclosure.Button>
               ))}
+            </nav>
 
-              {/* Mobile language switcher */}
-              <div className="px-3 py-2 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => changeLanguage('en')}
-                      className={`px-3 py-1 text-xs rounded-md ${i18n.language === 'en' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                      ENG
-                    </button>
-                    <button
-                      onClick={() => changeLanguage('my')}
-                      className={`px-3 py-1 text-xs rounded-md ${i18n.language === 'my' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}
-                    >
-                      {t('header.burmese')}
-                    </button>
-                  </div>
-                </div>
+            {/* Language + User */}
+            <div className="px-3 py-3 border-t border-gray-100 space-y-3">
+              {/* Language switcher */}
+              <div className="flex items-center gap-2">
+                {['en', 'my'].map((lng) => (
+                  <button
+                    key={lng}
+                    onClick={() => changeLanguage(lng)}
+                    className={`flex-1 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                      i18n.language === lng
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {lng === 'en' ? 'English' : t('header.burmese')}
+                  </button>
+                ))}
               </div>
-            </div>
 
-            {/* User section */}
-            <div className="pt-4 pb-3 border-t border-gray-200">
+              {/* User info + actions */}
               {user ? (
-                <>
-                  <div className="flex items-center px-4">
-                    <div className="flex-shrink-0">
-                      <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center text-gray-500">
-                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                      </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-2 px-1">
+                    <div className="w-10 h-10 rounded-full bg-green-100 border-2 border-green-200
+                                    flex items-center justify-center text-green-700
+                                    font-semibold flex-shrink-0">
+                      {user.name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div className="ml-3">
-                      <div className="text-base font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm font-medium text-gray-500 capitalize">
-                        {getDisplayRole()}
-                      </div>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                      <div className="text-xs text-gray-500 capitalize">{getDisplayRole()}</div>
                     </div>
                   </div>
-                  <div className="mt-3 space-y-1">
-                    {userNavigation.map((item) => (
-                      <Disclosure.Button
-                        key={item.name}
-                        as="button"
-                        onClick={item.onClick}
-                        className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                      >
-                        {item.name}
-                      </Disclosure.Button>
-                    ))}
-                  </div>
-                </>
+                  {userNavigation.map((item) => (
+                    <Disclosure.Button
+                      key={item.name}
+                      as="button"
+                      onClick={item.onClick}
+                      className="block w-full text-left px-3 py-2 text-sm font-medium
+                                 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-lg"
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  ))}
+                </div>
               ) : (
-                <div className="px-2 space-y-2">
+                <div className="space-y-2">
                   <Disclosure.Button
                     as={Link}
                     to="/login"
-                    className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700"
+                    className="w-full flex items-center justify-center py-2 rounded-lg
+                               bg-green-600 text-white text-sm font-medium hover:bg-green-700"
                   >
                     {t('header.login')}
                   </Disclosure.Button>
-                  <p className="text-center text-sm text-gray-600">
+                  <p className="text-center text-xs text-gray-500">
                     {t('header.new_user')}{' '}
                     <Disclosure.Button
                       as={Link}

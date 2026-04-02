@@ -167,13 +167,42 @@ const DeliveryManagement = ({ refreshData }) => {
     );
   }
 
+  // Delivery stats from loaded data
+  const stats = {
+    pending:   deliveries.filter(d => d.status === 'pending').length,
+    inTransit: deliveries.filter(d => ['awaiting_pickup','picked_up','in_transit','out_for_delivery'].includes(d.status)).length,
+    delivered: deliveries.filter(d => d.status === 'delivered').length,
+    failed:    deliveries.filter(d => d.status === 'failed').length,
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900">Delivery Management</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Choose delivery methods and track your order deliveries
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Delivery Management</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Choose delivery methods and track your order deliveries
+          </p>
+        </div>
+        <button onClick={fetchDeliveries}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          <ArrowPathIcon className="h-4 w-4" /> Refresh
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          { label: 'Pending',    value: stats.pending,    color: 'text-yellow-600', bg: 'bg-yellow-50' },
+          { label: 'In Transit', value: stats.inTransit,  color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: 'Delivered',  value: stats.delivered,  color: 'text-green-600',  bg: 'bg-green-50'  },
+          { label: 'Failed',     value: stats.failed,     color: 'text-red-600',    bg: 'bg-red-50'    },
+        ].map(s => (
+          <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{s.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* FIX: inline error banner instead of alert() */}
@@ -493,7 +522,8 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
   };
 
   // FIX: use deliveryUpdates (camelCase) — the key Laravel Eloquent serialises to
-  const updates = delivery.deliveryUpdates ?? [];
+  // Backend may serialize as snake_case or camelCase depending on config
+  const updates = delivery.delivery_updates ?? delivery.deliveryUpdates ?? [];
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">

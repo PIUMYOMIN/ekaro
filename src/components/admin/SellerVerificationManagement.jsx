@@ -561,13 +561,16 @@ const SellerVerificationManagement = () => {
                       ["tax_registration_document",      "Tax Reg",     "green"],
                     ].map(([field, label, color]) => {
                       const url = docUrl(selectedSeller[field]);
+                      const colorClasses = color === 'blue'
+                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                        : 'bg-green-50 text-green-700 hover:bg-green-100';
                       return url ? (
                         <a
                           key={field}
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`flex items-center gap-2 px-3 py-2 bg-${color}-50 text-${color}-700 rounded-lg hover:bg-${color}-100 text-sm`}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${colorClasses}`}
                         >
                           <DocumentIcon className="h-4 w-4 flex-shrink-0" />
                           {label}

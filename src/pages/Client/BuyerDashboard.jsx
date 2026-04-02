@@ -10,7 +10,7 @@ import {
   ClockIcon, XCircleIcon, HeartIcon, CogIcon, ChartBarIcon, HomeIcon,
   DocumentTextIcon, BuildingStorefrontIcon, PencilSquareIcon,
   ArrowPathIcon, ExclamationTriangleIcon, TrashIcon, DocumentArrowDownIcon,
-  ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon,
+  ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon, BellIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import NotificationPreferences from "../../components/Shared/NotificationPreferences";
