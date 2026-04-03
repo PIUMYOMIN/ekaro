@@ -140,7 +140,7 @@ const Footer = () => {
                   onClick={openBanner}
                   className="text-gray-300 hover:text-white transition-colors text-left"
                 >
-                  🍪 Cookie Settings
+                  Cookie Settings
                 </button>
               </li>
             </ul>
