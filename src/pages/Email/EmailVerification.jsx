@@ -81,7 +81,15 @@ const EmailVerification = () => {
   // Resend state
   const [resending,   setResending]   = useState(false);
   const [resendMsg,   setResendMsg]   = useState('');
-  const [resendCooldown, setCooldown] = useState(0);
+  const [resendCooldown, setCooldown] = useState(60);
+
+  // ── Initial resend cooldown — email just sent on registration ───────────────
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCooldown(prev => { if (prev <= 1) { clearInterval(timer); return 0; } return prev - 1; });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ── Link verification (runs if URL has id + hash) ───────────────────────
   const paramsKey = useMemo(() => {
