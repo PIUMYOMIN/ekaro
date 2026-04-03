@@ -367,7 +367,7 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
+              <div className="bg-white rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
                 <img
                   src={getImageUrl(
                     typeof product.images[activeImage] === "string"
@@ -388,7 +388,7 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
-                      className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
+                      className={`bg-white rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
                         }`}
                     >
                       <img
