@@ -45,7 +45,7 @@ const fmt = (n) =>
     style: "currency", currency: "MMK", minimumFractionDigits: 0,
   }).format(n || 0);
 
-// Fixed: removed useSEO from inside fmtDate
+
 const fmtDate = (iso) => {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-GB", {
@@ -65,7 +65,7 @@ const statusLabel = (s) =>
   s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "—";
 
 // ─── Step Progress Bar (fixed: removed useSEO) ────────────────────────────────
-const StepBar = ({ steps, current }) => {
+const StepBar = ({ steps, current, t }) => {
   const cancelled = current === "cancelled" || current === "refunded" || current === "failed";
   const activeIdx = cancelled ? -1 : steps.findIndex((s) => s.key === current);
 
@@ -340,7 +340,7 @@ const OrderTracking = () => {
                   </div>
                 </div>
               ) : (
-                <StepBar steps={ORDER_STEPS} current={order.status} />
+                <StepBar steps={ORDER_STEPS} current={order.status} t={t} />
               )}
             </div>
 
@@ -350,7 +350,7 @@ const OrderTracking = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <span className="w-1.5 h-4 bg-blue-500 rounded-full block" />
-                    t("order_tracking.delivery_tracking")
+                    {t("order_tracking.delivery_tracking")}
                   </h3>
                   {order.delivery.tracking_number && (
                     <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
@@ -362,7 +362,7 @@ const OrderTracking = () => {
 
                 {/* Delivery stepper */}
                 {order.delivery.status !== "cancelled" && order.delivery.status !== "failed" ? (
-                  <StepBar steps={DELIVERY_STEPS} current={order.delivery.status} />
+                  <StepBar steps={DELIVERY_STEPS} current={order.delivery.status} t={t} />
                 ) : (
                   <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl">
                     <span className="text-2xl">❌</span>
