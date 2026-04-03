@@ -14,6 +14,7 @@ import {
   SparklesIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
+import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 import { useNavigate } from "react-router-dom";
 import DataTable from "../ui/DataTable";
 
@@ -245,28 +246,30 @@ const ProductManagement = () => {
     }).format(amount || 0);
   };
 
-  // Get product image
-  const getProductImage = (product) => {
-    if (!product.images) return '/placeholder-product.jpg';
+  // Get product primary image URL — handles all API response formats
+  const getProductImage = (images) => {
+    if (!images) return DEFAULT_PLACEHOLDER;
 
-    let images = product.images;
-    if (typeof images === 'string') {
-      try {
-        images = JSON.parse(images);
-      } catch (e) {
-        return images;
-      }
+    // Parse JSON string if needed (raw DB column)
+    let imgs = images;
+    if (typeof imgs === 'string') {
+      try { imgs = JSON.parse(imgs); } catch { return DEFAULT_PLACEHOLDER; }
     }
 
-    if (Array.isArray(images) && images.length > 0) {
-      const image = images[0];
-      if (typeof image === 'object') {
-        return image.url || image.path || '/placeholder-product.jpg';
+    // Array format: [{url, path, is_primary}, ...]
+    if (Array.isArray(imgs) && imgs.length > 0) {
+      // Prefer primary image, fallback to first
+      const primary = imgs.find(i => i?.is_primary) || imgs[0];
+      if (!primary) return DEFAULT_PLACEHOLDER;
+      if (typeof primary === 'string') {
+        return primary.startsWith('http') ? primary : `${IMAGE_BASE_URL}/${primary.replace('public/', '')}`;
       }
-      return image;
+      const url = primary.url || primary.path || '';
+      if (!url) return DEFAULT_PLACEHOLDER;
+      return url.startsWith('http') ? url : `${IMAGE_BASE_URL}/${url.replace('public/', '')}`;
     }
 
-    return '/placeholder-product.jpg';
+    return DEFAULT_PLACEHOLDER;
   };
 
   // Get approval status badge
@@ -471,14 +474,12 @@ const ProductManagement = () => {
         />
       ),
       image: (
-        <div className="w-12 h-12 rounded overflow-hidden border border-gray-200">
+        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
           <img
             src={getProductImage(product.images)}
-            alt={product.name_en}
+            alt={product.name_en || 'Product'}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.src = '/placeholder-product.jpg';
-            }}
+            onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_PLACEHOLDER; }}
           />
         </div>
       ),

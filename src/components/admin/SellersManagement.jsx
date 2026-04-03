@@ -122,8 +122,8 @@ const SellersManagement = () => {
     let aVal = a[sortField] || "";
     let bVal = b[sortField] || "";
     if (sortField === "rating") {
-      aVal = a.reviews_avg_rating || 0;
-      bVal = b.reviews_avg_rating || 0;
+      aVal = parseFloat(a.reviews_avg_rating) || 0;
+      bVal = parseFloat(b.reviews_avg_rating) || 0;
     }
     if (sortField === "products_count") {
       aVal = a.products_count || 0;
@@ -238,15 +238,22 @@ const SellersManagement = () => {
           {badge.label}
         </span>
       ),
-      rating: seller.reviews_avg_rating ? seller.reviews_avg_rating.toFixed(1) : "0.0",
-      products_count: seller.products_count || 0,
+      rating: seller.reviews_avg_rating ? parseFloat(seller.reviews_avg_rating).toFixed(1) : "0.0",
+      products_count: (
+        <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold
+          ${(seller.products_count || 0) > 0
+            ? 'bg-blue-100 text-blue-800'
+            : 'bg-gray-100 text-gray-500'}`}>
+          {seller.products_count || 0}
+        </span>
+      ),
       created_at: formatDate(seller.created_at),
       actions: (
         <div className="flex space-x-2 items-center">
           <button
             className="p-1 text-gray-600 hover:text-gray-900"
             title="View Store"
-            onClick={() => window.open(`/sellers/${seller.id}`, "_blank")}
+            onClick={() => window.open(`/sellers/${seller.store_slug || seller.id}`, "_blank")}
           >
             <EyeIcon className="h-4 w-4" />
           </button>

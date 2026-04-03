@@ -74,8 +74,6 @@ export default function Checkout() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const resendTimerRef = React.useRef(null);
   const [otpVerified, setOtpVerified] = useState(false);
   const otpCountdownRef = React.useRef(null);
 
@@ -117,22 +115,35 @@ export default function Checkout() {
   const [platformFeeRate, setPlatformFeeRate] = useState(0.05); // safe default while loading
   const [platformFeePct, setPlatformFeePct] = useState(5.0);
 
+  // Fetch fees with location params — re-runs when address city/state changes
+  // Debounced 700ms so fast typing doesn't hammer the API
   useEffect(() => {
     if (!user) return;
-    api.get("/orders/checkout-fees")
-      .then(res => {
-        if (res.data.success) {
-          const d = res.data.data;
-          setShippingFee(d.shipping_fee);
-          setPlatformFeeRate(d.platform_fee_rate);
-          setPlatformFeePct(d.platform_fee_pct);
+    setFeesLoading(true);
+    const timer = setTimeout(() => {
+      api.get('/orders/checkout-fees', {
+        params: {
+          country: shippingAddress.country || 'Myanmar',
+          state:   shippingAddress.state   || undefined,
+          city:    shippingAddress.city    || undefined,
         }
       })
-      .catch(() => {
-        // Network error — keep safe defaults so checkout still works
-      })
-      .finally(() => setFeesLoading(false));
-  }, [user]);
+        .then(res => {
+          if (res.data.success) {
+            const d = res.data.data;
+            setShippingFee(d.shipping_fee ?? 5000);
+            // Backend returns tax_rate / tax_pct (they represent platform commission)
+            setPlatformFeeRate(d.tax_rate ?? d.platform_fee_rate ?? 0.05);
+            setPlatformFeePct(d.tax_pct  ?? d.platform_fee_pct  ?? 5.0);
+          }
+        })
+        .catch(() => {
+          // Network error — safe defaults remain
+        })
+        .finally(() => setFeesLoading(false));
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [user, shippingAddress.country, shippingAddress.state, shippingAddress.city]);
 
   // Derived totals — recalculate whenever fees or cart change
   const platformFee = subtotal * platformFeeRate;
@@ -270,18 +281,6 @@ export default function Checkout() {
     otpCountdownRef.current = setInterval(() => {
       setOtpCountdown(prev => {
         if (prev <= 1) { clearInterval(otpCountdownRef.current); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  // ── Resend cooldown (30s after each resend) ──────────────────────────────────
-  const startResendCooldown = (seconds = 30) => {
-    setResendCooldown(seconds);
-    clearInterval(resendTimerRef.current);
-    resendTimerRef.current = setInterval(() => {
-      setResendCooldown(prev => {
-        if (prev <= 1) { clearInterval(resendTimerRef.current); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -532,10 +531,10 @@ export default function Checkout() {
                         ) : 'Confirm Order'}
                       </button>
 
-                      <div className="text-center space-y-1">
+                      <div className="text-center">
                         <button
                           onClick={async () => {
-                            if (resendCooldown > 0 || otpCountdown > 0) return;
+                            // Reset OTP state
                             setOtpValue('');
                             setOtpError('');
                             setOtpVerified(false);
@@ -547,7 +546,6 @@ export default function Checkout() {
                                 payment_method: paymentMethod,
                               });
                               startOtpCountdown(res.data.expires_in || 600);
-                              startResendCooldown(30);
                               showToast('success', 'A new code has been sent to your email.');
                             } catch {
                               showToast('error', 'Failed to resend code. Please try again.');
@@ -555,16 +553,10 @@ export default function Checkout() {
                               setLoading(false);
                             }
                           }}
-                          disabled={otpCountdown > 0 || resendCooldown > 0}
-                          className="text-sm font-medium disabled:cursor-not-allowed transition-colors
-                                     enabled:text-green-600 enabled:hover:text-green-700
-                                     disabled:text-gray-400"
+                          disabled={otpCountdown > 0}  // <-- Fixed
+                          className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                          {otpCountdown > 0
-                            ? `Resend available when code expires (${Math.floor(otpCountdown / 60)}:${String(otpCountdown % 60).padStart(2, '0')})`
-                            : resendCooldown > 0
-                            ? `Resend in ${resendCooldown}s…`
-                            : "Didn't receive it? Resend code"}
+                          Didn't receive it? Resend code
                         </button>
                       </div>
                     </>
@@ -891,9 +883,16 @@ export default function Checkout() {
                   </div>
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Shipping</span>
+                    <div>
+                      <span className="text-gray-600">Shipping</span>
+                      {(shippingAddress.city || shippingAddress.state) && (
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          To {[shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ')}
+                        </p>
+                      )}
+                    </div>
                     {feesLoading
-                      ? <span className="text-gray-400 animate-pulse">Calculating…</span>
+                      ? <span className="text-gray-400 animate-pulse text-xs">Updating…</span>
                       : <span className="text-gray-900">{formatMMK(shippingFee)}</span>
                     }
                   </div>

@@ -10,7 +10,8 @@ import {
   ShoppingCartIcon,
   HeartIcon,
   ArrowLeftIcon,
-  XMarkIcon
+  XMarkIcon,
+  ShareIcon
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER } from "../config";
@@ -36,6 +37,7 @@ const ProductDetail = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
 
   const fallbackTitle = "Product Details";
@@ -299,7 +301,22 @@ const ProductDetail = () => {
     schema: productSchema,
   });
 
-  return (
+  // ── Share ────────────────────────────────────────────────────────────────────
+  const handleShare = async () => {
+    const url = `${window.location.origin}/products/${product?.slug_en || product?.slug || slug}`;
+    const title = loc(product?.name_en, product?.name_mm) || 'Product';
+    const text = `Check out ${title} on Pyonea`;
+    if (navigator.share) {
+      try { await navigator.share({ title, text, url }); return; } catch {}
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {}
+  };
+
+    return (
     <>
       {SeoComponent}
       {loading && (
@@ -367,7 +384,7 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="bg-white rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
+              <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
                 <img
                   src={getImageUrl(
                     typeof product.images[activeImage] === "string"
@@ -388,7 +405,7 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
-                      className={`bg-white rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
+                      className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
                         }`}
                     >
                       <img
@@ -538,6 +555,22 @@ const ProductDetail = () => {
                         }`}
                     />
                   )}
+                </button>
+
+                {/* Share button */}
+                <button
+                  onClick={handleShare}
+                  title="Share this product"
+                  className={`p-3 rounded-md border transition flex items-center justify-center
+                    ${copied
+                      ? "border-green-500 bg-green-50 text-green-600"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                >
+                  {copied
+                    ? <CheckIcon className="h-6 w-6" />
+                    : <ShareIcon className="h-6 w-6" />
+                  }
                 </button>
               </div>
 

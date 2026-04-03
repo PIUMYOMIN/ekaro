@@ -215,13 +215,13 @@ const AdminDashboard = () => {
   const [dashboardError, setDashboardError] = useState(null);
   const [ordersError, setOrdersError] = useState(null);
 
-  // Check authentication
+  // Check authentication + admin role
+  const { user } = useAuth();
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-    }
-  }, [navigate]);
+    if (!token) { navigate("/login"); return; }
+    if (user && user.type !== "admin") { navigate("/"); }
+  }, [navigate, user]);
 
   // Dashboard data
   useEffect(() => {
@@ -229,8 +229,8 @@ const AdminDashboard = () => {
       setIsDashboardLoading(true);
       setDashboardError(null);
       try {
-        const response = await api.get("/admin");
-        setDashboardData(response.data);
+        const response = await api.get("/admin/stats");
+        setDashboardData(response.data.data || response.data);
       } catch (error) {
         const isNetworkError = !error.response;
         const friendlyError = isNetworkError
@@ -245,25 +245,7 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Orders tab
-  useEffect(() => {
-    if (activeTab !== 6) return;
-    const fetchOrders = async () => {
-      setIsOrdersLoading(true);
-      setOrdersError(null);
-      try {
-        const response = await api.get("/orders");
-        const ordersData = response.data.data || response.data;
-        setOrders(Array.isArray(ordersData) ? ordersData : []);
-      } catch (error) {
-        setOrdersError(error);
-        console.error("Error fetching orders:", error);
-      } finally {
-        setIsOrdersLoading(false);
-      }
-    };
-    fetchOrders();
-  }, [activeTab]);
+  // Orders: now fetched self-contained inside <OrderManagement />
 
   // Refresh handler (only for components that still need it)
   const handleRefresh = async () => {
@@ -296,27 +278,7 @@ const AdminDashboard = () => {
     }
   };
 
-  // Order status update (still needed)
-  const updateOrderStatus = async (orderId, status) => {
-    try {
-      let endpoint = "";
-      if (status === "confirmed") endpoint = "confirm";
-      else if (status === "shipped") endpoint = "ship";
-      else if (status === "cancelled") endpoint = "cancel";
 
-      if (endpoint) {
-        await api.post(`/orders/${orderId}/${endpoint}`);
-      } else {
-        await api.put(`/orders/${orderId}`, { status });
-      }
-
-      setOrders(orders.map((order) =>
-        order.id === orderId ? { ...order, status } : order
-      ));
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-    }
-  };
 
   const navigation = [
     {
@@ -363,12 +325,7 @@ const AdminDashboard = () => {
       name: t("orders"),
       icon: ShoppingBagIcon,
       component: (
-        <OrderManagement
-          orders={orders}
-          loading={isOrdersLoading}
-          error={ordersError}
-          updateOrderStatus={updateOrderStatus}
-        />
+        <OrderManagement />
       )
     },
     {

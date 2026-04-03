@@ -1,474 +1,491 @@
-// components/admin/UserManagement.js
-import React, { useState, useEffect } from "react";
-import { MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  MagnifyingGlassIcon, FunnelIcon, TrashIcon, ShieldCheckIcon,
+  CheckCircleIcon, XCircleIcon, ArrowPathIcon, UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import api from "../../utils/api";
-import DataTable from "../ui/DataTable";
+import { useAuth } from "../../context/AuthContext";
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const ROLE_COLORS = {
+  admin:  "bg-purple-100 text-purple-800",
+  seller: "bg-blue-100 text-blue-800",
+  buyer:  "bg-green-100 text-green-800",
+};
+
+const RoleBadge = ({ role }) => (
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize
+                    ${ROLE_COLORS[role] || "bg-gray-100 text-gray-600"}`}>
+    {role || "—"}
+  </span>
+);
+
+const StatusBadge = ({ active }) => (
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                    ${active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"}`}>
+    {active
+      ? <><CheckCircleIcon className="h-3 w-3" />Active</>
+      : <><XCircleIcon className="h-3 w-3" />Inactive</>}
+  </span>
+);
+
+// ── Inline toast ──────────────────────────────────────────────────────────────
+const Toast = ({ toast }) => toast ? (
+  <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-medium
+    ${toast.type === "success"
+      ? "bg-green-50 border border-green-200 text-green-800"
+      : "bg-red-50 border border-red-200 text-red-700"}`}>
+    {toast.type === "success"
+      ? <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
+      : <XCircleIcon className="h-4 w-4 flex-shrink-0" />}
+    {toast.msg}
+  </div>
+) : null;
+
+// ── Delete confirm modal ──────────────────────────────────────────────────────
+const DeleteModal = ({ user, onConfirm, onClose }) => user ? (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+          <TrashIcon className="h-5 w-5 text-red-600" />
+        </div>
+        <h3 className="font-bold text-gray-900">Delete User</h3>
+      </div>
+      <p className="text-sm text-gray-600 mb-6">
+        Delete <strong>{user.name}</strong>? This cannot be undone and will remove all their data.
+      </p>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose}
+          className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50">
+          Cancel
+        </button>
+        <button onClick={onConfirm}
+          className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+) : null;
+
+// ── Bulk confirm modal ────────────────────────────────────────────────────────
+const BulkModal = ({ action, count, onConfirm, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+      <h3 className="font-bold text-gray-900 mb-2">Confirm Bulk Action</h3>
+      <p className="text-sm text-gray-600 mb-6">
+        Are you sure you want to <strong>{action}</strong> {count} user(s)?
+      </p>
+      <div className="flex justify-end gap-3">
+        <button onClick={onClose}
+          className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50">
+          Cancel
+        </button>
+        <button onClick={onConfirm}
+          className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Main component ────────────────────────────────────────────────────────────
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user: adminUser } = useAuth();
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState("");
+  const [toast, setToast]           = useState(null);
+  const [searchTerm, setSearch]     = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatus]   = useState("all");
+  const [page, setPage]             = useState(1);
   const [pagination, setPagination] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedUsers, setSelected] = useState([]);
   const [bulkAction, setBulkAction] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);  // user object
+  const [showBulkModal, setBulkModal]   = useState(false);
+  const toastTimer = useRef(null);
 
-  // Fetch users from API
-  const fetchUsers = async (page = currentPage, search = searchTerm, role = roleFilter, status = statusFilter) => {
+  const flash = (msg, type = "success") => {
+    clearTimeout(toastTimer.current);
+    setToast({ msg, type });
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  };
+
+  // ── Fetch users ────────────────────────────────────────────────────────────
+  const fetchUsers = useCallback(async (pg = page) => {
     setLoading(true);
-    setError(null);
+    setError("");
     try {
       const params = {
-        page,
+        page: pg,
         per_page: 15,
-        search: search || undefined,
-        ...(role !== "all" && { role }),
-        ...(status !== "all" && { status: status === "active" ? 1 : 0 }),
+        ...(searchTerm && { search: searchTerm }),
+        ...(roleFilter !== "all" && { role: roleFilter }),
+        ...(statusFilter !== "all" && { status: statusFilter }),
       };
-      const response = await api.get("/users", { params });
-      // Assuming response structure: { data: { data: [], current_page, last_page, total } }
-      const data = response.data.data || response.data;
-      setUsers(Array.isArray(data.data) ? data.data : data);
+      const res = await api.get("/users", { params });
+
+      // UserResource::collection($paginator) → response.data = {success, data:{data:[...], ...}, meta:{...}}
+      // OR direct paginator wrap: data = [{...}] with links/meta at root
+      const payload = res.data.data;
+      const items   = Array.isArray(payload?.data) ? payload.data
+                    : Array.isArray(payload)        ? payload
+                    : [];
+      setUsers(items);
+
+      // Pagination from meta (separate key in controller response)
+      const meta = res.data.meta || payload;
       setPagination({
-        current_page: data.current_page,
-        last_page: data.last_page,
-        total: data.total,
-        from: data.from,
-        to: data.to,
+        current_page: meta?.current_page ?? pg,
+        last_page:    meta?.last_page    ?? 1,
+        total:        meta?.total        ?? items.length,
+        from:         meta?.from         ?? 1,
+        to:           meta?.to           ?? items.length,
       });
     } catch (err) {
-      console.error("Failed to fetch users:", err);
-      setError(err.response?.data?.message || "Failed to load users");
-      setUsers([]);
+      setError(err.response?.data?.message || "Failed to load users.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, roleFilter, statusFilter, page]);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchUsers(1, searchTerm, roleFilter, statusFilter);
-  }, []);
+  useEffect(() => { fetchUsers(page); }, [searchTerm, roleFilter, statusFilter, page]);
 
-  // Re‑fetch when filters change
-  useEffect(() => {
-    fetchUsers(currentPage, searchTerm, roleFilter, statusFilter);
-  }, [searchTerm, roleFilter, statusFilter, currentPage]);
+  // ── Derive real role from user object ──────────────────────────────────────
+  // UserResource returns:
+  //   type:  "buyer" | "seller" | "admin"  ← most reliable (user.type column)
+  //   roles: ["buyer"] | ["seller"] | []   ← Spatie roles as string array
+  const deriveRole = (user) =>
+    user.type ||
+    (Array.isArray(user.roles) && user.roles.length > 0
+      ? (typeof user.roles[0] === "string" ? user.roles[0] : user.roles[0]?.name)
+      : null) ||
+    "buyer";
 
-  // Handle user role change
-  const handleRoleChange = async (userId, newRole) => {
+  // ── Role change ────────────────────────────────────────────────────────────
+  const handleRoleChange = async (targetUser, newRole) => {
+    // Prevent admin demoting themselves
+    if (targetUser.id === adminUser?.id && newRole !== "admin") {
+      flash("You cannot change your own role.", "error");
+      return;
+    }
     try {
-      await api.post(`/users/${userId}/assign-roles`, { roles: [newRole] });
-      setUsers(users.map(user =>
-        user.id === userId ? { ...user, roles: [{ name: newRole }] } : user
+      await api.post(`/users/${targetUser.id}/assign-roles`, { roles: [newRole] });
+      setUsers(prev => prev.map(u =>
+        u.id === targetUser.id ? { ...u, type: newRole, roles: [newRole] } : u
       ));
-    } catch (error) {
-      console.error("Failed to update user role:", error);
-      alert(error.response?.data?.message || "Failed to update role");
+      flash(`Role updated to ${newRole}.`);
+    } catch (err) {
+      flash(err.response?.data?.message || "Failed to update role.", "error");
     }
   };
 
-  // Handle user status change (active/inactive)
-  const handleUserStatus = async (userId, isActive) => {
+  // ── Status change ──────────────────────────────────────────────────────────
+  const handleStatusChange = async (userId, isActive) => {
     try {
       await api.put(`/users/${userId}`, { is_active: isActive });
-      setUsers(users.map(user =>
-        user.id === userId ? { ...user, is_active: isActive } : user
-      ));
-    } catch (error) {
-      console.error("Failed to update user status:", error);
-      // Fallback attempt via role assignment
-      try {
-        const role = isActive ? "buyer" : "suspended";
-        await api.post(`/users/${userId}/assign-roles`, { roles: [role] });
-        setUsers(users.map(user =>
-          user.id === userId ? { ...user, is_active: isActive } : user
-        ));
-      } catch (fallbackError) {
-        console.error("Fallback also failed:", fallbackError);
-        alert("Failed to update user status");
-      }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: isActive } : u));
+      flash(`User ${isActive ? "activated" : "deactivated"}.`);
+    } catch (err) {
+      flash(err.response?.data?.message || "Failed to update status.", "error");
     }
   };
 
-  // Handle user deletion
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/users/${userId}`);
-      setUsers(users.filter(user => user.id !== userId));
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      alert(error.response?.data?.message || "Failed to delete user");
+      await api.delete(`/users/${deleteTarget.id}`);
+      setUsers(prev => prev.filter(u => u.id !== deleteTarget.id));
+      setSelected(prev => prev.filter(id => id !== deleteTarget.id));
+      flash(`${deleteTarget.name} deleted.`);
+    } catch (err) {
+      flash(err.response?.data?.message || "Failed to delete user.", "error");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
-  // Bulk action handler
-  const handleBulkAction = async () => {
-    if (selectedUsers.length === 0) {
-      alert("Please select users first");
-      return;
-    }
-    if (!bulkAction) {
-      alert("Please select an action");
-      return;
-    }
-    if (!window.confirm(`Are you sure you want to ${bulkAction} ${selectedUsers.length} user(s)?`)) return;
-
+  // ── Bulk actions ───────────────────────────────────────────────────────────
+  const executeBulk = async () => {
+    setBulkModal(false);
     try {
-      const promises = selectedUsers.map(userId => {
-        if (bulkAction === "delete") {
-          return api.delete(`/users/${userId}`);
-        } else if (bulkAction === "activate") {
-          return api.put(`/users/${userId}`, { is_active: true });
-        } else if (bulkAction === "deactivate") {
-          return api.put(`/users/${userId}`, { is_active: false });
-        }
-        // Could add role bulk changes here
-      });
-      await Promise.all(promises);
-      alert(`Successfully performed ${bulkAction} on ${selectedUsers.length} user(s)`);
-      fetchUsers(currentPage, searchTerm, roleFilter, statusFilter); // refresh
-      setSelectedUsers([]);
+      await Promise.all(selectedUsers.map(id => {
+        if (bulkAction === "delete")     return api.delete(`/users/${id}`);
+        if (bulkAction === "activate")   return api.put(`/users/${id}`, { is_active: true });
+        if (bulkAction === "deactivate") return api.put(`/users/${id}`, { is_active: false });
+        return Promise.resolve();
+      }));
+      flash(`${bulkAction} applied to ${selectedUsers.length} user(s).`);
+      setSelected([]);
       setBulkAction("");
-    } catch (error) {
-      alert(error.response?.data?.message || `Failed to perform ${bulkAction}`);
+      fetchUsers(page);
+    } catch (err) {
+      flash(err.response?.data?.message || `Bulk ${bulkAction} failed.`, "error");
     }
   };
 
-  // Toggle selection
-  const toggleSelection = (userId) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
+  // ── Selection ──────────────────────────────────────────────────────────────
+  const toggleAll = () =>
+    setSelected(prev => prev.length === users.length ? [] : users.map(u => u.id));
 
-  const toggleAllSelection = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map(u => u.id));
-    }
-  };
-
-  // Columns definition for DataTable
-  const columns = [
-    {
-      header: (
-        <input
-          type="checkbox"
-          checked={selectedUsers.length === users.length && users.length > 0}
-          onChange={toggleAllSelection}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
-      ),
-      accessor: "selection",
-      width: "50px",
-    },
-    { header: "ID", accessor: "id" },
-    { header: "Name", accessor: "name" },
-    { header: "Email", accessor: "email" },
-    { header: "Phone", accessor: "phone" },
-    {
-      header: "Role",
-      accessor: "role",
-      cell: (row) => (
-        <select
-          value={row.role}
-          onChange={(e) => handleRoleChange(row.id, e.target.value)}
-          className="text-sm border rounded p-1 focus:ring-2 focus:ring-green-500"
-        >
-          <option value="admin">Admin</option>
-          <option value="seller">Seller</option>
-          <option value="buyer">Buyer</option>
-        </select>
-      )
-    },
-    {
-      header: "Status",
-      accessor: "status",
-      cell: (row) => (
-        <select
-          value={row.is_active ? "active" : "inactive"}
-          onChange={(e) => handleUserStatus(row.id, e.target.value === "active")}
-          className={`px-2 py-1 text-xs font-medium rounded-full ${
-            row.is_active
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          } border-0 focus:ring-2 focus:ring-green-500`}
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      )
-    },
-    { header: "Created At", accessor: "created_at" },
-    {
-      header: "Actions",
-      accessor: "actions",
-      cell: (row) => (
-        <button
-          className="text-red-600 hover:text-red-900"
-          onClick={() => handleDeleteUser(row.id)}
-          title="Delete User"
-        >
-          Delete
-        </button>
-      )
-    }
-  ];
-
-  // Transform user data for display
-  const userData = users.map(user => {
-    let userRole = "buyer";
-    if (user.roles && Array.isArray(user.roles)) {
-      userRole = user.roles[0]?.name || "buyer";
-    } else if (user.roles && typeof user.roles === 'string') {
-      userRole = user.roles;
-    } else if (user.role) {
-      userRole = user.role;
-    } else if (user.type) {
-      userRole = user.type;
-    }
-
-    return {
-      ...user,
-      selection: (
-        <input
-          type="checkbox"
-          checked={selectedUsers.includes(user.id)}
-          onChange={() => toggleSelection(user.id)}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
-      ),
-      role: userRole,
-      status: user.is_active ? "Active" : "Inactive",
-      created_at: new Date(user.created_at).toLocaleDateString(),
-      is_active: user.is_active !== undefined ? user.is_active : true,
-    };
-  });
+  const PER_PAGE = pagination?.last_page ?? 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <Toast toast={toast} />
+      <DeleteModal user={deleteTarget} onConfirm={handleDelete} onClose={() => setDeleteTarget(null)} />
+      {showBulkModal && (
+        <BulkModal
+          action={bulkAction}
+          count={selectedUsers.length}
+          onConfirm={executeBulk}
+          onClose={() => setBulkModal(false)}
+        />
+      )}
+
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="mt-1 text-sm text-gray-600">Manage all registered users</p>
+          <h2 className="text-xl font-bold text-gray-900">User Management</h2>
+          <p className="text-sm text-gray-500">
+            {pagination?.total ? `${pagination.total} total users` : "Manage registered users"}
+          </p>
         </div>
+        <button onClick={() => fetchUsers(page)}
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+          <ArrowPathIcon className="h-4 w-4" />
+        </button>
       </div>
 
-      {/* Bulk Actions */}
+      {/* Bulk action bar */}
       {selectedUsers.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-sm font-medium text-green-800 mr-4">
-                {selectedUsers.length} user(s) selected
-              </span>
-              <div className="flex items-center space-x-2">
-                <select
-                  value={bulkAction}
-                  onChange={(e) => setBulkAction(e.target.value)}
-                  className="block w-40 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                >
-                  <option value="">Choose action...</option>
-                  <option value="activate">Activate</option>
-                  <option value="deactivate">Deactivate</option>
-                  <option value="delete">Delete</option>
-                </select>
-                <button
-                  onClick={handleBulkAction}
-                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  Apply
-                </button>
-                <button
-                  onClick={() => setSelectedUsers([])}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  Clear Selection
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          <span className="text-sm font-medium text-green-800">
+            {selectedUsers.length} selected
+          </span>
+          <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-green-500">
+            <option value="">Choose action…</option>
+            <option value="activate">Activate</option>
+            <option value="deactivate">Deactivate</option>
+            <option value="delete">Delete</option>
+          </select>
+          <button onClick={() => {
+            if (!bulkAction) { flash("Please select an action.", "error"); return; }
+            setBulkModal(true);
+          }}
+            className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
+            Apply
+          </button>
+          <button onClick={() => setSelected([])}
+            className="px-3 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50">
+            Clear
+          </button>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Name, email, or phone..."
-                className="block w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
+          <div className="relative sm:col-span-2">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input value={searchTerm}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Name, email or phone…"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-xl
+                         focus:ring-2 focus:ring-green-500 focus:border-transparent" />
           </div>
-
-          {/* Role Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
-            >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="seller">Seller</option>
-              <option value="buyer">Buyer</option>
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Reset Filters */}
-          <div className="flex items-end">
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setRoleFilter("all");
-                setStatusFilter("all");
-                setCurrentPage(1);
-              }}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              <FunnelIcon className="h-4 w-4 mr-2" />
-              Reset Filters
-            </button>
-          </div>
+          {/* Role */}
+          <select value={roleFilter} onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500">
+            <option value="all">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="seller">Seller</option>
+            <option value="buyer">Buyer</option>
+          </select>
+          {/* Status */}
+          <select value={statusFilter} onChange={e => { setStatus(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
 
-        {/* Stats */}
         {pagination && (
-          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
-            <span>Total: {pagination.total}</span>
-            <span>•</span>
-            <span>Showing {pagination.from}–{pagination.to}</span>
+          <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+            <span>{pagination.total} users</span>
+            {pagination.from && <><span>·</span><span>Showing {pagination.from}–{pagination.to}</span></>}
+            <button onClick={() => { setSearch(""); setRoleFilter("all"); setStatus("all"); setPage(1); }}
+              className="ml-auto flex items-center gap-1 text-gray-500 hover:text-gray-700 text-xs">
+              <FunnelIcon className="h-3.5 w-3.5" /> Reset
+            </button>
           </div>
         )}
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
-          <p className="text-gray-600">Loading users...</p>
-        </div>
-      )}
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center py-14">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" />
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center text-red-600 text-sm">
+            {error}
+            <button onClick={() => fetchUsers(page)} className="ml-2 underline">Retry</button>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="py-14 text-center text-gray-400 text-sm">
+            <UserCircleIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            {searchTerm || roleFilter !== "all" || statusFilter !== "all"
+              ? "No users match your filters."
+              : "No users yet."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input type="checkbox"
+                      checked={selectedUsers.length === users.length && users.length > 0}
+                      onChange={toggleAll}
+                      className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                  </th>
+                  {["Name", "Email / Phone", "Role", "Status", "Joined", "Actions"].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {users.map(u => {
+                  const role    = deriveRole(u);
+                  const isMe    = u.id === adminUser?.id;
+                  return (
+                    <tr key={u.id} className={`transition-colors ${isMe ? "bg-green-50/40" : "hover:bg-gray-50"}`}>
+                      <td className="px-4 py-3">
+                        <input type="checkbox"
+                          checked={selectedUsers.includes(u.id)}
+                          onChange={() => setSelected(prev =>
+                            prev.includes(u.id) ? prev.filter(id => id !== u.id) : [...prev, u.id]
+                          )}
+                          className="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                      </td>
 
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading users</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={() => fetchUsers(currentPage, searchTerm, roleFilter, statusFilter)}
-                  className="text-sm font-medium text-red-600 hover:text-red-500"
-                >
-                  Try again
-                </button>
-              </div>
+                      {/* Name + avatar */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                            {u.profile_photo
+                              ? <img src={u.profile_photo} alt="" className="w-full h-full object-cover" />
+                              : <span className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500">
+                                  {u.name?.[0]?.toUpperCase() || "?"}
+                                </span>
+                            }
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 flex items-center gap-1">
+                              {u.name}
+                              {isMe && <ShieldCheckIcon className="h-3.5 w-3.5 text-green-600" title="You" />}
+                            </p>
+                            <p className="text-[11px] text-gray-400">{u.user_id || `#${u.id}`}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Email / Phone */}
+                      <td className="px-4 py-3 text-gray-600">
+                        <p className="truncate max-w-[180px]">{u.email || "—"}</p>
+                        <p className="text-[11px] text-gray-400">{u.phone || "—"}</p>
+                      </td>
+
+                      {/* Role — select to change, with self-protection */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <RoleBadge role={role} />
+                          <select
+                            value={role}
+                            onChange={e => handleRoleChange(u, e.target.value)}
+                            disabled={isMe}
+                            title={isMe ? "Cannot change your own role" : "Change role"}
+                            className="text-xs border border-gray-200 rounded-lg px-1.5 py-0.5
+                                       focus:ring-1 focus:ring-green-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <option value="admin">Admin</option>
+                            <option value="seller">Seller</option>
+                            <option value="buyer">Buyer</option>
+                          </select>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge active={u.is_active} />
+                          <button
+                            onClick={() => handleStatusChange(u.id, !u.is_active)}
+                            className="text-[11px] text-gray-400 hover:text-gray-600 underline"
+                          >
+                            {u.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Joined */}
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </td>
+
+                      {/* Delete */}
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setDeleteTarget(u)}
+                          disabled={isMe}
+                          title={isMe ? "Cannot delete yourself" : "Delete user"}
+                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg
+                                     transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && pagination && pagination.last_page > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
+            <span className="text-gray-400 text-xs">
+              Page {pagination.current_page} of {pagination.last_page}
+            </span>
+            <div className="flex gap-1">
+              <button disabled={pagination.current_page === 1}
+                onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1 border border-gray-200 rounded-lg text-xs disabled:opacity-40 hover:bg-gray-50">
+                Previous
+              </button>
+              <button disabled={pagination.current_page === pagination.last_page}
+                onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1 border border-gray-200 rounded-lg text-xs disabled:opacity-40 hover:bg-gray-50">
+                Next
+              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Users Table */}
-      {!loading && !error && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          {userData.length > 0 ? (
-            <DataTable
-              columns={columns}
-              data={userData}
-              // If DataTable supports sorting, we can add sorting handlers
-            />
-          ) : (
-            <div className="p-12 text-center">
-              <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm || roleFilter !== "all" || statusFilter !== "all"
-                  ? "No users found matching your criteria"
-                  : "No users yet"}
-              </h3>
-              <p className="text-gray-500">
-                {searchTerm || roleFilter !== "all" || statusFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Users will appear here once they register."}
-              </p>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {pagination && pagination.last_page > 1 && (
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Page {pagination.current_page} of {pagination.last_page}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  disabled={pagination.current_page === 1}
-                  onClick={() => setCurrentPage(pagination.current_page - 1)}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  disabled={pagination.current_page === pagination.last_page}
-                  onClick={() => setCurrentPage(pagination.current_page + 1)}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
