@@ -117,6 +117,36 @@ ChartJS.register(
 
 const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const { t } = useTranslation();
+  const [deliveryFees, setDeliveryFees] = useState([]);
+  const [feeSubmitting, setFeeSubmitting] = useState(null); // deliveryId
+  const [feeNote, setFeeNote] = useState('');
+  const [feeToast, setFeeToast] = useState(null);
+
+  const flashFee = (msg, type = 'success') => {
+    setFeeToast({ msg, type });
+    setTimeout(() => setFeeToast(null), 3500);
+  };
+
+  const fetchDeliveryFees = async () => {
+    try {
+      const res = await api.get('/deliveries', { params: { delivery_method: 'platform', per_page: 50 } });
+      const items = res.data?.data?.data ?? res.data?.data ?? [];
+      setDeliveryFees(Array.isArray(items) ? items : []);
+    } catch {}
+  };
+
+  const handleSubmitFee = async (deliveryId) => {
+    setFeeSubmitting(deliveryId);
+    try {
+      await api.patch(`/deliveries/${deliveryId}/submit-fee`, { note: feeNote || 'Delivery fee paid.' });
+      flashFee('Fee submission sent to admin!');
+      setFeeNote('');
+      fetchDeliveryFees();
+    } catch (err) {
+      flashFee(err.response?.data?.message || 'Failed to submit fee.', 'error');
+    } finally { setFeeSubmitting(null); }
+  };
+
   const [dashboardData, setDashboardData] = useState({
     orders: { total: 0, byStatus: {}, recent: [] },
     sales: { totalRevenue: 0, monthlyTrend: [], averageOrderValue: 0 },
@@ -273,6 +303,9 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
           }
         }));
       }
+
+      // Load platform delivery fees (seller must confirm payment to admin)
+      await fetchDeliveryFees().catch(() => {});
 
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
@@ -543,6 +576,87 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* Tier & Commission */}
       {storeData && <TierCard storeData={storeData} />}
+
+      {/* ── Telegram Community ── */}
+      <a
+        href="https://t.me/pyonea_community"
+        target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm transition-colors w-full sm:w-fit"
+      >
+        <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        <div>
+          <p className="text-sm font-bold leading-none">Join Pyonea Community</p>
+          <p className="text-[11px] text-sky-100 mt-0.5">t.me/pyonea_community</p>
+        </div>
+      </a>
+
+      {/* ── Delivery Fee Confirmation Panel ── */}
+      {deliveryFees.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Platform Delivery Fees</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Submit fee confirmation to admin once you have paid the delivery fee.
+              </p>
+            </div>
+            {feeToast && (
+              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+                feeToast.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
+              }`}>{feeToast.msg}</span>
+            )}
+          </div>
+          <div className="divide-y divide-gray-50">
+            {deliveryFees.map(d => {
+              const alreadySubmitted = !!d.fee_submitted_at;
+              const confirmed = !!d.fee_confirmed_at;
+              return (
+                <div key={d.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      Order #{d.order?.order_number ?? d.order_id}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Fee: <strong className="text-green-700">
+                        {new Intl.NumberFormat('my-MM', { style: 'currency', currency: 'MMK', minimumFractionDigits: 0 }).format(d.platform_delivery_fee ?? 0)}
+                      </strong>
+                      {' · '}
+                      Status: <span className={`font-semibold capitalize ${
+                        confirmed ? 'text-green-600' : alreadySubmitted ? 'text-blue-600' : 'text-gray-500'
+                      }`}>
+                        {confirmed ? '✓ Confirmed by admin' : alreadySubmitted ? '⏳ Awaiting admin confirmation' : 'Not submitted'}
+                      </span>
+                    </p>
+                  </div>
+                  {!alreadySubmitted && !confirmed && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <input
+                        type="text"
+                        value={feeNote}
+                        onChange={e => setFeeNote(e.target.value)}
+                        placeholder="Optional note…"
+                        className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-36 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={() => handleSubmitFee(d.id)}
+                        disabled={feeSubmitting === d.id}
+                        className="text-xs font-semibold px-4 py-1.5 bg-green-600 text-white rounded-xl
+                                   hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+                      >
+                        {feeSubmitting === d.id ? 'Submitting…' : 'Submit Payment'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

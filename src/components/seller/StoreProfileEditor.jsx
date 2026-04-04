@@ -10,6 +10,7 @@ import {
   TrashIcon, XMarkIcon, EyeIcon, BellIcon
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import NotificationPreferences from '../Shared/NotificationPreferences';
 
@@ -194,6 +195,22 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
   const [uploading, setUploading] = useState('');
   const [toast, setToast]     = useState({ msg:'', type:'success' });
   const [docUploading, setDocUploading] = useState('');
+  const { user } = useAuth();
+  const [notifPrefs, setNotifPrefs] = useState(null); // null = not yet fetched
+
+  // Fetch notification preferences directly from API when notifications tab is opened.
+  // We don't rely on user?.notification_preferences from the auth context because
+  // it may have been stripped by UserResource before our fix is deployed everywhere.
+  const fetchNotifPrefs = async () => {
+    if (notifPrefs !== null) return; // already fetched
+    try {
+      const res = await api.get('/auth/me');
+      const prefs = res.data?.data?.notification_preferences ?? {};
+      setNotifPrefs(prefs);
+    } catch {
+      setNotifPrefs({}); // fall back to defaults
+    }
+  };
 
   const flash = (msg, type='success') => {
     setToast({ msg, type });
@@ -418,7 +435,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── Tab Bar ─────────────────────────────────────────────────────── */}
       <div className="flex overflow-x-auto gap-1 pb-1 mb-6 border-b border-gray-100 scrollbar-hide">
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button key={t.id} onClick={() => { setTab(t.id); if (t.id === 'notifications') fetchNotifPrefs(); }}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap flex-shrink-0 transition-colors
               ${tab === t.id ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
             <t.icon className="h-4 w-4 flex-shrink-0"/>
@@ -695,6 +712,28 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
                 {storeData.verification_notes && ` — ${storeData.verification_notes}`}
               </span>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── NOTIFICATIONS ───────────────────────────────────────────────── */}
+      {tab === 'notifications' && (
+        <div className="max-w-lg space-y-5">
+          <p className="text-sm text-gray-500">
+            Choose which emails Pyonea sends you. These settings are saved to your account
+            and persist across devices.
+          </p>
+          {notifPrefs === null ? (
+            // still loading — show spinner
+            <div className="flex justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" />
+            </div>
+          ) : (
+            <NotificationPreferences
+              userType="seller"
+              initialPrefs={notifPrefs}
+              onSaved={(saved) => setNotifPrefs(saved)}
+            />
           )}
         </div>
       )}

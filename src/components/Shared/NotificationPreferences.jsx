@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircleIcon, BellIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 
@@ -71,6 +71,15 @@ const Toggle = ({ checked, onChange, disabled }) => (
 
 const NotificationPreferences = ({ userType = 'buyer', initialPrefs = {}, onSaved }) => {
   const [prefs,   setPrefs]   = useState({ ...DEFAULT_PREFS, ...initialPrefs });
+
+  // Sync when parent finishes loading real preferences from the server.
+  // useState ignores prop changes after mount — this effect catches late-arriving data.
+  // We use a stable JSON key so it only fires when the actual values change.
+  useEffect(() => {
+    if (!initialPrefs || Object.keys(initialPrefs).length === 0) return;
+    setPrefs(p => ({ ...DEFAULT_PREFS, ...initialPrefs }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialPrefs)]);
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState('');

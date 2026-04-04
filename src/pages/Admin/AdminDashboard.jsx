@@ -196,6 +196,140 @@ const AdminProfileTab = () => {
   );
 };
 
+
+// ── Inline DeliveryFeeReview — admin confirms seller delivery fee payments ─────
+const DeliveryFeeReview = () => {
+  const [fees, setFees] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [toast, setToast] = React.useState(null);
+  const [confirming, setConfirming] = React.useState(null);
+  const [note, setNote] = React.useState('');
+
+  const flash = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const fmtMMK = (n) =>
+    new Intl.NumberFormat('my-MM', { style: 'currency', currency: 'MMK', minimumFractionDigits: 0 }).format(n || 0);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await import('../../utils/api').then(m => m.default.get('/admin/delivery-fees/pending'));
+      setFees(res.data?.data ?? []);
+    } catch { setFees([]); }
+    finally { setLoading(false); }
+  }, []);
+
+  React.useEffect(() => { load(); }, [load]);
+
+  const confirmFee = async (id) => {
+    setConfirming(id);
+    try {
+      const api = (await import('../../utils/api')).default;
+      await api.patch(`/admin/deliveries/${id}/confirm-fee`, { note: note || 'Confirmed by admin.' });
+      flash('Fee confirmed!');
+      setNote('');
+      load();
+    } catch (err) {
+      flash(err.response?.data?.message || 'Failed to confirm.', 'error');
+    } finally { setConfirming(null); }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Delivery Fee Confirmations</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Sellers have submitted delivery fee payment — confirm receipt below.
+          </p>
+        </div>
+        <button onClick={load} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+
+      {toast && (
+        <div className={`p-3 rounded-xl text-sm font-medium ${
+          toast.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>{toast.msg}</div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" />
+        </div>
+      ) : fees.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400">
+          <svg className="h-10 w-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm">No pending delivery fee confirmations.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Order #', 'Seller', 'Delivery Fee', 'Submitted At', 'Seller Note', 'Action'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {fees.map(d => (
+                  <tr key={d.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      #{d.order?.order_number ?? d.order_id}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {d.supplier?.name ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-green-700 whitespace-nowrap">
+                      {fmtMMK(d.platform_delivery_fee)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                      {d.fee_submitted_at ? new Date(d.fee_submitted_at).toLocaleString() : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[160px] truncate">
+                      {d.fee_submission_note ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={confirming === d.id ? note : ''}
+                          onChange={e => setNote(e.target.value)}
+                          onClick={() => setConfirming(d.id)}
+                          placeholder="Note (optional)"
+                          className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-32 focus:ring-2 focus:ring-green-500"
+                        />
+                        <button
+                          onClick={() => confirmFee(d.id)}
+                          disabled={confirming === d.id}
+                          className="text-xs font-semibold px-3 py-1.5 bg-green-600 text-white rounded-xl
+                                     hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+                        >
+                          {confirming === d.id ? 'Confirming…' : '✓ Confirm'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -332,6 +466,11 @@ const AdminDashboard = () => {
       name: "Platform Logistics",
       icon: TruckIcon,
       component: <PlatformLogistics />
+    },
+    {
+      name: "Delivery Fees",
+      icon: CurrencyDollarIcon,
+      component: <DeliveryFeeReview />
     },
     {
       name: "Categories",

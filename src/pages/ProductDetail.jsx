@@ -30,6 +30,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [reviewText, setReviewText] = useState("");
+  const [reviewFlash, setReviewFlash] = useState(null);
+  const flash = (msg, type = "success") => { setReviewFlash({ msg, type }); setTimeout(() => setReviewFlash(null), 3500); };
   const [rating, setRating] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -91,7 +93,11 @@ const ProductDetail = () => {
           average_rating: parseFloat(productData.average_rating) || 0,
         });
 
-        setReviews(productResponse.data.data.reviews || []);
+        // Reviews come from a separate endpoint — not embedded in ProductResource
+        try {
+          const reviewsRes = await api.get(`/reviews/products/${productData.id}`);
+          setReviews(reviewsRes.data.data || []);
+        } catch { setReviews([]); }
 
         // Wishlist check (only for buyers)
         if (user && user.role === "buyer") {
@@ -196,7 +202,7 @@ const ProductDetail = () => {
     }
 
     if (user.role === "admin" || user.role === "seller") {
-      alert("Admins and sellers cannot write reviews");
+      flash("Only buyers can write reviews.", "error"); return;
       return;
     }
 
@@ -212,7 +218,7 @@ const ProductDetail = () => {
     }
 
     if (rating === 0) {
-      alert("Please select a rating");
+      flash("Please select a star rating.", "error"); return;
       return;
     }
 
@@ -241,7 +247,7 @@ const ProductDetail = () => {
       setSuccessMessage(response.data.message || "Review submitted successfully!");
     } catch (error) {
       console.error("Failed to submit review:", error);
-      alert(error.response?.data?.message || "Failed to submit review");
+      flash(error.response?.data?.message || "Failed to submit review.", "error");
     } finally {
       setSubmittingReview(false);
     }

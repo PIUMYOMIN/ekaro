@@ -38,6 +38,7 @@ const AnnouncementManagement = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [removeImage, setRemoveImage]   = useState(false);
   const [fieldErrors, setFieldErrors]   = useState({});
+  const [deleteTarget, setDeleteTarget]   = useState(null);
 
   const flash = (msg, type = 'success') => {
     if (type === 'success') setSuccess(msg);
@@ -133,7 +134,9 @@ const AnnouncementManagement = () => {
 
       let res;
       if (editing) {
-        res = await api.put(`/admin/announcements/${editing.id}`, fd, {
+        // PHP/Laravel cannot parse FormData on PUT — use POST with _method spoofing
+        fd.append('_method', 'PUT');
+        res = await api.post(`/admin/announcements/${editing.id}`, fd, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
@@ -157,10 +160,15 @@ const AnnouncementManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this announcement?')) return;
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/admin/announcements/${id}`);
+      await api.delete(`/admin/announcements/${deleteTarget}`);
       flash('Deleted.');
+      setDeleteTarget(null);
       fetch();
     } catch { flash('Failed to delete.', 'error'); }
   };
@@ -202,6 +210,26 @@ const AnnouncementManagement = () => {
 
   return (
     <div className="space-y-5">
+
+      {/* ── Delete confirm modal ── */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold text-gray-900 mb-2">Delete Announcement</h3>
+            <p className="text-sm text-gray-600 mb-6">Are you sure? This cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
