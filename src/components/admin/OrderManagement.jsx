@@ -120,11 +120,13 @@ const OrderManagement = () => {
 
   const updateStatus = async (orderId, status) => {
     try {
-      const map = { confirmed: "confirm", shipped: "ship", cancelled: "cancel" };
-      if (map[status]) {
-        await api.post(`/orders/${orderId}/${map[status]}`);
+      // Dedicated action routes for specific transitions
+      const actionMap = { confirmed: "confirm", shipped: "ship", cancelled: "cancel" };
+      if (actionMap[status]) {
+        await api.post(`/orders/${orderId}/${actionMap[status]}`);
       } else {
-        await api.put(`/orders/${orderId}`, { status });
+        // Admin generic status update (processing, delivered, etc.)
+        await api.patch(`/orders/${orderId}/status`, { status });
       }
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
       flash("Order status updated.");

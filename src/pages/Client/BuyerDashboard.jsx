@@ -10,11 +10,12 @@ import {
   ClockIcon, XCircleIcon, HeartIcon, CogIcon, ChartBarIcon, HomeIcon,
   DocumentTextIcon, BuildingStorefrontIcon, PencilSquareIcon,
   ArrowPathIcon, ExclamationTriangleIcon, TrashIcon, DocumentArrowDownIcon,
-  ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon, BellIcon
+  ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon, BellIcon, GiftIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
 import NotificationPreferences from "../../components/Shared/NotificationPreferences";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
+import ReferralPanel from "../../components/Shared/ReferralPanel";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -62,18 +63,73 @@ const StatusBadge = ({ status }) => {
 // Opens a new browser window with a fully formatted receipt and triggers print.
 // The browser print dialog allows "Save as PDF" on all platforms — no external
 // library required.
-const generatePaySlipHTML = (order) => {
+const generatePaySlipHTML = (order, delivery = null) => {
   const addr = typeof order.shipping_address === "string"
     ? JSON.parse(order.shipping_address) : (order.shipping_address || {});
 
   const payMethodLabel = {
-    kbz_pay: "KBZ Pay",
-    wave_pay: "Wave Money",
-    cb_pay: "CB Pay",
-    aya_pay: "AYA Pay",
-    mmqr: "MMQR",
-    cash_on_delivery: "Cash on Delivery",
+    kbz_pay: "KBZ Pay", wave_pay: "Wave Money", cb_pay: "CB Pay",
+    aya_pay: "AYA Pay", mmqr: "MMQR", cash_on_delivery: "Cash on Delivery",
   };
+
+  // ── Payment status logic ──────────────────────────────────────────────────
+  // COD orders are "paid" when delivered — show green "Confirmed on Delivery"
+  const isCOD      = order.payment_method === "cash_on_delivery";
+  const isDelivered = order.status === "delivered";
+  const isPaid      = order.payment_status === "paid";
+  const codConfirmed = isCOD && isDelivered;
+
+  const payStatusLabel = codConfirmed
+    ? "Confirmed on Delivery"
+    : isPaid
+      ? "Paid"
+      : isCOD
+        ? "Payable on Delivery"
+        : (order.payment_status || "Pending");
+
+  const payStatusColor = (codConfirmed || isPaid)
+    ? { bg: "#dcfce7", text: "#15803d" }
+    : isCOD
+      ? { bg: "#dbeafe", text: "#1d4ed8" }
+      : { bg: "#fef3c7", text: "#92400e" };
+
+  // ── Delivery status section ──────────────────────────────────────────────
+  const deliveryStatusLabel = {
+    pending:          "Pending",
+    awaiting_pickup:  "Awaiting Pickup",
+    picked_up:        "Picked Up",
+    in_transit:       "In Transit",
+    out_for_delivery: "Out for Delivery",
+    delivered:        "Delivered",
+    failed:           "Failed",
+    cancelled:        "Cancelled",
+  };
+
+  const deliverySection = delivery ? `
+  <div class="section">
+    <h4>Delivery Information</h4>
+    <table class="data-table">
+      <tr>
+        <td class="label">Delivery Status</td>
+        <td><span class="status-badge" style="background:${
+          delivery.status === "delivered" ? "#dcfce7" : "#dbeafe"
+        };color:${
+          delivery.status === "delivered" ? "#15803d" : "#1d4ed8"
+        }">${deliveryStatusLabel[delivery.status] || delivery.status}</span></td>
+      </tr>
+      <tr>
+        <td class="label">Method</td>
+        <td>${delivery.delivery_method === "platform" ? "Platform Logistics" : "Seller Self-Delivery"}</td>
+      </tr>
+      ${delivery.tracking_number ? `<tr><td class="label">Tracking #</td><td class="mono">${delivery.tracking_number}</td></tr>` : ""}
+      ${delivery.assigned_driver_name ? `<tr><td class="label">Driver</td><td>${delivery.assigned_driver_name}${delivery.assigned_driver_phone ? ` · ${delivery.assigned_driver_phone}` : ""}</td></tr>` : ""}
+      ${delivery.delivered_at ? `<tr><td class="label">Delivered At</td><td>${formatDateTime(delivery.delivered_at)}</td></tr>` : ""}
+    </table>
+  </div>` : (isDelivered ? `
+  <div class="section">
+    <h4>Delivery Information</h4>
+    <p style="color:#15803d;font-weight:600">✓ Delivered on ${order.delivered_at ? formatDateTime(order.delivered_at) : formatDate(order.updated_at)}</p>
+  </div>` : "");
 
   const itemRows = (order.items || []).map((item) => `
     <tr>
@@ -85,6 +141,9 @@ const generatePaySlipHTML = (order) => {
       <td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f0f0f0">${formatMMK(item.price)}</td>
       <td style="padding:8px 12px;text-align:right;border-bottom:1px solid #f0f0f0;font-weight:500">${formatMMK(item.subtotal)}</td>
     </tr>`).join("");
+
+  // Store name — now comes from order.store_name (mapped by backend) or order.seller?.store_name
+  const storeName = order.store_name || order.seller?.store_name || order.seller?.sellerProfile?.store_name || null;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -106,17 +165,23 @@ const generatePaySlipHTML = (order) => {
   .info-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; }
   .info-box h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; font-weight: 600; margin-bottom: 8px; }
   .info-box p { font-size: 13px; color: #111; margin-bottom: 2px; }
-  .info-box .label { font-size: 11px; color: #6b7280; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 600; }
-  thead th:not(:first-child) { text-align: right; }
-  thead th:nth-child(2) { text-align: center; }
+  .info-box .label { font-size: 11px; color: #6b7280; margin-top: 6px; }
+  .section { margin-bottom: 20px; }
+  .section h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 4px 0; }
+  .data-table td { padding: 5px 0; vertical-align: top; }
+  .data-table .label { color: #6b7280; width: 40%; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  table.items thead th { background: #f3f4f6; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 600; }
+  table.items thead th:not(:first-child) { text-align: right; }
+  table.items thead th:nth-child(2) { text-align: center; }
   .totals { margin-left: auto; width: 260px; }
   .totals-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: #374151; }
   .totals-row.total { border-top: 2px solid #16a34a; margin-top: 6px; padding-top: 10px; font-size: 15px; font-weight: 700; color: #16a34a; }
-  .payment-badge { display: inline-block; background: ${order.payment_status === "paid" ? "#dcfce7" : "#fef3c7"}; color: ${order.payment_status === "paid" ? "#15803d" : "#92400e"}; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .mono { font-family: 'Courier New', monospace; font-size: 12px; }
   .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 11px; color: #9ca3af; }
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
 <body>
@@ -144,17 +209,19 @@ const generatePaySlipHTML = (order) => {
     </div>
     <div class="info-box">
       <h4>Order Details</h4>
-      <div class="label">Status</div>
-      <p style="font-weight:600;text-transform:capitalize">${order.status}</p>
-      <div class="label" style="margin-top:6px">Payment Method</div>
+      <div class="label">Order Status</div>
+      <p style="font-weight:600;text-transform:capitalize">${(order.status || "").replace(/_/g, " ")}</p>
+      <div class="label">Payment Method</div>
       <p>${payMethodLabel[order.payment_method] || order.payment_method || "—"}</p>
-      <div class="label" style="margin-top:6px">Payment Status</div>
-      <p><span class="payment-badge">${order.payment_status || "pending"}</span></p>
-      ${order.seller?.store_name ? `<div class="label" style="margin-top:6px">Sold By</div><p>${order.seller.store_name}</p>` : ""}
+      <div class="label">Payment Status</div>
+      <p><span class="status-badge" style="background:${payStatusColor.bg};color:${payStatusColor.text}">${payStatusLabel}</span></p>
+      ${storeName ? `<div class="label">Sold By</div><p style="font-weight:500">${storeName}</p>` : ""}
     </div>
   </div>
 
-  <table>
+  ${deliverySection}
+
+  <table class="items">
     <thead>
       <tr>
         <th>Item</th>
@@ -184,10 +251,10 @@ const generatePaySlipHTML = (order) => {
 </html>`;
 };
 
-const downloadPaySlip = (order) => {
+const downloadPaySlip = (order, delivery = null) => {
   const win = window.open("", "_blank", "width=720,height=900");
   if (!win) return; // popup blocked
-  win.document.write(generatePaySlipHTML(order));
+  win.document.write(generatePaySlipHTML(order, delivery));
   win.document.close();
 };
 
@@ -209,9 +276,10 @@ const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
             <div>
               <h3 className="font-medium text-gray-900 text-sm">Order #{order.order_number}</h3>
               <p className="text-xs text-gray-500 mt-0.5">{order.items?.length} item(s) · {formatDate(order.created_at)}</p>
-              {order.seller?.store_name && (
+              {(order.store_name || order.seller?.store_name) && (
                 <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                  <BuildingStorefrontIcon className="h-3 w-3" />{order.seller.store_name}
+                  <BuildingStorefrontIcon className="h-3 w-3" />
+                  {order.store_name || order.seller?.store_name}
                 </p>
               )}
             </div>
@@ -299,7 +367,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               <StatusBadge status={order.status} />
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => downloadPaySlip(order)}
+              <button onClick={() => downloadPaySlip(order, delivery)}
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100">
                 <PrinterIcon className="h-3.5 w-3.5" />Pay Slip
               </button>
@@ -413,7 +481,19 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between"><span className="text-gray-600">Method</span><span className="font-medium capitalize">{(order.payment_method || "").replaceAll("_"," ")}</span></div>
                   <div className="flex justify-between"><span className="text-gray-600">Status</span>
-                    <span className={`font-medium ${order.payment_status === "paid" ? "text-green-600" : "text-yellow-600"}`}>{order.payment_status}</span>
+                    <span className={`font-medium ${
+                      order.payment_status === "paid" || (order.payment_method === "cash_on_delivery" && order.status === "delivered")
+                        ? "text-green-600"
+                        : order.payment_method === "cash_on_delivery"
+                          ? "text-blue-600"
+                          : "text-yellow-600"
+                    }`}>
+                      {order.payment_method === "cash_on_delivery" && order.status === "delivered"
+                        ? "Confirmed on Delivery"
+                        : order.payment_method === "cash_on_delivery" && order.payment_status !== "paid"
+                          ? "Payable on Delivery"
+                          : order.payment_status}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -433,7 +513,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
           </div>
 
           <div className="px-6 py-4 bg-gray-50 flex justify-end gap-2 border-t">
-            <button onClick={() => downloadPaySlip(order)}
+            <button onClick={() => downloadPaySlip(order, delivery)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">
               <DocumentArrowDownIcon className="h-4 w-4" />Download Pay Slip
             </button>
@@ -620,7 +700,7 @@ const PurchaseHistoryTab = ({ orders }) => {
                     <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">#{o.order_number || o.id}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(o.created_at)}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap max-w-[120px] truncate">
-                      {o.seller?.store_name || "—"}
+                      {o.store_name || o.seller?.store_name || "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{o.items?.length || 0}</td>
                     <td className="px-4 py-3 font-semibold text-green-600 whitespace-nowrap">{formatMMK(o.total_amount)}</td>
@@ -1113,6 +1193,7 @@ const BuyerDashboard = () => {
     { id: "profile",    label: t("buyer_dashboard.profile"),       Icon: UserIcon          },
     { id: "settings",   label: t("buyer_dashboard.settings"),      Icon: CogIcon           },
     { id: "notifications", label: "Notifications",                     Icon: BellIcon          },
+    { id: "referrals",     label: "Referrals",                         Icon: GiftIcon          },
   ], [t]);
 
   const fetchOrders = useCallback(async () => {
@@ -1164,6 +1245,7 @@ const BuyerDashboard = () => {
       case "profile":   return <ProfileTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
       case "settings":      return <SettingsTab user={user} />;
       case "notifications": return <NotificationsPanel />;
+      case "referrals":     return <ReferralPanel />;
       default:              return null;
     }
   };

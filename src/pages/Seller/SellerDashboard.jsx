@@ -18,6 +18,7 @@ import {
   PencilIcon,
   TicketIcon,
   UserCircleIcon,
+  GiftIcon
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
@@ -38,6 +39,7 @@ import CouponManagement from "../../components/seller/CouponManagement";
 import EditStore from "../../components/seller/EditStore";
 import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
+import ReferralPanel from "../../components/Shared/ReferralPanel";
 import ShippingSettings from "../../components/seller/ShippingSettings";
 
 function classNames(...classes) {
@@ -226,8 +228,9 @@ const SellerDashboard = () => {
     { name: t("seller.reviews.title"),  icon: StarIcon,               key: "reviews" },
     { name: t("seller.customers"),      icon: UserGroupIcon,          key: "customers" },
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
-    { name: t("seller.settings"),       icon: CogIcon,                key: "settings" },
-    { name: "Shipping Settings",          icon: TruckIcon,              key: "shipping" },
+    { name: t("seller.settings"), icon: CogIcon, key: "settings" },
+    { name: "Referrals", icon: GiftIcon, key: "referrals" },
+    { name: "Shipping Settings", icon: TruckIcon, key: "shipping" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
   ], [t]);
 
@@ -249,8 +252,9 @@ const SellerDashboard = () => {
       case "reviews":     return <ProductReviewManagement />;
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
-      case "settings":    return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
-      case "shipping":    return <ShippingSettings />;
+      case "settings": return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
+      case "referrals": return <ReferralPanel />;
+      case "shipping":    return <ShippingSettings storeData={storeData} />;
       case "profile":        return <SellerProfileTab />;
       default:               return null;
     }

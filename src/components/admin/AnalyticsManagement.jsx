@@ -13,20 +13,31 @@ const fmtK = (n) => {
   if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return v.toLocaleString();
 };
-const fmtMMK = (n) => `${fmtK(n)} MMK`;
 const fullMMK = (n) =>
   new Intl.NumberFormat("my-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 })
     .format(Number(n) || 0);
+const fmtMMK = (n) => `${fmtK(n)} MMK`;
 
-// ── KPI card ──────────────────────────────────────────────────────────────────
-const KPI = ({ label, value, color, bg }) => (
-  <div className={`rounded-xl p-4 ${bg}`}>
+// ── KPI Card ──────────────────────────────────────────────────────────────────
+const KPI = ({ label, value, sub, color, bg }) => (
+  <div className={`${bg} rounded-xl p-4`}>
     <p className="text-xs font-medium text-gray-500">{label}</p>
-    <p className={`text-lg font-bold ${color} mt-1 break-all`}>{value}</p>
+    <p className={`text-xl font-bold ${color} mt-1 break-all`}>{value}</p>
+    {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
   </div>
 );
 
-// ── Export button (no alert — uses inline error) ──────────────────────────────
+// ── Export CSV ────────────────────────────────────────────────────────────────
+const exportCSV = (filename, headers, rows) => {
+  const lines = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 const ExportBtn = ({ label, onClick, disabled }) => (
   <button onClick={onClick} disabled={disabled}
     className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white
@@ -41,45 +52,30 @@ const ExportBtn = ({ label, onClick, disabled }) => (
 
 // ── Main component ────────────────────────────────────────────────────────────
 const AnalyticsManagement = () => {
-  const [stats,    setStats]    = useState(null);   // from /admin/stats
-  const [monthly,  setMonthly]  = useState([]);     // from /admin/monthly-revenue
-  const [commissions, setComm]  = useState([]);     // from /admin/commission-summary
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState("");
+  const [stats,     setStats]     = useState(null);
+  const [breakdown, setBreakdown] = useState([]); // monthly platform revenue breakdown
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState("");
   const [exportErr, setExportErr] = useState("");
   const [exporting, setExporting] = useState("");
 
-  // ── Fetch all three endpoints in parallel ─────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [statsRes, monthlyRes, commRes] = await Promise.allSettled([
+      const [statsRes, breakdownRes] = await Promise.allSettled([
         api.get("/admin/stats"),
-        api.get("/admin/monthly-revenue"),
-        api.get("/admin/commission-summary"),
+        api.get("/admin/revenue-breakdown"),
       ]);
 
       if (statsRes.status === "fulfilled" && statsRes.value.data.success) {
         setStats(statsRes.value.data.data);
       }
-      if (monthlyRes.status === "fulfilled" && monthlyRes.value.data.success) {
-        const raw = monthlyRes.value.data.data || [];
-        setMonthly(raw.map(r => ({
-          month:      r.month,
-          revenue:    Number(r.revenue) || 0,
-        })));
-      }
-      if (commRes.status === "fulfilled" && commRes.value.data.success) {
-        const raw = commRes.value.data.data || [];
-        setComm(raw.map(r => ({
-          month:    r.month,
-          paid:     Number(r.paid_commissions)    || 0,
-          pending:  Number(r.pending_commissions) || 0,
-        })));
+      if (breakdownRes.status === "fulfilled" && breakdownRes.value.data.success) {
+        setBreakdown(breakdownRes.value.data.data || []);
       }
     } catch {
-      setError("Failed to load analytics. Please refresh.");
+      setError("Failed to load analytics.");
     } finally {
       setLoading(false);
     }
@@ -87,18 +83,8 @@ const AnalyticsManagement = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ── CSV export (no xlsx dependency needed for simple export) ─────────────
-  const exportCSV = (filename, headers, rows) => {
-    const lines = [headers.join(","), ...rows.map(r => r.map(v => `"${v}"`).join(","))];
-    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  const doExport = async (key, fn) => {
+  // ── Exports ───────────────────────────────────────────────────────────────
+  const doExport = (key, fn) => {
     setExporting(key);
     setExportErr("");
     try { fn(); }
@@ -106,50 +92,38 @@ const AnalyticsManagement = () => {
     finally { setExporting(""); }
   };
 
-  const exportMonthly = () => doExport("monthly", () =>
+  const exportBreakdown = () => doExport("breakdown", () =>
     exportCSV(
-      `pyonea-monthly-revenue-${new Date().toISOString().slice(0,10)}.csv`,
-      ["Month", "Revenue (MMK)"],
-      monthly.map(r => [r.month, r.revenue])
-    )
-  );
-
-  const exportCommissions = () => doExport("commissions", () =>
-    exportCSV(
-      `pyonea-commissions-${new Date().toISOString().slice(0,10)}.csv`,
-      ["Month", "Paid (MMK)", "Pending (MMK)"],
-      commissions.map(r => [r.month, r.paid, r.pending])
+      `pyonea-platform-revenue-${new Date().toISOString().slice(0,10)}.csv`,
+      ["Month", "Commission (MMK)", "Delivery Fees (MMK)", "Total Platform Revenue (MMK)", "GMV (MMK)"],
+      breakdown.map(r => [r.month, r.commission, r.delivery_fee, r.platform, r.gmv])
     )
   );
 
   const exportSummary = () => doExport("summary", () =>
     exportCSV(
       `pyonea-summary-${new Date().toISOString().slice(0,10)}.csv`,
-      ["Metric", "Value"],
+      ["Metric", "Value (MMK)"],
       [
-        ["Total Users",       stats?.total_users       ?? 0],
-        ["Active Users",      stats?.active_users      ?? 0],
-        ["Total Products",    stats?.total_products    ?? 0],
-        ["Active Products",   stats?.active_products   ?? 0],
-        ["Total Orders",      stats?.total_orders      ?? 0],
-        ["Pending Orders",    stats?.pending_orders    ?? 0],
-        ["Completed Orders",  stats?.completed_orders  ?? 0],
-        ["Total Revenue MMK", stats?.total_revenue     ?? 0],
-        ["Pending Commissions MMK", stats?.pending_commissions ?? 0],
-        ["Paid Commissions MMK",    stats?.paid_commissions    ?? 0],
+        ["Total GMV",             stats?.total_revenue       ?? 0],
+        ["Platform Revenue",      stats?.platform_revenue    ?? 0],
+        ["Commission Revenue",    stats?.commission_revenue  ?? 0],
+        ["Delivery Fee Revenue",  stats?.delivery_fee_revenue?? 0],
+        ["Pending Commissions",   stats?.pending_commissions ?? 0],
+        ["Paid Commissions",      stats?.paid_commissions    ?? 0],
+        ["Total Orders",          stats?.total_orders        ?? 0],
+        ["Completed Orders",      stats?.completed_orders    ?? 0],
       ]
     )
   );
 
-  // ── Merge monthly revenue + commissions for the combined chart ─────────────
-  const combinedChart = monthly.map(mr => {
-    const cm = commissions.find(c => c.month === mr.month) || { paid: 0, pending: 0 };
-    return { month: mr.month, revenue: mr.revenue, paid: cm.paid, pending: cm.pending };
-  });
-
-  const totalRevenue     = monthly.reduce((s, r) => s + r.revenue, 0);
-  const totalPaid        = commissions.reduce((s, r) => s + r.paid, 0);
-  const totalPending     = commissions.reduce((s, r) => s + r.pending, 0);
+  // ── Derived chart data ────────────────────────────────────────────────────
+  const totals = {
+    commission:   breakdown.reduce((s, r) => s + (r.commission   || 0), 0),
+    deliveryFee:  breakdown.reduce((s, r) => s + (r.delivery_fee || 0), 0),
+    platform:     breakdown.reduce((s, r) => s + (r.platform     || 0), 0),
+    gmv:          breakdown.reduce((s, r) => s + (r.gmv          || 0), 0),
+  };
 
   if (loading)
     return (
@@ -173,129 +147,166 @@ const AnalyticsManagement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Revenue Analytics</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Platform revenue, commissions and order trends</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Platform revenue = seller commissions + platform delivery fees
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <ExportBtn label="Export Summary"     onClick={exportSummary}     disabled={!!exporting} />
-          <ExportBtn label="Export Monthly"     onClick={exportMonthly}     disabled={!!exporting} />
-          <ExportBtn label="Export Commissions" onClick={exportCommissions} disabled={!!exporting} />
+          <ExportBtn label="Export Summary"   onClick={exportSummary}   disabled={!!exporting} />
+          <ExportBtn label="Export Breakdown" onClick={exportBreakdown} disabled={!!exporting} />
         </div>
       </div>
 
-      {/* Export error inline */}
       {exportErr && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
           {exportErr}
         </div>
       )}
 
-      {/* ── KPI cards — from /admin/stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPI label="Total Revenue"        value={fmtMMK(stats?.total_revenue)}         color="text-emerald-700" bg="bg-emerald-50" />
-        <KPI label="Paid Commissions"     value={fmtMMK(stats?.paid_commissions)}      color="text-teal-700"    bg="bg-teal-50"    />
-        <KPI label="Pending Commissions"  value={fmtMMK(stats?.pending_commissions)}   color="text-amber-700"   bg="bg-amber-50"   />
-        <KPI label="Total Orders"         value={(stats?.total_orders ?? 0).toLocaleString()} color="text-blue-700" bg="bg-blue-50" />
-      </div>
-
-      {/* ── Stats grid — users / products ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total Users",      value: stats?.total_users     ?? 0 },
-          { label: "Active Users",     value: stats?.active_users    ?? 0 },
-          { label: "Total Products",   value: stats?.total_products  ?? 0 },
-          { label: "Pending Orders",   value: stats?.pending_orders  ?? 0 },
-        ].map(s => (
-          <div key={s.label} className="bg-white border border-gray-100 rounded-xl p-4">
-            <p className="text-xs font-medium text-gray-500">{s.label}</p>
-            <p className="text-xl font-bold text-gray-900 mt-1">{Number(s.value).toLocaleString()}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Monthly revenue chart ── */}
-      {monthly.length > 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-700">Monthly Order Revenue (Last 12 months)</h3>
-            <ExportBtn label="Export" onClick={exportMonthly} disabled={!!exporting} />
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthly} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#666" }} />
-                <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: "#666" }} />
-                <Tooltip formatter={(v) => [fullMMK(v), "Revenue"]} />
-                <Bar dataKey="revenue" name="Revenue" fill="#10b981" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+      {/* ── Platform Revenue KPIs (what Pyonea actually earns) ── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+          Platform Revenue (What Pyonea Earns)
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KPI
+            label="Total Platform Revenue"
+            value={fmtMMK(stats?.platform_revenue)}
+            sub="Commission + Delivery Fees"
+            color="text-emerald-700" bg="bg-emerald-50"
+          />
+          <KPI
+            label="Commission Revenue"
+            value={fmtMMK(stats?.commission_revenue)}
+            sub="From delivered orders"
+            color="text-teal-700" bg="bg-teal-50"
+          />
+          <KPI
+            label="Delivery Fee Revenue"
+            value={fmtMMK(stats?.delivery_fee_revenue)}
+            sub="Platform deliveries"
+            color="text-blue-700" bg="bg-blue-50"
+          />
+          <KPI
+            label="Pending Commissions"
+            value={fmtMMK(stats?.pending_commissions)}
+            sub="Awaiting collection"
+            color="text-amber-700" bg="bg-amber-50"
+          />
         </div>
+      </div>
+
+      {/* ── GMV + Order KPIs (marketplace volume) ── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+          Marketplace Volume (GMV)
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KPI label="Total GMV"        value={fmtMMK(stats?.total_revenue)}   sub="All time order value"   color="text-gray-700" bg="bg-gray-50" />
+          <KPI label="Total Orders"     value={(stats?.total_orders ?? 0).toLocaleString()}     sub=""  color="text-gray-700" bg="bg-gray-50" />
+          <KPI label="Completed Orders" value={(stats?.completed_orders ?? 0).toLocaleString()} sub="Delivered" color="text-green-700" bg="bg-green-50" />
+          <KPI label="Paid Commissions" value={fmtMMK(stats?.paid_commissions)} sub="Collected"             color="text-gray-700" bg="bg-gray-50" />
+        </div>
+      </div>
+
+      {/* ── Platform Revenue Chart — commission + delivery fees stacked ── */}
+      {breakdown.length > 0 ? (
+        <>
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Monthly Platform Revenue (Last 12 months)
+                </h3>
+                <p className="text-xs text-gray-400">Commission fees + Platform delivery fees</p>
+              </div>
+              <ExportBtn label="Export" onClick={exportBreakdown} disabled={!!exporting} />
+            </div>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={breakdown} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#666" }} />
+                  <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: "#666" }} />
+                  <Tooltip formatter={(v, name) => [fullMMK(v), name]} />
+                  <Legend />
+                  <Bar dataKey="commission"   name="Commission"    fill="#10b981" radius={[4,4,0,0]} stackId="platform" />
+                  <Bar dataKey="delivery_fee" name="Delivery Fees" fill="#3b82f6" radius={[4,4,0,0]} stackId="platform" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* ── GMV vs Platform Revenue comparison ── */}
+          <div className="bg-white rounded-xl border border-gray-100 p-5">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">
+              GMV vs Platform Revenue (Last 12 months)
+            </h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={breakdown} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#666" }} />
+                  <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: "#666" }} />
+                  <Tooltip formatter={(v, name) => [fullMMK(v), name]} />
+                  <Legend />
+                  <Line dataKey="gmv"      name="GMV"              stroke="#94a3b8" strokeWidth={2} dot={false} />
+                  <Line dataKey="platform" name="Platform Revenue"  stroke="#10b981" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* ── Monthly Breakdown Table ── */}
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50">
+              <h3 className="text-sm font-semibold text-gray-700">Monthly Breakdown</h3>
+              <ExportBtn label="Export CSV" onClick={exportBreakdown} disabled={!!exporting} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {["Month","Commission","Delivery Fees","Total Platform","GMV","Take Rate"].map(h => (
+                      <th key={h} className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {breakdown.map(r => {
+                    const takeRate = r.gmv > 0 ? ((r.platform / r.gmv) * 100).toFixed(1) : "0.0";
+                    return (
+                      <tr key={r.month} className="hover:bg-gray-50">
+                        <td className="px-4 py-2.5 font-medium text-gray-900">{r.month}</td>
+                        <td className="px-4 py-2.5 text-teal-700">{fullMMK(r.commission)}</td>
+                        <td className="px-4 py-2.5 text-blue-700">{fullMMK(r.delivery_fee)}</td>
+                        <td className="px-4 py-2.5 font-bold text-emerald-700">{fullMMK(r.platform)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{fullMMK(r.gmv)}</td>
+                        <td className="px-4 py-2.5 text-gray-500">{takeRate}%</td>
+                      </tr>
+                    );
+                  })}
+                  {/* Totals row */}
+                  <tr className="bg-gray-50 font-semibold border-t-2 border-gray-200">
+                    <td className="px-4 py-2.5 text-gray-700">Total</td>
+                    <td className="px-4 py-2.5 text-teal-700">{fullMMK(totals.commission)}</td>
+                    <td className="px-4 py-2.5 text-blue-700">{fullMMK(totals.deliveryFee)}</td>
+                    <td className="px-4 py-2.5 text-emerald-700">{fullMMK(totals.platform)}</td>
+                    <td className="px-4 py-2.5 text-gray-500">{fullMMK(totals.gmv)}</td>
+                    <td className="px-4 py-2.5 text-gray-500">
+                      {totals.gmv > 0 ? ((totals.platform / totals.gmv) * 100).toFixed(1) : "0.0"}%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400 text-sm">
-          No revenue data yet. Revenue will appear here once orders are delivered.
-        </div>
-      )}
-
-      {/* ── Commission trend chart ── */}
-      {commissions.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-700">Commission Trend (Last 12 months)</h3>
-            <ExportBtn label="Export" onClick={exportCommissions} disabled={!!exporting} />
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={commissions} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#666" }} />
-                <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: "#666" }} />
-                <Tooltip formatter={(v, name) => [fullMMK(v), name]} />
-                <Legend />
-                <Line dataKey="paid"    name="Paid"    stroke="#10b981" strokeWidth={2} dot={false} />
-                <Line dataKey="pending" name="Pending" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="4 2" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
-      {/* ── Monthly table ── */}
-      {monthly.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-50">
-            <h3 className="text-sm font-semibold text-gray-700">Monthly Breakdown</h3>
-            <ExportBtn label="Export" onClick={exportMonthly} disabled={!!exporting} />
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  {["Month", "Revenue (MMK)", "Paid Commission", "Pending Commission"].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {combinedChart.map(r => (
-                  <tr key={r.month} className="hover:bg-gray-50">
-                    <td className="px-4 py-2.5 font-medium text-gray-900">{r.month}</td>
-                    <td className="px-4 py-2.5 font-semibold text-emerald-700">{fullMMK(r.revenue)}</td>
-                    <td className="px-4 py-2.5 text-teal-700">{fullMMK(r.paid)}</td>
-                    <td className="px-4 py-2.5 text-amber-700">{fullMMK(r.pending)}</td>
-                  </tr>
-                ))}
-                <tr className="bg-gray-50 font-semibold">
-                  <td className="px-4 py-2.5 text-gray-700">Total</td>
-                  <td className="px-4 py-2.5 text-emerald-700">{fullMMK(totalRevenue)}</td>
-                  <td className="px-4 py-2.5 text-teal-700">{fullMMK(totalPaid)}</td>
-                  <td className="px-4 py-2.5 text-amber-700">{fullMMK(totalPending)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          No revenue data yet. Revenue will appear here once orders are delivered and commissions recorded.
         </div>
       )}
     </div>

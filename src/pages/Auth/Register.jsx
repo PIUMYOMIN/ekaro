@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from "react-i18next";
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -13,6 +13,9 @@ import useSEO from '../../hooks/useSEO';
 const Register = () => {
   const { t } = useTranslation();
   const { register: registerUser } = useAuth();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref') || '';
+  const [referrerName, setReferrerName] = React.useState('');
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +75,15 @@ const Register = () => {
     return true;
   };
 
-  const onSubmit = async (data) => {
+  // Validate ref code from URL on mount
+  React.useEffect(() => {
+    if (!refCode) return;
+    api.post('/referral/validate', { ref_code: refCode })
+      .then(r => { if (r.data.success) setReferrerName(r.data.data.referrer_name); })
+      .catch(() => {});
+  }, [refCode]);
+
+    const onSubmit = async (data) => {
     if (!agreed) {
       setAgreedError('You must agree to the Terms & Conditions and Privacy Policy.');
       return;
@@ -101,6 +112,7 @@ const Register = () => {
         city: data.city,
         state: data.state,
         recaptcha_token: token,
+        ...(refCode && { ref_code: refCode }),
       });
 
       if (result.success) {
@@ -143,6 +155,16 @@ const Register = () => {
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Referral banner */}
+          {referrerName && (
+            <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
+              <span className="text-green-600">🎁</span>
+              <span className="text-green-800">
+                You were referred by <strong>{referrerName}</strong>. Your account will be linked to their referral.
+              </span>
             </div>
           )}
 
