@@ -2,11 +2,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   MegaphoneIcon, PlusIcon, PencilIcon, TrashIcon,
-  CheckCircleIcon, XCircleIcon, EyeIcon, ArrowPathIcon,
+  CheckCircleIcon, XCircleIcon, ArrowPathIcon,
   PhotoIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
-import { IMAGE_BASE_URL } from '../../config';
 
 const TYPES     = ['announcement', 'promotion', 'newsletter', 'advertisement', 'sponsorship'];
 const AUDIENCES = ['all', 'guests', 'buyers', 'sellers'];
@@ -38,6 +37,7 @@ const AnnouncementManagement = () => {
   const [imageFile, setImageFile]   = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [removeImage, setRemoveImage]   = useState(false);
+  const [fieldErrors, setFieldErrors]   = useState({});
 
   const flash = (msg, type = 'success') => {
     if (type === 'success') setSuccess(msg);
@@ -58,10 +58,11 @@ const AnnouncementManagement = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(EMPTY);
+    setForm({ ...EMPTY });
     setImageFile(null);
     setImagePreview('');
     setRemoveImage(false);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -88,6 +89,7 @@ const AnnouncementManagement = () => {
     setImagePreview(item.image ?? '');
     setImageFile(null);
     setRemoveImage(false);
+    setFieldErrors({});
     setShowForm(true);
   };
 
@@ -99,25 +101,45 @@ const AnnouncementManagement = () => {
     setRemoveImage(false);
   };
 
+  // Simple change handler – no memoization needed
+  const handleChange = (field) => (e) => {
+    let val = e.target.type === 'checkbox' ? e.target.checked
+            : e.target.type === 'number'   ? Number(e.target.value)
+            : e.target.value;
+    setForm(prev => ({ ...prev, [field]: val }));
+    // Clear field error when user types
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError('');
+    setFieldErrors({});
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => {
-        if (v !== null && v !== undefined && v !== '') fd.append(k, v);
+        if (v === null || v === undefined) return;
+        if (typeof v === 'boolean') {
+          fd.append(k, v ? '1' : '0');
+        } else if (v !== '') {
+          fd.append(k, v);
+        }
       });
       if (imageFile) fd.append('image', imageFile);
       if (removeImage) fd.append('remove_image', '1');
 
       let res;
       if (editing) {
-        res = await api.put(`/admin/announcements/${editing.id}`, fd,
-          { headers: { 'Content-Type': 'multipart/form-data' } });
+        res = await api.put(`/admin/announcements/${editing.id}`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       } else {
-        res = await api.post('/admin/announcements', fd,
-          { headers: { 'Content-Type': 'multipart/form-data' } });
+        res = await api.post('/admin/announcements', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       }
       if (res.data.success) {
         flash(editing ? 'Announcement updated.' : 'Announcement created.');
@@ -125,10 +147,12 @@ const AnnouncementManagement = () => {
         fetch();
       }
     } catch (err) {
-      const msgs = err.response?.data?.errors
-        ? Object.values(err.response.data.errors).flat().join(', ')
-        : err.response?.data?.message ?? 'Failed to save.';
-      setError(msgs);
+      if (err.response?.data?.errors) {
+        setFieldErrors(err.response.data.errors);
+        setError('Please correct the highlighted fields.');
+      } else {
+        setError(err.response?.data?.message ?? 'Failed to save.');
+      }
     } finally { setSaving(false); }
   };
 
@@ -148,30 +172,36 @@ const AnnouncementManagement = () => {
     } catch { flash('Failed to toggle.', 'error'); }
   };
 
-  const f = (k) => (e) => {
-    const val = e.target.type === 'checkbox' ? e.target.checked
-              : e.target.type === 'number'   ? Number(e.target.value)
-              : e.target.value;
-    setForm(prev => ({ ...prev, [k]: val }));
+  const isEffectivelyActive = (item) => {
+    if (!item.is_active) return false;
+    const now = new Date();
+    if (item.starts_at && new Date(item.starts_at) > now) return false;
+    if (item.ends_at && new Date(item.ends_at) < now) return false;
+    return true;
   };
 
-  const Input = ({ label, name, type = 'text', ...rest }) => (
-    <div>
-      <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+  // Simple input component – inline to avoid any HOC issues
+  const renderInput = (label, name, type = 'text', required = false, placeholder = '') => (
+    <div key={name}>
+      <label htmlFor={name} className="block text-xs font-semibold text-gray-600 mb-1">
+        {label} {required && '*'}
+      </label>
       <input
+        id={name}
+        name={name}
         type={type}
-        value={form[name]}
-        onChange={f(name)}
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg
-                   focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        {...rest}
+        value={form[name] ?? ''}
+        onChange={handleChange(name)}
+        placeholder={placeholder}
+        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent
+          ${fieldErrors[name] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
       />
+      {fieldErrors[name] && <p className="mt-1 text-xs text-red-600">{fieldErrors[name][0]}</p>}
     </div>
   );
 
   return (
     <div className="space-y-5">
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -184,13 +214,11 @@ const AnnouncementManagement = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetch}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={fetch} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
             <ArrowPathIcon className="h-4 w-4" />
           </button>
           <button onClick={openCreate}
-            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white
-                       text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700">
             <PlusIcon className="h-4 w-4" /> New
           </button>
         </div>
@@ -198,31 +226,27 @@ const AnnouncementManagement = () => {
 
       {/* Alerts */}
       {success && (
-        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200
-                        rounded-lg text-sm text-green-800">
+        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
           <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
           {success}
         </div>
       )}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200
-                        rounded-lg text-sm text-red-700">
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           <XCircleIcon className="h-4 w-4 flex-shrink-0" />
           {error}
         </div>
       )}
 
-      {/* Form modal */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center
-                        bg-black/50 overflow-y-auto py-8 px-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8 px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">
                 {editing ? 'Edit Announcement' : 'New Announcement'}
               </h3>
-              <button onClick={() => setShowForm(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
                 <XCircleIcon className="h-5 w-5" />
               </button>
             </div>
@@ -231,58 +255,82 @@ const AnnouncementManagement = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Title */}
                 <div className="sm:col-span-2">
-                  <Input label="Title *" name="title" required />
+                  {renderInput('Title', 'title', 'text', true)}
                 </div>
 
                 {/* Content */}
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Content</label>
+                  <label htmlFor="content" className="block text-xs font-semibold text-gray-600 mb-1">Content</label>
                   <textarea
+                    id="content"
+                    name="content"
                     rows={3}
-                    value={form.content}
-                    onChange={f('content')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg
-                               focus:ring-2 focus:ring-green-500"
-                    placeholder="Message body..."
+                    value={form.content ?? ''}
+                    onChange={handleChange('content')}
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500
+                      ${fieldErrors.content ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
                   />
+                  {fieldErrors.content && <p className="mt-1 text-xs text-red-600">{fieldErrors.content[0]}</p>}
                 </div>
 
-                {/* Type + Audience */}
+                {/* Type */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
-                  <select value={form.type} onChange={f('type')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                  <label htmlFor="type" className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                  <select
+                    id="type"
+                    name="type"
+                    value={form.type}
+                    onChange={handleChange('type')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
                     {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+
+                {/* Audience */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Target Audience</label>
-                  <select value={form.target_audience} onChange={f('target_audience')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                  <label htmlFor="target_audience" className="block text-xs font-semibold text-gray-600 mb-1">Target Audience</label>
+                  <select
+                    id="target_audience"
+                    name="target_audience"
+                    value={form.target_audience}
+                    onChange={handleChange('target_audience')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
                     {AUDIENCES.map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
                 </div>
 
                 {/* CTA */}
-                <Input label="CTA Button Text" name="cta_label" placeholder="e.g. Shop Now" />
-                <Input label="CTA URL" name="cta_url" placeholder="/products or https://..." />
+                {renderInput('CTA Button Text', 'cta_label', 'text', false, 'e.g. Shop Now')}
+                {renderInput('CTA URL', 'cta_url', 'text', false, '/products or https://...')}
 
+                {/* CTA Style */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">CTA Style</label>
-                  <select value={form.cta_style} onChange={f('cta_style')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                  <label htmlFor="cta_style" className="block text-xs font-semibold text-gray-600 mb-1">CTA Style</label>
+                  <select
+                    id="cta_style"
+                    name="cta_style"
+                    value={form.cta_style}
+                    onChange={handleChange('cta_style')}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
                     <option value="primary">Primary (filled)</option>
                     <option value="outline">Outline</option>
                   </select>
                 </div>
 
                 {/* Badge */}
-                <Input label="Badge Label" name="badge_label" placeholder="e.g. 🔥 New" />
+                {renderInput('Badge Label', 'badge_label', 'text', false, 'e.g. 🔥 New')}
+
+                {/* Badge Color */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Badge Color</label>
                   <div className="flex gap-2 mt-1 flex-wrap">
                     {COLORS.map(c => (
-                      <button type="button" key={c}
+                      <button
+                        type="button"
+                        key={c}
                         onClick={() => setForm(p => ({ ...p, badge_color: c }))}
                         className={`w-6 h-6 rounded-full border-2 transition-transform
                           ${BADGE_PREVIEW[c]} ${form.badge_color === c ? 'scale-125 border-gray-800' : 'border-transparent'}`}
@@ -292,51 +340,48 @@ const AnnouncementManagement = () => {
                 </div>
 
                 {/* Dates */}
-                <Input label="Starts At" name="starts_at" type="datetime-local" />
-                <Input label="Ends At"   name="ends_at"   type="datetime-local" />
+                {renderInput('Starts At', 'starts_at', 'datetime-local')}
+                {renderInput('Ends At', 'ends_at', 'datetime-local')}
 
                 {/* Options */}
-                <Input label="Delay (seconds)" name="delay_seconds" type="number" min="0" max="30" />
-                <Input label="Sort Order" name="sort_order" type="number" min="0" />
+                {renderInput('Delay (seconds)', 'delay_seconds', 'number', false, '')}
+                {renderInput('Sort Order', 'sort_order', 'number', false, '')}
 
                 {/* Checkboxes */}
                 <div className="sm:col-span-2 flex flex-wrap gap-6">
-                  {[
-                    ['is_active', 'Active'],
-                    ['show_once', 'Show once per day'],
-                  ].map(([key, label]) => (
-                    <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
-                      <input type="checkbox" checked={form[key]} onChange={f(key)}
-                        className="w-4 h-4 text-green-600 rounded focus:ring-green-500" />
-                      <span className="text-sm font-medium text-gray-700">{label}</span>
-                    </label>
-                  ))}
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={form.is_active} onChange={handleChange('is_active')} />
+                    <span className="text-sm font-medium text-gray-700">Active</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={form.show_once} onChange={handleChange('show_once')} />
+                    <span className="text-sm font-medium text-gray-700">Show once per day</span>
+                  </label>
                 </div>
 
-                {/* Image upload */}
+                {/* Image Upload */}
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 mb-2">Banner Image</label>
                   <div className="flex items-start gap-4">
                     {imagePreview ? (
                       <div className="relative w-40 h-24 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
-                        <img src={imagePreview} alt="" className="w-full h-full object-cover" />
-                        <button type="button"
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
                           onClick={() => { setImagePreview(''); setImageFile(null); setRemoveImage(true); }}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5">
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5"
+                        >
                           <XCircleIcon className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
-                      <div className="w-40 h-24 rounded-xl border-2 border-dashed border-gray-300
-                                      flex flex-col items-center justify-center text-gray-400 flex-shrink-0">
+                      <div className="w-40 h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400">
                         <PhotoIcon className="h-6 w-6" />
                         <span className="text-[10px] mt-1">No image</span>
                       </div>
                     )}
                     <div>
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2
-                                        border border-gray-300 rounded-lg text-sm text-gray-700
-                                        hover:bg-gray-50 transition-colors">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
                         <PhotoIcon className="h-4 w-4" />
                         {imagePreview ? 'Change image' : 'Upload image'}
                         <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -344,22 +389,15 @@ const AnnouncementManagement = () => {
                       <p className="text-xs text-gray-400 mt-1">Max 4MB · JPG, PNG, WebP</p>
                     </div>
                   </div>
+                  {fieldErrors.image && <p className="mt-1 text-xs text-red-600">{fieldErrors.image[0]}</p>}
                 </div>
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-              )}
-
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm
-                             font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving}
-                  className="px-5 py-2 bg-green-600 text-white text-sm font-semibold
-                             rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors">
+                <button type="submit" disabled={saving} className="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
                   {saving ? 'Saving…' : editing ? 'Update' : 'Create'}
                 </button>
               </div>
@@ -378,8 +416,7 @@ const AnnouncementManagement = () => {
           <div className="text-center py-14 text-gray-400">
             <MegaphoneIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">No announcements yet.</p>
-            <button onClick={openCreate}
-              className="mt-3 text-sm text-green-700 hover:text-green-900 underline">
+            <button onClick={openCreate} className="mt-3 text-sm text-green-700 hover:text-green-900 underline">
               Create your first one
             </button>
           </div>
@@ -389,67 +426,66 @@ const AnnouncementManagement = () => {
               <thead className="bg-gray-50">
                 <tr>
                   {['Title', 'Type', 'Audience', 'Dates', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold
-                                           text-gray-500 uppercase tracking-wide">
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {items.map(item => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        {item.image ? (
-                          <img src={item.image} alt="" className="w-10 h-7 object-cover rounded-md flex-shrink-0" />
-                        ) : (
-                          <div className="w-10 h-7 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0">
-                            <PhotoIcon className="h-4 w-4 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900 line-clamp-1">{item.title}</p>
-                          {item.badge_label && (
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full
-                                              ${BADGE_PREVIEW[item.badge_color] ?? BADGE_PREVIEW.green}`}>
-                              {item.badge_label}
-                            </span>
+                {items.map(item => {
+                  const effectiveActive = isEffectivelyActive(item);
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {item.image ? (
+                            <img src={item.image} alt="" className="w-10 h-7 object-cover rounded-md" />
+                          ) : (
+                            <div className="w-10 h-7 bg-gray-100 rounded-md flex items-center justify-center">
+                              <PhotoIcon className="h-4 w-4 text-gray-400" />
+                            </div>
                           )}
+                          <div>
+                            <p className="font-medium text-gray-900 line-clamp-1">{item.title}</p>
+                            {item.badge_label && (
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${BADGE_PREVIEW[item.badge_color] ?? BADGE_PREVIEW.green}`}>
+                                {item.badge_label}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 capitalize text-gray-600">{item.type}</td>
-                    <td className="px-4 py-3 capitalize text-gray-600">{item.target_audience}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      {item.starts_at ? new Date(item.starts_at).toLocaleDateString() : '—'} →{' '}
-                      {item.ends_at   ? new Date(item.ends_at).toLocaleDateString()   : '∞'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => handleToggle(item.id)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                          item.is_active
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                        }`}>
-                        {item.is_active ? <CheckCircleIcon className="h-3 w-3" /> : <XCircleIcon className="h-3 w-3" />}
-                        {item.is_active ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => openEdit(item)}
-                          className="p-1.5 text-gray-400 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
-                          <PencilIcon className="h-4 w-4" />
+                      </td>
+                      <td className="px-4 py-3 capitalize text-gray-600">{item.type}</td>
+                      <td className="px-4 py-3 capitalize text-gray-600">{item.target_audience}</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {item.starts_at ? new Date(item.starts_at).toLocaleDateString() : '—'} →{' '}
+                        {item.ends_at ? new Date(item.ends_at).toLocaleDateString() : '∞'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => handleToggle(item.id)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                            effectiveActive
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}>
+                          {effectiveActive ? <CheckCircleIcon className="h-3 w-3" /> : <XCircleIcon className="h-3 w-3" />}
+                          {effectiveActive ? 'Active' : (item.is_active ? 'Inactive (date)' : 'Inactive')}
                         </button>
-                        <button onClick={() => handleDelete(item.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEdit(item)} className="p-1.5 text-gray-400 hover:text-green-700 hover:bg-green-50 rounded-lg">
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
