@@ -275,7 +275,7 @@ const Cart = () => {
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                     <dt className="text-sm text-gray-600">Tax (5%)</dt>
-                    <dd className="text-sm font-medium text-gray-900">{formatMMK(cartSummary?.tax ?? 0)}</dd>
+                    <dd className="text-sm font-medium text-gray-900">{formatMMK(cartSummary?.platform_fee ?? cartSummary?.tax ?? 0)}</dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                     <dt className="text-lg font-bold text-gray-900">Estimated Total</dt>
