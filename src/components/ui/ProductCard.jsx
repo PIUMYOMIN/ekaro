@@ -6,6 +6,7 @@ import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
+import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
@@ -122,10 +123,9 @@ const DeliveryZoneStrip = ({ sellerProfile }) => {
     // Fallback: fetch public endpoint
     const profileId = sellerProfile?.id || sellerProfile?.seller_profile_id;
     if (!profileId) { setZones(["Whole Myanmar"]); setLoaded(true); return; }
-    fetch(`/api/v1/sellers/${profileId}/delivery-areas`)
-      .then(r => r.json())
-      .then(d => {
-        const states = d.data?.states ?? [];
+    api.get(`/sellers/${profileId}/delivery-areas`)
+      .then(res => {
+        const states = res.data?.data?.states ?? [];
         setZones(states.length ? states : ["Whole Myanmar"]);
       })
       .catch(() => setZones(["Whole Myanmar"]))
