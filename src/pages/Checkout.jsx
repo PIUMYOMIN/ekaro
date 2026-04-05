@@ -109,11 +109,11 @@ export default function Checkout() {
   // Replaces the previous hardcoded `SHIPPING_FEE = 5000` and `TAX_RATE = 0.05`.
   // The platform fee rate comes from the commission_rules table via
   // CommissionRateResolver (tier → business_type → category → default).
-  // The label is also corrected: this is a "Platform Fee", not a "Tax".
+  // Tax shown to buyer. Commission is collected from the seller separately — not shown here.
   const [feesLoading, setFeesLoading] = useState(true);
   const [shippingFee, setShippingFee] = useState(5000);       // safe default while loading
-  const [platformFeeRate, setPlatformFeeRate] = useState(0.05); // safe default while loading
-  const [platformFeePct, setPlatformFeePct] = useState(5.0);
+  const [taxRate, setTaxRate] = useState(0.05); // safe default while loading
+  const [taxPct, setTaxPct] = useState(5.0);
 
   // Fetch fees with location params — re-runs when address city/state changes
   // Debounced 700ms so fast typing doesn't hammer the API
@@ -133,8 +133,8 @@ export default function Checkout() {
             const d = res.data.data;
             setShippingFee(d.shipping_fee ?? 5000);
             // Backend returns tax_rate / tax_pct (they represent platform commission)
-            setPlatformFeeRate(d.tax_rate ?? d.platform_fee_rate ?? 0.05);
-            setPlatformFeePct(d.tax_pct  ?? d.platform_fee_pct  ?? 5.0);
+            setTaxRate(d.tax_rate ?? 0.05);
+            setTaxPct(d.tax_pct  ?? 5.0);
           }
         })
         .catch(() => {
@@ -146,8 +146,8 @@ export default function Checkout() {
   }, [user, shippingAddress.country, shippingAddress.state, shippingAddress.city]);
 
   // Derived totals — recalculate whenever fees or cart change
-  const platformFee = subtotal * platformFeeRate;
-  const total = Math.max(0, subtotal + shippingFee + platformFee - couponDiscount);
+  const taxFee = subtotal * taxRate;
+  const total = Math.max(0, subtotal + shippingFee + taxFee - couponDiscount);
 
   // ── Fetch seller policies ────────────────────────────────────────────────────
   useEffect(() => {
@@ -242,7 +242,7 @@ export default function Checkout() {
     total_amount: total,
     subtotal_amount: subtotal,
     shipping_fee: shippingFee,
-    tax_amount: platformFee,
+    tax_amount: taxFee,
     coupon_id: appliedCoupon?.coupon?.id ?? null,
     coupon_code: appliedCoupon?.coupon?.code ?? null,
     coupon_discount_amount: appliedCoupon?.discount_amount ?? 0,
@@ -897,14 +897,14 @@ export default function Checkout() {
                     }
                   </div>
 
-                  {/* Platform Fee — fetched from commission_rules table, correctly labelled */}
+                  {/* Tax (5%) — collected as part of buyer total; commission is separate and invisible to buyer */}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">
-                      Platform Fee ({feesLoading ? '…' : `${platformFeePct}%`})
+                      Tax ({feesLoading ? '…' : `${taxPct}%`})
                     </span>
                     {feesLoading
                       ? <span className="text-gray-400 animate-pulse">Calculating…</span>
-                      : <span className="text-gray-900">{formatMMK(platformFee)}</span>
+                      : <span className="text-gray-900">{formatMMK(taxFee)}</span>
                     }
                   </div>
 
