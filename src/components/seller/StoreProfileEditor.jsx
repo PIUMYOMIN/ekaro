@@ -196,20 +196,14 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
   const [toast, setToast]     = useState({ msg:'', type:'success' });
   const [docUploading, setDocUploading] = useState('');
   const { user } = useAuth();
-  const [notifPrefs, setNotifPrefs] = useState(null); // null = not yet fetched
+  const [notifPrefs, setNotifPrefs] = useState(null);
 
-  // Fetch notification preferences directly from API when notifications tab is opened.
-  // We don't rely on user?.notification_preferences from the auth context because
-  // it may have been stripped by UserResource before our fix is deployed everywhere.
   const fetchNotifPrefs = async () => {
-    if (notifPrefs !== null) return; // already fetched
+    if (notifPrefs !== null) return;
     try {
       const res = await api.get('/auth/me');
-      const prefs = res.data?.data?.notification_preferences ?? {};
-      setNotifPrefs(prefs);
-    } catch {
-      setNotifPrefs({}); // fall back to defaults
-    }
+      setNotifPrefs(res.data?.data?.notification_preferences ?? {});
+    } catch { setNotifPrefs({}); }
   };
 
   const flash = (msg, type='success') => {
@@ -716,15 +710,13 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
         </div>
       )}
 
-      {/* ── NOTIFICATIONS ───────────────────────────────────────────────── */}
+      {/* ── NOTIFICATIONS ─────────────────────────────────────────── */}
       {tab === 'notifications' && (
         <div className="max-w-lg space-y-5">
           <p className="text-sm text-gray-500">
-            Choose which emails Pyonea sends you. These settings are saved to your account
-            and persist across devices.
+            Choose which emails Pyonea sends you. Saved to your account and synced across devices.
           </p>
           {notifPrefs === null ? (
-            // still loading — show spinner
             <div className="flex justify-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" />
             </div>

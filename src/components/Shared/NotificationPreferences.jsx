@@ -72,12 +72,10 @@ const Toggle = ({ checked, onChange, disabled }) => (
 const NotificationPreferences = ({ userType = 'buyer', initialPrefs = {}, onSaved }) => {
   const [prefs,   setPrefs]   = useState({ ...DEFAULT_PREFS, ...initialPrefs });
 
-  // Sync when parent finishes loading real preferences from the server.
-  // useState ignores prop changes after mount — this effect catches late-arriving data.
-  // We use a stable JSON key so it only fires when the actual values change.
+  // useState only reads initialPrefs on first render — sync when real data arrives later
   useEffect(() => {
     if (!initialPrefs || Object.keys(initialPrefs).length === 0) return;
-    setPrefs(p => ({ ...DEFAULT_PREFS, ...initialPrefs }));
+    setPrefs({ ...DEFAULT_PREFS, ...initialPrefs });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(initialPrefs)]);
   const [saving,  setSaving]  = useState(false);

@@ -1,828 +1,490 @@
 // components/admin/BusinessTypeManagement.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  BuildingStorefrontIcon,
-  UsersIcon,
-  BriefcaseIcon,
-  TruckIcon,
-  CurrencyDollarIcon,
-  CubeIcon,
-  ShieldCheckIcon,
-  ChartBarIcon
+  BuildingStorefrontIcon, UsersIcon, BriefcaseIcon, TruckIcon,
+  CurrencyDollarIcon, CubeIcon, ShieldCheckIcon, ChartBarIcon,
+  CheckCircleIcon, XCircleIcon,
 } from "@heroicons/react/24/outline";
 import {
-  MagnifyingGlassIcon,
-  PlusIcon,
-  XMarkIcon,
-  ArrowPathIcon,
-  ChevronUpIcon,
-  ChevronDownIcon
+  MagnifyingGlassIcon, PlusIcon, XMarkIcon, ArrowPathIcon,
+  PencilIcon, TrashIcon,
 } from "@heroicons/react/20/solid";
 import api from "../../utils/api";
 
+const slugify = (str) =>
+  str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const ICONS = [
+  { value: "UsersIcon",              label: "Individual",  Icon: UsersIcon },
+  { value: "BuildingStorefrontIcon", label: "Store",       Icon: BuildingStorefrontIcon },
+  { value: "BriefcaseIcon",          label: "Business",    Icon: BriefcaseIcon },
+  { value: "TruckIcon",              label: "Logistics",   Icon: TruckIcon },
+  { value: "CurrencyDollarIcon",     label: "Finance",     Icon: CurrencyDollarIcon },
+  { value: "CubeIcon",               label: "Products",    Icon: CubeIcon },
+  { value: "ShieldCheckIcon",        label: "Verified",    Icon: ShieldCheckIcon },
+  { value: "ChartBarIcon",           label: "Analytics",   Icon: ChartBarIcon },
+];
+
+const COLORS = [
+  { value: "#3b82f6", label: "Blue"   },
+  { value: "#10b981", label: "Green"  },
+  { value: "#f59e0b", label: "Amber"  },
+  { value: "#ef4444", label: "Red"    },
+  { value: "#8b5cf6", label: "Purple" },
+  { value: "#ec4899", label: "Pink"   },
+  { value: "#6366f1", label: "Indigo" },
+  { value: "#06b6d4", label: "Cyan"   },
+];
+
+const EMPTY_FORM = {
+  name_en: "", name_mm: "", slug_en: "", slug_mm: "",
+  description_en: "", description_mm: "",
+  requires_registration: false, requires_tax_document: false,
+  requires_identity_document: false, requires_business_certificate: false,
+  additional_requirements: "", is_active: true, sort_order: 0,
+  icon: "BuildingStorefrontIcon", color: "#3b82f6",
+};
+
+const Toast = ({ toast }) => toast ? (
+  <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-medium mb-4
+    ${toast.type === "success"
+      ? "bg-green-50 border border-green-200 text-green-800"
+      : "bg-red-50 border border-red-200 text-red-700"}`}>
+    {toast.type === "success"
+      ? <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
+      : <XCircleIcon    className="h-4 w-4 flex-shrink-0" />}
+    {toast.msg}
+  </div>
+) : null;
+
+const DeleteModal = ({ item, onConfirm, onClose }) => !item ? null : (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+      <h3 className="font-bold text-gray-900 mb-2">Delete Business Type</h3>
+      <p className="text-sm text-gray-600 mb-1">Delete <strong>{item.name_en}</strong>?</p>
+      {(item.sellers_count > 0) && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+          ⚠ {item.sellers_count} seller(s) use this type.
+        </p>
+      )}
+      <div className="flex justify-end gap-3 mt-4">
+        <button onClick={onClose}
+          className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50">
+          Cancel
+        </button>
+        <button onClick={onConfirm}
+          className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const BusinessTypeManagement = () => {
-  const [businessTypes, setBusinessTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingType, setEditingType] = useState(null);
-  const [formData, setFormData] = useState({
-    name_en: "",
-    name_mm: "",
-    slug_en: "",
-    slug_mm: "",
-    description_en: "",
-    description_mm: "",
-    requires_registration: false,
-    requires_tax_document: false,
-    requires_identity_document: false,
-    requires_business_certificate: false,
-    additional_requirements: "",
-    is_active: true,
-    sort_order: 0,
-    icon: "BuildingStorefront",
-    color: "#3b82f6"
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [types, setTypes]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState("");
+  const [toast, setToast]               = useState(null);
+  const [search, setSearch]             = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [showModal, setShowModal]       = useState(false);
+  const [editing, setEditing]           = useState(null);
+  const [form, setForm]                 = useState({ ...EMPTY_FORM });
+  const [fieldErrors, setFieldErrors]   = useState({});
+  const [saving, setSaving]             = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [toggling, setToggling]         = useState(null);
 
-  // Available icons for selection
-  const availableIcons = [
-    { value: "UserIcon", label: "Individual", icon: UsersIcon },
-    { value: "BuildingStorefrontIcon", label: "Store", icon: BuildingStorefrontIcon },
-    { value: "BriefcaseIcon", label: "Business", icon: BriefcaseIcon },
-    { value: "TruckIcon", label: "Logistics", icon: TruckIcon },
-    { value: "CurrencyDollarIcon", label: "Finance", icon: CurrencyDollarIcon },
-    { value: "CubeIcon", label: "Products", icon: CubeIcon },
-    { value: "ShieldCheckIcon", label: "Verified", icon: ShieldCheckIcon },
-    { value: "ChartBarIcon", label: "Analytics", icon: ChartBarIcon }
-  ];
-
-  // Available colors for selection
-  const availableColors = [
-    { value: "#3b82f6", label: "Blue", bg: "bg-blue-500" },
-    { value: "#10b981", label: "Green", bg: "bg-green-500" },
-    { value: "#f59e0b", label: "Amber", bg: "bg-yellow-500" },
-    { value: "#ef4444", label: "Red", bg: "bg-red-500" },
-    { value: "#8b5cf6", label: "Purple", bg: "bg-purple-500" },
-    { value: "#ec4899", label: "Pink", bg: "bg-pink-500" },
-    { value: "#6366f1", label: "Indigo", bg: "bg-indigo-500" },
-    { value: "#06b6d4", label: "Cyan", bg: "bg-cyan-500" }
-  ];
-
-  // Fetch business types from API
-  const fetchBusinessTypes = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await api.get("/business-types");
-      const data = response.data.data || response.data;
-      setBusinessTypes(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to fetch business types:", err);
-      setError(err.response?.data?.message || "Failed to load business types");
-      setBusinessTypes([]);
-    } finally {
-      setLoading(false);
-    }
+  const flash = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchBusinessTypes();
+  const fetch = useCallback(async () => {
+    setLoading(true); setError("");
+    try {
+      const res = await api.get("/admin/business-types");
+      setTypes(res.data.data ?? []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load business types.");
+    } finally { setLoading(false); }
   }, []);
 
-  const handleOpenModal = (type = null) => {
-    if (type) {
-      setEditingType(type);
-      setFormData({
-        name_en: type.name_en || "",
-        name_mm: type.name_mm || "",
-        slug_en: type.slug_en || "",
-        slug_mm: type.slug_mm || "",
-        description_en: type.description_en || "",
-        description_mm: type.description_mm || "",
-        requires_registration: type.requires_registration || false,
-        requires_tax_document: type.requires_tax_document || false,
-        requires_identity_document: type.requires_identity_document || false,
-        requires_business_certificate: type.requires_business_certificate || false,
-        additional_requirements: type.additional_requirements
-          ? JSON.stringify(type.additional_requirements, null, 2)
-          : "",
-        is_active: type.is_active !== undefined ? type.is_active : true,
-        sort_order: type.sort_order || 0,
-        icon: type.icon || "BuildingStorefront",
-        color: type.color || "#3b82f6"
-      });
-    } else {
-      setEditingType(null);
-      setFormData({
-        name_en: "",
-        name_mm: "",
-        slug_en: "",
-        slug_mm: "",
-        description_en: "",
-        description_mm: "",
-        requires_registration: false,
-        requires_tax_document: false,
-        requires_identity_document: false,
-        requires_business_certificate: false,
-        additional_requirements: "",
-        is_active: true,
-        sort_order: 0,
-        icon: "BuildingStorefront",
-        color: "#3b82f6"
-      });
-    }
-    setFormErrors({});
-    setIsModalOpen(true);
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const openCreate = () => {
+    setEditing(null); setForm({ ...EMPTY_FORM }); setFieldErrors({}); setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingType(null);
-    setFormErrors({});
+  const openEdit = (t) => {
+    setEditing(t);
+    setForm({
+      name_en: t.name_en || "", name_mm: t.name_mm || "",
+      slug_en: t.slug_en || "", slug_mm: t.slug_mm || "",
+      description_en: t.description_en || "", description_mm: t.description_mm || "",
+      requires_registration:         !!t.requires_registration,
+      requires_tax_document:         !!t.requires_tax_document,
+      requires_identity_document:    !!t.requires_identity_document,
+      requires_business_certificate: !!t.requires_business_certificate,
+      additional_requirements: t.additional_requirements
+        ? JSON.stringify(t.additional_requirements, null, 2) : "",
+      is_active:  t.is_active !== undefined ? t.is_active : true,
+      sort_order: t.sort_order ?? 0,
+      icon:  t.icon  || "BuildingStorefrontIcon",
+      color: t.color || "#3b82f6",
+    });
+    setFieldErrors({}); setShowModal(true);
   };
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const val = type === "checkbox" ? checked : value;
+    setForm((p) => {
+      const next = { ...p, [name]: val };
+      if (name === "name_en" && !editing) next.slug_en = slugify(value);
+      return next;
+    });
+    if (fieldErrors[name]) setFieldErrors((p) => ({ ...p, [name]: "" }));
   };
 
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.name_en.trim()) {
-      errors.name_en = "English name is required";
+  const validate = () => {
+    const errs = {};
+    if (!form.name_en.trim()) errs.name_en = "English name is required.";
+    if (!form.slug_en.trim()) { errs.slug_en = "Slug is required."; }
+    else if (!/^[a-z0-9-]+$/.test(form.slug_en)) { errs.slug_en = "Only lowercase letters, numbers, hyphens."; }
+    if (form.additional_requirements.trim()) {
+      try { JSON.parse(form.additional_requirements); }
+      catch { errs.additional_requirements = "Must be valid JSON."; }
     }
-
-    if (!formData.slug_en.trim()) {
-      errors.slug_en = "English slug is required";
-    } else if (!/^[a-z0-9-]+$/.test(formData.slug_en)) {
-      errors.slug_en = "Slug can only contain lowercase letters, numbers, and hyphens";
-    }
-
-    // Validate JSON if additional_requirements is provided
-    if (formData.additional_requirements.trim()) {
-      try {
-        JSON.parse(formData.additional_requirements);
-      } catch (e) {
-        errors.additional_requirements = "Must be valid JSON format";
-      }
-    }
-
-    return errors;
+    return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const errors = validateForm();
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setFormErrors({});
-
+    const errs = validate();
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setSaving(true); setFieldErrors({});
     try {
-      const dataToSubmit = {
-        ...formData,
-        additional_requirements: formData.additional_requirements.trim()
-          ? JSON.parse(formData.additional_requirements)
-          : []
+      const payload = {
+        ...form,
+        additional_requirements: form.additional_requirements.trim()
+          ? JSON.parse(form.additional_requirements) : [],
       };
-
-      if (editingType) {
-        await api.put(`/admin/business-types/${editingType.id}`, dataToSubmit);
+      if (editing) {
+        await api.put(`/admin/business-types/${editing.id}`, payload);
+        flash("Business type updated.");
       } else {
-        await api.post("/admin/business-types", dataToSubmit);
+        await api.post("/admin/business-types", payload);
+        flash("Business type created.");
       }
-
-      handleCloseModal();
-      await fetchBusinessTypes(); // refresh list
-    } catch (error) {
-      console.error("Failed to save business type:", error);
-      setFormErrors({ submit: error.response?.data?.message || "Failed to save business type" });
-    } finally {
-      setIsSubmitting(false);
-    }
+      setShowModal(false); fetch();
+    } catch (err) {
+      if (err.response?.data?.errors) setFieldErrors(err.response.data.errors);
+      else setFieldErrors({ submit: err.response?.data?.message || "Failed to save." });
+    } finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this business type?")) {
-      try {
-        await api.delete(`/admin/business-types/${id}`);
-        await fetchBusinessTypes(); // refresh list
-      } catch (error) {
-        alert(error.response?.data?.message || "Failed to delete business type");
-      }
-    }
-  };
-
-  const handleToggleStatus = async (id, currentStatus) => {
+  const handleToggle = async (t) => {
+    setToggling(t.id);
     try {
-      await api.put(`/admin/business-types/${id}`, { is_active: !currentStatus });
-      await fetchBusinessTypes();
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to update status");
+      await api.patch(`/admin/business-types/${t.id}/toggle`);
+      setTypes((prev) => prev.map((x) => x.id === t.id ? { ...x, is_active: !x.is_active } : x));
+      flash(`"${t.name_en}" ${t.is_active ? "deactivated" : "activated"}.`);
+    } catch (err) {
+      flash(err.response?.data?.message || "Failed to update status.", "error");
+    } finally { setToggling(null); }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/admin/business-types/${deleteTarget.id}`);
+      flash(`"${deleteTarget.name_en}" deleted.`);
+      setDeleteTarget(null); fetch();
+    } catch (err) {
+      flash(err.response?.data?.message || "Failed to delete.", "error");
+      setDeleteTarget(null);
     }
   };
 
-  // Filter business types based on search
-  const filteredBusinessTypes = businessTypes.filter(type =>
-    type.name_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    type.name_mm?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    type.slug_en?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    type.description_en?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = types.filter((t) => {
+    const ms = t.name_en?.toLowerCase().includes(search.toLowerCase()) ||
+               t.name_mm?.toLowerCase().includes(search.toLowerCase()) ||
+               t.slug_en?.toLowerCase().includes(search.toLowerCase());
+    const mf = filterStatus === "all" ? true : filterStatus === "active" ? t.is_active : !t.is_active;
+    return ms && mf;
+  });
 
-  // Sorting function
-  const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Sort and paginate data
-  const processedData = React.useMemo(() => {
-    let filteredData = Array.isArray(filteredBusinessTypes) ? filteredBusinessTypes : [];
-
-    if (sortConfig.key) {
-      filteredData = [...filteredData].sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-
-    return filteredData;
-  }, [filteredBusinessTypes, sortConfig]);
-
-  const totalPages = Math.ceil(processedData.length / itemsPerPage);
-  const paginatedData = processedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // Table headers
-  const tableHeaders = [
-    { key: "icon", label: "Icon" },
-    { key: "name_en", label: "Name (EN)" },
-    { key: "name_mm", label: "Name (MM)" },
-    { key: "description_en", label: "Description (EN)" },
-    { key: "requirements", label: "Document Requirements" },
-    { key: "is_active", label: "Status" },
-    { key: "sort_order", label: "Sort Order" },
-    { key: "actions", label: "Actions" }
-  ];
+  const activeCount = types.filter((t) => t.is_active).length;
 
   return (
-    <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-blue-600">
-            {businessTypes.length}
+    <div className="space-y-5">
+      <DeleteModal item={deleteTarget} onConfirm={handleDelete} onClose={() => setDeleteTarget(null)} />
+      <Toast toast={toast} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "Total",        value: types.length,      color: "text-blue-700",   bg: "bg-blue-50"   },
+          { label: "Active",       value: activeCount,       color: "text-green-700",  bg: "bg-green-50"  },
+          { label: "Inactive",     value: types.length - activeCount, color: "text-red-500", bg: "bg-red-50" },
+          { label: "Require Docs", value: types.filter(t => t.requires_registration || t.requires_business_certificate).length, color: "text-purple-700", bg: "bg-purple-50" },
+        ].map((s) => (
+          <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
           </div>
-          <div className="text-sm text-gray-500">Total Business Types</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-green-600">
-            {businessTypes.filter(t => t.is_active).length}
-          </div>
-          <div className="text-sm text-gray-500">Active Types</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-yellow-600">
-            {businessTypes.filter(t => t.requires_tax_document).length}
-          </div>
-          <div className="text-sm text-gray-500">Require Tax Docs</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-2xl font-bold text-purple-600">
-            {businessTypes.filter(t => t.requires_business_certificate).length}
-          </div>
-          <div className="text-sm text-gray-500">Require Business Cert</div>
-        </div>
+        ))}
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Business Type Management
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage business types for seller onboarding
-            </p>
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-gray-900">Business Type Management</h3>
+            <p className="text-xs text-gray-500">Manage seller onboarding business types</p>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search business types..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-xl w-44 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
-            <button
-              onClick={fetchBusinessTypes}
-              className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-2" />
-              Refresh
+            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button onClick={fetch} className="p-2 border border-gray-300 rounded-xl hover:bg-gray-50">
+              <ArrowPathIcon className="h-4 w-4 text-gray-500" />
             </button>
-            <button
-              onClick={() => handleOpenModal()}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Add Business Type
+            <button onClick={openCreate}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700">
+              <PlusIcon className="h-4 w-4" /> Add Type
             </button>
           </div>
         </div>
 
-        {loading && (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        )}
+        {error && <div className="p-4 bg-red-50 text-red-700 text-sm border-b border-red-100">{error}</div>}
 
-        {error && (
-          <div className="p-4 text-red-500 bg-red-50">
-            Error: {error}
+        {loading ? (
+          <div className="flex justify-center py-14"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="py-14 text-center text-gray-400 text-sm">
+            {types.length === 0 ? "No business types yet." : "No types match your filter."}
           </div>
-        )}
-
-        {!loading && !error && (
+        ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full text-sm divide-y divide-gray-100">
               <thead className="bg-gray-50">
                 <tr>
-                  {tableHeaders.map((header) => (
-                    <th
-                      key={header.key}
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => header.key !== "actions" && requestSort(header.key)}
-                    >
-                      <div className="flex items-center">
-                        {header.label}
-                        {sortConfig.key === header.key && (
-                          <span className="ml-1">
-                            {sortConfig.direction === "asc" ? (
-                              <ChevronUpIcon className="h-4 w-4" />
-                            ) : (
-                              <ChevronDownIcon className="h-4 w-4" />
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </th>
+                  {["Icon","Name","Slug","Requirements","Sellers","Status","Order","Actions"].map((h) => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.length > 0 ? (
-                  paginatedData.map((businessType) => {
-                    const iconConfig = availableIcons.find(icon => icon.value === businessType.icon);
-                    const IconComponent = iconConfig ? iconConfig.icon : BuildingStorefrontIcon;
-
-                    return (
-                      <tr key={businessType.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div
-                            className="h-10 w-10 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: `${businessType.color}20` }}
-                          >
-                            <IconComponent className="h-6 w-6" style={{ color: businessType.color }} />
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="font-medium text-gray-900">{businessType.name_en}</div>
-                            <div className="text-sm text-gray-500">{businessType.slug_en}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="font-medium text-gray-900">{businessType.name_mm || "-"}</div>
-                            <div className="text-sm text-gray-500">{businessType.slug_mm || "-"}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="max-w-xs truncate">{businessType.description_en || "-"}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            {businessType.requires_registration && (
-                              <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded mr-1">
-                                Registration
-                              </span>
-                            )}
-                            {businessType.requires_tax_document && (
-                              <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded mr-1">
-                                Tax Doc
-                              </span>
-                            )}
-                            {businessType.requires_identity_document && (
-                              <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded mr-1">
-                                ID Doc
-                              </span>
-                            )}
-                            {businessType.requires_business_certificate && (
-                              <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded mr-1">
-                                Business Cert
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleToggleStatus(businessType.id, businessType.is_active)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              businessType.is_active
-                                ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                : "bg-red-100 text-red-800 hover:bg-red-200"
-                            }`}
-                          >
-                            {businessType.is_active ? "Active" : "Inactive"}
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map((t) => {
+                  const iconCfg = ICONS.find((i) => i.value === t.icon) || ICONS[1];
+                  const Icon = iconCfg.Icon;
+                  return (
+                    <tr key={t.id} className={`transition-colors ${t.is_active ? "hover:bg-gray-50" : "bg-gray-50/50 opacity-70 hover:opacity-100"}`}>
+                      <td className="px-4 py-3">
+                        <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${t.color}22` }}>
+                          <Icon className="h-5 w-5" style={{ color: t.color }} />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-gray-900">{t.name_en}</p>
+                        {t.name_mm && <p className="text-xs text-gray-400">{t.name_mm}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <code className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-700">{t.slug_en}</code>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {t.requires_registration         && <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100   text-blue-800   font-medium">Registration</span>}
+                          {t.requires_tax_document         && <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100  text-green-800  font-medium">Tax Doc</span>}
+                          {t.requires_identity_document    && <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-medium">ID Doc</span>}
+                          {t.requires_business_certificate && <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">Biz Cert</span>}
+                          {!t.requires_registration && !t.requires_tax_document && !t.requires_identity_document && !t.requires_business_certificate && (
+                            <span className="text-[10px] text-gray-400">None</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-semibold text-gray-700">{t.sellers_count ?? "—"}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => handleToggle(t)} disabled={toggling === t.id}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all disabled:opacity-60
+                            ${t.is_active ? "bg-green-100 text-green-800 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"}`}>
+                          {toggling === t.id
+                            ? <span className="h-2.5 w-2.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                            : t.is_active ? <CheckCircleIcon className="h-3.5 w-3.5" /> : <XCircleIcon className="h-3.5 w-3.5" />}
+                          {t.is_active ? "Active" : "Inactive"}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">{t.sort_order}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => openEdit(t)} className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg" title="Edit">
+                            <PencilIcon className="h-4 w-4" />
                           </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 bg-gray-100 rounded text-sm">
-                            {businessType.sort_order}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleOpenModal(businessType)}
-                              className="text-indigo-600 hover:text-indigo-900"
-                              title="Edit"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(businessType.id)}
-                              className="text-red-600 hover:text-red-900"
-                              title="Delete"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={tableHeaders.length} className="px-6 py-4 text-center text-sm text-gray-500">
-                      {businessTypes.length === 0 ? "No business types available" : "No matching records found"}
-                    </td>
-                  </tr>
-                )}
+                          <button onClick={() => setDeleteTarget(t)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Showing{" "}
-                  <span className="font-medium">
-                    {(currentPage - 1) * itemsPerPage + 1}
-                  </span>{" "}
-                  to{" "}
-                  <span className="font-medium">
-                    {Math.min(currentPage * itemsPerPage, processedData.length)}
-                  </span>{" "}
-                  of <span className="font-medium">{processedData.length}</span>{" "}
-                  results
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1 rounded-md border border-gray-300 text-sm font-medium disabled:opacity-50 hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900">
-                {editingType ? "Edit Business Type" : "Add New Business Type"}
+      {showModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 flex items-start justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">
+                {editing ? `Edit — ${editing.name_en}` : "New Business Type"}
               </h3>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
+              <button onClick={() => setShowModal(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              {formErrors.submit && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-600">{formErrors.submit}</p>
-                </div>
+            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5 max-h-[80vh] overflow-y-auto">
+              {fieldErrors.submit && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{fieldErrors.submit}</div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* English Information */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-700 border-b pb-2">English</h4>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">English</p>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name (EN) *
-                    </label>
-                    <input
-                      type="text"
-                      name="name_en"
-                      value={formData.name_en}
-                      onChange={handleInputChange}
-                      className={`w-full border ${formErrors.name_en ? 'border-red-300' : 'border-gray-300'} rounded-md px-3 py-2`}
-                      placeholder="e.g., Individual Seller"
-                    />
-                    {formErrors.name_en && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.name_en}</p>
-                    )}
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Name (EN) *</label>
+                    <input name="name_en" value={form.name_en} onChange={handleChange} placeholder="e.g. Individual Seller"
+                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${fieldErrors.name_en ? "border-red-400" : "border-gray-300"}`} />
+                    {fieldErrors.name_en && <p className="text-xs text-red-600 mt-0.5">{fieldErrors.name_en}</p>}
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Slug (EN) *
-                    </label>
-                    <input
-                      type="text"
-                      name="slug_en"
-                      value={formData.slug_en}
-                      onChange={handleInputChange}
-                      className={`w-full border ${formErrors.slug_en ? 'border-red-300' : 'border-gray-300'} rounded-md px-3 py-2`}
-                      placeholder="e.g., individual-seller"
-                    />
-                    {formErrors.slug_en && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.slug_en}</p>
-                    )}
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Slug (EN) * <span className="text-gray-400 font-normal">(auto-generated)</span></label>
+                    <input name="slug_en" value={form.slug_en} onChange={handleChange} placeholder="e.g. individual-seller"
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 ${fieldErrors.slug_en ? "border-red-400" : "border-gray-300"}`} />
+                    {fieldErrors.slug_en && <p className="text-xs text-red-600 mt-0.5">{fieldErrors.slug_en}</p>}
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description (EN)
-                    </label>
-                    <textarea
-                      name="description_en"
-                      value={formData.description_en}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      placeholder="English description of this business type..."
-                    />
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Description (EN)</label>
+                    <textarea name="description_en" value={form.description_en} onChange={handleChange} rows={3}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 resize-none" />
                   </div>
                 </div>
 
-                {/* Myanmar Information */}
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-700 border-b pb-2">Myanmar (မြန်မာ)</h4>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Myanmar (မြန်မာ)</p>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name (MM)
-                    </label>
-                    <input
-                      type="text"
-                      name="name_mm"
-                      value={formData.name_mm}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      placeholder="e.g., တစ်ဦးတည်းရောင်းချသူ"
-                    />
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Name (MM)</label>
+                    <input name="name_mm" value={form.name_mm} onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Slug (MM)
-                    </label>
-                    <input
-                      type="text"
-                      name="slug_mm"
-                      value={formData.slug_mm}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      placeholder="e.g., တစ်ဦးတည်းရောင်းချသူ"
-                    />
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Slug (MM)</label>
+                    <input name="slug_mm" value={form.slug_mm} onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description (MM)
-                    </label>
-                    <textarea
-                      name="description_mm"
-                      value={formData.description_mm}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      placeholder="မြန်မာဘာသာဖြင့် ဖော်ပြချက်..."
-                    />
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Description (MM)</label>
+                    <textarea name="description_mm" value={form.description_mm} onChange={handleChange} rows={3}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 resize-none" />
                   </div>
                 </div>
               </div>
 
-              {/* Document Requirements & Other Settings */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Document Requirements */}
-                <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-700 border-b pb-2">Document Requirements</h4>
-                  <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="requires_registration"
-                        checked={formData.requires_registration}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Requires Business Registration</span>
+              <div className="border border-gray-200 rounded-xl p-4">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Document Requirements</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    ["requires_registration",         "Business Registration"],
+                    ["requires_tax_document",          "Tax Document"],
+                    ["requires_identity_document",     "Identity Document"],
+                    ["requires_business_certificate",  "Business Certificate"],
+                  ].map(([name, label]) => (
+                    <label key={name} className="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" name={name} checked={form[name]} onChange={handleChange}
+                        className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                      <span className="text-sm text-gray-700">{label}</span>
                     </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="requires_tax_document"
-                        checked={formData.requires_tax_document}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Requires Tax Document</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="requires_identity_document"
-                        checked={formData.requires_identity_document}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Requires Identity Document</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="requires_business_certificate"
-                        checked={formData.requires_business_certificate}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Requires Business Certificate</span>
-                    </label>
-                  </div>
+                  ))}
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sort Order
-                    </label>
-                    <input
-                      type="number"
-                      name="sort_order"
-                      value={formData.sort_order}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      min="0"
-                    />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Icon</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {ICONS.map(({ value, label, Icon }) => (
+                      <button key={value} type="button" onClick={() => setForm((p) => ({ ...p, icon: value }))}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 text-[10px] transition-all
+                          ${form.icon === value ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 hover:border-gray-300 text-gray-500"}`}
+                        title={label}>
+                        <Icon className="h-5 w-5" />
+                        <span className="truncate w-full text-center">{label}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-
-                {/* Visual Settings */}
                 <div className="space-y-4">
-                  <h4 className="text-md font-medium text-gray-700 border-b pb-2">Visual Settings</h4>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Icon
-                    </label>
-                    <select
-                      name="icon"
-                      value={formData.icon}
-                      onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    >
-                      {availableIcons.map(icon => (
-                        <option key={icon.value} value={icon.value}>
-                          {icon.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Color
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Color</label>
                     <div className="flex flex-wrap gap-2">
-                      {availableColors.map(color => (
-                        <button
-                          key={color.value}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
-                          className={`h-8 w-8 rounded-full border-2 ${formData.color === color.value ? 'border-gray-900' : 'border-gray-300'}`}
-                          style={{ backgroundColor: color.value }}
-                          title={color.label}
-                        />
+                      {COLORS.map(({ value, label }) => (
+                        <button key={value} type="button" onClick={() => setForm((p) => ({ ...p, color: value }))}
+                          className={`h-8 w-8 rounded-full border-2 transition-all ${form.color === value ? "border-gray-900 scale-110" : "border-gray-300 hover:border-gray-500"}`}
+                          style={{ backgroundColor: value }} title={label} />
                       ))}
                     </div>
                   </div>
-
                   <div>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="is_active"
-                        checked={formData.is_active}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-blue-600 rounded"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">Active</span>
-                    </label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Sort Order</label>
+                    <input type="number" name="sort_order" value={form.sort_order} onChange={handleChange} min="0"
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500" />
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange}
+                      className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                    <span className="text-sm text-gray-700 font-medium">Active (visible to sellers)</span>
+                  </label>
                 </div>
               </div>
 
-              {/* Additional Requirements (JSON) */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Additional Requirements (JSON)
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  Additional Requirements <span className="text-gray-400 font-normal">(JSON array, optional)</span>
                 </label>
-                <textarea
-                  name="additional_requirements"
-                  value={formData.additional_requirements}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className={`w-full border ${formErrors.additional_requirements ? 'border-red-300' : 'border-gray-300'} rounded-md px-3 py-2 font-mono text-sm`}
-                  placeholder='[{"name": "Example Requirement", "description": "Additional requirement description"}]'
-                />
-                {formErrors.additional_requirements && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.additional_requirements}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Enter additional requirements as a JSON array of objects with "name" and "description" fields
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : editingType ? "Update" : "Create"}
-                </button>
+                <textarea name="additional_requirements" value={form.additional_requirements} onChange={handleChange} rows={3}
+                  placeholder='[{"name":"Example","description":"Detail"}]'
+                  className={`w-full border rounded-xl px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-blue-500 resize-none ${fieldErrors.additional_requirements ? "border-red-400" : "border-gray-300"}`} />
+                {fieldErrors.additional_requirements && <p className="text-xs text-red-600 mt-0.5">{fieldErrors.additional_requirements}</p>}
               </div>
             </form>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-xl hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={handleSubmit} disabled={saving}
+                className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                {saving ? "Saving…" : editing ? "Update" : "Create"}
+              </button>
+            </div>
           </div>
         </div>
       )}

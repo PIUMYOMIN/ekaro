@@ -31,7 +31,7 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [reviewFlash, setReviewFlash] = useState(null);
-  const flash = (msg, type = "success") => { setReviewFlash({ msg, type }); setTimeout(() => setReviewFlash(null), 3500); };
+  const flashReview = (msg, type="success") => { setReviewFlash({ msg, type }); setTimeout(() => setReviewFlash(null), 3500); };
   const [rating, setRating] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -93,10 +93,10 @@ const ProductDetail = () => {
           average_rating: parseFloat(productData.average_rating) || 0,
         });
 
-        // Reviews come from a separate endpoint — not embedded in ProductResource
+        // ProductResource does not embed reviews — fetch separately
         try {
-          const reviewsRes = await api.get(`/reviews/products/${productData.id}`);
-          setReviews(reviewsRes.data.data || []);
+          const revRes = await api.get(`/reviews/products/${productData.id}`);
+          setReviews(revRes.data.data || []);
         } catch { setReviews([]); }
 
         // Wishlist check (only for buyers)
@@ -202,7 +202,7 @@ const ProductDetail = () => {
     }
 
     if (user.role === "admin" || user.role === "seller") {
-      flash("Only buyers can write reviews.", "error"); return;
+      flashReview("Only buyers can write reviews.", "error"); return;
       return;
     }
 
@@ -218,7 +218,7 @@ const ProductDetail = () => {
     }
 
     if (rating === 0) {
-      flash("Please select a star rating.", "error"); return;
+      flashReview("Please select a rating.", "error"); return;
       return;
     }
 
@@ -247,7 +247,7 @@ const ProductDetail = () => {
       setSuccessMessage(response.data.message || "Review submitted successfully!");
     } catch (error) {
       console.error("Failed to submit review:", error);
-      flash(error.response?.data?.message || "Failed to submit review.", "error");
+      flashReview(error.response?.data?.message || "Failed to submit review.", "error");
     } finally {
       setSubmittingReview(false);
     }
