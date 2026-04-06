@@ -18,7 +18,8 @@ import {
   PencilIcon,
   TicketIcon,
   UserCircleIcon,
-  GiftIcon
+  GiftIcon,
+  WalletIcon,
 } from "@heroicons/react/24/outline";
 import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
@@ -41,6 +42,7 @@ import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import ShippingSettings from "../../components/seller/ShippingSettings";
+import SellerWallet from "../../components/seller/SellerWallet";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -232,6 +234,7 @@ const SellerDashboard = () => {
     { name: "Referrals", icon: GiftIcon, key: "referrals" },
     { name: "Shipping Settings", icon: TruckIcon, key: "shipping" },
     { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
+    { name: "Seller Wallet",               icon: WalletIcon,         key: "wallet" },
   ], [t]);
 
   // Render the active tab with current state — separated from the stable nav structure
@@ -255,7 +258,8 @@ const SellerDashboard = () => {
       case "settings": return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
       case "referrals": return <ReferralPanel />;
       case "shipping":    return <ShippingSettings storeData={storeData} />;
-      case "profile":        return <SellerProfileTab />;
+      case "profile": return <SellerProfileTab />;
+      case "wallet": return <SellerWallet />;
       default:               return null;
     }
   };

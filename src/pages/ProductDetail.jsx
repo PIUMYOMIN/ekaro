@@ -11,7 +11,8 @@ import {
   HeartIcon,
   ArrowLeftIcon,
   XMarkIcon,
-  ShareIcon
+  ShareIcon,
+  CheckIcon,
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER } from "../config";
@@ -458,11 +459,35 @@ const ProductDetail = () => {
                 </span>
               </div>
 
-              {/* Price */}
+              {/* Price — show discounted price when active */}
               <div>
-                <h2 className="text-2xl font-semibold text-green-600">
-                  {parseFloat(product.price).toLocaleString()} MMK
-                </h2>
+                {product.is_currently_on_sale && product.selling_price < product.price ? (
+                  <>
+                    {/* Discount badge */}
+                    {product.discount_percentage > 0 && (
+                      <span className="inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
+                        -{Math.round(product.discount_percentage)}% OFF
+                      </span>
+                    )}
+                    <div className="flex items-baseline gap-3">
+                      <h2 className="text-2xl font-bold text-red-600">
+                        {parseFloat(product.selling_price).toLocaleString()} MMK
+                      </h2>
+                      <span className="text-lg text-gray-400 line-through">
+                        {parseFloat(product.price).toLocaleString()} MMK
+                      </span>
+                    </div>
+                    {product.discount_saved > 0 && (
+                      <p className="text-sm text-green-600 font-medium mt-0.5">
+                        You save {parseFloat(product.discount_saved).toLocaleString()} MMK
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <h2 className="text-2xl font-semibold text-green-600">
+                    {parseFloat(product.price).toLocaleString()} MMK
+                  </h2>
+                )}
                 <p className="text-gray-500 mt-1">Tax inclusive</p>
               </div>
 

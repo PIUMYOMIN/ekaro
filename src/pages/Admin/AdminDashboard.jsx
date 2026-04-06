@@ -41,6 +41,9 @@ import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import AnnouncementManagement from "../../components/admin/AnnouncementManagement";
 import Settings from "../../components/admin/Settings";
 import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
+import DeliveryFeeManagement from "../../components/admin/DeliveryFeeManagement";
+import CodInvoiceManagement from "../../components/admin/CodInvoiceManagement";
+import FinancialReports from "../../components/admin/FinancialReports";
 import SEO from "../../components/SEO/SEO";
 
 // ── Admin personal profile tab ────────────────────────────────────────────────
@@ -343,8 +346,6 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Orders: now fetched self-contained inside <OrderManagement />
-
   // Refresh handler (only for components that still need it)
   const handleRefresh = async () => {
     switch (activeTab) {
@@ -390,6 +391,11 @@ const AdminDashboard = () => {
       component: <NotificationsPanel />
     },
     {
+      name: "Financial Reports",
+      icon: ChartBarIcon,
+      component: <FinancialReports />
+    },
+    {
       name: "Contact Messages",
       icon: EnvelopeIcon,
       component: <ContactMessagesManagement />
@@ -431,8 +437,19 @@ const AdminDashboard = () => {
       icon: TruckIcon,
       component: <PlatformLogistics />
     },
+
     {
-      name: "Delivery Fees",
+      name: "Delivery Fee Management",
+      icon: TruckIcon,
+      component: <DeliveryFeeManagement />
+    },
+    {
+      name: "COD Invoice Management",
+      icon: CurrencyDollarIcon,
+      component: <CodInvoiceManagement />
+    },
+    {
+      name: "Delivery Fee Review",
       icon: CurrencyDollarIcon,
       component: <DeliveryFeeReview />
     },

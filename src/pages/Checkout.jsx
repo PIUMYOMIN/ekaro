@@ -109,7 +109,7 @@ export default function Checkout() {
   // Replaces the previous hardcoded `SHIPPING_FEE = 5000` and `TAX_RATE = 0.05`.
   // The platform fee rate comes from the commission_rules table via
   // CommissionRateResolver (tier → business_type → category → default).
-  // Tax shown to buyer. Commission is collected from the seller separately — not shown here.
+  // Tax (5%) shown to buyer. Commission is collected from the seller separately — not visible here.
   const [feesLoading, setFeesLoading] = useState(true);
   const [shippingFee, setShippingFee] = useState(5000);       // safe default while loading
   const [taxRate, setTaxRate] = useState(0.05); // safe default while loading
@@ -134,7 +134,7 @@ export default function Checkout() {
             setShippingFee(d.shipping_fee ?? 5000);
             // Backend returns tax_rate / tax_pct (they represent platform commission)
             setTaxRate(d.tax_rate ?? 0.05);
-            setTaxPct(d.tax_pct  ?? 5.0);
+            setTaxPct(d.tax_pct ?? 5.0);
           }
         })
         .catch(() => {
@@ -897,7 +897,7 @@ export default function Checkout() {
                     }
                   </div>
 
-                  {/* Tax (5%) — collected as part of buyer total; commission is separate and invisible to buyer */}
+                  {/* Tax (5%) — part of buyer total; seller commission is separate and not shown to buyer */}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       Tax ({feesLoading ? '…' : `${taxPct}%`})

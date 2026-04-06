@@ -539,7 +539,7 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
                       This is an computer-generated receipt. No signature required.
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
-                      For any inquiries, contact: support@yourb2b.com | +95 9 123 456 789
+                      For any inquiries, contact: support@pyonea.com | +95 9 792 115 547
                     </p>
                   </div>
                 </div>
@@ -614,8 +614,8 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
                 Our support team is here to help with your order.
               </p>
               <div className="text-sm text-blue-700 space-y-1">
-                <p>📞 +95 9 123 456 789</p>
-                <p>✉️ support@yourb2b.com</p>
+                <p>📞 +95 9 792 115 547</p>
+                <p>✉️ support@pyonea.com</p>
                 <p>🕒 Mon-Sun: 8:00 AM - 8:00 PM</p>
               </div>
             </div>

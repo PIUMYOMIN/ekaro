@@ -76,6 +76,7 @@ import StepGuard from "./components/StepGuard";
 import Error from "./pages/Errors/404";
 import SellerRouteGuard from "./components/SellerRouteGuard";
 import MyStore from "./components/seller/MyStore";
+import FinancialReports from "./components/admin/FinancialReports";
 
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
@@ -262,7 +263,13 @@ function App() {
                         <Route path="/admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
                         <Route path="/admin/dashboard" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
                         <Route path="/admin/categories/create" element={<ProtectedRoute roles={["admin"]}><CategoryCreate /></ProtectedRoute>} />
-                        <Route path="/admin/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}><CategoryEdit /></ProtectedRoute>} />
+                          <Route path="/admin/categories/:id/edit" element={<ProtectedRoute roles={["admin"]}><CategoryEdit /></ProtectedRoute>} />
+                          
+                          <Route path="/admin/financial-reports" element={
+                          <ProtectedRoute roles={["admin"]}>
+                            <FinancialReports />
+                          </ProtectedRoute>
+                        } />
 
                         {/* Shared Routes */}
                         <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}><ProductCreate /></ProtectedRoute>} />

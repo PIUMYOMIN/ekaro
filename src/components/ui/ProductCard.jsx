@@ -164,10 +164,17 @@ const ProductCard = ({ product, className = "" }) => {
   const imageUrl  = product.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
   const isInWishlist = !!wishlist?.some((w) => w.id === productId);
 
-  const discountPct = product.discount_percentage
-    || (product.discount_price && product.price > 0
-        ? Math.round(((product.price - product.discount_price) / product.price) * 100)
-        : 0);
+  // Use server-computed fields when available (ProductResource now always returns them);
+  // fall back to client-side calculation for backward compat.
+  const isOnSale     = product.is_currently_on_sale
+                    ?? (product.is_on_sale && (product.discount_price > 0 || product.discount_percentage > 0));
+  const effectivePrice = isOnSale
+    ? (product.selling_price ?? product.discount_price ?? product.price)
+    : product.price;
+  const discountPct = isOnSale
+    ? (product.discount_percentage
+        || (product.price > 0 ? Math.round(((product.price - effectivePrice) / product.price) * 100) : 0))
+    : 0;
 
   const isBuyer       = !user || user.type === "buyer";
   const isUnavailable = !product.is_active;
@@ -281,7 +288,7 @@ const ProductCard = ({ product, className = "" }) => {
           {discountPct > 0 && !isOutOfStock && !isUnavailable && (
             <span className="bg-red-500 text-white text-[10px] font-bold
                              px-2 py-0.5 rounded-full leading-tight">
-              -{discountPct}%
+              -{Math.round(discountPct)}%
             </span>
           )}
           {product.is_new && !isOutOfStock && !isUnavailable && (
@@ -367,10 +374,7 @@ const ProductCard = ({ product, className = "" }) => {
               {discountPct > 0 ? (
                 <>
                   <span className="text-base font-bold text-red-600 leading-none">
-                    {formatMMK(
-                      product.discount_price ||
-                      product.price * (1 - discountPct / 100)
-                    )}
+                    {formatMMK(effectivePrice)}
                   </span>
                   <span className="text-xs text-gray-400 line-through leading-none">
                     {formatMMK(product.price)}

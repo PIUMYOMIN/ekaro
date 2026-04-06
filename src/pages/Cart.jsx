@@ -169,12 +169,28 @@ const Cart = () => {
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-lg font-bold text-green-700">
-                                {formatMMK(item.price)}
-                              </p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {formatMMK(item.subtotal)}
-                              </p>
+                              {item.selling_price != null && item.selling_price < item.price ? (
+                                <>
+                                  <p className="text-lg font-bold text-red-600">
+                                    {formatMMK(item.selling_price)}
+                                  </p>
+                                  <p className="text-xs text-gray-400 line-through">
+                                    {formatMMK(item.price)}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {formatMMK(item.selling_price * item.quantity)}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-lg font-bold text-green-700">
+                                    {formatMMK(item.price)}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {formatMMK(item.subtotal)}
+                                  </p>
+                                </>
+                              )}
                             </div>
                           </div>
 
@@ -266,20 +282,33 @@ const Cart = () => {
 
                 <dl className="mt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm text-gray-600">Subtotal ({totalItems} items)</dt>
+                    <dt className="text-sm text-gray-600">Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})</dt>
                     <dd className="text-sm font-medium text-gray-900">{formatMMK(subtotal)}</dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <dt className="text-sm text-gray-600">Shipping <span className="text-xs text-gray-400 font-normal">(est.)</span></dt>
-                    <dd className="text-sm font-medium text-gray-900">{formatMMK(cartSummary?.shipping_fee || 0)}</dd>
+                    <dt className="text-sm text-gray-600">
+                      Shipping <span className="text-xs text-gray-400 font-normal">(est.)</span>
+                    </dt>
+                    <dd className="text-sm font-medium text-gray-900">
+                      {formatMMK(cartSummary?.shipping_fee ?? 5000)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <dt className="text-sm text-gray-600">Tax (5%)</dt>
-                    <dd className="text-sm font-medium text-gray-900">{formatMMK(cartSummary?.platform_fee ?? cartSummary?.tax ?? 0)}</dd>
+                    <dt className="text-sm text-gray-600">
+                      Tax <span className="text-xs text-gray-400 font-normal">(5%)</span>
+                    </dt>
+                    <dd className="text-sm font-medium text-gray-900">
+                      {formatMMK(cartSummary?.tax ?? Math.round(subtotal * 0.05 * 100) / 100)}
+                    </dd>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                     <dt className="text-lg font-bold text-gray-900">Estimated Total</dt>
-                    <dd className="text-lg font-bold text-gray-900">{formatMMK(cartSummary?.total || 0)}</dd>
+                    <dd className="text-lg font-bold text-green-700">
+                      {formatMMK(
+                        cartSummary?.total ??
+                        Math.round((subtotal + (cartSummary?.shipping_fee ?? 5000) + Math.round(subtotal * 0.05 * 100) / 100) * 100) / 100
+                      )}
+                    </dd>
                   </div>
                 </dl>
 

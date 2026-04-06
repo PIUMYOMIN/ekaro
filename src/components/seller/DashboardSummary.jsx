@@ -1,47 +1,47 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowUpIcon,
-  ArrowDownIcon,
-  ShoppingBagIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  XCircleIcon,
-  CurrencyDollarIcon,
-  UserGroupIcon,
-  StarIcon,
-  TruckIcon,
+  ArrowUpIcon, ArrowDownIcon,
+  ShoppingBagIcon, CheckCircleIcon, ClockIcon, XCircleIcon,
+  CurrencyDollarIcon, UserGroupIcon, StarIcon, TruckIcon,
+  BanknotesIcon, LockClosedIcon, DocumentTextIcon, ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { Bar, Doughnut } from "react-chartjs-2";
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, BarElement,
+  Title, Tooltip, Legend, ArcElement,
+} from "chart.js";
 import api from "../../utils/api";
 
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 const fmtK = (n) => {
   const v = Number(n) || 0;
-  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'k';
+  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return v.toLocaleString();
 };
 const fmtMMK = (n) => `${fmtK(n)} MMK`;
 
+// ── Tier config ────────────────────────────────────────────────────────────────
 const TIER_CONFIG = {
-  bronze: { label: 'Bronze',  rate: '6%', next: 'Silver', threshold: 50,  color: 'from-amber-600 to-amber-500',   bg: 'bg-amber-50',  border: 'border-amber-200', text: 'text-amber-700', emoji: '🥉' },
-  silver: { label: 'Silver',  rate: '5%', next: 'Gold',   threshold: 500, color: 'from-slate-400 to-slate-500',   bg: 'bg-slate-50',  border: 'border-slate-200', text: 'text-slate-700', emoji: '🥈' },
-  gold:   { label: 'Gold',    rate: '4%', next: null,      threshold: null, color: 'from-yellow-500 to-yellow-400', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', emoji: '🥇' },
+  bronze: { label: "Bronze", rate: "6%", next: "Silver", threshold: 50,  color: "from-amber-600 to-amber-500",   bg: "bg-amber-50",  border: "border-amber-200", text: "text-amber-700", emoji: "🥉" },
+  silver: { label: "Silver", rate: "5%", next: "Gold",   threshold: 500, color: "from-slate-400 to-slate-500",   bg: "bg-slate-50",  border: "border-slate-200", text: "text-slate-700", emoji: "🥈" },
+  gold:   { label: "Gold",   rate: "4%", next: null,     threshold: null, color: "from-yellow-500 to-yellow-400", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", emoji: "🥇" },
 };
 
-// ── Tier Card ──────────────────────────────────────────────────────────────────
-const TierCard = ({ storeData }) => {
-  const tier   = storeData?.seller_tier || 'bronze';
-  const cfg    = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
-  const completed  = storeData?.completed_orders_count || 0;
-  const promoted   = storeData?.tier_promoted_at
-    ? new Date(storeData.tier_promoted_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
-    : null;
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
-  const progress = cfg.threshold
-    ? Math.min(100, Math.round((completed / cfg.threshold) * 100))
-    : 100;
+const TierCard = ({ storeData }) => {
+  const tier      = storeData?.seller_tier || "bronze";
+  const cfg       = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
+  const completed = storeData?.completed_orders_count || 0;
+  const promoted  = storeData?.tier_promoted_at
+    ? new Date(storeData.tier_promoted_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+    : null;
+  const progress = cfg.threshold ? Math.min(100, Math.round((completed / cfg.threshold) * 100)) : 100;
 
   return (
     <div className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 sm:p-5`}>
@@ -52,9 +52,7 @@ const TierCard = ({ storeData }) => {
             <span className="text-2xl">{cfg.emoji}</span>
             <span className={`text-xl font-bold ${cfg.text}`}>{cfg.label}</span>
           </div>
-          {promoted && (
-            <p className="text-xs text-gray-400 mt-0.5">Since {promoted}</p>
-          )}
+          {promoted && <p className="text-xs text-gray-400 mt-0.5">Since {promoted}</p>}
         </div>
         <div className="text-right flex-shrink-0">
           <p className="text-xs font-medium text-gray-500">Commission Rate</p>
@@ -62,18 +60,15 @@ const TierCard = ({ storeData }) => {
           <p className="text-xs text-gray-400">per order</p>
         </div>
       </div>
-
-      {cfg.threshold && (
+      {cfg.threshold ? (
         <div className="mt-4">
           <div className="flex justify-between text-xs text-gray-500 mb-1.5">
             <span>{completed} completed orders</span>
             <span>{cfg.threshold} for {cfg.next}</span>
           </div>
           <div className="w-full bg-white rounded-full h-2 border border-gray-200">
-            <div
-              className={`h-2 rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-500`}
-              style={{ width: `${progress}%` }}
-            />
+            <div className={`h-2 rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-500`}
+              style={{ width: `${progress}%` }} />
           </div>
           <p className="text-xs text-gray-400 mt-1.5">
             {cfg.threshold - completed > 0
@@ -81,9 +76,7 @@ const TierCard = ({ storeData }) => {
               : `Ready to be promoted to ${cfg.next}!`}
           </p>
         </div>
-      )}
-
-      {!cfg.threshold && (
+      ) : (
         <div className="mt-3 flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full bg-yellow-400" />
           <p className="text-xs text-yellow-700 font-medium">Highest tier — lowest commission rate</p>
@@ -93,496 +86,447 @@ const TierCard = ({ storeData }) => {
   );
 };
 
+const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent }) => {
+  const accents = {
+    green:  "border-l-4 border-green-400 bg-green-50",
+    blue:   "border-l-4 border-blue-400 bg-blue-50",
+    amber:  "border-l-4 border-amber-400 bg-amber-50",
+    red:    "border-l-4 border-red-400 bg-red-50",
+    purple: "border-l-4 border-purple-400 bg-purple-50",
+    teal:   "border-l-4 border-teal-400 bg-teal-50",
+    gray:   "border-l-4 border-gray-300 bg-gray-50",
+  };
+  return (
+    <div className={`rounded-xl p-4 shadow-sm ${accents[accent] ?? accents.gray}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
+          <p className="text-xl font-bold text-gray-900 mt-1 break-all">{value}</p>
+          {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+          {change !== undefined && (
+            <div className={`flex items-center gap-0.5 mt-1.5 text-xs font-semibold ${
+              changeType === "positive" ? "text-green-600" : changeType === "negative" ? "text-red-500" : "text-gray-400"
+            }`}>
+              {changeType === "positive"
+                ? <ArrowUpIcon className="h-3 w-3" />
+                : changeType === "negative"
+                ? <ArrowDownIcon className="h-3 w-3" />
+                : null}
+              <span>{change}</span>
+            </div>
+          )}
+        </div>
+        <Icon className="h-7 w-7 text-gray-200 flex-shrink-0 mt-1" />
+      </div>
+    </div>
+  );
+};
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-} from "chart.js";
+const SetupChecklist = ({ storeData, onSetupClick }) => {
+  const items = [
+    { id: 1, label: "Store Profile Complete",   done: !!(storeData?.store_name && storeData?.contact_email), action: "Complete profile",   step: "my-store" },
+    { id: 2, label: "Store Logo Uploaded",      done: !!storeData?.store_logo,                               action: "Upload logo",        step: "my-store" },
+    { id: 3, label: "Business Details",         done: !!(storeData?.business_registration_number || storeData?.business_type === "individual"), action: "Add details", step: "my-store" },
+    { id: 4, label: "Payment Method Set",       done: !!storeData?.account_number,                           action: "Set up payment",     step: "my-store" },
+    { id: 5, label: "Shipping Configured",      done: !!storeData?.shipping_enabled,                         action: "Configure shipping", step: "shipping" },
+  ];
+  const done  = items.filter(i => i.done).length;
+  const total = items.length;
+  if (done === total) return null;
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+  return (
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-semibold text-blue-900">Store Setup Checklist</h3>
+        <span className="text-sm text-blue-700">{done}/{total} completed</span>
+      </div>
+      <div className="space-y-3">
+        {items.map(item => (
+          <div key={item.id} className="flex items-center justify-between">
+            <div className="flex items-center">
+              {item.done
+                ? <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                : <div className="w-5 h-5 rounded-full border-2 border-blue-300 mr-2" />}
+              <span className={`text-sm ${item.done ? "text-gray-500" : "text-gray-900"}`}>{item.label}</span>
+            </div>
+            {!item.done && item.id !== 5 && (
+              <button onClick={() => onSetupClick?.(item.step)}
+                className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg">
+                {item.action}
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <div className="flex justify-between text-xs text-gray-600 mb-1">
+          <span>Setup Progress</span><span>{Math.round((done / total) * 100)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full"
+            style={{ width: `${(done / total) * 100}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
+// ── Main Dashboard ─────────────────────────────────────────────────────────────
 const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const { t } = useTranslation();
+  const [dash, setDash] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [deliveryFees, setDeliveryFees] = useState([]);
-  const [feeSubmitting, setFeeSubmitting] = useState(null); // deliveryId
-  const [feeNote, setFeeNote] = useState('');
+  const [feeSubmitting, setFeeSubmitting] = useState(null);
+  const [feeNote, setFeeNote] = useState("");
   const [feeToast, setFeeToast] = useState(null);
+  const initialFetchDone = useRef(false);
 
-  const flashFee = (msg, type = 'success') => {
+  const flashFee = (msg, type = "success") => {
     setFeeToast({ msg, type });
     setTimeout(() => setFeeToast(null), 3500);
   };
 
-  const fetchDeliveryFees = async () => {
+  const fetchDeliveryFees = useCallback(async () => {
     try {
-      const res = await api.get('/deliveries', { params: { delivery_method: 'platform', per_page: 50 } });
+      const res = await api.get("/deliveries", { params: { delivery_method: "platform", per_page: 50 } });
       const items = res.data?.data?.data ?? res.data?.data ?? [];
       setDeliveryFees(Array.isArray(items) ? items : []);
     } catch {}
-  };
+  }, []);
 
   const handleSubmitFee = async (deliveryId) => {
     setFeeSubmitting(deliveryId);
     try {
-      await api.patch(`/deliveries/${deliveryId}/submit-fee`, { note: feeNote || 'Delivery fee paid.' });
-      flashFee('Fee submission sent to admin!');
-      setFeeNote('');
+      await api.patch(`/deliveries/${deliveryId}/submit-fee`, { note: feeNote || "Delivery fee paid." });
+      flashFee("Fee submission sent to admin!");
+      setFeeNote("");
       fetchDeliveryFees();
     } catch (err) {
-      flashFee(err.response?.data?.message || 'Failed to submit fee.', 'error');
+      flashFee(err.response?.data?.message || "Failed to submit fee.", "error");
     } finally { setFeeSubmitting(null); }
   };
 
-  const [dashboardData, setDashboardData] = useState({
-    orders: { total: 0, byStatus: {}, recent: [] },
-    sales: { totalRevenue: 0, monthlyTrend: [], averageOrderValue: 0 },
-    products: { total: 0, active: 0, lowStock: 0 },
-    customers: { total: 0, repeatCustomers: 0 },
-    deliveries: { total: 0, byStatus: {} }
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const initialFetchDone = useRef(false);
-
-  // Setup Checklist Component (unchanged)
-  const SetupChecklist = ({ storeData, onSetupClick }) => {
-    const checklistItems = [
-      {
-        id: 1,
-        label: "Store Profile Complete",
-        completed: storeData?.store_name && storeData?.contact_email && storeData?.contact_phone,
-        action: "Complete profile",
-        step: "my-store"
-      },
-      {
-        id: 2,
-        label: "Store Logo Uploaded",
-        completed: !!storeData?.store_logo,
-        action: "Upload logo",
-        step: "my-store"
-      },
-      {
-        id: 3,
-        label: "Business Details",
-        completed: storeData?.business_registration_number || storeData?.business_type === "individual",
-        action: "Add details",
-        step: "my-store"
-      },
-      {
-        id: 4,
-        label: "Payment Method Set",
-        completed: !!storeData?.account_number,
-        action: "Set up payment",
-        step: "my-store"
-      },
-      {
-        id: 5,
-        label: "Shipping Configured",
-        completed: storeData?.shipping_enabled || false,
-        action: "Configure shipping",
-        step: "shipping"
-      }
-    ];
-
-    const completedCount = checklistItems.filter(item => item.completed).length;
-    const totalCount = checklistItems.length;
-    const progress = (completedCount / totalCount) * 100;
-
-    if (completedCount === totalCount) return null;
-
-    return (
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-blue-900">Store Setup Checklist</h3>
-          <span className="text-sm text-blue-700">
-            {completedCount}/{totalCount} completed
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {checklistItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
-              <div className="flex items-center">
-                {item.completed ? (
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-blue-300 mr-2"></div>
-                )}
-                <span className={`text-sm ${item.completed ? 'text-gray-600' : 'text-gray-900'}`}>
-                  {item.label}
-                </span>
-              </div>
-              {!item.completed && (
-                item.id === 5 ? (
-                  <span className="text-xs text-gray-500 italic">Turn on Shipping in the Shipping tab</span>
-                ) : (
-                  <button
-                    onClick={() => onSetupClick && onSetupClick(item.step)}
-                    className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg transition-colors"
-                  >
-                    {item.action}
-                  </button>
-                )
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-600 mb-1">
-            <span>Setup Progress</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Fetch dashboard data – only once on mount and when refreshData is called
-  const fetchDashboardData = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [salesSummaryResponse, recentOrdersResponse, deliveriesResponse] = await Promise.all([
-        api.get("/seller/sales-summary").catch(err => ({ data: { success: false, data: {} } })),
-        api.get("/seller/recent-orders?limit=8").catch(err => ({ data: { success: false, data: [] } })),
-        api.get("/deliveries?stats=true").catch(err => ({ data: { success: false, data: {} } }))
+      const [salesRes, recentRes, delivRes, walletRes] = await Promise.allSettled([
+        api.get("/seller/sales-summary"),
+        api.get("/seller/recent-orders?limit=8"),
+        api.get("/deliveries?stats=true"),
+        api.get("/seller/wallet"),
       ]);
 
-      // Process sales summary
-      if (salesSummaryResponse.data?.success) {
-        const salesData = salesSummaryResponse.data.data || {};
-        setDashboardData(prev => ({
-          ...prev,
-          orders: {
-            total: salesData.sales?.total_orders || 0,
-            byStatus: salesData.orders_by_status || {},
-            recent: recentOrdersResponse.data?.data || []
-          },
-          sales: {
-            totalRevenue: salesData.sales?.total_revenue || 0,
-            monthlyTrend: salesData.recent_trend || [],
-            averageOrderValue: salesData.sales?.average_order_value || 0
-          },
-          products: {
-            total: salesData.products?.total || 0,
-            active: salesData.products?.active || 0,
-            lowStock: salesData.products?.low_stock || 0
-          }
-        }));
+      const salesData = salesRes.status === "fulfilled" && salesRes.value.data?.success
+        ? salesRes.value.data.data || {}
+        : {};
+
+      const recentOrders = recentRes.status === "fulfilled"
+        ? recentRes.value.data?.data || []
+        : [];
+
+      const delivStats = delivRes.status === "fulfilled" && delivRes.value.data?.success
+        ? delivRes.value.data.data?.delivery_stats || {}
+        : {};
+
+      setDash({
+        orders: {
+          total: salesData.sales?.total_orders || 0,
+          byStatus: salesData.orders_by_status || {},
+          recent: recentOrders,
+        },
+        sales: {
+          totalRevenue:      salesData.sales?.total_revenue || 0,
+          monthlyTrend:      salesData.recent_trend || [],
+          averageOrderValue: salesData.sales?.average_order_value || 0,
+        },
+        products: {
+          total:    salesData.products?.total || 0,
+          active:   salesData.products?.active || 0,
+          lowStock: salesData.products?.low_stock || 0,
+        },
+        deliveries: {
+          total:    delivStats.total || 0,
+          byStatus: delivStats.by_status || {},
+        },
+      });
+
+      if (walletRes.status === "fulfilled" && walletRes.value.data?.success) {
+        setWallet(walletRes.value.data.data?.wallet || null);
       }
 
-      // Process delivery stats
-      if (deliveriesResponse.data?.success) {
-        const deliveryStats = deliveriesResponse.data.data?.delivery_stats || {};
-        setDashboardData(prev => ({
-          ...prev,
-          deliveries: {
-            total: deliveryStats.total || 0,
-            byStatus: deliveryStats.by_status || {}
-          }
-        }));
-      }
-
-      // Load platform delivery fees (seller must confirm payment to admin)
-      await fetchDeliveryFees().catch(() => {});
-
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-      const isNetworkError = !error.response;
-      setError(
-        isNetworkError
-          ? "Cannot reach the server. Please check your internet connection and make sure the API URL is configured correctly."
-          : "Failed to load dashboard data. Please try again."
+      await fetchDeliveryFees();
+    } catch (err) {
+      setError(!err.response
+        ? "Cannot reach the server. Please check your connection."
+        : "Failed to load dashboard data. Please try again."
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchDeliveryFees]);
 
-  // Initial fetch (with Strict Mode guard)
   useEffect(() => {
-    if (!initialFetchDone.current) {
-      initialFetchDone.current = true;
-      fetchDashboardData();
-    }
-  }, [fetchDashboardData]);
+    if (!initialFetchDone.current) { initialFetchDone.current = true; fetchAll(); }
+  }, [fetchAll]);
 
-  // Allow parent to refresh data (e.g., after an update)
-  useEffect(() => {
-    if (refreshData) {
-      fetchDashboardData();
-    }
-  }, [refreshData, fetchDashboardData]);
+  useEffect(() => { if (refreshData) fetchAll(); }, [refreshData, fetchAll]);
 
-  // Calculate metrics (with fallbacks)
-  const calculateMetrics = () => {
-    const orders = dashboardData.orders.byStatus || {};
-    const deliveries = dashboardData.deliveries.byStatus || {};
-
-    return {
-      successOrders: orders.delivered || 0,
-      pendingOrders: orders.pending || 0,
-      processingOrders: (orders.confirmed || 0) + (orders.processing || 0),
-      cancelledOrders: orders.cancelled || 0,
-      deliveredOrders: deliveries.delivered || 0,
-      inTransitOrders: (deliveries.in_transit || 0) + (deliveries.out_for_delivery || 0),
-      pendingDelivery: deliveries.pending || deliveries.awaiting_pickup || 0,
-      totalRevenue: dashboardData.sales.totalRevenue,
-      averageOrderValue: dashboardData.sales.averageOrderValue,
-      conversionRate: dashboardData.orders.total > 0
-        ? ((orders.delivered || 0) / dashboardData.orders.total * 100).toFixed(1)
-        : 0,
-      totalProducts: dashboardData.products.total,
-      activeProducts: dashboardData.products.active,
-      lowStockProducts: dashboardData.products.lowStock || 0
-    };
-  };
-
-  const metrics = calculateMetrics();
-
-  // Stats cards (use actual metrics)
-  const statsCards = [
-    {
-      id: 1,
-      name: "Total Revenue",
-      value: `${fmtMMK(metrics.totalRevenue)}`,
-      icon: CurrencyDollarIcon,
-      change: "+12.5%", // This could be dynamic later
-      changeType: "positive",
-      description: "Total sales revenue"
-    },
-    {
-      id: 2,
-      name: "Success Orders",
-      value: metrics.successOrders.toString(),
-      icon: CheckCircleIcon,
-      change: "+8.2%",
-      changeType: "positive",
-      description: "Completed orders"
-    },
-    {
-      id: 3,
-      name: "Pending Orders",
-      value: metrics.pendingOrders.toString(),
-      icon: ClockIcon,
-      change: "-3.1%",
-      changeType: "negative",
-      description: "Orders awaiting confirmation"
-    },
-    {
-      id: 4,
-      name: "Processing Orders",
-      value: metrics.processingOrders.toString(),
-      icon: ShoppingBagIcon,
-      change: "+5.7%",
-      changeType: "positive",
-      description: "Orders in progress"
-    },
-    {
-      id: 5,
-      name: "Active Products",
-      value: metrics.activeProducts.toString(),
-      icon: StarIcon,
-      change: "+2.3%",
-      changeType: "positive",
-      description: "Listed products"
-    },
-    {
-      id: 6,
-      name: "Total Customers",
-      value: dashboardData.customers.total.toString(),
-      icon: UserGroupIcon,
-      change: "+15.4%",
-      changeType: "positive",
-      description: "Unique buyers"
-    }
-  ];
-
-  // Chart data
-  const orderStatusData = {
-    labels: ['Delivered', 'Pending', 'Processing', 'Cancelled'],
-    datasets: [
-      {
-        data: [
-          metrics.successOrders,
-          metrics.pendingOrders,
-          metrics.processingOrders,
-          metrics.cancelledOrders
-        ],
-        backgroundColor: [
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(251, 191, 36, 0.8)',
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(239, 68, 68, 0.8)'
-        ],
-        borderColor: [
-          'rgb(34, 197, 94)',
-          'rgb(251, 191, 36)',
-          'rgb(59, 130, 246)',
-          'rgb(239, 68, 68)'
-        ],
-        borderWidth: 2
-      }
-    ]
-  };
-
-  const salesTrendData = {
-    labels: dashboardData.sales.monthlyTrend.map(item => {
-      if (!item?.date) return '';
-      const date = new Date(item.date);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }),
-    datasets: [
-      {
-        label: 'Daily Revenue (MMK)',
-        data: dashboardData.sales.monthlyTrend.map(item => item?.revenue || 0),
-        backgroundColor: 'rgba(5, 150, 105, 0.8)',
-        borderColor: 'rgb(5, 150, 105)',
-        borderWidth: 2,
-        borderRadius: 4
-      },
-      {
-        label: 'Orders Count',
-        data: dashboardData.sales.monthlyTrend.map(item => item?.orders_count || 0),
-        backgroundColor: 'rgba(16, 185, 129, 0.6)',
-        borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 2,
-        borderRadius: 4
-      }
-    ]
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Sales Performance' }
-    },
-    scales: { y: { beginAtZero: true } }
-  };
-
-  const doughnutOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'bottom' },
-      title: { display: true, text: 'Order Status Distribution' }
-    }
-  };
-
-  if (loading && !dashboardData.orders.total) {
+  if (loading && !dash) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-        </div>
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
         <p className="text-red-700 mb-4">{error}</p>
-        <button
-          onClick={fetchDashboardData}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Retry
-        </button>
+        <button onClick={fetchAll} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Retry</button>
       </div>
     );
   }
+
+  const os = dash?.orders?.byStatus || {};
+  const ds = dash?.deliveries?.byStatus || {};
+
+  const metrics = {
+    delivered:       os.delivered   || 0,
+    pending:         os.pending     || 0,
+    processing:      (os.confirmed  || 0) + (os.processing || 0),
+    cancelled:       os.cancelled   || 0,
+    shipped:         os.shipped     || 0,
+    totalRevenue:    dash?.sales.totalRevenue || 0,
+    avgOrderValue:   dash?.sales.averageOrderValue || 0,
+    activeProducts:  dash?.products.active    || 0,
+    totalProducts:   dash?.products.total     || 0,
+    lowStock:        dash?.products.lowStock  || 0,
+    deliveryTotal:   dash?.deliveries.total   || 0,
+    deliveryDone:    ds.delivered || 0,
+    deliveryActive:  (ds.in_transit || 0) + (ds.out_for_delivery || 0),
+
+    // Wallet
+    escrowBalance:    wallet?.escrow_balance             || 0,
+    availableBalance: wallet?.available_balance          || 0,
+    totalEarned:      wallet?.total_earned               || 0,
+    commissionPaid:   wallet?.total_commission_paid      || 0,
+    codOutstanding:   wallet?.cod_commission_outstanding || 0,
+    netRevenue:       (wallet?.total_earned || 0) - 0, // total_earned is already after commission
+  };
+
+  const completionRate = dash?.orders.total > 0
+    ? ((metrics.delivered / dash.orders.total) * 100).toFixed(1)
+    : "0.0";
+
+  // Chart data
+  const orderStatusData = {
+    labels: ["Delivered", "Pending", "Processing", "Shipped", "Cancelled"],
+    datasets: [{
+      data: [metrics.delivered, metrics.pending, metrics.processing, metrics.shipped, metrics.cancelled],
+      backgroundColor: ["rgba(34,197,94,.8)","rgba(251,191,36,.8)","rgba(59,130,246,.8)","rgba(168,85,247,.8)","rgba(239,68,68,.8)"],
+      borderColor:     ["rgb(34,197,94)","rgb(251,191,36)","rgb(59,130,246)","rgb(168,85,247)","rgb(239,68,68)"],
+      borderWidth: 2,
+    }],
+  };
+
+  const salesTrendData = {
+    labels: (dash?.sales.monthlyTrend || []).map(i => {
+      if (!i?.date) return "";
+      return new Date(i.date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }),
+    datasets: [
+      { label: "Revenue (MMK)", data: (dash?.sales.monthlyTrend || []).map(i => i?.revenue || 0), backgroundColor: "rgba(5,150,105,.8)", borderColor: "rgb(5,150,105)", borderWidth: 2, borderRadius: 4 },
+      { label: "Orders",        data: (dash?.sales.monthlyTrend || []).map(i => i?.orders_count || 0), backgroundColor: "rgba(16,185,129,.6)", borderColor: "rgb(16,185,129)", borderWidth: 2, borderRadius: 4 },
+    ],
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {t("seller.overview")}
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            {t("seller.dashboard_summary")}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900">{t("seller.overview")}</h2>
+          <p className="mt-1 text-sm text-gray-500">{t("seller.dashboard_summary")}</p>
         </div>
-        <button
-          onClick={fetchDashboardData}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
-        >
-          <span>Refresh Data</span>
+        <button onClick={fetchAll}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2">
+          <ArrowUpIcon className="h-3.5 w-3.5 rotate-90" /> Refresh
         </button>
       </div>
 
-      {/* Setup Checklist */}
+      {/* Setup checklist */}
       <SetupChecklist storeData={storeData} onSetupClick={onSetupClick} />
 
-      {/* Store Status Banner */}
+      {/* Store status banner */}
       {storeData && (
-        <div className={`p-4 rounded-lg ${storeData.status === "approved"
-            ? "bg-green-50 border border-green-200"
-            : storeData.status === "pending"
-              ? "bg-yellow-50 border border-yellow-200"
-              : "bg-blue-50 border border-blue-200"
-          }`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-3 ${storeData.status === "approved"
-                  ? "bg-green-500"
-                  : storeData.status === "pending"
-                    ? "bg-yellow-500 animate-pulse"
-                    : "bg-blue-500"
-                }`}></div>
-              <div>
-                <h3 className="font-semibold">
-                  {storeData.status === "approved"
-                    ? "Store Active"
-                    : storeData.status === "pending"
-                      ? "Pending Approval"
-                      : "Setup Required"}
-                </h3>
-                <p className="text-sm opacity-75">
-                  {storeData.status === "approved"
-                    ? "Your store is live and accepting orders"
-                    : storeData.status === "pending"
-                      ? "Your store is under review by our team"
-                      : "Please complete your store setup"}
-                </p>
-              </div>
+        <div className={`p-4 rounded-lg ${
+          storeData.status === "approved" ? "bg-green-50 border border-green-200" :
+          storeData.status === "pending"  ? "bg-yellow-50 border border-yellow-200" :
+                                            "bg-blue-50 border border-blue-200"
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
+              storeData.status === "approved" ? "bg-green-500" :
+              storeData.status === "pending"  ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
+            }`} />
+            <div>
+              <h3 className="font-semibold text-sm">
+                {storeData.status === "approved" ? "Store Active" :
+                 storeData.status === "pending"  ? "Pending Approval" : "Setup Required"}
+              </h3>
+              <p className="text-xs opacity-75">
+                {storeData.status === "approved" ? "Your store is live and accepting orders" :
+                 storeData.status === "pending"  ? "Your store is under review by our team" :
+                                                   "Please complete your store setup"}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tier & Commission */}
+      {/* Tier card */}
       {storeData && <TierCard storeData={storeData} />}
 
-      {/* ── Telegram Community ── */}
-      <a
-        href="https://t.me/pyonea_community"
-        target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm transition-colors w-full sm:w-fit"
-      >
+      {/* COD outstanding warning */}
+      {metrics.codOutstanding > 0 && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+          <ExclamationTriangleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-800">COD Commission Outstanding</p>
+            <p className="text-sm text-red-700 mt-0.5">
+              You owe <strong>{fmtMMK(metrics.codOutstanding)}</strong> in commission for COD orders.
+              Please settle via the Wallet tab to avoid restrictions.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── WALLET STATS ─────────────────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Wallet & Earnings</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard
+            icon={LockClosedIcon}
+            label="In Escrow"
+            value={fmtMMK(metrics.escrowBalance)}
+            sub="Held until delivery confirmed"
+            accent="blue"
+          />
+          <StatCard
+            icon={BanknotesIcon}
+            label="Available Balance"
+            value={fmtMMK(metrics.availableBalance)}
+            sub="Ready to withdraw"
+            accent="green"
+          />
+          <StatCard
+            icon={CurrencyDollarIcon}
+            label="Total Earned"
+            value={fmtMMK(metrics.totalEarned)}
+            sub="Lifetime seller payout"
+            accent="teal"
+          />
+          <StatCard
+            icon={DocumentTextIcon}
+            label="COD Outstanding"
+            value={fmtMMK(metrics.codOutstanding)}
+            sub="Commission owed to platform"
+            accent={metrics.codOutstanding > 0 ? "red" : "gray"}
+          />
+        </div>
+      </div>
+
+      {/* ── ORDER STATS ───────────────────────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Orders</p>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <StatCard
+            icon={CurrencyDollarIcon}
+            label="Total Revenue"
+            value={fmtMMK(metrics.totalRevenue)}
+            sub="Gross order value"
+            accent="green"
+          />
+          <StatCard
+            icon={CheckCircleIcon}
+            label="Delivered Orders"
+            value={metrics.delivered.toLocaleString()}
+            sub={`${completionRate}% completion rate`}
+            accent="green"
+          />
+          <StatCard
+            icon={ClockIcon}
+            label="Pending Orders"
+            value={metrics.pending.toLocaleString()}
+            sub="Awaiting confirmation"
+            accent="amber"
+          />
+          <StatCard
+            icon={ShoppingBagIcon}
+            label="Processing"
+            value={metrics.processing.toLocaleString()}
+            sub="Confirmed + Processing"
+            accent="blue"
+          />
+          <StatCard
+            icon={TruckIcon}
+            label="Shipped"
+            value={metrics.shipped.toLocaleString()}
+            sub="Out for delivery"
+            accent="purple"
+          />
+          <StatCard
+            icon={XCircleIcon}
+            label="Cancelled"
+            value={metrics.cancelled.toLocaleString()}
+            sub=""
+            accent="red"
+          />
+        </div>
+      </div>
+
+      {/* ── PRODUCT & PERFORMANCE STATS ───────────────────────────────────────── */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Products & Performance</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard
+            icon={StarIcon}
+            label="Active Products"
+            value={metrics.activeProducts.toLocaleString()}
+            sub={`${metrics.totalProducts} total`}
+            accent="green"
+          />
+          <StatCard
+            icon={ExclamationTriangleIcon}
+            label="Low Stock"
+            value={metrics.lowStock.toLocaleString()}
+            sub="Restock soon"
+            accent={metrics.lowStock > 0 ? "amber" : "gray"}
+          />
+          <StatCard
+            icon={CurrencyDollarIcon}
+            label="Avg. Order Value"
+            value={fmtMMK(metrics.avgOrderValue)}
+            sub="Per order"
+            accent="teal"
+          />
+          <StatCard
+            icon={UserGroupIcon}
+            label="Commission Paid"
+            value={fmtMMK(metrics.commissionPaid)}
+            sub="To platform, all time"
+            accent="gray"
+          />
+        </div>
+      </div>
+
+      {/* Telegram */}
+      <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm transition-colors w-full sm:w-fit">
         <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
           <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
         </svg>
@@ -592,60 +536,46 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         </div>
       </a>
 
-      {/* ── Delivery Fee Confirmation Panel ── */}
+      {/* Delivery fee panel */}
       {deliveryFees.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-gray-900">Platform Delivery Fees</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Submit fee confirmation to admin once you have paid the delivery fee.
-              </p>
+              <p className="text-xs text-gray-500 mt-0.5">Submit fee confirmation once you have paid the delivery fee.</p>
             </div>
             {feeToast && (
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                feeToast.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'
+                feeToast.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
               }`}>{feeToast.msg}</span>
             )}
           </div>
           <div className="divide-y divide-gray-50">
             {deliveryFees.map(d => {
-              const alreadySubmitted = !!d.fee_submitted_at;
+              const submitted = !!d.fee_submitted_at;
               const confirmed = !!d.fee_confirmed_at;
               return (
                 <div key={d.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      Order #{d.order?.order_number ?? d.order_id}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Order #{d.order?.order_number ?? d.order_id}</p>
                     <p className="text-xs text-gray-500">
                       Fee: <strong className="text-green-700">
-                        {new Intl.NumberFormat('my-MM', { style: 'currency', currency: 'MMK', minimumFractionDigits: 0 }).format(d.platform_delivery_fee ?? 0)}
+                        {new Intl.NumberFormat("my-MM",{style:"currency",currency:"MMK",minimumFractionDigits:0}).format(d.platform_delivery_fee ?? 0)}
                       </strong>
-                      {' · '}
-                      Status: <span className={`font-semibold capitalize ${
-                        confirmed ? 'text-green-600' : alreadySubmitted ? 'text-blue-600' : 'text-gray-500'
-                      }`}>
-                        {confirmed ? '✓ Confirmed by admin' : alreadySubmitted ? '⏳ Awaiting admin confirmation' : 'Not submitted'}
+                      {" · "}
+                      <span className={`font-semibold capitalize ${confirmed ? "text-green-600" : submitted ? "text-blue-600" : "text-gray-500"}`}>
+                        {confirmed ? "✓ Confirmed by admin" : submitted ? "⏳ Awaiting admin confirmation" : "Not submitted"}
                       </span>
                     </p>
                   </div>
-                  {!alreadySubmitted && !confirmed && (
+                  {!submitted && !confirmed && (
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <input
-                        type="text"
-                        value={feeNote}
-                        onChange={e => setFeeNote(e.target.value)}
+                      <input type="text" value={feeNote} onChange={e => setFeeNote(e.target.value)}
                         placeholder="Optional note…"
-                        className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-36 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => handleSubmitFee(d.id)}
-                        disabled={feeSubmitting === d.id}
-                        className="text-xs font-semibold px-4 py-1.5 bg-green-600 text-white rounded-xl
-                                   hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap"
-                      >
-                        {feeSubmitting === d.id ? 'Submitting…' : 'Submit Payment'}
+                        className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-36 focus:ring-2 focus:ring-green-500" />
+                      <button onClick={() => handleSubmitFee(d.id)} disabled={feeSubmitting === d.id}
+                        className="text-xs font-semibold px-4 py-1.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
+                        {feeSubmitting === d.id ? "Submitting…" : "Submit Payment"}
                       </button>
                     </div>
                   )}
@@ -656,171 +586,78 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         </div>
       )}
 
-
-
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {statsCards.map((stat) => {
-          const IconComponent = stat.icon;
-          return (
-            <div
-              key={stat.id}
-              className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
-            >
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className={`p-3 rounded-lg ${stat.changeType === "positive"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-600"
-                      }`}>
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-500">
-                      {stat.name}
-                    </p>
-                    <div className="flex items-baseline">
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {stat.value}
-                      </p>
-                      <div
-                        className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === "positive"
-                            ? "text-green-600"
-                            : "text-red-600"
-                          }`}
-                      >
-                        {stat.changeType === "positive" ? (
-                          <ArrowUpIcon className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <ArrowDownIcon className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className="sr-only">
-                          {stat.changeType === "positive" ? "Increased" : "Decreased"} by
-                        </span>
-                        {stat.change}
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {stat.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Charts Section */}
+      {/* ── Charts ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend Chart */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Sales Trend (Last 7 Days)
-          </h3>
-          {dashboardData.sales.monthlyTrend.length > 0 ? (
-            <Bar data={salesTrendData} options={chartOptions} height={300} />
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend (Last 7 Days)</h3>
+          {(dash?.sales.monthlyTrend.length ?? 0) > 0 ? (
+            <Bar data={salesTrendData} options={{ responsive: true, plugins: { legend: { position: "top" } }, scales: { y: { beginAtZero: true } } }} height={280} />
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-400">
-              No sales data available
-            </div>
+            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No sales data available</div>
           )}
         </div>
-
-        {/* Order Distribution Chart */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Order Status Distribution
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status Distribution</h3>
           <div className="h-64 flex items-center justify-center">
-            {dashboardData.orders.total > 0 ? (
-              <Doughnut data={orderStatusData} options={doughnutOptions} />
+            {(dash?.orders.total ?? 0) > 0 ? (
+              <Doughnut data={orderStatusData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
             ) : (
-              <p className="text-gray-400">No orders yet</p>
+              <p className="text-gray-400 text-sm">No orders yet</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Recent Activity & Quick Stats */}
+      {/* ── Recent orders + quick stats ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders */}
+        {/* Recent orders */}
         <div className="bg-white shadow rounded-lg p-6 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Recent Orders
-          </h3>
-          <div className="space-y-4">
-            {dashboardData.orders.recent.length > 0 ? (
-              dashboardData.orders.recent.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${order.status === 'delivered' ? 'bg-green-500' :
-                        order.status === 'pending' ? 'bg-yellow-500' :
-                          order.status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'
-                      }`}></div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        #{order.order_number}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {order.buyer?.name || 'Customer'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {order.total_amount_formatted || fmtMMK(order.total_amount)}
-                    </p>
-                    <p className="text-sm text-gray-500 capitalize">
-                      {order.status}
-                    </p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+          <div className="space-y-3">
+            {(dash?.orders.recent.length ?? 0) > 0 ? dash.orders.recent.map(o => (
+              <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                    o.status === "delivered" ? "bg-green-500" :
+                    o.status === "pending"   ? "bg-yellow-500" :
+                    o.status === "cancelled" ? "bg-red-500"    : "bg-blue-500"
+                  }`} />
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">#{o.order_number}</p>
+                    <p className="text-xs text-gray-500">{o.buyer?.name || "Customer"}</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingBagIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                <p>No recent orders</p>
+                <div className="text-right">
+                  <p className="font-semibold text-sm text-gray-900">{fmtMMK(o.total_amount)}</p>
+                  <p className="text-xs text-gray-500 capitalize">{o.status}</p>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-8 text-gray-400">
+                <ShoppingBagIcon className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No recent orders</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Quick Stats
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Order Completion Rate</span>
-              <span className="font-semibold text-green-600">
-                {metrics.conversionRate}%
-              </span>
+        {/* Quick stats */}
+        <div className="bg-white shadow rounded-lg p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Quick Stats</h3>
+          {[
+            { label: "Order Completion Rate",   value: `${completionRate}%`,            color: "text-green-600" },
+            { label: "Avg. Order Value",         value: fmtMMK(metrics.avgOrderValue),  color: "text-gray-900" },
+            { label: "Low Stock Products",       value: metrics.lowStock.toString(),     color: metrics.lowStock > 0 ? "text-red-600" : "text-gray-900" },
+            { label: "Delivery Success Rate",    value: dash?.deliveries.total > 0 ? Math.round((metrics.deliveryDone / dash.deliveries.total) * 100) + "%" : "—", color: "text-green-600" },
+            { label: "Escrow (Locked)",          value: fmtMMK(metrics.escrowBalance),  color: "text-blue-600" },
+            { label: "Available Payout",         value: fmtMMK(metrics.availableBalance), color: "text-emerald-600" },
+            { label: "Commission Paid (All Time)", value: fmtMMK(metrics.commissionPaid), color: "text-gray-600" },
+          ].map(r => (
+            <div key={r.label} className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">{r.label}</span>
+              <span className={`font-semibold text-sm ${r.color}`}>{r.value}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg. Order Value</span>
-              <span className="font-semibold text-gray-900">
-                {fmtMMK(metrics.averageOrderValue)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Low Stock Products</span>
-              <span className="font-semibold text-red-600">
-                {metrics.lowStockProducts}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Delivery Success Rate</span>
-              <span className="font-semibold text-green-600">
-                {metrics.deliveredOrders > 0 ?
-                  Math.round((metrics.deliveredOrders / dashboardData.deliveries.total) * 100) : 0
-                }%
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

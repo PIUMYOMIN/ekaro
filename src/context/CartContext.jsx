@@ -17,10 +17,11 @@ export const CartProvider = ({ children }) => {
   const [subtotal, setSubtotal] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [cartSummary, setCartSummary] = useState({
+    subtotal: 0,
     shipping_fee: 0,
-    tax_rate: 0,
+    tax_rate: 0.05,
     tax: 0,
-    total: 0
+    total: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -43,10 +44,7 @@ export const CartProvider = ({ children }) => {
       setSubtotal(cartData.subtotal || 0);
       setTotalItems(cartData.total_items || 0);
       setCartSummary(cartData.summary || {
-        shipping_fee: 0,
-        tax_rate: 0,
-        tax: 0,
-        total: 0
+        subtotal: 0, shipping_fee: 5000, tax_rate: 0.05, tax: 0, total: 0,
       });
     } catch (err) {
       console.error('Failed to fetch cart:', err);
@@ -61,7 +59,7 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
     setSubtotal(0);
     setTotalItems(0);
-    setCartSummary({ shipping_fee: 0, tax_rate: 0, tax: 0, total: 0 });
+    setCartSummary({ subtotal: 0, shipping_fee: 0, tax_rate: 0.05, tax: 0, total: 0 });
   };
 
   // Add to cart
@@ -109,7 +107,7 @@ export const CartProvider = ({ children }) => {
     
     const updatedItems = cartItems.map(item => 
       item.id === cartItemId 
-        ? { ...item, quantity: newQuantity, subtotal: item.price * newQuantity }
+        ? { ...item, quantity: newQuantity, subtotal: (item.selling_price ?? item.price) * newQuantity }
         : item
     );
     
@@ -119,12 +117,12 @@ export const CartProvider = ({ children }) => {
     setCartItems(updatedItems);
     setSubtotal(newSubtotal);
     setTotalItems(newTotalItems);
-    setCartSummary(prev => ({
-      ...prev,
-      subtotal: newSubtotal,
-      tax: newSubtotal * prev.tax_rate,
-      total: newSubtotal + prev.shipping_fee + (newSubtotal * prev.tax_rate)
-    }));
+    setCartSummary(prev => {
+      const rate     = prev.tax_rate ?? 0.05;
+      const shipping = prev.shipping_fee ?? 5000;
+      const tax      = Math.round(newSubtotal * rate * 100) / 100;
+      return { ...prev, subtotal: newSubtotal, tax, total: Math.round((newSubtotal + shipping + tax) * 100) / 100 };
+    });
 
     try {
       const response = await api.put(`/buyer/cart/${cartItemId}`, { quantity: newQuantity });
@@ -163,12 +161,12 @@ export const CartProvider = ({ children }) => {
     setCartItems(updatedItems);
     setSubtotal(newSubtotal);
     setTotalItems(newTotalItems);
-    setCartSummary(prev => ({
-      ...prev,
-      subtotal: newSubtotal,
-      tax: newSubtotal * prev.tax_rate,
-      total: newSubtotal + prev.shipping_fee + (newSubtotal * prev.tax_rate)
-    }));
+    setCartSummary(prev => {
+      const rate     = prev.tax_rate ?? 0.05;
+      const shipping = prev.shipping_fee ?? 5000;
+      const tax      = Math.round(newSubtotal * rate * 100) / 100;
+      return { ...prev, subtotal: newSubtotal, tax, total: Math.round((newSubtotal + shipping + tax) * 100) / 100 };
+    });
 
     try {
       const response = await api.delete(`/buyer/cart/${cartItemId}`);
@@ -200,12 +198,7 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
     setTotalItems(0);
     setSubtotal(0);
-    setCartSummary({
-      shipping_fee: 0,
-      tax_rate: 0,
-      tax: 0,
-      total: 0
-    });
+    setCartSummary({ subtotal: 0, shipping_fee: 0, tax_rate: 0.05, tax: 0, total: 0 });
 
     try {
       const response = await api.post('/buyer/cart/clear');
