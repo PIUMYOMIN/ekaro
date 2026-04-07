@@ -279,6 +279,7 @@ const DeliveryManagement = ({ refreshData }) => {
                         <EyeIcon className="h-5 w-5" />
                       </button>
 
+                      {/* Choose Method — only when pending (no method chosen yet) */}
                       {delivery.status === "pending" && (
                         <button
                           disabled={actionLoading === delivery.id}
@@ -287,6 +288,17 @@ const DeliveryManagement = ({ refreshData }) => {
                         >
                           Choose Method
                         </button>
+                      )}
+
+                      {/* Method already chosen — show locked badge instead of button */}
+                      {delivery.status !== "pending" && delivery.delivery_method && (
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded border ${
+                          delivery.delivery_method === "platform"
+                            ? "bg-purple-50 text-purple-700 border-purple-200"
+                            : "bg-gray-50 text-gray-600 border-gray-200"
+                        } cursor-not-allowed opacity-70`}>
+                          🔒 {delivery.delivery_method === "platform" ? "Platform Delivery" : "Self Delivery"}
+                        </span>
                       )}
 
                       {delivery.status === "awaiting_pickup" && delivery.delivery_method === "supplier" && (
