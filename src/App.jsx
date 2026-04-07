@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
@@ -10,6 +10,7 @@ import CookieBanner from "./components/ui/CookieBanner";
 import { HelmetProvider } from "react-helmet-async";
 import OrderTracking from "./pages/OrderTracking";
 import { setNavigate } from "./utils/api";
+import { trackPageView, isInitialised } from "./utils/analytics";
 
 // Layout
 import Header from "./components/layout/Header";
@@ -92,6 +93,18 @@ const NavigationWirer = () => {
   return null;
 };
 
+// Tracks a GA4 pageview on every route change, but only when the user
+// has accepted analytics cookies (GA is not yet initialised otherwise).
+const GARouteTracker = () => {
+  const location = useLocation();
+  React.useEffect(() => {
+    if (isInitialised()) {
+      trackPageView(location.pathname + location.search);
+    }
+  }, [location]);
+  return null;
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -101,6 +114,7 @@ function App() {
             <CartProvider>
               <Router>
                 <NavigationWirer />
+                <GARouteTracker />
                 <WishlistProvider>
                   <CookieProvider>
                   <div className="flex flex-col min-h-screen">

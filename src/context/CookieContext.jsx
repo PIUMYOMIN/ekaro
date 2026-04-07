@@ -1,5 +1,6 @@
 // src/context/CookieContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { initGA, disableGA } from '../utils/analytics';
 
 const STORAGE_KEY = 'pyonea_cookie_consent';
 
@@ -35,6 +36,15 @@ export const CookieProvider = ({ children }) => {
       setShowBanner(true);
     }
   }, []);
+
+  // ── GA lifecycle — init when analytics consented, disable when revoked ──────
+  useEffect(() => {
+    if (prefs.analytics) {
+      initGA();
+    } else {
+      disableGA();
+    }
+  }, [prefs.analytics]);
 
   const save = useCallback((newConsent, newPrefs) => {
     const data = {
