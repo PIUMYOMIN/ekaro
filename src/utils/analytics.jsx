@@ -1,11 +1,11 @@
-// src/utils/analytics.js
+// src/utils/analytics.jsx
 // Google Analytics 4 integration via react-ga4.
 // All tracking is gated on the user's cookie consent — GA is never
 // initialised and no data is sent until analytics cookies are accepted.
 
 import ReactGA from 'react-ga4';
 
-const MEASUREMENT_ID = 'G-3G2ZPHGEV1';
+const MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
 
 let _initialised = false;
 
@@ -16,7 +16,11 @@ let _initialised = false;
  * Safe to call multiple times — only initialises once per session.
  */
 export const initGA = () => {
-  if (_initialised) return;
+  if (_initialised || !MEASUREMENT_ID) return;
+  if (typeof window !== 'undefined') {
+    // Re-enable tracking in case consent was previously revoked.
+    window[`ga-disable-${MEASUREMENT_ID}`] = false;
+  }
   ReactGA.initialize(MEASUREMENT_ID, {
     gaOptions: {
       // Anonymise IP for GDPR compliance
@@ -34,6 +38,7 @@ export const initGA = () => {
  * Disable GA and stop sending data (called when consent is revoked).
  */
 export const disableGA = () => {
+  if (!MEASUREMENT_ID) return;
   if (typeof window !== 'undefined') {
     // GA respects this window property to suppress all tracking
     window[`ga-disable-${MEASUREMENT_ID}`] = true;

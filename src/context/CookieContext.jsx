@@ -1,6 +1,6 @@
 // src/context/CookieContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { initGA, disableGA } from '../utils/analytics';
+import { initGA, disableGA, trackPageView } from '../utils/analytics';
 
 const STORAGE_KEY = 'pyonea_cookie_consent';
 
@@ -41,6 +41,10 @@ export const CookieProvider = ({ children }) => {
   useEffect(() => {
     if (prefs.analytics) {
       initGA();
+      // Track the current page immediately after consent is granted.
+      if (typeof window !== 'undefined') {
+        trackPageView(window.location.pathname + window.location.search, document.title);
+      }
     } else {
       disableGA();
     }
