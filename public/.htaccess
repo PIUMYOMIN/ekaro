@@ -1,16 +1,27 @@
+# Enable URL rewriting
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+  RewriteEngine On
 
-    # Forward Authorization header (e.g. if a backend on the same host needs it)
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # Redirect all requests to index.html except existing files and directories
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
 
-    # React SPA (React Router): real files/dirs only; everything else → index.html
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^ index.html [L]
+  # Optional: Cache static files for performance
+  <FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+
+  # Optional: Set MIME types for fonts
+  <FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
+    AddType application/font-woff2 .woff2
+    AddType application/font-woff .woff
+    AddType application/vnd.ms-fontobject .eot
+    AddType application/x-font-ttf .ttf
+    AddType font/opentype .otf
+  </FilesMatch>
 </IfModule>
 
-# Disable directory listing
+# Optional: Disable directory listing
 Options -Indexes
