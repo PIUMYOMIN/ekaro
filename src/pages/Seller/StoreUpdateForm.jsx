@@ -6,6 +6,7 @@ import {
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
+import { IMAGE_BASE_URL } from "../../config";
 
 const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
   const { t } = useTranslation();
@@ -13,12 +14,12 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [businessTypes, setBusinessTypes] = useState([]);
 
-  // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    const baseUrl = "http://localhost:8000"; // Adjust based on your backend config
-    if (imagePath.startsWith('http')) return imagePath;
-    return `${baseUrl}/storage/${imagePath}`;
+    if (imagePath.startsWith("http")) return imagePath;
+    const cleanPath = String(imagePath).replace(/^public\//, "").replace(/^\//, "");
+    const base = (IMAGE_BASE_URL || "").replace(/\/$/, "");
+    return base ? `${base}/${cleanPath}` : null;
   };
 
   const [formFields, setFormFields] = useState({
