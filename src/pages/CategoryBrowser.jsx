@@ -9,7 +9,7 @@ import useSEO from "../hooks/useSEO";
 
 // Skeleton loader matching the CategoryCard shape
 const CategoryCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+  <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden animate-pulse">
     <div className="aspect-square bg-gray-300"></div>
     <div className="p-3 sm:p-4 space-y-2">
       <div className="h-4 bg-gray-300 rounded w-3/4"></div>
@@ -67,16 +67,13 @@ const CategoryBrowser = () => {
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
     const query = searchQuery.toLowerCase();
-    const name = i18n.language === 'my'
-      ? (cat.name_mm || cat.name_en || '')
-      : (cat.name_en || '');
     return categories.filter(cat => {
       const n = i18n.language === 'my'
         ? (cat.name_mm || cat.name_en || '')
         : (cat.name_en || '');
       return n.toLowerCase().includes(query);
     });
-  }, [categories, searchQuery]);
+  }, [categories, searchQuery, i18n.language]);
 
   const SeoComponent = useSEO({
     title: t("categories.title"),
@@ -85,7 +82,7 @@ const CategoryBrowser = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen theme-transition bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
@@ -103,7 +100,7 @@ const CategoryBrowser = () => {
     <>
       {SeoComponent}
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen theme-transition bg-gray-50 dark:bg-slate-900">
         {/* Header with i18n */}
         <div className="bg-gradient-to-r from-green-600 to-emerald-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -122,7 +119,7 @@ const CategoryBrowser = () => {
               {/* Search Bar */}
               <div className="max-w-md mx-auto">
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-slate-600" />
                   <input
                     type="text"
                     value={searchQuery}
@@ -156,7 +153,7 @@ const CategoryBrowser = () => {
           ) : filteredCategories.length > 0 ? (
             <>
               {/* Result count */}
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 dark:text-slate-500 mb-4">
                 {t("categories.showing_categories", { count: filteredCategories.length })}
               </p>
               <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-6">
@@ -168,13 +165,13 @@ const CategoryBrowser = () => {
           ) : (
             // Empty state
             <div className="text-center py-16">
-              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                <MagnifyingGlassIcon className="h-12 w-12 text-gray-400" />
+              <div className="mx-auto w-24 h-24 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 dark:text-slate-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">
                 {t("categories.no_categories_found")}
               </h3>
-              <p className="text-gray-600 max-w-md mx-auto mb-6">
+              <p className="text-gray-600 dark:text-slate-400 max-w-md mx-auto mb-6">
                 {searchQuery
                   ? t("categories.no_matching_categories", { query: searchQuery })
                   : t("categories.no_categories_available")}

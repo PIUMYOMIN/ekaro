@@ -64,6 +64,7 @@ const DiscountManagement = () => {
   const [editingDiscount, setEditingDiscount] = useState(null);
   const [deleteTarget, setDeleteTarget]   = useState(null);
   const [products, setProducts]           = useState([]);
+  const [onSaleProducts, setOnSaleProducts] = useState([]);
   const [categories, setCategories]       = useState([]);
   const [submitting, setSubmitting]       = useState(false);
   const [formData, setFormData]           = useState(() => EMPTY_FORM(isAdmin));
@@ -98,7 +99,11 @@ const DiscountManagement = () => {
   const fetchProducts = useCallback(async () => {
     try {
       const res = await api.get("/seller/products");
-      setProducts(res.data.data ?? []);
+      const allProducts = res.data.data ?? [];
+      setProducts(allProducts);
+      setOnSaleProducts(allProducts.filter(p =>
+        p.is_on_sale || p.discount_price || p.discount_percentage
+      ));
     } catch {
       console.error("Failed to fetch products");
     }
@@ -622,6 +627,78 @@ const DiscountManagement = () => {
             </tbody>
           </table>
         </div>
+
+      {/* ── Products with Direct Price Discounts ── */}
+      {onSaleProducts.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Product Price Discounts
+              </h3>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Set via the <span className="font-medium">discount icon</span> (✨) in Product Management.
+                These are direct price reductions on individual products — separate from the discount rules above.
+              </p>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-sm text-amber-800">
+            <strong>Note:</strong> These products have <code className="bg-amber-100 px-1 rounded">discount_price</code> or
+            <code className="bg-amber-100 px-1 ml-1 rounded">discount_percentage</code> set directly on the product record.
+            They show a sale badge on the listing automatically without needing a discount rule.
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                  <tr>
+                    {["Product","Price","Discount","Sale Price","Valid Until","Status"].map(h => (
+                      <th key={h} className="px-4 py-3 text-left font-semibold whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {onSaleProducts.map(p => {
+                    const salePrice = p.discount_price
+                      || (p.discount_percentage ? p.price * (1 - p.discount_percentage / 100) : null);
+                    return (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 font-medium text-gray-900 max-w-[180px] truncate">
+                          {p.name_en || p.name}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          {formatMMK(p.price)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {p.discount_percentage
+                            ? <span className="text-blue-700 font-semibold">-{p.discount_percentage}%</span>
+                            : p.discount_price
+                            ? <span className="text-green-700 font-semibold">-{formatMMK(p.price - p.discount_price)}</span>
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-red-600 font-semibold whitespace-nowrap">
+                          {salePrice ? formatMMK(salePrice) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                          {p.discount_end ? new Date(p.discount_end).toLocaleDateString() : "No expiry"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                            p.is_on_sale ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {p.is_on_sale ? "On Sale" : "Inactive"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </div>
   );

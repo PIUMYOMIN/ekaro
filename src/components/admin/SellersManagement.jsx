@@ -13,6 +13,8 @@ import api from "../../utils/api";
 import DataTable from "../ui/DataTable";
 
 const SellersManagement = () => {
+  const [_toast, _setToast] = useState(null);
+  const flash = (msg, type='success') => { _setToast({msg,type}); setTimeout(()=>_setToast(null),3000); };
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -77,7 +79,7 @@ const SellersManagement = () => {
         reason,
       });
       if (response.data.success) {
-        alert(`Seller status updated to ${newStatus} successfully`);
+        flash(`Seller status updated to ${newStatus} successfully.`);
         // Update local state
         setSellers(prev =>
           prev.map(seller =>
@@ -88,7 +90,7 @@ const SellersManagement = () => {
     } catch (error) {
       console.error("Error updating seller status:", error);
       const message = error.response?.data?.message || error.message || "Failed to update seller status";
-      alert(message);
+      flash(message, 'error');
     }
   };
 

@@ -12,6 +12,8 @@ import {
 import api from '../../utils/api';
 
 const ContactMessagesManagement = () => {
+  const [_toast, _setToast] = useState(null);
+  const flash = (msg, type='success') => { _setToast({msg,type}); setTimeout(()=>_setToast(null),3000); };
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -97,19 +99,19 @@ const ContactMessagesManagement = () => {
         prev.map(m => (m.id === id ? { ...m, read_at: new Date().toISOString() } : m))
       );
     } catch (err) {
-      alert('Failed to mark as read');
+      console.error('Failed to mark as read');
     }
   };
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    // Inline delete without confirm (admin action)
     try {
       await api.delete(`/admin/contact-messages/${id}`);
       setMessages(prev => prev.filter(m => m.id !== id));
       if (selectedMessage?.id === id) setShowModal(false);
     } catch (err) {
-      alert('Failed to delete message');
+      console.error('Failed to delete message');
     }
   };
 

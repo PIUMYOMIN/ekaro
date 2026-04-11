@@ -57,7 +57,7 @@ function StatCard({ icon: Icon, label, value, sub, accent }) {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+          <p className="mt-1 text-lg sm:text-2xl font-bold text-gray-900 truncate">{value}</p>
           {sub && <p className="mt-0.5 text-xs text-gray-500">{sub}</p>}
         </div>
         <Icon className="h-8 w-8 text-gray-300 flex-shrink-0" />
@@ -77,7 +77,7 @@ function PaymentModal({ invoice, onClose, onSubmit, loading }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 sm:p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900">Submit COD Commission Payment</h3>
@@ -262,7 +262,7 @@ export default function SellerWallet() {
       )}
 
       {/* Balance Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={LockClosedIcon}
           label="In Escrow"
@@ -310,7 +310,8 @@ export default function SellerWallet() {
           <p className="text-sm text-gray-500">No transactions yet.</p>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-3 text-left">Type</th>
@@ -344,6 +345,7 @@ export default function SellerWallet() {
                 })}
               </tbody>
             </table>
+            </div>
             {transactions.length > 8 && (
               <div className="border-t border-gray-100 p-3 text-center">
                 <button
@@ -360,9 +362,9 @@ export default function SellerWallet() {
 
       {/* COD Commission Invoices */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">COD Commission Invoices</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {['', 'outstanding', 'overdue', 'paid', 'waived'].map(s => (
               <button
                 key={s}

@@ -179,6 +179,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deliveryFees, setDeliveryFees] = useState([]);
+  const [commissionData, setCommissionData] = useState(null);
+  const fetchCommissionData = async () => {
+    try { const res = await api.get('/seller/commission-summary'); if (res.data.success) setCommissionData(res.data.data); } catch {}
+  };
   const [feeSubmitting, setFeeSubmitting] = useState(null);
   const [feeNote, setFeeNote] = useState("");
   const [feeToast, setFeeToast] = useState(null);

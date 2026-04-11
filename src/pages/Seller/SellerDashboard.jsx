@@ -87,18 +87,18 @@ const SellerProfileTab = () => {
 
   const field = (label, name, type = "text", placeholder = "") => (
     <div key={name}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
       <input
         type={type} name={name} value={formData[name]} onChange={handleChange}
         placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
       />
     </div>
   );
 
   return (
-    <div className="bg-white rounded-xl border p-6 max-w-2xl">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Profile</h3>
+    <div className="bg-white dark:bg-slate-800 rounded-xl border p-6 max-w-2xl">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Personal Profile</h3>
       {message && (
         <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
           {message.text}
@@ -418,7 +418,7 @@ const SellerDashboard = () => {
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your seller dashboard...</p>
+          <p className="text-gray-600 dark:text-slate-400">Loading your seller dashboard...</p>
         </div>
       </div>
     );
@@ -428,12 +428,12 @@ const SellerDashboard = () => {
   if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
     return (
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <BuildingStorefrontIcon className="h-10 w-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Complete Your Store Setup</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">Complete Your Store Setup</h2>
+          <p className="text-gray-600 dark:text-slate-400 mb-6">
             Before you can access your seller dashboard, you need to complete your store setup.
           </p>
           <div className="space-y-4">
@@ -445,7 +445,7 @@ const SellerDashboard = () => {
             </button>
             <button
               onClick={() => navigate('/')}
-              className="w-full py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              className="w-full py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 font-medium rounded-xl hover:bg-gray-50 dark:bg-slate-900 transition-colors"
             >
               Return to Home
             </button>
@@ -461,7 +461,7 @@ const SellerDashboard = () => {
       <div className="md:hidden fixed top-4 left-4 z-20">
         <button
           type="button"
-          className="inline-flex items-center justify-center p-2 rounded-lg bg-white shadow-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+          className="inline-flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 shadow-lg text-gray-500 dark:text-slate-500 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           <span className="sr-only">{t("seller.open_sidebar")}</span>
@@ -473,7 +473,7 @@ const SellerDashboard = () => {
 
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity" onClick={() => setSidebarOpen(false)}>
-          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white dark:bg-slate-800 shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="pt-8 pb-4 px-4">
               {navigation.map((item, idx) => (
                 <button
@@ -512,7 +512,7 @@ const SellerDashboard = () => {
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
               </div>
               <div className="ml-4">
-                <h1 className="text-lg font-bold text-gray-900 truncate max-w-[180px]">
+                <h1 className="text-lg font-bold text-gray-900 dark:text-slate-100 truncate max-w-[180px]">
                   {storeData?.store_name || t("seller.seller_center")}
                 </h1>
                 <p className="text-sm text-green-600 font-medium">Seller Account</p>
@@ -522,7 +522,7 @@ const SellerDashboard = () => {
             {/* Setup Notification */}
             {showSetupNotification && (
               <div className="mx-4 mb-4">
-                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50">
                   <div className="flex items-start">
                     <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
                     <div className="flex-1">
@@ -570,18 +570,18 @@ const SellerDashboard = () => {
                 )}
               </div>
               <div className="ml-3 min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">{user?.name}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500 truncate">{user?.email}</p>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
               <div className="text-center p-2 bg-green-50 rounded-lg">
                 <div className="font-bold text-green-700">{stats.totalProducts}</div>
-                <div className="text-gray-600">Products</div>
+                <div className="text-gray-600 dark:text-slate-400">Products</div>
               </div>
               <div className="text-center p-2 bg-blue-50 rounded-lg">
                 <div className="font-bold text-blue-700">{stats.totalOrders}</div>
-                <div className="text-gray-600">Orders</div>
+                <div className="text-gray-600 dark:text-slate-400">Orders</div>
               </div>
             </div>
           </div>
@@ -594,10 +594,10 @@ const SellerDashboard = () => {
           <div className="flex items-center justify-between px-6 py-4">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Seller Center</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage your store and grow your business</p>
+              <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">Manage your store and grow your business</p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+              <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600 dark:text-slate-400">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Store Active</span>
               </div>
@@ -606,10 +606,10 @@ const SellerDashboard = () => {
         </div>
 
         {setupNotificationData.progress > 0 && (
-          <div className="bg-gray-50 border-b border-gray-200">
+          <div className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-600">Setup Progress: {setupNotificationData.progress}%</span>
+                <span className="text-xs text-gray-600 dark:text-slate-400">Setup Progress: {setupNotificationData.progress}%</span>
                 <div className="w-64 bg-gray-200 rounded-full h-2">
                   <div className="bg-green-500 h-2 rounded-full transition-all duration-300" style={{ width: `${setupNotificationData.progress}%` }}></div>
                 </div>

@@ -13,6 +13,7 @@ import {
 
 const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = React.useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [discountStats, setDiscountStats] = useState(null);
@@ -93,7 +94,6 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
   };
 
   const handleRemoveDiscount = async () => {
-    if (!window.confirm("Remove discount from this product?")) return;
 
     setLoading(true);
     try {
@@ -200,7 +200,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                   </span>
                 </div>
                 <button
-                  onClick={handleRemoveDiscount}
+                  onClick={() => setShowRemoveConfirm(true)}
                   className="text-sm text-red-600 hover:text-red-800 font-medium"
                 >
                   Remove Discount
@@ -440,7 +440,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                 {product.is_on_sale && (
                   <button
                     type="button"
-                    onClick={handleRemoveDiscount}
+                    onClick={() => setShowRemoveConfirm(true)}
                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     <TrashIcon className="h-4 w-4 mr-2" />
@@ -504,6 +504,18 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
           )}
         </div>
       </div>
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold text-gray-900 mb-2">Remove Discount</h3>
+            <p className="text-sm text-gray-600 mb-5">Remove the discount from <strong>{product?.name_en || product?.name}</strong>?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowRemoveConfirm(false)} className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700">Cancel</button>
+              <button onClick={() => { setShowRemoveConfirm(false); handleRemoveDiscount(); }} className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl">Remove</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

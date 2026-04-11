@@ -19,6 +19,12 @@ const CategoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const flash = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -48,15 +54,18 @@ const CategoryManagement = () => {
     }));
   };
 
-  const handleDelete = async (categoryId) => {
-    if (window.confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
-      try {
-        await api.delete(`/categories/${categoryId}`);
-        alert("Category deleted successfully");
-        fetchCategories();
-      } catch (error) {
-        alert(error.response?.data?.message || "Failed to delete category");
-      }
+  const handleDelete = (categoryId) => setDeleteTarget(categoryId);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/categories/${deleteTarget}`);
+      flash('Category deleted successfully.');
+      setDeleteTarget(null);
+      fetchCategories();
+    } catch (error) {
+      flash(error.response?.data?.message || 'Failed to delete category.', 'error');
+      setDeleteTarget(null);
     }
   };
 
@@ -70,11 +79,11 @@ const CategoryManagement = () => {
     try {
       await api.put(`/categories/${categoryId}`, { is_active: newStatus });
       fetchCategories(); // refresh list (optional, but ensures consistency)
-      alert(`Category ${newStatus ? 'activated' : 'deactivated'} successfully`);
+      flash(`Category ${newStatus ? 'activated' : 'deactivated'} successfully.`);
     } catch (error) {
       // ❗ Revert optimistic update on error
       setCategories(prev => updateCategoryRecursively(prev, categoryId, { is_active: currentStatus }));
-      alert(error.response?.data?.message || "Failed to update status");
+      flash(error.response?.data?.message || 'Failed to update status.', 'error');
     }
   };
 
@@ -256,6 +265,36 @@ const CategoryManagement = () => {
 
   return (
     <div className="space-y-6">
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 ${
+          toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold text-gray-900 mb-2">Delete Category</h3>
+            <p className="text-sm text-gray-600 mb-5">This cannot be undone.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

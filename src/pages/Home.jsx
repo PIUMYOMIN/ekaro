@@ -1,9 +1,10 @@
 // Home.jsx (fixed)
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import AnnouncementModal from "../components/ui/AnnouncementModal";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -66,6 +67,8 @@ const Home = () => {
   const [topSellers, setTopSellers] = useState([]);
   const [transformedSellers, setTransformedSellers] = useState([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
+  const [activeBanner, setActiveBanner]           = useState(null); // page_banner replaces hero
+  const [bannerDismissed, setBannerDismissed]      = useState(false);
   const announcementFetched = useRef(false);
   const [loading, setLoading] = useState({
     categories: true,
@@ -390,26 +393,35 @@ const Home = () => {
     if (announcementFetched.current) return;
     announcementFetched.current = true;
 
-    const fetchAnnouncement = async () => {
+    const fetchAnnouncements = async () => {
       try {
         const res = await api.get('/announcements');
         const list = res.data.data ?? [];
-        // Pick first eligible one (not already dismissed today)
-        const eligible = list.find(a => {
+
+        const isEligible = (a) => {
           if (!a.show_once) return true;
           const key = `ann_seen_${a.id}_${new Date().toDateString()}`;
           return !localStorage.getItem(key);
-        });
-        if (eligible) {
-          const delay = (eligible.delay_seconds ?? 1) * 1000;
-          setTimeout(() => setActiveAnnouncement(eligible), delay);
+        };
+
+        // page_banner → replaces hero section (Option B)
+        const heroBanner = list.find(a => a.display_style === 'page_banner' && isEligible(a));
+        if (heroBanner) setActiveBanner(heroBanner);
+
+        // popup_card / popup_banner → modal (show after delay)
+        const popupAnn = list.find(a =>
+          a.display_style !== 'page_banner' && isEligible(a)
+        );
+        if (popupAnn) {
+          const delay = (popupAnn.delay_seconds ?? 1) * 1000;
+          setTimeout(() => setActiveAnnouncement(popupAnn), delay);
         }
       } catch {
-        // silently ignore — announcement is non-critical
+        // silently ignore — announcements are non-critical
       }
     };
 
-    fetchAnnouncement();
+    fetchAnnouncements();
   }, []);
 
   return (
@@ -422,7 +434,99 @@ const Home = () => {
       )}
       {SeoComponent}
       <div className="bg-gray-50">
-        {renderHeroSection}
+        {/* Hero area — page_banner replaces gradient hero when active */}
+        <AnimatePresence mode="wait">
+          {activeBanner && !bannerDismissed ? (
+            <motion.div
+              key="page-banner"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+              className="relative w-full overflow-hidden bg-black"
+            >
+              {/* Full-bleed banner image */}
+              {activeBanner.banner_link_url ? (
+                activeBanner.banner_link_url.startsWith('http') ? (
+                  <a href={activeBanner.banner_link_url} target="_blank" rel="noopener noreferrer"
+                     className="block w-full cursor-pointer">
+                    <img
+                      src={activeBanner.image}
+                      alt={activeBanner.title}
+                      className={`w-full object-cover object-center ${
+                        { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                          '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                        ?? 'aspect-[3/1]'
+                      }`}
+                    />
+                  </a>
+                ) : (
+                  <Link to={activeBanner.banner_link_url} className="block w-full cursor-pointer">
+                    <img
+                      src={activeBanner.image}
+                      alt={activeBanner.title}
+                      className={`w-full object-cover object-center ${
+                        { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                          '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                        ?? 'aspect-[3/1]'
+                      }`}
+                    />
+                  </Link>
+                )
+              ) : (
+                <img
+                  src={activeBanner.image}
+                  alt={activeBanner.title}
+                  className={`w-full object-cover object-center ${
+                    { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                      '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                    ?? 'aspect-[3/1]'
+                  }`}
+                />
+              )}
+
+              {/* Badge overlay */}
+              {activeBanner.badge_label && (
+                <span className={`absolute top-3 left-4 sm:top-4 sm:left-6 z-10
+                                  text-xs font-bold px-2.5 py-1 rounded-full shadow
+                                  ${{ green:'bg-green-500 text-white', red:'bg-red-500 text-white',
+                                      blue:'bg-blue-500 text-white', yellow:'bg-yellow-400 text-gray-900',
+                                      purple:'bg-purple-500 text-white', orange:'bg-orange-500 text-white',
+                                   }[activeBanner.badge_color] ?? 'bg-green-500 text-white'}`}>
+                  {activeBanner.badge_label}
+                </span>
+              )}
+
+              {/* Dismiss button */}
+              <button
+                onClick={() => {
+                  if (activeBanner.show_once) {
+                    const key = `ann_seen_${activeBanner.id}_${new Date().toDateString()}`;
+                    localStorage.setItem(key, '1');
+                  }
+                  setBannerDismissed(true);
+                }}
+                aria-label="Dismiss banner"
+                className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10
+                           p-1.5 sm:p-2 bg-black/40 hover:bg-black/60
+                           backdrop-blur-sm rounded-full text-white transition-colors"
+              >
+                <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="hero-gradient"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderHeroSection}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {renderCategoriesSection}
         {renderProductsSection}
         {renderSellersSection}

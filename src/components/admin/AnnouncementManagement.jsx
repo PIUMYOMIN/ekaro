@@ -18,7 +18,10 @@ const BADGE_PREVIEW = {
 };
 
 const EMPTY = {
-  title: '', content: '', type: 'announcement', image: null,
+  title: '', content: '', type: 'announcement',
+  display_style: 'popup_card',
+  banner_link_url: '', banner_aspect_ratio: '16:9',
+  image: null,
   cta_label: '', cta_url: '', cta_style: 'primary',
   badge_label: '', badge_color: 'green',
   target_audience: 'all', is_active: true, show_once: true,
@@ -97,6 +100,9 @@ const AnnouncementManagement = () => {
       delay_seconds: item.delay_seconds ?? 1,
       starts_at: item.starts_at ? item.starts_at.slice(0, 16) : '',
       ends_at: item.ends_at ? item.ends_at.slice(0, 16) : '',
+      display_style: item.display_style ?? 'popup_card',
+      banner_link_url: item.banner_link_url ?? '',
+      banner_aspect_ratio: item.banner_aspect_ratio ?? '16:9',
       sort_order: item.sort_order ?? 0,
     });
     setImagePreview(item.image ?? '');
@@ -213,8 +219,8 @@ const AnnouncementManagement = () => {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="font-bold text-gray-900 mb-2">Delete Announcement</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold text-gray-900 dark:text-slate-100 mb-2">Delete Announcement</h3>
             <p className="text-sm text-gray-600 mb-5">This cannot be undone.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setDeleteTarget(null)}
@@ -313,6 +319,50 @@ const AnnouncementManagement = () => {
                     {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+
+                {/* Display Style */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
+                    Display Style
+                  </label>
+                  <select
+                    value={form.display_style ?? "popup_card"}
+                    onChange={handleChange("display_style")}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="popup_card">🪟 Popup Card — title, content, CTA</option>
+                    <option value="popup_banner">🖼 Popup Banner — image only (full-width modal)</option>
+                    <option value="page_banner">📌 Page Banner — image strip below header</option>
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {(form.display_style ?? "popup_card") === "popup_card" && "Modal with title, text, image and CTA button."}
+                    {form.display_style === "popup_banner" && "Large image-only popup. Title saved but not shown to buyers."}
+                    {form.display_style === "page_banner" && "Non-blocking strip shown sitewide below the header."}
+                  </p>
+                </div>
+
+                {/* Banner fields */}
+                {(form.display_style === "popup_banner" || form.display_style === "page_banner") && (
+                  <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-3 p-3
+                                  bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Click-through URL</label>
+                      <input value={form.banner_link_url ?? ""} onChange={handleChange("banner_link_url")}
+                        placeholder="https://… or /products"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Aspect Ratio</label>
+                      <select value={form.banner_aspect_ratio ?? "16:9"} onChange={handleChange("banner_aspect_ratio")}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-green-500">
+                        <option value="16:9">16:9 — Standard widescreen</option>
+                        <option value="4:3">4:3 — Classic</option>
+                        <option value="3:1">3:1 — Panoramic / strip</option>
+                        <option value="1:1">1:1 — Square</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 {/* Audience */}
                 <div>

@@ -266,7 +266,7 @@ const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
   const canCancel  = ["pending", "confirmed"].includes(order.status);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition p-4">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 hover:shadow-md transition p-4">
       <div className="flex items-start gap-3">
         <img src={thumb} alt={firstItem.product_name || "Product"}
           className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
@@ -274,10 +274,10 @@ const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-medium text-gray-900 text-sm">Order #{order.order_number}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">{order.items?.length} item(s) · {formatDate(order.created_at)}</p>
+              <h3 className="font-medium text-gray-900 dark:text-slate-100 text-sm">Order #{order.order_number}</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5">{order.items?.length} item(s) · {formatDate(order.created_at)}</p>
               {(order.store_name || order.seller?.store_name) && (
-                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-slate-500 flex items-center gap-1 mt-0.5">
                   <BuildingStorefrontIcon className="h-3 w-3" />
                   {order.store_name || order.seller?.store_name}
                 </p>
@@ -358,12 +358,12 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
 
           {/* Header */}
-          <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center z-10">
+          <div className="sticky top-0 bg-white dark:bg-slate-800 px-6 py-4 border-b flex justify-between items-center z-10">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Order #{order.order_number}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Order #{order.order_number}</h3>
               <StatusBadge status={order.status} />
             </div>
             <div className="flex items-center gap-2">
@@ -371,7 +371,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100">
                 <PrinterIcon className="h-3.5 w-3.5" />Pay Slip
               </button>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <button onClick={onClose} className="text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:text-slate-400">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -380,12 +380,12 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
           <div className="p-6 space-y-6">
 
             {/* Delivery tracking */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5">
+            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                <h4 className="font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-2">
                   <TruckIcon className="h-5 w-5 text-blue-600" />Delivery Tracking
                 </h4>
-                {dlLoading && <ArrowPathIcon className="h-4 w-4 text-gray-400 animate-spin" />}
+                {dlLoading && <ArrowPathIcon className="h-4 w-4 text-gray-400 dark:text-slate-600 animate-spin" />}
               </div>
 
               {delivery ? (
@@ -393,9 +393,9 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   <div className="flex flex-wrap gap-3 items-center bg-blue-50 p-3 rounded-lg text-sm">
                     <span className="font-medium">{delivery.delivery_method === "platform" ? "Platform Logistics" : "Self Delivery"}</span>
                     {delivery.tracking_number && (
-                      <span className="font-mono bg-white px-2 py-0.5 rounded border text-xs">{delivery.tracking_number}</span>
+                      <span className="font-mono bg-white dark:bg-slate-800 px-2 py-0.5 rounded border text-xs">{delivery.tracking_number}</span>
                     )}
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${DELIVERY_STATUS[delivery.status]?.color || "bg-gray-100 text-gray-700"}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${DELIVERY_STATUS[delivery.status]?.color || "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300"}`}>
                       {DELIVERY_STATUS[delivery.status]?.label || delivery.status}
                     </span>
                   </div>
@@ -415,9 +415,9 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                               <s.Icon className="h-4 w-4" />
                             </div>
                             <span className={`text-[10px] mt-1.5 text-center leading-tight hidden sm:block
-                              ${done ? "text-gray-700" : cur ? "text-blue-600" : "text-gray-400"}`}>{s.label}</span>
+                              ${done ? "text-gray-700 dark:text-slate-300" : cur ? "text-blue-600" : "text-gray-400 dark:text-slate-600"}`}>{s.label}</span>
                             {tsMap[s.key] && (
-                              <span className="text-[9px] text-gray-400 mt-0.5 text-center hidden sm:block">
+                              <span className="text-[9px] text-gray-400 dark:text-slate-600 mt-0.5 text-center hidden sm:block">
                                 {formatDate(tsMap[s.key], { month:"short", day:"numeric" })}
                               </span>
                             )}
@@ -438,7 +438,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-gray-400 dark:text-slate-600">
                   <TruckIcon className="h-10 w-10 mx-auto mb-2" />
                   <p className="text-sm">No delivery info yet. Check back later.</p>
                 </div>
@@ -447,18 +447,18 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
             {/* Items */}
             <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Items ({order.items?.length})</h4>
+              <h4 className="font-semibold text-gray-800 dark:text-slate-200 mb-3">Items ({order.items?.length})</h4>
               <div className="space-y-2">
                 {order.items?.map((item, i) => {
                   const imgs = item.product_data?.images || [];
                   const img  = imgs.find((x) => x.is_primary)?.url || imgs[0]?.url || "/placeholder-product.jpg";
                   return (
-                    <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                    <div key={i} className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900 p-3 rounded-lg">
                       <img src={img} alt={item.product_name} className="w-12 h-12 object-cover rounded flex-shrink-0"
                         onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.product_name}</p>
-                        <p className="text-xs text-gray-500">Qty: {item.quantity} · {formatMMK(item.price)} each</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-500">Qty: {item.quantity} · {formatMMK(item.price)} each</p>
                       </div>
                       <p className="font-semibold text-sm flex-shrink-0">{formatMMK(item.subtotal)}</p>
                     </div>
@@ -469,18 +469,18 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
             {/* Shipping + Payment */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <h4 className="font-semibold text-gray-800 mb-2 text-sm">Shipping Address</h4>
+              <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-800 dark:text-slate-200 mb-2 text-sm">Shipping Address</h4>
                 <p className="font-medium text-sm">{addr.full_name}</p>
-                {addr.phone && <p className="text-sm text-gray-600">{addr.phone}</p>}
-                <p className="text-sm text-gray-600 mt-1">{addr.address}</p>
-                {addr.city && <p className="text-sm text-gray-600">{addr.city}{addr.state ? `, ${addr.state}` : ""}</p>}
+                {addr.phone && <p className="text-sm text-gray-600 dark:text-slate-400">{addr.phone}</p>}
+                <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{addr.address}</p>
+                {addr.city && <p className="text-sm text-gray-600 dark:text-slate-400">{addr.city}{addr.state ? `, ${addr.state}` : ""}</p>}
               </div>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <h4 className="font-semibold text-gray-800 mb-2 text-sm">Payment</h4>
+              <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl">
+                <h4 className="font-semibold text-gray-800 dark:text-slate-200 mb-2 text-sm">Payment</h4>
                 <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-600">Method</span><span className="font-medium capitalize">{(order.payment_method || "").replaceAll("_"," ")}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Status</span>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-slate-400">Method</span><span className="font-medium capitalize">{(order.payment_method || "").replaceAll("_"," ")}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600 dark:text-slate-400">Status</span>
                     <span className={`font-medium ${
                       order.payment_status === "paid" || (order.payment_method === "cash_on_delivery" && order.status === "delivered")
                         ? "text-green-600"
@@ -500,24 +500,24 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
             </div>
 
             {/* Summary */}
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <h4 className="font-semibold text-gray-800 mb-3 text-sm">Order Summary</h4>
+            <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-xl">
+              <h4 className="font-semibold text-gray-800 dark:text-slate-200 mb-3 text-sm">Order Summary</h4>
               <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatMMK(order.subtotal_amount)}</span></div>
-                <div className="flex justify-between text-gray-600"><span>Shipping</span><span>{formatMMK(order.shipping_fee)}</span></div>
-                {order.tax_amount > 0 && <div className="flex justify-between text-gray-600"><span>Tax</span><span>{formatMMK(order.tax_amount)}</span></div>}
+                <div className="flex justify-between text-gray-600 dark:text-slate-400"><span>Subtotal</span><span>{formatMMK(order.subtotal_amount)}</span></div>
+                <div className="flex justify-between text-gray-600 dark:text-slate-400"><span>Shipping</span><span>{formatMMK(order.shipping_fee)}</span></div>
+                {order.tax_amount > 0 && <div className="flex justify-between text-gray-600 dark:text-slate-400"><span>Tax</span><span>{formatMMK(order.tax_amount)}</span></div>}
                 {order.coupon_discount_amount > 0 && <div className="flex justify-between text-red-600"><span>Coupon</span><span>-{formatMMK(order.coupon_discount_amount)}</span></div>}
-                <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200"><span>Total</span><span className="text-green-600">{formatMMK(order.total_amount)}</span></div>
+                <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-200 dark:border-slate-700"><span>Total</span><span className="text-green-600">{formatMMK(order.total_amount)}</span></div>
               </div>
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 flex justify-end gap-2 border-t">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-slate-900 flex justify-end gap-2 border-t">
             <button onClick={() => downloadPaySlip(order, delivery)}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700">
               <DocumentArrowDownIcon className="h-4 w-4" />Download Pay Slip
             </button>
-            <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+            <button onClick={onClose} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900">
               Close
             </button>
           </div>
@@ -549,7 +549,7 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
 
       {/* ── Telegram Community ── */}
       <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm transition-colors w-full sm:w-auto">
+        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm dark:shadow-slate-900/50 transition-colors w-full sm:w-auto">
         <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
           <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
         </svg>
@@ -561,10 +561,10 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div key={s.label} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-sm dark:shadow-slate-900/50">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500 mb-1">{s.label}</p>
                 <p className={`text-xl sm:text-2xl font-bold ${s.color}`}>{s.value}</p>
               </div>
               <div className={`${s.bg} rounded-lg p-2 flex-shrink-0`}>
@@ -575,13 +575,13 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="bg-orange-100 rounded-full p-2"><ChartBarIcon className="h-5 w-5 text-orange-600" /></div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-gray-900">Recent Orders</h2>
-              <p className="text-xs text-gray-500">Your latest purchasing activity</p>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-slate-100">Recent Orders</h2>
+              <p className="text-xs text-gray-500 dark:text-slate-500">Your latest purchasing activity</p>
             </div>
           </div>
         </div>
@@ -589,7 +589,7 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
         {recentOrders.length === 0 ? (
           <div className="text-center py-10">
             <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-600">No orders yet</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-slate-400">No orders yet</p>
             <button onClick={() => navigate("/products")}
               className="mt-3 bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
               Start Shopping
@@ -613,11 +613,11 @@ const OrdersTab = ({ orders, onViewDetails, onCancel }) => {
   const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <h2 className="text-lg font-bold text-gray-900">My Orders</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">My Orders</h2>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+          className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
           <option value="all">All Orders</option>
           {["pending","confirmed","processing","shipped","delivered","cancelled"].map((s) => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>
@@ -628,7 +628,7 @@ const OrdersTab = ({ orders, onViewDetails, onCancel }) => {
       {filtered.length === 0 ? (
         <div className="text-center py-12">
           <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">No orders match this filter.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500">No orders match this filter.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -664,19 +664,19 @@ const PurchaseHistoryTab = ({ orders }) => {
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="bg-white rounded-2xl shadow-sm p-5">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5">
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Purchase History</h2>
-            <p className="text-sm text-gray-500 mt-0.5">All your orders with downloadable pay slips</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Purchase History</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-500 mt-0.5">All your orders with downloadable pay slips</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="text-right">
-              <p className="text-xs text-gray-500">Total Records</p>
+              <p className="text-xs text-gray-500 dark:text-slate-500">Total Records</p>
               <p className="text-xl font-bold text-blue-600">{history.length}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500">Total Spent</p>
+              <p className="text-xs text-gray-500 dark:text-slate-500">Total Spent</p>
               <p className="text-xl font-bold text-green-600">{formatMMK(totalSpent)}</p>
             </div>
           </div>
@@ -685,37 +685,37 @@ const PurchaseHistoryTab = ({ orders }) => {
         <div className="mt-4 relative">
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by order number, store or product…"
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" />
-          <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" />
+          <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-600" />
         </div>
       </div>
 
       {history.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-sm p-10 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-10 text-center">
           <ReceiptRefundIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-500">No purchase records found.</p>
+          <p className="text-sm font-medium text-gray-500 dark:text-slate-500">No purchase records found.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 overflow-hidden">
           {/* Desktop table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
                 <tr>
                   {[t("buyer_dashboard.order_number"), t("buyer_dashboard.date"), t("buyer_dashboard.store"), t("buyer_dashboard.items"), t("buyer_dashboard.amount"), t("buyer_dashboard.payment"), t("buyer_dashboard.status"), t("buyer_dashboard.pay_slip")].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {history.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">#{o.order_number || o.id}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(o.created_at)}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap max-w-[120px] truncate">
+                  <tr key={o.id} className="hover:bg-gray-50 dark:bg-slate-900 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100 whitespace-nowrap">#{o.order_number || o.id}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-slate-400 whitespace-nowrap">{formatDate(o.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-slate-400 whitespace-nowrap max-w-[120px] truncate">
                       {o.store_name || o.seller?.store_name || "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{o.items?.length || 0}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{o.items?.length || 0}</td>
                     <td className="px-4 py-3 font-semibold text-green-600 whitespace-nowrap">{formatMMK(o.total_amount)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${o.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
@@ -741,9 +741,9 @@ const PurchaseHistoryTab = ({ orders }) => {
               <div key={o.id} className="p-4 space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium text-gray-900">#{o.order_number || o.id}</p>
-                    <p className="text-xs text-gray-500">{formatDate(o.created_at)}</p>
-                    {o.seller?.store_name && <p className="text-xs text-gray-500">{o.seller.store_name}</p>}
+                    <p className="font-medium text-gray-900 dark:text-slate-100">#{o.order_number || o.id}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500">{formatDate(o.created_at)}</p>
+                    {o.seller?.store_name && <p className="text-xs text-gray-500 dark:text-slate-500">{o.seller.store_name}</p>}
                   </div>
                   <StatusBadge status={o.status} />
                 </div>
@@ -758,7 +758,7 @@ const PurchaseHistoryTab = ({ orders }) => {
             ))}
           </div>
 
-          <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 text-xs text-gray-500 dark:text-slate-500">
             {history.length} record{history.length !== 1 ? "s" : ""} · Total: {formatMMK(totalSpent)}
           </div>
         </div>
@@ -799,13 +799,13 @@ const WishlistTab = ({ navigate }) => {
   if (error)   return <div className="bg-red-50 text-red-700 p-4 rounded-xl text-sm">{error}</div>;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
       {removeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
-            <p className="text-sm font-medium text-gray-900 mb-4">Remove this item from your wishlist?</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-4">Remove this item from your wishlist?</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm">Cancel</button>
               <button onClick={confirmRemove} disabled={removing}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50">
                 {removing ? t("buyer_dashboard.removing") : t("buyer_dashboard.remove")}
@@ -815,12 +815,12 @@ const WishlistTab = ({ navigate }) => {
         </div>
       )}
 
-      <h2 className="text-lg font-bold text-gray-900 mb-5">My Wishlist</h2>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-5">My Wishlist</h2>
 
       {wishlist.length === 0 ? (
         <div className="text-center py-12">
           <HeartIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 mb-3">Your wishlist is empty</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500 mb-3">Your wishlist is empty</p>
           <button onClick={() => navigate("/products")} className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
             Browse Products
           </button>
@@ -828,16 +828,16 @@ const WishlistTab = ({ navigate }) => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {wishlist.map((item) => (
-            <div key={item.id} className="border border-gray-200 rounded-xl p-3 hover:shadow-md transition flex gap-3">
+            <div key={item.id} className="border border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:shadow-md transition flex gap-3">
               <img src={item.images?.[0] || "/placeholder-product.jpg"} alt={item.name}
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                 onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 text-sm line-clamp-2">{item.name}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-slate-100 text-sm line-clamp-2">{item.name}</h3>
                 <p className="text-sm text-green-600 font-bold mt-0.5">{formatMMK(item.price)}</p>
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => navigate(`/products/${item.slug || item.id}`)}
-                    className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded hover:bg-gray-200">View</button>
+                    className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2.5 py-1 rounded hover:bg-gray-200">View</button>
                   <button onClick={() => setRemoveModal(item.id)}
                     className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded hover:bg-red-100">Remove</button>
                 </div>
@@ -891,14 +891,14 @@ const CartTab = ({ navigate }) => {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" /></div>;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
       {/* Remove confirm */}
       {removeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
-            <p className="text-sm font-medium text-gray-900 mb-4">Remove this item from your cart?</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-4">Remove this item from your cart?</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setRemoveModal(null)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm">Cancel</button>
               <button onClick={confirmRemove} disabled={!!removingId}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50">
                 {removingId ? t("buyer_dashboard.removing") : t("buyer_dashboard.remove")}
@@ -911,11 +911,11 @@ const CartTab = ({ navigate }) => {
       {/* Clear confirm */}
       {clearModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
-            <p className="text-sm font-medium text-gray-900 mb-2">Clear your entire cart?</p>
-            <p className="text-xs text-gray-500 mb-4">This will remove all items.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-xs w-full mx-4">
+            <p className="text-sm font-medium text-gray-900 dark:text-slate-100 mb-2">Clear your entire cart?</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">This will remove all items.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setClearModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setClearModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm">Cancel</button>
               <button onClick={confirmClear} disabled={clearing}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm disabled:opacity-50">
                 {clearing ? "Clearing…" : "Clear Cart"}
@@ -926,8 +926,8 @@ const CartTab = ({ navigate }) => {
       )}
 
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold text-gray-900">
-          My Cart {totalItems > 0 && <span className="text-gray-400 font-normal text-sm">({totalItems})</span>}
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">
+          My Cart {totalItems > 0 && <span className="text-gray-400 dark:text-slate-600 font-normal text-sm">({totalItems})</span>}
         </h2>
         {cartItems.length > 0 && (
           <button onClick={() => setClearModal(true)} disabled={clearing}
@@ -944,7 +944,7 @@ const CartTab = ({ navigate }) => {
       {cartItems.length === 0 ? (
         <div className="text-center py-12">
           <ShoppingCartIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 mb-3">Your cart is empty</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500 mb-3">Your cart is empty</p>
           <button onClick={() => navigate("/products")} className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700">
             Browse Products
           </button>
@@ -962,7 +962,7 @@ const CartTab = ({ navigate }) => {
             <ul className="divide-y divide-gray-100">
               {cartItems.map((item) => (
                 <li key={item.id} className={`py-4 flex gap-3 ${removingId === item.id ? "opacity-40" : ""}`}>
-                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
                     <img src={item.image || "/placeholder-product.jpg"} alt={item.name}
                       className="w-full h-full object-contain"
                       onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
@@ -970,7 +970,7 @@ const CartTab = ({ navigate }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between gap-2">
                       <div>
-                        <h4 className="font-medium text-gray-900 text-sm truncate cursor-pointer hover:text-green-700"
+                        <h4 className="font-medium text-gray-900 dark:text-slate-100 text-sm truncate cursor-pointer hover:text-green-700"
                           onClick={() => navigate(`/products/${item.product_id}`)}>
                           {item.name}
                         </h4>
@@ -979,19 +979,19 @@ const CartTab = ({ navigate }) => {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="font-bold text-green-700 text-sm">{formatMMK(item.price)}</p>
-                        <p className="text-xs text-gray-400">{formatMMK(item.subtotal)}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-600">{formatMMK(item.subtotal)}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-gray-200 rounded overflow-hidden">
+                      <div className="flex items-center border border-gray-200 dark:border-slate-700 rounded overflow-hidden">
                         <button onClick={() => handleQty(item.id, item.quantity - 1)} disabled={item.quantity <= 1 || updatingId === item.id || !item.is_available}
-                          className="px-2.5 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-40 text-sm">−</button>
+                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-40 text-sm">−</button>
                         <div className="relative w-8 text-center text-sm">
                           {item.quantity}
                           {updatingId === item.id && <div className="absolute inset-0 flex items-center justify-center bg-white/80"><div className="animate-spin h-3 w-3 rounded-full border-b-2 border-green-500" /></div>}
                         </div>
                         <button onClick={() => handleQty(item.id, item.quantity + 1)} disabled={item.quantity >= item.stock || updatingId === item.id || !item.is_available}
-                          className="px-2.5 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-40 text-sm">+</button>
+                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-40 text-sm">+</button>
                       </div>
                       <button onClick={() => setRemoveModal(item.id)} disabled={removingId === item.id}
                         className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-40">
@@ -1005,20 +1005,20 @@ const CartTab = ({ navigate }) => {
           </div>
 
           <div className="mt-6 lg:mt-0 lg:col-span-5">
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h3 className="font-semibold text-gray-900 mb-3 text-sm">Order Summary</h3>
+            <div className="bg-gray-50 dark:bg-slate-900 rounded-xl p-4">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-3 text-sm">Order Summary</h3>
               <dl className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-500"><dt>Subtotal ({totalItems})</dt><dd className="font-medium text-gray-900">{formatMMK(subtotal)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>Shipping</dt><dd className="font-medium text-gray-900">{formatMMK(cartSummary?.shipping_fee || 0)}</dd></div>
-                <div className="flex justify-between text-gray-500"><dt>Tax (5%)</dt><dd className="font-medium text-gray-900">{formatMMK(cartSummary?.tax || 0)}</dd></div>
-                <div className="flex justify-between border-t pt-2 font-bold text-gray-900"><dt>Total</dt><dd>{formatMMK(cartSummary?.total || 0)}</dd></div>
+                <div className="flex justify-between text-gray-500 dark:text-slate-500"><dt>Subtotal ({totalItems})</dt><dd className="font-medium text-gray-900 dark:text-slate-100">{formatMMK(subtotal)}</dd></div>
+                <div className="flex justify-between text-gray-500 dark:text-slate-500"><dt>Shipping</dt><dd className="font-medium text-gray-900 dark:text-slate-100">{formatMMK(cartSummary?.shipping_fee || 0)}</dd></div>
+                <div className="flex justify-between text-gray-500 dark:text-slate-500"><dt>Tax (5%)</dt><dd className="font-medium text-gray-900 dark:text-slate-100">{formatMMK(cartSummary?.tax || 0)}</dd></div>
+                <div className="flex justify-between border-t pt-2 font-bold text-gray-900 dark:text-slate-100"><dt>Total</dt><dd>{formatMMK(cartSummary?.total || 0)}</dd></div>
               </dl>
               <button onClick={() => navigate("/checkout")} disabled={!canCheckout}
                 className={`mt-4 w-full py-2.5 rounded-lg font-medium text-white text-sm transition ${canCheckout ? "bg-green-600 hover:bg-green-700" : "bg-gray-300 cursor-not-allowed"}`}>
                 Proceed to Checkout
               </button>
               <button onClick={() => navigate("/products")}
-                className="mt-2 w-full py-2.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50">
+                className="mt-2 w-full py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:bg-slate-900">
                 Continue Shopping
               </button>
             </div>
@@ -1048,16 +1048,16 @@ const ProfileTab = ({ user, onUpdate }) => {
 
   const field = (label, name, type = "text") => (
     <div key={name}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
       <input type={type} name={name} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
     </div>
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-lg font-bold text-gray-900">Personal Information</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Personal Information</h2>
         {!editing && (
           <button onClick={() => setEditing(true)} className="flex items-center gap-1 text-green-600 hover:text-green-700 text-sm">
             <PencilSquareIcon className="h-4 w-4" />Edit
@@ -1076,7 +1076,7 @@ const ProfileTab = ({ user, onUpdate }) => {
           {field("Address", "address")}
           <div className="grid grid-cols-2 gap-4">{field("City", "city")} {field("State", "state")}</div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+            <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm">Cancel</button>
             <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
               {loading ? t("buyer_dashboard.saving") : t("buyer_dashboard.save_changes")}
             </button>
@@ -1091,8 +1091,8 @@ const ProfileTab = ({ user, onUpdate }) => {
             [MapPinIcon,  t("buyer_dashboard.address"), [user?.address, user?.city, user?.state].filter(Boolean).join(", ") || "—"],
           ].map(([Icon, label, value]) => (
             <div key={label} className="flex items-start gap-3">
-              <Icon className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-              <div><p className="text-xs text-gray-500">{label}</p><p className="font-medium text-sm">{value || "—"}</p></div>
+              <Icon className="h-5 w-5 text-gray-400 dark:text-slate-600 mt-0.5 flex-shrink-0" />
+              <div><p className="text-xs text-gray-500 dark:text-slate-500">{label}</p><p className="font-medium text-sm">{value || "—"}</p></div>
             </div>
           ))}
         </div>
@@ -1129,7 +1129,7 @@ const SettingsTab = ({ user }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 border-b border-gray-100">
+      <div className="flex gap-1 border-b border-gray-100 dark:border-slate-800">
         {subTabs.map(t => (
           <button key={t.id} onClick={() => setSection(t.id)}
             className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors
@@ -1140,7 +1140,7 @@ const SettingsTab = ({ user }) => {
       </div>
 
       {section === "notifications" && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
           <NotificationPreferences
             userType="buyer"
             initialPrefs={user?.notification_preferences || {}}
@@ -1149,16 +1149,16 @@ const SettingsTab = ({ user }) => {
       )}
 
       {section === "password" && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Change Password</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
           {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
             {[[t("buyer_dashboard.current_password"),"current_password"],[t("buyer_dashboard.new_password"),"new_password"],[t("buyer_dashboard.confirm_new_password"),"confirm_password"]].map(([label,name]) => (
               <div key={name}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type="password" name={name} value={pwd[name]} required minLength={name!=="current_password"?8:undefined}
                   onChange={(e) => setPwd({...pwd,[name]:e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
               </div>
             ))}
             <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
@@ -1169,9 +1169,9 @@ const SettingsTab = ({ user }) => {
       )}
 
       {section === "account" && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 sm:p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Account</h2>
-          <p className="text-sm text-gray-500 mb-4">Deactivating your account will remove your access. Your order history will be preserved.</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-3">Account</h2>
+          <p className="text-sm text-gray-500 dark:text-slate-500 mb-4">Deactivating your account will remove your access. Your order history will be preserved.</p>
           <button className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors">
             <ExclamationTriangleIcon className="h-4 w-4" />Request Account Deactivation
           </button>
@@ -1268,7 +1268,7 @@ const BuyerDashboard = () => {
       <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
-          <p className="text-gray-600 text-sm">Loading your dashboard…</p>
+          <p className="text-gray-600 dark:text-slate-400 text-sm">Loading your dashboard…</p>
         </div>
       </div>
     );
@@ -1280,14 +1280,14 @@ const BuyerDashboard = () => {
       {/* ── Cancel Confirm Modal ── */}
       {cancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-2">Cancel Order</h3>
-            <p className="text-sm text-gray-600 mb-1">Cancel <strong>Order #{cancelModal.order_number}</strong>?</p>
-            <p className="text-xs text-gray-500 mb-4">Stock will be restored. This cannot be undone.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100 mb-2">Cancel Order</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-1">Cancel <strong>Order #{cancelModal.order_number}</strong>?</p>
+            <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">Stock will be restored. This cannot be undone.</p>
             {cancelError && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{cancelError}</div>}
             <div className="flex justify-end gap-3">
               <button onClick={() => { setCancelModal(null); setCancelError(null); }} disabled={cancelling}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 disabled:opacity-50">Keep Order</button>
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 disabled:opacity-50">Keep Order</button>
               <button onClick={handleCancelOrder} disabled={cancelling}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
                 {cancelling ? t("buyer_dashboard.cancelling") : t("buyer_dashboard.cancel_order")}
@@ -1300,16 +1300,16 @@ const BuyerDashboard = () => {
       {/* ── Mobile sidebar overlay ── */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setSidebarOpen(false)}>
-          <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-800 shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="pt-6 pb-4 px-4">
               <div className="flex items-center justify-between mb-6 px-2">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center">
                     <span className="text-white font-bold text-sm">{user?.name?.charAt(0)?.toUpperCase() || "B"}</span>
                   </div>
-                  <div><p className="font-medium text-sm text-gray-900 truncate max-w-[140px]">{user?.name}</p><p className="text-xs text-gray-500">Buyer</p></div>
+                  <div><p className="font-medium text-sm text-gray-900 dark:text-slate-100 truncate max-w-[140px]">{user?.name}</p><p className="text-xs text-gray-500 dark:text-slate-500">Buyer</p></div>
                 </div>
-                <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-5 w-5" /></button>
+                <button onClick={() => setSidebarOpen(false)} className="text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:text-slate-400"><XMarkIcon className="h-5 w-5" /></button>
               </div>
               {TABS.map((tab, idx) => (
                 <button key={tab.id} onClick={() => { setActiveTab(idx); setSidebarOpen(false); }}
@@ -1326,7 +1326,7 @@ const BuyerDashboard = () => {
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-4 left-4 z-20">
         <button onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-lg bg-white shadow-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-all">
+          className="p-2 rounded-lg bg-white dark:bg-slate-800 shadow-lg text-gray-500 dark:text-slate-500 hover:text-green-600 hover:bg-green-50 transition-all">
           <Bars3Icon className="h-6 w-6" />
         </button>
       </div>
@@ -1342,7 +1342,7 @@ const BuyerDashboard = () => {
                 <span className="text-white font-bold text-base">{user?.name?.charAt(0)?.toUpperCase() || "B"}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-base font-bold text-gray-900 truncate">{user?.name || "Buyer"}</p>
+                <p className="text-base font-bold text-gray-900 dark:text-slate-100 truncate">{user?.name || "Buyer"}</p>
                 <p className="text-sm text-green-600 font-medium">Buyer Account</p>
               </div>
             </div>
@@ -1367,14 +1367,14 @@ const BuyerDashboard = () => {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="text-center p-2 bg-green-50 rounded-xl">
                 <div className="font-bold text-green-700 text-lg">{orders.length}</div>
-                <div className="text-gray-500">Orders</div>
+                <div className="text-gray-500 dark:text-slate-500">Orders</div>
               </div>
               <div className="text-center p-2 bg-blue-50 rounded-xl">
                 <div className="font-bold text-blue-700 text-lg">{orders.filter((o) => o.status === "delivered").length}</div>
-                <div className="text-gray-500">Delivered</div>
+                <div className="text-gray-500 dark:text-slate-500">Delivered</div>
               </div>
             </div>
-            <div className="mt-3 text-center text-xs text-gray-500">
+            <div className="mt-3 text-center text-xs text-gray-500 dark:text-slate-500">
               Member since {user?.created_at ? new Date(user.created_at).getFullYear() : "—"}
             </div>
           </div>
@@ -1391,7 +1391,7 @@ const BuyerDashboard = () => {
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
                 Buyer Dashboard
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage your orders and account</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-500 mt-0.5">Manage your orders and account</p>
             </div>
           </div>
         </div>

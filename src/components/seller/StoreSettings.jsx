@@ -17,7 +17,23 @@ import {
 
 const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '', email: user?.email || '', phone: user?.phone || '',
+    address: user?.address || '', city: user?.city || '', state: user?.state || '',
+    country: user?.country || 'Myanmar', postal_code: user?.postal_code || '',
+    date_of_birth: user?.date_of_birth ? user.date_of_birth.split('T')[0] : '',
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState(null);
+  const handleProfileSave = async (e) => {
+    e.preventDefault(); setProfileSaving(true); setProfileMsg(null);
+    try {
+      const res = await api.put('/users/profile', profileData);
+      if (res.data.success) { updateUser(res.data.data); setProfileMsg({ type:'success', text:'Profile updated!' }); }
+    } catch (err) { setProfileMsg({ type:'error', text: err.response?.data?.message || 'Update failed.' }); }
+    finally { setProfileSaving(false); }
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -312,7 +328,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
-            {['General', 'Policies', 'Payment', 'Notifications', 'Security', 'Account'].map((tab) => (
+            {['Personal', 'General', 'Policies', 'Payment', 'Notifications', 'Security', 'Account'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => document.getElementById(tab.toLowerCase())?.scrollIntoView({ behavior: 'smooth' })}

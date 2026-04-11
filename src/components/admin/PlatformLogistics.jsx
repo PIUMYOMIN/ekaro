@@ -442,8 +442,12 @@ const PlatformLogistics = () => {
                         ) : (
                           <button
                             onClick={() => setAssignDelivery(d)}
-                            className="flex items-center gap-1 text-xs text-green-700 border border-green-300
-                                       bg-green-50 hover:bg-green-100 px-2.5 py-1 rounded-lg transition-colors">
+                            disabled={['pending','delivered','cancelled','returned','failed'].includes(d.status)}
+                            title={d.status === 'pending' ? 'Confirm the order first' : d.status === 'delivered' ? 'Already delivered' : 'Assign courier'}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition-colors border
+                              ${['pending','delivered','cancelled','returned','failed'].includes(d.status)
+                                ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                                : 'border-green-300 bg-green-50 hover:bg-green-100 text-green-700'}`}>
                             <UserGroupIcon className="h-3.5 w-3.5" /> Assign Courier
                           </button>
                         )}
