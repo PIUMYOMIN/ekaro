@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import api from '../utils/api';
+import { parseApiErrorMessage } from '../utils/apiError';
 
 const AuthContext = createContext();
 
@@ -112,27 +113,22 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: normalizedUser };
     } catch (err) {
       const data = err.response?.data;
-
-      // Laravel validation error (422) → data.errors is an object of arrays
-      if (data?.errors) {
-        const firstError = Object.values(data.errors).flat()[0];
-        return { success: false, message: firstError || data.message || 'Validation failed.' };
+      const fromBody = parseApiErrorMessage(data);
+      if (fromBody) {
+        return { success: false, message: fromBody };
       }
 
-      // Standard API error with message field
-      if (data?.message) {
-        return { success: false, message: data.message };
-      }
-
-      // 5xx / network error — no response body
       if (!err.response) {
         return { success: false, message: 'Network error. Please check your connection.' };
       }
 
-      // Status-specific fallbacks
       const status = err.response?.status;
-      if (status === 500) return { success: false, message: 'Server error. Please try again shortly.' };
-      if (status === 503) return { success: false, message: 'Service unavailable. Please try again.' };
+      if (status === 500) {
+        return { success: false, message: 'Server error. Please try again shortly.' };
+      }
+      if (status === 503) {
+        return { success: false, message: 'Service unavailable. Please try again.' };
+      }
 
       return { success: false, message: 'Login failed. Please try again.' };
     }
@@ -149,7 +145,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       return {
         success: false,
-        message: err.response?.data?.message || 'Registration failed'
+        message: parseApiErrorMessage(err.response?.data) || 'Registration failed',
       };
     }
   };
