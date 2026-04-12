@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import SEO from "../../components/SEO/seo";
 import useSEO from '../../hooks/useSEO';
 
 const ResetPassword = () => {
@@ -73,28 +72,28 @@ const ResetPassword = () => {
   return (
     <>
       {SeoComponent}
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-slate-900 dark:to-slate-800 py-12 px-4 sm:px-6 lg:px-8 theme-transition">
         <motion.div 
-          className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl"
+          className="max-w-md w-full space-y-8 bg-white dark:bg-slate-800 p-10 rounded-2xl shadow-xl dark:shadow-slate-900/50"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div>
-            <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
               <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-slate-100">
               {pageTitle}
             </h2>
             {(!token || !email) ? (
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-2 text-center text-sm text-gray-600 dark:text-slate-400">
                 The password reset link is invalid or expired.
               </p>
             ) : (
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-2 text-center text-sm text-gray-600 dark:text-slate-400">
                 {t('reset_password.subtitle')}
               </p>
             )}
@@ -109,7 +108,7 @@ const ResetPassword = () => {
           )}
 
           {success && (
-            <div className="rounded-md bg-green-50 p-4">
+            <div className="rounded-md bg-green-50 dark:bg-green-900/30 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -117,18 +116,18 @@ const ResetPassword = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
                     {t('reset_password.success_message')}
                   </p>
-                  <p className="text-sm text-green-700 mt-1">Redirecting to login...</p>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">Redirecting to login...</p>
                 </div>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4">
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           )}
 
@@ -136,14 +135,14 @@ const ResetPassword = () => {
             <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     {t('reset_password.new_password_label')}
                   </label>
                   <div className="relative">
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
-                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                       placeholder={t('reset_password.new_password_placeholder')}
                       {...register('password', {
                         required: t('validation.required'),
@@ -153,7 +152,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
                     >
                       {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
@@ -162,14 +161,14 @@ const ResetPassword = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     {t('reset_password.confirm_password_label')}
                   </label>
                   <div className="relative">
                     <input
                       id="password_confirmation"
                       type={showConfirmPassword ? 'text' : 'password'}
-                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password_confirmation ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                      className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password_confirmation ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                       placeholder={t('reset_password.confirm_password_placeholder')}
                       {...register('password_confirmation', {
                         required: t('validation.required'),
@@ -179,7 +178,7 @@ const ResetPassword = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
                     >
                       {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>

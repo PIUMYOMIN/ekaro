@@ -160,7 +160,7 @@ const Login = () => {
     <>
       {SeoComponent}
       {showRedirectMessage && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 mb-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -168,7 +168,7 @@ const Login = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-blue-700">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 {t('login.redirectMessage') || 'Please login to add items to your cart. The product will be automatically added after login.'}
               </p>
             </div>
@@ -177,7 +177,7 @@ const Login = () => {
       )}
       <AuthLayout title={t('login.title')} subtitle={t('login.subtitle')}>
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -185,7 +185,7 @@ const Login = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -194,11 +194,11 @@ const Login = () => {
       <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
               {t('login.phone.label')}
             </label>
             <div className="mt-1 flex rounded-md shadow-sm">
-              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-900 dark:text-slate-100 text-sm">
+              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-500 dark:text-slate-300 text-sm">
                 <span className="mr-2 text-base">🇲🇲</span>
                 +95
               </div>
@@ -206,19 +206,19 @@ const Login = () => {
                 id="phone"
                 type="tel"
                 autoComplete="tel"
-                className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder="912345678"
                 {...register('phone', { required: t('validation.required'), validate: validateMyanmarPhone })}
               />
             </div>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">
               {t('register.phone.examples') || 'Examples: 912345678, 0912345678, +95912345678'}
             </p>
             {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
               {t('login.password.label')}
             </label>
             <div className="mt-1 relative">
@@ -226,7 +226,7 @@ const Login = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
-                className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                 placeholder={t('login.password.placeholder')}
                 {...register('password', {
                   required: t('validation.required'),
@@ -237,7 +237,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 focus:outline-none transition-colors"
                 >
                   {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                 </button>
@@ -255,7 +255,7 @@ const Login = () => {
               className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
               {...register('remember')}
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-slate-300">
               {t('login.remember')}
             </label>
           </div>
@@ -289,7 +289,7 @@ const Login = () => {
         </div>
 
         <div className="mt-4 text-center text-sm">
-          <span className="text-gray-600">{t('login.noAccount')} </span>
+          <span className="text-gray-600 dark:text-slate-400">{t('login.noAccount')} </span>
           <Link to="/register" state={location.state} className="font-medium text-green-600 hover:text-green-500">
             {t('login.register')}
           </Link>
@@ -299,19 +299,19 @@ const Login = () => {
       <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-gray-300 dark:border-slate-600"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">{t('login.orContinue')}</span>
+            <span className="px-2 bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400">{t('login.orContinue')}</span>
           </div>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600">
             <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
             <span className="ml-2">Facebook</span>
           </button>
-          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600">
             <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
             <span className="ml-2">Google</span>
           </button>

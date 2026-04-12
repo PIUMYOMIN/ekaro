@@ -144,7 +144,7 @@ const Register = () => {
           subtitle={t('register.subtitle')}
         >
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -152,7 +152,7 @@ const Register = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
                 </div>
               </div>
             </div>
@@ -160,9 +160,9 @@ const Register = () => {
 
           {/* Referral banner */}
           {referrerName && (
-            <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
+            <div className="mt-4 flex items-center gap-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-xl px-4 py-3 text-sm">
               <span className="text-green-600">🎁</span>
-              <span className="text-green-800">
+              <span className="text-green-800 dark:text-green-200">
                 You were referred by <strong>{referrerName}</strong>. Your account will be linked to their referral.
               </span>
             </div>
@@ -171,14 +171,14 @@ const Register = () => {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   {t('register.name.label')}
                 </label>
                 <input
                   id="name"
                   name="name"
                   type="text"
-                  className={`appearance-none block w-full px-3 py-3 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                  className={`appearance-none block w-full px-3 py-3 border ${errors.name ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                   placeholder={t('register.name.placeholder')}
                   {...register('name', {
                     required: t('validation.required'),
@@ -194,11 +194,11 @@ const Register = () => {
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   {t('register.phone.label')}
                 </label>
                 <div className="mt-1 flex rounded-md shadow-sm">
-                  <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                  <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-500 dark:text-slate-300 text-sm">
                     <span className="mr-2 text-base">🇲🇲</span>
                     +95
                   </div>
@@ -206,7 +206,7 @@ const Register = () => {
                     id="phone"
                     name="phone"
                     type="tel"
-                    className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300' : 'border-gray-300'} shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                    className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-md border ${errors.phone ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                     placeholder="912345678"
                     {...register('phone', {
                       required: t('validation.required'),
@@ -214,7 +214,7 @@ const Register = () => {
                     })}
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">
                   {t('register.phone.examples') || 'Examples: 912345678, 0912345678, +95912345678'}
                 </p>
                 {errors.phone && (
@@ -223,14 +223,14 @@ const Register = () => {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   {t('register.email.label')}
                 </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
-                  className={`appearance-none block w-full px-3 py-3 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                  className={`appearance-none block w-full px-3 py-3 border ${errors.email ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                   placeholder={t('register.email.placeholder')}
                   {...register('email', {
                     required: t('validation.required'),
@@ -246,7 +246,7 @@ const Register = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   {t('register.accountType.label')}
                 </label>
                 <div className="flex space-x-4">
@@ -255,7 +255,7 @@ const Register = () => {
                     onClick={() => setUserType('buyer')}
                     className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${userType === 'buyer'
                         ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
-                        : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                        : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-400'
                       }`}
                   >
                     {t('register.accountType.buyer')}
@@ -265,13 +265,13 @@ const Register = () => {
                     onClick={() => setUserType('seller')}
                     className={`flex-1 py-3 px-4 border rounded-md text-sm font-medium transition-colors ${userType === 'seller'
                         ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
-                        : 'border-gray-300 text-gray-700 hover:border-gray-400'
+                        : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-400'
                       }`}
                   >
                     {t('register.accountType.seller')}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">
                   {userType === 'buyer'
                     ? t('register.accountType.buyerDescription')
                     : t('register.accountType.sellerDescription')
@@ -280,7 +280,7 @@ const Register = () => {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   {t('register.password.label')}
                 </label>
                 <div className="mt-1 relative">
@@ -288,7 +288,7 @@ const Register = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                    className={`appearance-none block w-full px-3 py-3 pr-10 border ${errors.password ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                     placeholder={t('register.password.placeholder')}
                     {...register('password', {
                       required: t('validation.required'),
@@ -302,7 +302,7 @@ const Register = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors"
+                      className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 focus:outline-none transition-colors"
                     >
                       {showPassword ? (
                         <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
@@ -318,14 +318,14 @@ const Register = () => {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   {t('register.confirmPassword.label')}
                 </label>
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
-                  className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
+                  className={`appearance-none block w-full px-3 py-3 border ${errors.confirmPassword ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-slate-600'} rounded-md shadow-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                   placeholder={t('register.confirmPassword.placeholder')}
                   {...register('confirmPassword', {
                     required: t('validation.required'),
@@ -359,7 +359,7 @@ const Register = () => {
                     )}
                   </div>
                 </div>
-                <span className="text-sm text-gray-600 leading-snug">
+                <span className="text-sm text-gray-600 dark:text-slate-400 leading-snug">
                   I agree to Pyonea's{' '}
                   <a href="/terms" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                     className="font-medium text-green-600 hover:underline">Terms &amp; Conditions</a>
@@ -399,7 +399,7 @@ const Register = () => {
             </div>
 
             <div className="mt-4 text-center text-sm">
-              <span className="text-gray-600">{t('register.hasAccount')} </span>
+              <span className="text-gray-600 dark:text-slate-400">{t('register.hasAccount')} </span>
               <Link to="/login" className="font-medium text-green-600 hover:text-green-500 transition-colors">
                 {t('register.signIn')}
               </Link>

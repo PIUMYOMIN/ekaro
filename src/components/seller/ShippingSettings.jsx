@@ -67,10 +67,15 @@ const ShippingSettings = ({ storeData }) => {
       if (res.data.success) {
         flash("Shipping settings saved successfully.");
       } else {
-        flash(res.data.message || "Failed to save.", "error");
+        // Show first validation error if present, else message
+        const errs = res.data.errors;
+        const firstErr = errs ? Object.values(errs).flat()[0] : null;
+        flash(firstErr || res.data.message || "Failed to save.", "error");
       }
     } catch (err) {
-      flash(err.response?.data?.message || "Failed to save shipping settings.", "error");
+      const errs = err.response?.data?.errors;
+      const firstErr = errs ? Object.values(errs).flat()[0] : null;
+      flash(firstErr || err.response?.data?.message || "Failed to save shipping settings.", "error");
     } finally {
       setSaving(false);
     }
@@ -89,11 +94,11 @@ const ShippingSettings = ({ storeData }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <TruckIcon className="h-5 w-5 text-green-600" />
             Shipping Settings
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             Configure how your store handles shipping and delivery.
           </p>
         </div>
@@ -119,11 +124,11 @@ const ShippingSettings = ({ storeData }) => {
       <form onSubmit={handleSave} className="space-y-5">
 
         {/* Enable toggle */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-5">
+        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Enable Shipping</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Enable Shipping</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                 Allow buyers to have orders shipped to their address.
               </p>
             </div>
@@ -140,64 +145,64 @@ const ShippingSettings = ({ storeData }) => {
 
         {/* Settings (only when enabled) */}
         {settings.enabled && (
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-5">
-            <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-100 pb-3">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 space-y-5">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-300 border-b border-gray-100 dark:border-slate-700 pb-3">
               Shipping Configuration
             </h3>
 
             {/* Default shipping fee */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
                 Default Shipping Fee (MMK)
               </label>
               <input
                 type="number" min="0" step="100"
                 value={settings.default_shipping_fee}
                 onChange={e => set("default_shipping_fee", Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl
-                           focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                 Used when no delivery zone matches the buyer's location.
               </p>
             </div>
 
             {/* Free shipping threshold */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
                 Free Shipping Threshold (MMK) — 0 to disable
               </label>
               <input
                 type="number" min="0" step="1000"
                 value={settings.free_shipping_threshold}
                 onChange={e => set("free_shipping_threshold", Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl
-                           focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                 Orders above this amount qualify for free shipping.
               </p>
             </div>
 
             {/* Processing time */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
                 Processing Time
               </label>
               <select
                 value={settings.processing_time}
                 onChange={e => set("processing_time", e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl
-                           focus:ring-2 focus:ring-green-500">
-                {["Same day", "1 day", "1-2 days", "2-3 days", "3-5 days", "1 week", "1-2 weeks"].map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-xl
+                           focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
+                <option value="same_day">Same day</option>
+                <option value="1_2_days">1–2 days</option>
+                <option value="3_5_days">3–5 days</option>
+                <option value="5_7_days">5–7 days</option>
+                <option value="custom">Custom (specify in notes)</option>
               </select>
             </div>
 
             {/* Shipping notes */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
                 Shipping Notes (shown to buyers)
               </label>
               <textarea
@@ -205,8 +210,7 @@ const ShippingSettings = ({ storeData }) => {
                 value={settings.shipping_notes}
                 onChange={e => set("shipping_notes", e.target.value)}
                 placeholder="e.g. We ship nationwide. Remote areas may take additional time."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl
-                           focus:ring-2 focus:ring-green-500 resize-none"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500 resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
               />
             </div>
           </div>
