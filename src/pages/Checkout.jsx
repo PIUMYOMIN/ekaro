@@ -1,20 +1,3 @@
-const MYANMAR_STATES = [
-  { state: 'Yangon Region',            cities: ['Yangon','Thanlyin','Hlegu','Pathein'] },
-  { state: 'Mandalay Region',          cities: ['Mandalay','Pyin Oo Lwin','Meikhtila','Kyaukse'] },
-  { state: 'Naypyidaw Union Territory',cities: ['Naypyidaw','Pyinmana','Lewe'] },
-  { state: 'Sagaing Region',           cities: ['Sagaing','Monywa','Shwebo','Katha'] },
-  { state: 'Bago Region',              cities: ['Bago','Toungoo','Pyay','Taungoo'] },
-  { state: 'Magway Region',            cities: ['Magway','Pakokku','Yenangyaung'] },
-  { state: 'Ayeyarwady Region',        cities: ['Pathein','Hinthada','Myaungmya'] },
-  { state: 'Tanintharyi Region',       cities: ['Dawei','Myeik','Kawthaung'] },
-  { state: 'Mon State',                cities: ['Mawlamyine','Thaton','Ye'] },
-  { state: 'Karen State',              cities: ['Hpa-an','Myawaddy','Kawkareik'] },
-  { state: 'Karenni State',            cities: ['Loikaw','Demoso'] },
-  { state: 'Chin State',               cities: ['Hakha','Falam','Mindat'] },
-  { state: 'Kachin State',             cities: ['Myitkyina','Bhamo','Putao'] },
-  { state: 'Shan State',               cities: ['Taunggyi','Lashio','Kengtung','Loilem'] },
-  { state: 'Rakhine State',            cities: ['Sittwe','Kyaukpyu','Thandwe'] },
-];
 import React, { useState, useEffect, useCallback } from "react";
 import useSEO from "../hooks/useSEO";
 import { useNavigate } from "react-router-dom";
@@ -130,9 +113,25 @@ export default function Checkout() {
   const [feesLoading, setFeesLoading] = useState(true);
   const [idempotencyKey] = useState(() => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now());
   const [shippingFee, setShippingFee] = useState(5000);
-  const [sellerShipping, setSellerShipping] = useState([]);       // safe default while loading
-  const [taxRate, setTaxRate] = useState(0.05); // safe default while loading
+  const [sellerShipping, setSellerShipping] = useState([]);
+  const [taxRate, setTaxRate] = useState(0.05);
   const [taxPct, setTaxPct] = useState(5.0);
+
+  // ── Location data — loaded from server (aggregated from seller delivery zones) ─
+  const [locationStates, setLocationStates] = useState([]);
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // Fetch covered states/cities from seller delivery zones (once on mount)
+  useEffect(() => {
+    api.get('/checkout-locations')
+      .then(res => {
+        if (res.data?.success && res.data?.data?.states?.length) {
+          setLocationStates(res.data.data.states);
+        }
+      })
+      .catch(() => {/* use empty list — selects will still show hardcoded fallback */})
+      .finally(() => setLocationLoading(false));
+  }, []);
 
   // Fetch fees with location params — re-runs when address city/state changes
   // Debounced 700ms so fast typing doesn't hammer the API
@@ -667,7 +666,7 @@ export default function Checkout() {
                         type="text" required
                         value={shippingAddress.full_name}
                         onChange={e => setShippingAddress(p => ({ ...p, full_name: e.target.value }))}
-                        className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -681,7 +680,7 @@ export default function Checkout() {
                         type="tel" required
                         value={shippingAddress.phone}
                         onChange={e => setShippingAddress(p => ({ ...p, phone: e.target.value }))}
-                        className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                         placeholder="09XXXXXXXXX"
                       />
                     </div>
@@ -694,25 +693,31 @@ export default function Checkout() {
                       value={shippingAddress.address}
                       onChange={e => setShippingAddress(p => ({ ...p, address: e.target.value }))}
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                       placeholder="Enter your complete address including township and city"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">State / Region *</label>
-                    <select value={shippingAddress.state} onChange={e => setShippingAddress(p => ({ ...p, state: e.target.value, city: "" }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 dark:text-slate-100">
-                      <option value="">Select State / Region</option>
-                      {MYANMAR_STATES.map(s => <option key={s.state} value={s.state}>{s.state}</option>)}
+                    <select
+                      value={shippingAddress.state}
+                      onChange={e => setShippingAddress(p => ({ ...p, state: e.target.value, city: "" }))}
+                      disabled={locationLoading}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:opacity-60">
+                      <option value="">{locationLoading ? "Loading areas…" : "Select State / Region"}</option>
+                      {locationStates.map(s => <option key={s.state} value={s.state}>{s.state}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">City *</label>
-                    <select value={shippingAddress.city} disabled={!shippingAddress.state} onChange={e => setShippingAddress(p => ({ ...p, city: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 dark:text-slate-100 disabled:bg-gray-50 dark:disabled:bg-slate-700">
+                    <select
+                      value={shippingAddress.city}
+                      disabled={!shippingAddress.state}
+                      onChange={e => setShippingAddress(p => ({ ...p, city: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:bg-gray-50 dark:disabled:bg-slate-700 disabled:opacity-60">
                       <option value="">{shippingAddress.state ? "Select City" : "Select a state first"}</option>
-                      {(MYANMAR_STATES.find(s => s.state === shippingAddress.state)?.cities ?? []).map(c => <option key={c} value={c}>{c}</option>)}
+                      {(locationStates.find(s => s.state === shippingAddress.state)?.cities ?? []).map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
@@ -792,7 +797,7 @@ export default function Checkout() {
                   value={orderNotes}
                   onChange={e => setOrderNotes(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                   placeholder="Any special instructions for your order…"
                 />
               </div>
