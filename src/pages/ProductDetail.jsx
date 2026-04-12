@@ -204,7 +204,6 @@ const ProductDetail = () => {
 
     if (user.role === "admin" || user.role === "seller") {
       flashReview("Only buyers can write reviews.", "error"); return;
-      return;
     }
 
     setShowReviewForm(!showReviewForm);
@@ -220,7 +219,6 @@ const ProductDetail = () => {
 
     if (rating === 0) {
       flashReview("Please select a rating.", "error"); return;
-      return;
     }
 
     setSubmittingReview(true);
@@ -228,7 +226,7 @@ const ProductDetail = () => {
       const response = await api.post(`/buyer/reviews/product/${product.id}`, {
         product_id: product.id,
         rating,
-        comment: reviewText,   // <-- This is the correct variable
+        comment: reviewText,
       });
 
       // Add new review to the list
@@ -323,14 +321,6 @@ const ProductDetail = () => {
     } catch {}
   };
 
-    if (loading) return (
-      <>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-20 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" /></div></>
-    );
-    if (error && !product) return (
-      <>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-16 text-center"><h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2><p className="text-gray-600 mb-6">{error}</p><button onClick={() => navigate('/products')} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Back to Products</button></div></>
-    );
-    if (!product) return (<>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-16 text-center"><h2 className="text-2xl font-bold text-gray-900">Product Not Found</h2></div></>);
-
     return (
     <>
       {SeoComponent}
@@ -375,18 +365,6 @@ const ProductDetail = () => {
 
       {product && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Success Message Popup */}
-          {successMessage && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md">
-                <span>{successMessage}</span>
-                <button onClick={closeSuccessMessage} className="ml-4 text-green-700 hover:text-green-900">
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Back Button */}
           <button
             onClick={() => navigate(-1)}

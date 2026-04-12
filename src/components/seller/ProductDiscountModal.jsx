@@ -154,6 +154,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
@@ -504,6 +505,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
           )}
         </div>
       </div>
+    </div>
       {showRemoveConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
@@ -516,7 +518,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
