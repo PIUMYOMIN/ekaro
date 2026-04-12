@@ -575,8 +575,8 @@ const FinancialReports = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {o.items.map((item, i) => (
-                                  <tr key={i} className="border-t border-green-100">
+{o.items.map((item, i) => (
+                                  <tr key={item.id || item.product_id || item.sku || `item-${o.order_id}-${i}`} className="border-t border-green-100">
                                     <td className="py-1 text-gray-700">{item.name}</td>
                                     <td className="py-1 text-right text-gray-600">{item.qty}</td>
                                     <td className="py-1 text-right text-gray-600">{fmtMMK(item.price)}</td>
