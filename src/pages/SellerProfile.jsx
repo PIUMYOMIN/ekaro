@@ -83,7 +83,9 @@ const SellerProfile = () => {
   const [error, setError] = useState(null);
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
+  const [isOwnStore, setIsOwnStore] = useState(false);
   const [fwLoading, setFwLoading] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [reviewForm, setReviewForm] = useState({ open: false, rating: 0, comment: '', submitting: false });
   const [activeTab, setActiveTab] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -104,6 +106,7 @@ const SellerProfile = () => {
         setStats(d.stats || {});
         setFollowing(d.is_following || false);
         setFollowers(d.stats?.followers_count || 0);
+        setIsOwnStore(d.is_own_store || false);
       } catch { setError('Could not load this seller profile.'); }
       finally { setLoading(false); }
     })();
@@ -138,7 +141,8 @@ const SellerProfile = () => {
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to update follow status';
-      console.error('Follow error:', msg);
+      setFollowError(msg);
+      setTimeout(() => setFollowError(''), 3500);
     } finally {
       setFwLoading(false);
     }
@@ -201,17 +205,7 @@ const SellerProfile = () => {
   });
 
   // ── States ─────────────────────────────────────────────────────────────
-  if (error) return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-      <div className="text-center px-4">
-        <p className="text-red-600 font-medium mb-4">{error}</p>
-        <button onClick={() => navigate('/sellers')} className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Browse Sellers</button>
-      </div>
-    </div>
-  );
-
-  if (!seller) return null;
-
+  // ── Guard: loading first, then error, then not-found ─────────────────────
   if (loading) return (
     <>
       {SeoComponent}
@@ -221,12 +215,25 @@ const SellerProfile = () => {
     </>
   );
 
-  if (error || !seller) return (
+  if (error) return (
     <>
       {SeoComponent}
       <div className="min-h-screen theme-transition bg-gray-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4 text-center px-4">
         <BuildingStorefrontIcon className="h-14 w-14 text-gray-300" />
-        <h1 className="text-lg font-semibold text-gray-700 dark:text-slate-300">{error || 'Seller not found'}</h1>
+        <h1 className="text-lg font-semibold text-gray-700 dark:text-slate-300">{error}</h1>
+        <button onClick={() => navigate('/sellers')} className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
+          <ArrowLeftIcon className="h-4 w-4" /> Browse all sellers
+        </button>
+      </div>
+    </>
+  );
+
+  if (!seller) return (
+    <>
+      {SeoComponent}
+      <div className="min-h-screen theme-transition bg-gray-50 dark:bg-slate-900 flex flex-col items-center justify-center gap-4 text-center px-4">
+        <BuildingStorefrontIcon className="h-14 w-14 text-gray-300" />
+        <h1 className="text-lg font-semibold text-gray-700 dark:text-slate-300">Seller not found</h1>
         <Link to="/sellers" className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
           <ArrowLeftIcon className="h-4 w-4" /> Browse all sellers
         </Link>
@@ -312,14 +319,22 @@ const SellerProfile = () => {
                   <ShareIcon className="h-4 w-4" />
                   {copied ? 'Copied!' : 'Share'}
                 </button>
-                {/* Follow button — buyers + guests only */}
-                {(!user || user.type === 'buyer') && (
-                  <button onClick={toggleFollow} disabled={fwLoading}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50
-                      ${following ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-                    <UserGroupIcon className="h-4 w-4" />
-                    {!user ? 'Follow' : following ? 'Following' : 'Follow'} · {fmtK(followers)}
-                  </button>
+                {/* Follow button — hide on own store, sellers viewing another store, admins */}
+                {!isOwnStore && (!user || user.type === 'buyer') && (
+                  <div className="flex flex-col items-end gap-1">
+                    <button onClick={toggleFollow} disabled={fwLoading}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50
+                        ${following ? 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600' : 'bg-green-600 text-white hover:bg-green-700'}`}>
+                      <UserGroupIcon className="h-4 w-4" />
+                      {fwLoading
+                        ? <span className="animate-pulse">{following ? 'Unfollowing…' : 'Following…'}</span>
+                        : <>{!user ? 'Follow' : following ? 'Following' : 'Follow'} · {fmtK(followers)}</>
+                      }
+                    </button>
+                    {followError && (
+                      <p className="text-xs text-red-500 max-w-[180px] text-right">{followError}</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -444,7 +459,7 @@ const SellerProfile = () => {
                       <textarea rows={3} value={reviewForm.comment}
                         onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))}
                         placeholder="Share your experience with this seller…"
-                        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none" />
+                        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-green-500 focus:outline-none resize-none" />
                       <div className="flex gap-2">
                         <button onClick={submitReview} disabled={!reviewForm.rating || reviewForm.submitting}
                           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl disabled:opacity-50 transition-colors">

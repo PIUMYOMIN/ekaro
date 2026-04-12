@@ -268,7 +268,7 @@ const ProductCard = ({ product, className = "" }) => {
               src={imageUrl}
               alt={loc(product.name_en, product.name_mm) || "Product"}
               effect="blur"
-              className="w-full h-full object-contain
+              className="w-full h-full object-center object-contain
                          transition-transform duration-500 ease-out
                          group-hover:scale-105"
               placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f9fafb'/%3E%3C/svg%3E"
