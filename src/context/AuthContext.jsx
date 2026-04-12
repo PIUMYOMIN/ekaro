@@ -1,7 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import api from '../utils/api';
-import { parseApiErrorMessage } from '../utils/apiError';
 
 const AuthContext = createContext();
 
@@ -112,25 +111,10 @@ export const AuthProvider = ({ children }) => {
       setUser(normalizedUser);
       return { success: true, user: normalizedUser };
     } catch (err) {
-      const data = err.response?.data;
-      const fromBody = parseApiErrorMessage(data);
-      if (fromBody) {
-        return { success: false, message: fromBody };
-      }
-
-      if (!err.response) {
-        return { success: false, message: 'Network error. Please check your connection.' };
-      }
-
-      const status = err.response?.status;
-      if (status === 500) {
-        return { success: false, message: 'Server error. Please try again shortly.' };
-      }
-      if (status === 503) {
-        return { success: false, message: 'Service unavailable. Please try again.' };
-      }
-
-      return { success: false, message: 'Login failed. Please try again.' };
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Login failed'
+      };
     }
   };
 
@@ -145,7 +129,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       return {
         success: false,
-        message: parseApiErrorMessage(err.response?.data) || 'Registration failed',
+        message: err.response?.data?.message || 'Registration failed'
       };
     }
   };

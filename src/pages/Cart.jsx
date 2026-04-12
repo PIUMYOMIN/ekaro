@@ -95,21 +95,21 @@ const Cart = () => {
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <SEO title="My Cart" description="Your shopping cart on Pyonea." noindex={true} />
       <div className="max-w-2xl mx-auto lg:max-w-none">
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100">
+        <h1 className="text-3xl font-extrabold text-gray-900">
           Cart ({totalItems} {totalItems === 1 ? "item" : "items"})
         </h1>
 
         {cartItems.length === 0 ? (
           <div className="mt-12 text-center">
             <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32 mx-auto flex items-center justify-center">
-              <XMarkIcon className="h-12 w-12 text-gray-400 dark:text-slate-600" />
+              <XMarkIcon className="h-12 w-12 text-gray-400" />
             </div>
-            <h2 className="mt-6 text-2xl font-bold text-gray-900 dark:text-slate-100">Your cart is empty</h2>
-            <p className="mt-2 text-lg text-gray-500 dark:text-slate-500">Start adding some products!</p>
+            <h2 className="mt-6 text-2xl font-bold text-gray-900">Your cart is empty</h2>
+            <p className="mt-2 text-lg text-gray-500">Start adding some products!</p>
             <div className="mt-10">
               <Link 
                 to="/products" 
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm dark:shadow-slate-900/50 text-white bg-green-600 hover:bg-green-700"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
               >
                 Continue Shopping
               </Link>
@@ -136,7 +136,7 @@ const Cart = () => {
                     
                     return (
                       <li key={item.id} className={`py-6 flex ${isRemoving ? 'opacity-50' : ''}`}>
-                        <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden border border-gray-200 dark:border-slate-700">
+                        <div className="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden border border-gray-200">
                           <img
                             src={getItemImage(item)}
                             alt={item.name}
@@ -148,13 +148,13 @@ const Cart = () => {
                         <div className="ml-4 flex-1 flex flex-col">
                           <div className="flex justify-between">
                             <div className="flex-1">
-                              <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100">
+                              <h4 className="text-lg font-medium text-gray-900">
                                 <Link to={`/products/${item.product_id}`}>
                                   {item.name}
                                 </Link>
                               </h4>
-                              <p className="mt-1 text-sm text-gray-500 dark:text-slate-500">{item.category}</p>
-                              <p className="mt-1 text-sm text-gray-500 dark:text-slate-500">Stock: {item.stock}</p>
+                              <p className="mt-1 text-sm text-gray-500">{item.category}</p>
+                              <p className="mt-1 text-sm text-gray-500">Stock: {item.stock}</p>
 
                               {!item.is_available && (
                                 <p className="mt-1 text-sm text-red-500 font-medium">
@@ -174,10 +174,10 @@ const Cart = () => {
                                   <p className="text-lg font-bold text-red-600">
                                     {formatMMK(item.selling_price)}
                                   </p>
-                                  <p className="text-xs text-gray-400 dark:text-slate-600 line-through">
+                                  <p className="text-xs text-gray-400 line-through">
                                     {formatMMK(item.price)}
                                   </p>
-                                  <p className="text-sm text-gray-500 dark:text-slate-500 mt-1">
+                                  <p className="text-sm text-gray-500 mt-1">
                                     {formatMMK(item.selling_price * item.quantity)}
                                   </p>
                                 </>
@@ -186,7 +186,7 @@ const Cart = () => {
                                   <p className="text-lg font-bold text-green-700">
                                     {formatMMK(item.price)}
                                   </p>
-                                  <p className="text-sm text-gray-500 dark:text-slate-500 mt-1">
+                                  <p className="text-sm text-gray-500 mt-1">
                                     {formatMMK(item.subtotal)}
                                   </p>
                                 </>
@@ -195,11 +195,11 @@ const Cart = () => {
                           </div>
 
                           <div className="mt-4 flex items-center justify-between">
-                            <div className="flex items-center border border-gray-300 dark:border-slate-600 rounded">
+                            <div className="flex items-center border border-gray-300 rounded">
                               <button
                                 onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                                 disabled={item.quantity <= 1 || isUpdating || !item.is_available}
-                                className="px-3 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                               >
                                 -
                               </button>
@@ -219,7 +219,7 @@ const Cart = () => {
                                   className="w-12 text-center border-0 focus:ring-0 bg-transparent"
                                 />
                                 {isUpdating && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-800 bg-opacity-50">
+                                  <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
                                   </div>
                                 )}
@@ -227,7 +227,7 @@ const Cart = () => {
                               <button
                                 onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                                 disabled={item.quantity >= item.stock || isUpdating || !item.is_available}
-                                className="px-3 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-50"
+                                className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                               >
                                 +
                               </button>
@@ -277,36 +277,36 @@ const Cart = () => {
                 </div>
               </section>
 
-              <section className="mt-16 bg-gray-50 dark:bg-slate-900 rounded-lg px-6 py-6 lg:mt-0 lg:col-span-5">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-slate-100">Order Summary</h2>
+              <section className="mt-16 bg-gray-50 rounded-lg px-6 py-6 lg:mt-0 lg:col-span-5">
+                <h2 className="text-lg font-medium text-gray-900">Order Summary</h2>
 
                 <dl className="mt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <dt className="text-sm text-gray-600 dark:text-slate-400">Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})</dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-slate-100">{formatMMK(subtotal)}</dd>
+                    <dt className="text-sm text-gray-600">Subtotal ({totalItems} {totalItems === 1 ? "item" : "items"})</dt>
+                    <dd className="text-sm font-medium text-gray-900">{formatMMK(subtotal)}</dd>
                   </div>
-                  <div className="flex items-center justify-between border-t border-gray-200 dark:border-slate-700 pt-4">
-                    <dt className="text-sm text-gray-600 dark:text-slate-400">
-                      Shipping <span className="text-xs text-gray-400 dark:text-slate-600 font-normal">(est.)</span>
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                    <dt className="text-sm text-gray-600">
+                      Shipping <span className="text-xs text-gray-400 font-normal">(est.)</span>
                     </dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-slate-100">
-                       <span className="text-sm font-medium text-gray-500 italic">Calculated at checkout</span>
+                    <dd className="text-sm font-medium text-gray-900">
+                      {formatMMK(cartSummary?.shipping_fee ?? 5000)}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between border-t border-gray-200 dark:border-slate-700 pt-4">
-                    <dt className="text-sm text-gray-600 dark:text-slate-400">
-                      Tax <span className="text-xs text-gray-400 dark:text-slate-600 font-normal">(5%)</span>
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                    <dt className="text-sm text-gray-600">
+                      Tax <span className="text-xs text-gray-400 font-normal">(5%)</span>
                     </dt>
-                    <dd className="text-sm font-medium text-gray-900 dark:text-slate-100">
+                    <dd className="text-sm font-medium text-gray-900">
                       {formatMMK(cartSummary?.tax ?? Math.round(subtotal * 0.05 * 100) / 100)}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between border-t border-gray-200 dark:border-slate-700 pt-4">
-                    <dt className="text-lg font-bold text-gray-900 dark:text-slate-100">Estimated Total</dt>
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                    <dt className="text-lg font-bold text-gray-900">Estimated Total</dt>
                     <dd className="text-lg font-bold text-green-700">
                       {formatMMK(
                         cartSummary?.total ??
-                        Math.round((subtotal + Math.round(subtotal * 0.05 * 100) / 100) * 100) / 100
+                        Math.round((subtotal + (cartSummary?.shipping_fee ?? 5000) + Math.round(subtotal * 0.05 * 100) / 100) * 100) / 100
                       )}
                     </dd>
                   </div>
@@ -326,7 +326,7 @@ const Cart = () => {
                   </button>
                   <Link 
                     to="/products"
-                    className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md py-3 px-4 text-center text-base font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900 block"
+                    className="w-full bg-white border border-gray-300 rounded-md py-3 px-4 text-center text-base font-medium text-gray-700 hover:bg-gray-50 block"
                   >
                     Continue Shopping
                   </Link>

@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Bars3Icon, XMarkIcon, ShoppingCartIcon,
   UserIcon, MagnifyingGlassIcon, ChevronDownIcon,
-  SunIcon, MoonIcon,
 } from '@heroicons/react/24/outline';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useCart } from '../../context/CartContext.jsx';
 import Logo from '../../assets/images/logo.png';
@@ -18,7 +16,6 @@ const Header = () => {
   const navigate                  = useNavigate();
   const location                  = useLocation();
 
-  const { isDark, toggleTheme } = useTheme();
   const [mobileOpen,   setMobileOpen]   = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchTerm,   setSearchTerm]   = useState('');
@@ -116,8 +113,8 @@ const Header = () => {
   const desktopLinkClass = (href) =>
     `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
       isActive(href)
-        ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-semibold'
-        : 'text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-slate-800'
+        ? 'bg-green-50 text-green-700 font-semibold'
+        : 'text-gray-600 hover:text-green-700 hover:bg-green-50'
     }`;
 
   const mobileLinkClass = (href) =>
@@ -138,7 +135,7 @@ const Header = () => {
   const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-slate-800 theme-transition">
+    <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
 
       {/* ── Main bar ─────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -147,7 +144,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <img src={Logo} alt="Pyonea" className="h-9 w-9 rounded-lg object-contain" />
-            <span className="font-torus font-semibold text-green-800 dark:text-green-400 text-xl hidden sm:block">
+            <span className="font-torus font-semibold text-green-800 text-xl hidden sm:block">
               {t('header.logo_text')}
             </span>
           </Link>
@@ -170,9 +167,8 @@ const Header = () => {
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={t('header.search_placeholder')}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg
-                           bg-gray-50 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500
-                           focus:bg-white dark:focus:bg-slate-700 focus:outline-none focus:ring-2
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg
+                           bg-gray-50 focus:bg-white focus:outline-none focus:ring-2
                            focus:ring-green-400 focus:border-transparent placeholder-gray-400 transition-colors"
               />
             </div>
@@ -180,17 +176,6 @@ const Header = () => {
 
           {/* Right actions */}
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Dark mode toggle */}
-            <button
-              onClick={toggleTheme}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              className="p-2 text-gray-500 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400
-                         hover:bg-green-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              {isDark
-                ? <SunIcon  className="h-5 w-5" />
-                : <MoonIcon className="h-5 w-5" />}
-            </button>
 
             {/* Mobile search toggle */}
             <button

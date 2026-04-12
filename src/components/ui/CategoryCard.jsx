@@ -78,7 +78,7 @@ const CategoryCard = ({ category }) => {
 
   return (
     <motion.div
-      className="bg-white dark:bg-slate-800 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -112,7 +112,7 @@ const CategoryCard = ({ category }) => {
 
         {/* ── Parent category name ─────────────────────── */}
         <div className="px-2 pt-2 sm:px-3 sm:pt-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 line-clamp-1">
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
             {displayName}
           </h3>
         </div>

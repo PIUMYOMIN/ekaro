@@ -51,7 +51,7 @@ const Stars = ({ rating, count }) => {
         ))}
       </div>
       {(rating > 0 || count > 0) && (
-        <span className="text-[10px] text-gray-400 dark:text-slate-600 leading-none">
+        <span className="text-[10px] text-gray-400 leading-none">
           {rating ? Number(rating).toFixed(1) : ""}
           {count > 0 && ` (${count})`}
         </span>
@@ -109,8 +109,6 @@ const DeliveryZoneTicker = ({ zones }) => {
   );
 };
 
-const _zoneCache = {};
-
 const DeliveryZoneStrip = ({ sellerProfile }) => {
   const [zones, setZones] = React.useState([]);
   const [loaded, setLoaded] = React.useState(false);
@@ -140,7 +138,7 @@ const DeliveryZoneStrip = ({ sellerProfile }) => {
         <MapPinIcon className="h-3 w-3 text-green-500 flex-shrink-0" />
         {loaded
           ? <DeliveryZoneTicker zones={zones} />
-          : <span className="text-[10px] text-gray-400 dark:text-slate-600">Loading…</span>}
+          : <span className="text-[10px] text-gray-400">Loading…</span>}
       </div>
     </div>
   );
@@ -252,7 +250,7 @@ const ProductCard = ({ product, className = "" }) => {
 
   return (
     <motion.div
-      className={`group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden flex flex-col h-full
+      className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col h-full
                   border border-gray-100 shadow-sm
                   hover:shadow-lg hover:border-gray-200
                   transition-all duration-300 ease-out ${className}`}
@@ -261,7 +259,7 @@ const ProductCard = ({ product, className = "" }) => {
       transition={{ duration: 0.3 }}
     >
       {/* ── Image ───────────────────────────────────────────────────────────── */}
-      <div className="relative flex-shrink-0 overflow-hidden bg-gray-50 dark:bg-slate-900 aspect-square">
+      <div className="relative flex-shrink-0 overflow-hidden bg-gray-50 aspect-square">
         <Link to={`/products/${slug}`} className="block w-full h-full">
           {!imageError ? (
             <LazyLoadImage
@@ -275,9 +273,9 @@ const ProductCard = ({ product, className = "" }) => {
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900">
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
               <PhotoIcon className="h-10 w-10 text-gray-300 mb-1" />
-              <span className="text-xs text-gray-400 dark:text-slate-600">No image</span>
+              <span className="text-xs text-gray-400">No image</span>
             </div>
           )}
         </Link>
@@ -329,7 +327,7 @@ const ProductCard = ({ product, className = "" }) => {
           >
             {isInWishlist
               ? <HeartSolid className="h-3.5 w-3.5 text-red-500" />
-              : <HeartOutline className="h-3.5 w-3.5 text-gray-500 dark:text-slate-500 group-hover:text-red-400 transition-colors" />
+              : <HeartOutline className="h-3.5 w-3.5 text-gray-500 group-hover:text-red-400 transition-colors" />
             }
           </button>
         )}
@@ -350,7 +348,7 @@ const ProductCard = ({ product, className = "" }) => {
 
         {/* Product name */}
         <Link to={`/products/${slug}`} className="block mb-1.5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 line-clamp-2 leading-snug
+          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug
                          group-hover:text-green-700 transition-colors duration-150">
             {loc(product.name_en, product.name_mm) || product.name || "Unnamed Product"}
           </h3>
@@ -361,7 +359,7 @@ const ProductCard = ({ product, className = "" }) => {
 
         {/* Seller name */}
         {sellerName && (
-          <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-600 truncate">
+          <p className="mt-1 text-[10px] text-gray-400 truncate">
             by {sellerName}
           </p>
         )}
@@ -370,7 +368,7 @@ const ProductCard = ({ product, className = "" }) => {
         <div className="flex-grow" />
 
         {/* ── Price ─────────────────────────────────────────────────────────── */}
-        <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-800">
+        <div className="mt-3 pt-2.5 border-t border-gray-100">
           <div className="flex items-end justify-between gap-1 flex-wrap">
             <div className="flex items-baseline gap-1.5 flex-wrap">
               {discountPct > 0 ? (
@@ -378,7 +376,7 @@ const ProductCard = ({ product, className = "" }) => {
                   <span className="text-base font-bold text-red-600 leading-none">
                     {formatMMK(effectivePrice)}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-slate-600 line-through leading-none">
+                  <span className="text-xs text-gray-400 line-through leading-none">
                     {formatMMK(product.price)}
                   </span>
                 </>
@@ -391,7 +389,7 @@ const ProductCard = ({ product, className = "" }) => {
 
             {/* MOQ chip */}
             {product.moq > 1 && (
-              <span className="text-[10px] text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-900 border border-gray-200
+              <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200
                                px-1.5 py-0.5 rounded-md font-medium whitespace-nowrap">
                 MOQ {product.moq}
               </span>

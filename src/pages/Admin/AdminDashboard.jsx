@@ -118,8 +118,8 @@ const AdminProfileTab = () => {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Profile info */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Personal Information</h3>
+      <div className="bg-white rounded-xl border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
         {profileMsg && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(profileMsg)}`}>{profileMsg.text}</div>
         )}
@@ -132,28 +132,28 @@ const AdminProfileTab = () => {
               ["Date of Birth", "date_of_birth", "date"],
             ].map(([label, name, type]) => (
               <div key={name}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
                 <input type={type} name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                 />
               </div>
             ))}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
             <input type="text" name="address" value={profileData.address}
               onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[["City","city"],["State","state"],["Country","country"],["Postal Code","postal_code"]].map(([label, name]) => (
               <div key={name}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
                 <input type="text" name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
                 />
               </div>
             ))}
@@ -168,8 +168,8 @@ const AdminProfileTab = () => {
       </div>
 
       {/* Password change */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Change Password</h3>
+      <div className="bg-white rounded-xl border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Change Password</h3>
         {passwordMsg && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(passwordMsg)}`}>{passwordMsg.text}</div>
         )}
@@ -180,10 +180,10 @@ const AdminProfileTab = () => {
             ["Confirm New Password", "confirm_password"],
           ].map(([label, name]) => (
             <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input type="password" name={name} value={passwordData[name]} required
                 onChange={(e) => setPasswordData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
               />
             </div>
           ))}
@@ -240,10 +240,10 @@ const DeliveryFeeReview = () => {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Delivery Fee Confirmations</h2>
-          <p className="text-sm text-gray-500 dark:text-slate-500 mt-0.5">Sellers have submitted delivery fee payment — confirm receipt below.</p>
+          <h2 className="text-xl font-bold text-gray-900">Delivery Fee Confirmations</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Sellers have submitted delivery fee payment — confirm receipt below.</p>
         </div>
-        <button onClick={load} className="p-2 text-gray-500 dark:text-slate-500 hover:bg-gray-100 dark:bg-slate-800 rounded-lg">↻</button>
+        <button onClick={load} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">↻</button>
       </div>
       {toast && (
         <div className={`p-3 rounded-xl text-sm font-medium ${toast.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-700'}`}>
@@ -253,33 +253,33 @@ const DeliveryFeeReview = () => {
       {loading ? (
         <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" /></div>
       ) : fees.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-10 text-center text-gray-400 dark:text-slate-600 text-sm">No pending delivery fee confirmations.</div>
+        <div className="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400 text-sm">No pending delivery fee confirmations.</div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm divide-y divide-gray-100">
-              <thead className="bg-gray-50 dark:bg-slate-900">
+              <thead className="bg-gray-50">
                 <tr>
                   {['Order #','Seller','Fee','Submitted At','Seller Note','Action'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {fees.map(d => (
-                  <tr key={d.id} className="hover:bg-gray-50 dark:bg-slate-900">
+                  <tr key={d.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">#{d.order?.order_number ?? d.order_id}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-slate-300">{d.supplier?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-700">{d.supplier?.name ?? '—'}</td>
                     <td className="px-4 py-3 font-semibold text-green-700 whitespace-nowrap">{fmtMMK(d.platform_delivery_fee)}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-slate-500 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
                       {d.fee_submitted_at ? new Date(d.fee_submitted_at).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-slate-500 text-xs max-w-[140px] truncate">{d.fee_submission_note ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs max-w-[140px] truncate">{d.fee_submission_note ?? '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <input type="text" value={confirming === d.id ? note : ''} onChange={e => setNote(e.target.value)}
                           onClick={() => setConfirming(d.id)} placeholder="Note (optional)"
-                          className="text-xs border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-1.5 w-28 focus:ring-2 focus:ring-green-500" />
+                          className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-28 focus:ring-2 focus:ring-green-500" />
                         <button onClick={() => confirmFee(d.id)} disabled={confirming === d.id}
                           className="text-xs font-semibold px-3 py-1.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
                           {confirming === d.id ? 'Confirming…' : '✓ Confirm'}
@@ -503,12 +503,12 @@ const AdminDashboard = () => {
         url="/admin/dashboard"
         noindex={true}
       />
-      <div className="flex h-screen bg-gray-50 dark:bg-slate-900">
+      <div className="flex h-screen bg-gray-50">
         {/* Mobile sidebar toggle */}
         <div className="md:hidden fixed top-4 left-4 z-10">
           <button
             type="button"
-            className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-slate-500 hover:text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:bg-slate-800 focus:outline-none"
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <span className="sr-only">{t("sidebar.open")}</span>
@@ -521,7 +521,7 @@ const AdminDashboard = () => {
         {/* Mobile overlay */}
         {sidebarOpen && (
           <div className="md:hidden fixed inset-0 z-20 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}>
-            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white dark:bg-slate-800 shadow-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="pt-5 pb-4 px-2">
                 {navigation.map((item, idx) => (
                   <button
@@ -544,7 +544,7 @@ const AdminDashboard = () => {
 
         {/* Desktop sidebar */}
         <div className="hidden md:flex md:flex-shrink-0">
-          <div className="flex flex-col w-64 border-r border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
             <div className="h-0 flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <div className="flex items-center flex-shrink-0 px-4">
                 <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
@@ -567,12 +567,12 @@ const AdminDashboard = () => {
                 ))}
               </nav>
             </div>
-            <div className="flex-shrink-0 flex border-t border-gray-200 dark:border-slate-700 p-4">
+            <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
               <div className="flex items-center">
                 <div className="bg-gray-200 border-2 border-dashed rounded-full w-9 h-9" />
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700 dark:text-slate-300">{t("admin.user")}</p>
-                  <p className="text-xs font-medium text-gray-500 dark:text-slate-500">{t("admin.role")}</p>
+                  <p className="text-sm font-medium text-gray-700">{t("admin.user")}</p>
+                  <p className="text-xs font-medium text-gray-500">{t("admin.role")}</p>
                 </div>
               </div>
             </div>
@@ -581,22 +581,22 @@ const AdminDashboard = () => {
 
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="bg-white dark:bg-slate-800 shadow-sm dark:shadow-slate-900/50">
+          <div className="bg-white shadow-sm">
             <div className="px-4 py-4 sm:px-6 flex justify-between items-center">
               <div className="relative w-full max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 dark:text-slate-600" />
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="text"
                   placeholder={t("search.placeholder")}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md leading-5 bg-white dark:bg-slate-800 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   value={mainSearchTerm}
                   onChange={(e) => setMainSearchTerm(e.target.value)}
                 />
               </div>
               <button
-                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm dark:shadow-slate-900/50 text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 onClick={handleRefresh}
               >
                 <ArrowPathIcon className="h-4 w-4 mr-2" />

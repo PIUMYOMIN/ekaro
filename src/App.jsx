@@ -6,7 +6,6 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
 import { CookieProvider } from "./context/CookieContext";
-import { ThemeProvider } from "./context/ThemeContext";
 import CookieBanner from "./components/ui/CookieBanner";
 import { HelmetProvider } from "react-helmet-async";
 import OrderTracking from "./pages/OrderTracking";
@@ -118,8 +117,7 @@ function App() {
                 <GARouteTracker />
                 <WishlistProvider>
                   <CookieProvider>
-                  <ThemeProvider>
-                  <div className="flex flex-col min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] theme-transition">
+                  <div className="flex flex-col min-h-screen">
                     <Header />
                     <main className="flex-grow">
                       <Routes>
@@ -299,7 +297,6 @@ function App() {
                     <Footer />
                     <CookieBanner />
                   </div>
-                  </ThemeProvider>
                   </CookieProvider>
                 </WishlistProvider>
               </Router>
