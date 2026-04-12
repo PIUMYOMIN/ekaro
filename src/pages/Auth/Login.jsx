@@ -7,7 +7,6 @@ import AuthLayout from './AuthLayout';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import SEO from "../../components/SEO/seo";
 import useSEO from '../../hooks/useSEO';
 
 const Login = () => {
@@ -199,7 +198,7 @@ const Login = () => {
               {t('login.phone.label')}
             </label>
             <div className="mt-1 flex rounded-md shadow-sm">
-              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+              <div className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-900 dark:text-slate-100 text-sm">
                 <span className="mr-2 text-base">🇲🇲</span>
                 +95
               </div>
