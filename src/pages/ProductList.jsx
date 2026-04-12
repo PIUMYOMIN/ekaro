@@ -324,7 +324,7 @@ const ProductList = () => {
               <p className="text-base font-medium">{cartMessage.message}</p>
               <button
                 onClick={() => setCartMessage(null)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-slate-300"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -433,7 +433,7 @@ const ProductList = () => {
           <div className="md:w-1/4">
             <div className="sticky top-20">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">{t("products.filters")}</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{t("products.filters")}</h2>
                 <button onClick={clearFilters} className="text-sm text-green-600 hover:text-green-700">
                   {t("products.clear_all")}
                 </button>
@@ -454,9 +454,9 @@ const ProductList = () => {
           {/* Product grid area */}
           <div className="md:w-3/4">
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">{getPageTitle}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">{getPageTitle}</h1>
               {products.length > 0 && (
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-slate-400">
                   {t("products.showing_count", { count: products.length })}
                   {hasMore && " + more"}
                 </div>
@@ -520,8 +520,8 @@ const ProductList = () => {
                     ))
                   : !loading && (
                       <div className="col-span-full text-center py-12">
-                        <h3 className="text-xl font-medium text-gray-900">{t("products.no_products_found")}</h3>
-                        <p className="mt-1 text-gray-500">{t("products.try_adjusting_search")}</p>
+                        <h3 className="text-xl font-medium text-gray-900 dark:text-slate-100">{t("products.no_products_found")}</h3>
+                        <p className="mt-1 text-gray-500 dark:text-slate-500">{t("products.try_adjusting_search")}</p>
                         <button
                           onClick={clearFilters}
                           className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
@@ -545,7 +545,7 @@ const ProductList = () => {
             )}
 
             {!hasMore && products.length > 0 && (
-              <div className="text-center py-6 text-gray-500">{t("products.no_more_products")}</div>
+              <div className="text-center py-6 text-gray-500 dark:text-slate-500">{t("products.no_more_products")}</div>
             )}
           </div>
         </div>

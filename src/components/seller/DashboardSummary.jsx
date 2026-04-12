@@ -179,6 +179,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deliveryFees, setDeliveryFees] = useState([]);
+  const [commissionData, setCommissionData] = useState(null);
+  const fetchCommissionData = async () => {
+    try { const res = await api.get('/seller/commission-summary'); if (res.data.success) setCommissionData(res.data.data); } catch {}
+  };
   const [feeSubmitting, setFeeSubmitting] = useState(null);
   const [feeNote, setFeeNote] = useState("");
   const [feeToast, setFeeToast] = useState(null);
@@ -390,6 +394,47 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* Tier card */}
       {storeData && <TierCard storeData={storeData} />}
+
+      {/* ── Commission & Delivery Fee Summary ─────────────────────── */}
+      {commissionData && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-2xl p-4">
+            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide">Total Commission</p>
+            <p className="text-lg font-bold text-amber-800 dark:text-amber-300 mt-1">
+              {new Intl.NumberFormat('en-MM').format(commissionData.commission?.total ?? 0)} MMK
+            </p>
+            <p className="text-[11px] text-amber-500 mt-0.5">{commissionData.commission?.rate_pct ?? 0}% rate</p>
+          </div>
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800 rounded-2xl p-4">
+            <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide">Commission Pending</p>
+            <p className="text-lg font-bold text-orange-800 dark:text-orange-300 mt-1">
+              {new Intl.NumberFormat('en-MM').format(commissionData.commission?.pending ?? 0)} MMK
+            </p>
+            <p className="text-[11px] text-orange-400 mt-0.5">
+              {new Intl.NumberFormat('en-MM').format(commissionData.commission?.paid ?? 0)} MMK collected
+            </p>
+          </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-2xl p-4">
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Delivery Fees</p>
+            <p className="text-lg font-bold text-blue-800 dark:text-blue-300 mt-1">
+              {new Intl.NumberFormat('en-MM').format(commissionData.delivery_fees?.total ?? 0)} MMK
+            </p>
+            <p className="text-[11px] text-blue-400 mt-0.5">
+              {new Intl.NumberFormat('en-MM').format(commissionData.delivery_fees?.confirmed ?? 0)} MMK confirmed
+            </p>
+          </div>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-2xl p-4">
+            <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wide">Fees Pending</p>
+            <p className="text-lg font-bold text-yellow-800 dark:text-yellow-300 mt-1">
+              {new Intl.NumberFormat('en-MM').format(commissionData.delivery_fees?.pending ?? 0)} MMK
+            </p>
+            <p className="text-[11px] text-yellow-500 mt-0.5">
+              {new Intl.NumberFormat('en-MM').format(commissionData.delivery_fees?.submitted_awaiting ?? 0)} MMK awaiting admin
+            </p>
+          </div>
+        </div>
+      )}
+
 
       {/* COD outstanding warning */}
       {metrics.codOutstanding > 0 && (

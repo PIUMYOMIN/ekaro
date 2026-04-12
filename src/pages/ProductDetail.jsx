@@ -323,6 +323,14 @@ const ProductDetail = () => {
     } catch {}
   };
 
+    if (loading) return (
+      <>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-20 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" /></div></>
+    );
+    if (error && !product) return (
+      <>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-16 text-center"><h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2><p className="text-gray-600 mb-6">{error}</p><button onClick={() => navigate('/products')} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">Back to Products</button></div></>
+    );
+    if (!product) return (<>{SeoComponent}<div className="max-w-7xl mx-auto px-4 py-16 text-center"><h2 className="text-2xl font-bold text-gray-900">Product Not Found</h2></div></>);
+
     return (
     <>
       {SeoComponent}
@@ -348,8 +356,8 @@ const ProductDetail = () => {
 
       {error && !product && (
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-4">Product Not Found</h2>
+          <p className="text-gray-600 dark:text-slate-400 mb-4">{error}</p>
           <button
             onClick={() => navigate("/products")}
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
@@ -361,7 +369,7 @@ const ProductDetail = () => {
 
       {!product && !loading && !error && (
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Product Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Product Not Found</h2>
         </div>
       )}
 
@@ -391,7 +399,7 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Product Images */}
             <div className="space-y-4">
-              <div className="bg-gray-100 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
                 <img
                   src={getImageUrl(
                     typeof product.images[activeImage] === "string"
@@ -412,7 +420,7 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
-                      className={`bg-gray-100 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
+                      className={`bg-gray-100 dark:bg-slate-800 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
                         }`}
                     >
                       <img
@@ -432,11 +440,11 @@ const ProductDetail = () => {
             {/* Product Info */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-slate-100">
                   {loc(product.name_en, product.name_mm) || "Product"}
                 </h1>
                 {product.name_en && product.name_mm && (
-                  <p className="text-lg text-gray-600 mt-1">{loc(product.name_en, product.name_mm)}</p>
+                  <p className="text-lg text-gray-600 dark:text-slate-400 mt-1">{loc(product.name_en, product.name_mm)}</p>
                 )}
               </div>
 
@@ -453,7 +461,7 @@ const ProductDetail = () => {
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-gray-600">
+                <span className="ml-2 text-gray-600 dark:text-slate-400">
                   {product.average_rating?.toFixed(1) || "0.0"} (
                   {product.review_count || 0} reviews)
                 </span>
@@ -473,7 +481,7 @@ const ProductDetail = () => {
                       <h2 className="text-2xl font-bold text-red-600">
                         {parseFloat(product.selling_price).toLocaleString()} MMK
                       </h2>
-                      <span className="text-lg text-gray-400 line-through">
+                      <span className="text-lg text-gray-400 dark:text-slate-600 line-through">
                         {parseFloat(product.price).toLocaleString()} MMK
                       </span>
                     </div>
@@ -488,13 +496,13 @@ const ProductDetail = () => {
                     {parseFloat(product.price).toLocaleString()} MMK
                   </h2>
                 )}
-                <p className="text-gray-500 mt-1">Tax inclusive</p>
+                <p className="text-gray-500 dark:text-slate-500 mt-1">Tax inclusive</p>
               </div>
 
               {/* Description */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Description</h3>
-                <p className="text-gray-700 leading-relaxed">
+                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                   {loc(product.description_en, product.description_mm) || "No description"}
                 </p>
               </div>
@@ -506,12 +514,12 @@ const ProductDetail = () => {
                     <h3 className="text-lg font-semibold mb-2">Specifications</h3>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {Object.entries(product.specifications).map(([key, value]) => (
-                        <div key={key} className="border-t border-gray-200 pt-2">
-                          <dt className="font-medium text-gray-900 text-sm">
+                        <div key={key} className="border-t border-gray-200 dark:border-slate-700 pt-2">
+                          <dt className="font-medium text-gray-900 dark:text-slate-100 text-sm">
                             {key.charAt(0).toUpperCase() +
                               key.slice(1).replace(/([A-Z])/g, " $1")}
                           </dt>
-                          <dd className="text-gray-700 text-sm">{value}</dd>
+                          <dd className="text-gray-700 dark:text-slate-300 text-sm">{value}</dd>
                         </div>
                       ))}
                     </dl>
@@ -537,9 +545,9 @@ const ProductDetail = () => {
                       )
                     )
                   }
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md"
                 />
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-slate-400">
                   {product.quantity || 0} in stock
                 </span>
               </div>
@@ -575,7 +583,7 @@ const ProductDetail = () => {
                 <button
                   onClick={handleAddToWishlist}
                   disabled={wishlistLoading}
-                  className="p-3 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 rounded-md border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
                 >
                   {wishlistLoading ? (
@@ -613,20 +621,20 @@ const ProductDetail = () => {
 
               {/* Seller Info */}
               {product.seller && (
-                <div className="pt-6 border-t border-gray-200">
+                <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
                   <h3 className="text-lg font-semibold mb-3">Seller Information</h3>
                   <Link
                     to={`/sellers/${product.seller.seller_profile?.store_slug || product.seller.id}`}
-                    className="flex items-center hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                    className="flex items-center hover:bg-gray-50 dark:bg-slate-900 p-2 rounded-lg transition-colors"
                   >
                     <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
-                      <span className="text-gray-500 text-sm">Shop</span>
+                      <span className="text-gray-500 dark:text-slate-500 text-sm">Shop</span>
                     </div>
                     <div className="ml-4">
                       <p className="font-medium text-green-600 hover:text-green-700">
                         {product.seller.seller_profile?.store_name || product.seller?.name}
                       </p>
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-gray-600 dark:text-slate-400 text-sm">
                         {product.seller?.rating || 4.7} ★ (120 ratings)
                       </p>
                     </div>
@@ -639,7 +647,7 @@ const ProductDetail = () => {
           {/* Reviews Section */}
           <div className="mt-16">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 Customer Reviews ({product.review_count || 0})
               </h2>
               <button
@@ -652,7 +660,7 @@ const ProductDetail = () => {
 
             {/* Review Form */}
             {showReviewForm && (
-              <div className="mt-6 bg-white p-6 rounded-lg shadow-md mb-8">
+              <div className="mt-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-8">
                 <h3 className="text-lg font-medium mb-4">Write a Review</h3>
                   {reviewFlash && (
                     <div className={`mb-3 px-4 py-2.5 rounded-xl text-sm font-medium ${
@@ -664,7 +672,7 @@ const ProductDetail = () => {
                   )}
                 <form onSubmit={handleSubmitReview}>
                   <div className="mb-4">
-                    <label className="block text-gray-700 mb-2">Your Rating</label>
+                    <label className="block text-gray-700 dark:text-slate-300 mb-2">Your Rating</label>
                     <div className="flex">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -682,13 +690,13 @@ const ProductDetail = () => {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <label htmlFor="review" className="block text-gray-700 mb-2">
+                    <label htmlFor="review" className="block text-gray-700 dark:text-slate-300 mb-2">
                       Your Review
                     </label>
                     <textarea
                       id="review"
                       rows="4"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       value={reviewText}
                       onChange={(e) => setReviewText(e.target.value)}
                       required
@@ -699,7 +707,7 @@ const ProductDetail = () => {
                     <button
                       type="button"
                       onClick={() => setShowReviewForm(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900"
                     >
                       Cancel
                     </button>
@@ -726,17 +734,17 @@ const ProductDetail = () => {
             <div className="space-y-6">
               {reviews.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 text-lg">No reviews yet</p>
-                  <p className="text-gray-400">
+                  <p className="text-gray-500 dark:text-slate-500 text-lg">No reviews yet</p>
+                  <p className="text-gray-400 dark:text-slate-600">
                     Be the first to review this product!
                   </p>
                 </div>
               ) : (
                 reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-200 pb-6">
+                  <div key={review.id} className="border-b border-gray-200 dark:border-slate-700 pb-6">
                     <div className="flex items-start">
                       <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">User</span>
+                        <span className="text-gray-500 dark:text-slate-500 text-xs">User</span>
                       </div>
                       <div className="ml-4 flex-1">
                         <h4 className="font-medium">
@@ -755,11 +763,11 @@ const ProductDetail = () => {
                               />
                             ))}
                           </div>
-                          <span className="ml-2 text-sm text-gray-500">
-                            {review.created_at}
+                          <span className="ml-2 text-sm text-gray-500 dark:text-slate-500">
+                            {review.created_at ? new Date(review.created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'}) : '—'}
                           </span>
                         </div>
-                        <p className="mt-3 text-gray-700 leading-relaxed">
+                        <p className="mt-3 text-gray-700 dark:text-slate-300 leading-relaxed">
                           {review.comment}
                         </p>
                       </div>
