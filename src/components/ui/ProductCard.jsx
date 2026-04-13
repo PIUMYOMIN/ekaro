@@ -109,43 +109,6 @@ const DeliveryZoneTicker = ({ zones }) => {
   );
 };
 
-const _zoneCache = {};
-
-const DeliveryZoneStrip = ({ sellerProfile }) => {
-  const [zones, setZones] = React.useState([]);
-  const [loaded, setLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    // Try delivery_areas_summary on the seller profile prop first
-    if (sellerProfile?.delivery_areas_summary?.length) {
-      setZones(sellerProfile.delivery_areas_summary);
-      setLoaded(true);
-      return;
-    }
-    // Fallback: fetch public endpoint
-    const profileId = sellerProfile?.id || sellerProfile?.seller_profile_id;
-    if (!profileId) { setZones(["Whole Myanmar"]); setLoaded(true); return; }
-    api.get(`/sellers/${profileId}/delivery-areas`)
-      .then(res => {
-        const states = res.data?.data?.states ?? [];
-        setZones(states.length ? states : ["Whole Myanmar"]);
-      })
-      .catch(() => setZones(["Whole Myanmar"]))
-      .finally(() => setLoaded(true));
-  }, [sellerProfile?.id]);
-
-  return (
-    <div className="bg-green-300 border-t border-green-100 px-3 py-1.5">
-      <div className="flex items-center gap-1.5">
-        <MapPinIcon className="h-3 w-3 text-green-900 flex-shrink-0" />
-        {loaded
-          ? <DeliveryZoneTicker zones={zones} />
-          : <span className="text-xs text-gray-400 dark:text-slate-600">Loading…</span>}
-      </div>
-    </div>
-  );
-};
-
 // ── Main component ────────────────────────────────────────────────────────────
 const ProductCard = ({ product, className = "" }) => {
   const { i18n } = useTranslation();
@@ -423,12 +386,6 @@ const ProductCard = ({ product, className = "" }) => {
           </button>
         )}
       </div>
-      {/* ── Delivery zones (swipe-up ticker) ── */}
-      {(product.seller_id || product.seller?.id) && (
-        <DeliveryZoneStrip
-          sellerProfile={product.seller?.seller_profile || product.seller_profile}
-        />
-      )}
     </motion.div>
   );
 };
