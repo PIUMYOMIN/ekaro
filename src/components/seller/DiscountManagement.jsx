@@ -340,8 +340,8 @@ const DiscountManagement = () => {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white rounded-lg shadow border p-6">
-          <h3 className="text-lg font-semibold mb-6">
+        <div className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">
             {editingDiscount ? "Edit Discount" : "New Discount"}
           </h3>
 
@@ -353,7 +353,7 @@ const DiscountManagement = () => {
                 <input
                   type="text" name="name" value={formData.name}
                   onChange={handleChange} required
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                   placeholder="Summer Sale 20%"
                 />
               </div>
@@ -363,7 +363,7 @@ const DiscountManagement = () => {
                 <select
                   name="type" value={formData.type}
                   onChange={handleChange} required
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                 >
                   <option value="" disabled>Select type</option>
                   <option value="percentage">Percentage (%)</option>
@@ -382,7 +382,7 @@ const DiscountManagement = () => {
                   required={!!formData.type && formData.type !== "free_shipping"}
                   disabled={!formData.type || formData.type === "free_shipping"}
                   min="0" step="0.01"
-                  className="w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 disabled:bg-gray-100 dark:disabled:bg-slate-700 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                   placeholder={formData.type === "percentage" ? "e.g. 20" : "e.g. 5000"}
                 />
               </div>
@@ -391,28 +391,28 @@ const DiscountManagement = () => {
             {/* Dates + Min order */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Starts at *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Starts at *</label>
                 <input
                   type="date" name="starts_at" value={formData.starts_at}
                   onChange={handleChange} required
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Expires at *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Expires at *</label>
                 <input
                   type="date" name="expires_at" value={formData.expires_at}
                   onChange={handleChange} required
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                 />
               </div>
               <div>
                 {/* FIX: input name is now min_order_amount (matches backend) */}
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min order amount (MMK)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Min order amount (MMK)</label>
                 <input
                   type="number" name="min_order_amount" value={formData.min_order_amount}
                   onChange={handleChange} min="0" step="0.01"
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                   placeholder="Leave empty for no minimum"
                 />
               </div>
@@ -422,21 +422,21 @@ const DiscountManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 {/* FIX: name is max_uses (was max_uses_total) */}
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max total uses</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Max total uses</label>
                 <input
                   type="number" name="max_uses" value={formData.max_uses}
                   onChange={handleChange} min="1"
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                   placeholder="Leave empty for unlimited"
                 />
               </div>
               <div>
                 {/* FIX: name is max_uses_per_user (was max_uses_per_customer) */}
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max uses per customer</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Max uses per customer</label>
                 <input
                   type="number" name="max_uses_per_user" value={formData.max_uses_per_user}
                   onChange={handleChange} min="1"
-                  className="w-full border rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
                   placeholder="Leave empty for unlimited"
                 />
               </div>
@@ -444,11 +444,11 @@ const DiscountManagement = () => {
 
             {/* Applicable to */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Applies to *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Applies to *</label>
               <select
                 name="applicable_to" value={formData.applicable_to}
                 onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
               >
                 {isAdmin && <option value="all_products">All products (store-wide)</option>}
                 <option value="specific_products">Specific products</option>
@@ -466,15 +466,15 @@ const DiscountManagement = () => {
                   {products.length === 0
                     ? <p className="p-3 text-sm text-gray-500">No products found</p>
                     : products.map((p) => (
-                      <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                      <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700">
                         <input
                           type="checkbox"
                           checked={formData.applicable_product_ids.includes(p.id)}
                           onChange={() => toggleSelection("applicable_product_ids", p.id)}
-                          className="h-4 w-4 text-green-600"
+                          className="h-4 w-4 text-green-600 dark:text-green-400"
                         />
-                        <span className="text-sm flex-1">{loc(p.name_en, p.name_mm)}</span>
-                        <span className="text-xs text-gray-400">{formatMMK(p.price)}</span>
+                        <span className="text-sm flex-1 text-gray-900 dark:text-slate-100">{loc(p.name_en, p.name_mm)}</span>
+                        <span className="text-xs text-gray-400 dark:text-slate-500">{formatMMK(p.price)}</span>
                       </label>
                     ))
                   }
@@ -512,7 +512,7 @@ const DiscountManagement = () => {
               <input
                 type="checkbox" id="is_one_time_use" name="is_one_time_use"
                 checked={formData.is_one_time_use} onChange={handleChange}
-                className="h-4 w-4 text-green-600"
+                className="h-4 w-4 text-green-600 focus:ring-2 focus:ring-green-500 dark:text-green-400 rounded"
               />
               <label htmlFor="is_one_time_use" className="text-sm text-gray-700">
                 One-time use per customer
@@ -523,7 +523,7 @@ const DiscountManagement = () => {
               <button
                 type="button"
                 onClick={() => { setShowForm(false); resetForm(); }}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-500"
               >
                 Cancel
               </button>

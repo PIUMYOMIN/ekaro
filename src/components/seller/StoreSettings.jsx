@@ -325,14 +325,14 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
       )}
 
       {/* Settings Tabs */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
+        <div className="border-b border-gray-200 dark:border-slate-700">
           <nav className="flex -mb-px">
             {['Personal', 'General', 'Policies', 'Payment', 'Notifications', 'Security', 'Account'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => document.getElementById(tab.toLowerCase())?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap border-b-2 border-transparent"
+                className="px-6 py-3 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:border-gray-300 dark:hover:border-slate-500 whitespace-nowrap border-b-2 border-transparent"
               >
                 {tab}
               </button>
@@ -357,7 +357,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                 >
                   <option value="MMK">Myanmar Kyat (MMK)</option>
                   <option value="USD">US Dollar (USD)</option>
@@ -415,7 +415,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Return Policy
                 </label>
                 <textarea
@@ -423,13 +423,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   value={formData.return_policy}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                   placeholder="Describe your return policy and conditions..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Shipping Policy
                 </label>
                 <textarea
@@ -437,13 +437,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   value={formData.shipping_policy}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                   placeholder="Describe your shipping methods, timelines, and costs..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Warranty Policy
                 </label>
                 <textarea
@@ -451,7 +451,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   value={formData.warranty_policy}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                   placeholder="Describe your product warranty terms and conditions..."
                 />
               </div>
@@ -478,7 +478,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   min="0"
                   max="30"
                   step="0.1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                 />
                 <p className="text-xs text-gray-500 mt-2">
                   Platform commission rate on your sales
@@ -493,7 +493,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   name="preferred_payment_method"
                   value={formData.preferred_payment_method}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                 >
                   <option value="bank_transfer">Bank Transfer</option>
                   <option value="wave_money">Wave Money</option>
@@ -682,12 +682,12 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     name="current_password"
                     value={passwordData.current_password}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     New Password
                   </label>
                   <input
@@ -695,12 +695,12 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     name="new_password"
                     value={passwordData.new_password}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Confirm New Password
                   </label>
                   <input
@@ -708,7 +708,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     name="confirm_password"
                     value={passwordData.confirm_password}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                     required
                   />
                 </div>

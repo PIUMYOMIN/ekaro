@@ -678,12 +678,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       case 1:
         return (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
-            <p className="text-gray-600">Tell us about your product (English fields are required)</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Basic Information</h2>
+            <p className="text-gray-600 dark:text-slate-400">Tell us about your product (English fields are required)</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Product Name (English) *
                 </label>
                 <input
@@ -691,20 +691,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   name="name_en"
                   value={formData.name_en}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Enter product name in English"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name (Myanmar) <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Product Name (Myanmar) <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="name_mm"
                   value={formData.name_mm}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Enter product name in Myanmar"
                 />
               </div>
@@ -712,7 +712,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Description (English) *
                 </label>
                 <textarea
@@ -720,20 +720,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   rows="4"
                   value={formData.description_en}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Describe your product in detail in English..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description (Myanmar) <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Description (Myanmar) <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <textarea
                   name="description_mm"
                   rows="4"
                   value={formData.description_mm}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Describe your product in detail in Myanmar..."
                 />
               </div>
@@ -741,20 +741,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Category *
                 </label>
                 {loadingCategories ? (
-                  <div className="flex items-center p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600"></div>
-                    <span className="ml-2 text-gray-600">Loading categories...</span>
+                    <span className="ml-2 text-gray-600 dark:text-slate-400">Loading categories...</span>
                   </div>
                 ) : categories.length > 0 ? (
                   <select
                     name="category_id"
                     value={formData.category_id}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   >
                     <option value="">Select a category</option>
                     {categories.map((parentCategory) => (
@@ -772,28 +772,28 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     ))}
                   </select>
                 ) : (
-                  <div className="text-center py-4 bg-gray-50 rounded-lg border border-gray-300">
-                    <p className="text-gray-500 text-sm mb-2">
+                  <div className="text-center py-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-600">
+                    <p className="text-gray-500 dark:text-slate-400 text-sm mb-2">
                       {catError ? 'Failed to load categories.' : 'No categories available.'}
                     </p>
                     <button type="button" onClick={fetchCategories}
-                      className="text-xs text-green-700 underline hover:text-green-900">
+                      className="text-xs text-green-700 dark:text-green-400 underline hover:text-green-900 dark:hover:text-green-300">
                       Try again
                     </button>
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Select a sub-category for your product.</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Select a sub-category for your product.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Condition *
                 </label>
                 <select
                   name="condition"
                   value={formData.condition}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 >
                   {productConditions.map((condition) => (
                     <option key={condition.value} value={condition.value}>
@@ -801,7 +801,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
                   {productConditions.find((c) => c.value === formData.condition)?.description}
                 </p>
               </div>
@@ -809,67 +809,67 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Brand <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Brand <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="brand"
                   value={formData.brand}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Product brand"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Model <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Model <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="model"
                   value={formData.model}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Model number/name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Color <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Color <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="color"
                   value={formData.color}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Product color"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Material <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Material <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="material"
                   value={formData.material}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Primary material"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Origin <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Origin <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="origin"
                   value={formData.origin}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Country of origin"
                 />
               </div>
@@ -880,12 +880,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       case 2:
         return (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Pricing & Inventory</h2>
-            <p className="text-gray-600">Set your pricing and stock information</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Pricing & Inventory</h2>
+            <p className="text-gray-600 dark:text-slate-400">Set your pricing and stock information</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Price (MMK) *
                 </label>
                 <input
@@ -895,13 +895,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   min="0"
                   value={formData.price}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="0.00"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Discount Price (MMK) <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Discount Price (MMK) <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="number"
@@ -910,7 +910,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   min="0"
                   value={formData.discount_price}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="0.00"
                 />
               </div>
@@ -918,7 +918,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Stock Quantity *
                 </label>
                 <input
@@ -927,12 +927,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   min="0"
                   value={formData.quantity}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Available quantity"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   MOQ (Minimum Order) *
                 </label>
                 <input
@@ -941,19 +941,19 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   min="1"
                   value={formData.moq}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Minimum order quantity"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Order Unit *
                 </label>
                 <select
                   name="min_order_unit"
                   value={formData.min_order_unit}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 >
                   {minOrderUnits.map((unit) => (
                     <option key={unit.value} value={unit.value}>
@@ -966,21 +966,21 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Lead Time <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Lead Time <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="lead_time"
                   value={formData.lead_time}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="e.g., 3-5 days, 1 week"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Weight (kg) <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Weight (kg) <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="number"
@@ -989,7 +989,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   name="weight_kg"
                   value={formData.weight_kg}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Product weight in kilograms"
                 />
               </div>
@@ -1000,15 +1000,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       case 3:
         return (
           <div className="space-y-8">
-            <h2 className="text-lg font-semibold text-gray-900">Media & Specifications</h2>
-            <p className="text-gray-600">Add images and product specifications</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Media & Specifications</h2>
+            <p className="text-gray-600 dark:text-slate-400">Add images and product specifications</p>
 
             {/* Image Upload Section */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Product Images *
-                  <span className="ml-2 text-xs font-normal text-gray-500">
+                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-slate-500">
                     {imagePreviews.length} image(s)
                   </span>
                 </label>
@@ -1021,13 +1021,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       onChange={(e) => setUrlInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageFromUrl(); } }}
                       placeholder="https://example.com/image.jpg"
-                      className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1.5 w-full sm:w-56 focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                     />
                     <button
                       type="button"
                       onClick={addImageFromUrl}
                       disabled={!urlInput.trim()}
-                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                      className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 text-gray-700 dark:text-slate-300"
                     >
                       Add URL
                     </button>
@@ -1036,7 +1036,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     <button
                       type="button"
                       onClick={clearAllImages}
-                      className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+                      className="px-3 py-1.5 text-sm border border-red-300 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       Clear All
                     </button>
@@ -1045,12 +1045,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </div>
 
               {isUploadingImages && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-700">Uploading images...</span>
-                    <span className="text-sm text-blue-600">{uploadProgress}%</span>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Uploading images...</span>
+                    <span className="text-sm text-blue-600 dark:text-blue-400">{uploadProgress}%</span>
                   </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div className="w-full bg-blue-200 dark:bg-blue-900/30 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all"
                       style={{ width: `${uploadProgress}%` }}
@@ -1059,13 +1059,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 </div>
               )}
 
-              <label className="block w-full h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 transition-all cursor-pointer bg-gray-50 hover:bg-green-50 group">
+              <label className="block w-full h-40 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl hover:border-green-500 transition-all cursor-pointer bg-gray-50 dark:bg-slate-800 hover:bg-green-50 dark:hover:bg-green-900/20 group">
                 <div className="flex flex-col items-center justify-center h-full p-4">
-                  <CloudArrowUpIcon className="h-10 w-10 text-gray-400 mb-2 group-hover:text-green-500" />
-                  <span className="text-base font-medium text-gray-600 group-hover:text-green-600">
+                  <CloudArrowUpIcon className="h-10 w-10 text-gray-400 dark:text-slate-500 mb-2 group-hover:text-green-500" />
+                  <span className="text-base font-medium text-gray-600 dark:text-slate-400 group-hover:text-green-600">
                     {imagePreviews.length > 0 ? "Add more images" : "Click to upload images"}
                   </span>
-                  <span className="text-sm text-gray-500 mt-1 text-center">
+                  <span className="text-sm text-gray-500 dark:text-slate-500 mt-1 text-center">
                     Drag & drop or click to browse<br />PNG, JPG, WebP up to 5MB each
                   </span>
                 </div>
@@ -1082,10 +1082,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               {imagePreviews.length > 0 && (
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium text-gray-700">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       Uploaded Images ({imagePreviews.length})
                     </h3>
-                    <span className="text-xs text-gray-500 flex items-center">
+                    <span className="text-xs text-gray-500 dark:text-slate-500 flex items-center">
                       <ArrowsUpDownIcon className="h-4 w-4 mr-1" /> Drag to reorder
                     </span>
                   </div>
@@ -1096,15 +1096,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                         key={index}
                         className={`relative group rounded-lg overflow-hidden border-2 transition-all ${
                           image.is_primary
-                            ? "border-green-500 ring-2 ring-green-200"
-                            : "border-gray-200 hover:border-green-300"
+                            ? "border-green-500 ring-2 ring-green-200 dark:ring-green-800"
+                            : "border-gray-200 dark:border-slate-600 hover:border-green-300"
                         } ${draggedImage === index ? "opacity-50" : ""}`}
                         draggable
                         onDragStart={() => handleDragStart(index)}
                         onDragOver={handleDragOver}
                         onDrop={() => handleDrop(index)}
                       >
-                        <div className="aspect-square bg-gray-100 relative">
+                        <div className="aspect-square bg-gray-100 dark:bg-slate-800 relative">
                           <img
                             src={getImageUrl(image.url)}
                             alt={`Preview ${index + 1}`}
@@ -1181,9 +1181,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     ))}
                   </div>
 
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="text-sm font-medium text-blue-800 mb-1">Image Tips:</h4>
-                    <ul className="text-xs text-blue-600 space-y-1">
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <h4 className="text-sm font-medium text-blue-800 dark:text-blue-400 mb-1">Image Tips:</h4>
+                    <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
                       <li>• Set the best image as primary (will be shown first)</li>
                       <li>• Use different angles (front, back, side) for better presentation</li>
                       <li>• Ensure images are well-lit and in focus</li>
@@ -1196,11 +1196,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             {/* Specifications */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4">
-                Product Specifications <span className="text-xs text-gray-500">(Optional)</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">
+                Product Specifications <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
               </label>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div className="md:col-span-2">
                     <input
@@ -1209,7 +1209,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       placeholder="Specification name (e.g., Material, Size)"
                       value={specInput.key}
                       onChange={handleSpecChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -1219,7 +1219,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       placeholder="Specification value (e.g., Cotton, XL)"
                       value={specInput.value}
                       onChange={handleSpecChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                     />
                   </div>
                   <div>
@@ -1240,16 +1240,16 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   {Object.entries(formData.specifications).map(([key, value]) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 hover:border-green-500 transition-colors group"
+                      className="flex items-center justify-between bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg p-3 hover:border-green-500 transition-colors group"
                     >
                       <div className="flex-1 flex items-center">
-                        <span className="font-medium text-gray-900 min-w-[120px]">{key}:</span>
-                        <span className="text-gray-600 ml-2">{value}</span>
+                        <span className="font-medium text-gray-900 dark:text-slate-100 min-w-[120px]">{key}:</span>
+                        <span className="text-gray-600 dark:text-slate-400 ml-2">{value}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeSpecification(key)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded-lg hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors opacity-0 group-hover:opacity-100"
                         title="Remove specification"
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -1258,8 +1258,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg">
-                  <PencilIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <div className="text-center py-6 text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                  <PencilIcon className="h-8 w-8 mx-auto mb-2 text-gray-400 dark:text-slate-500" />
                   <p>No specifications added yet.</p>
                   <p className="text-sm mt-1">Add details like dimensions, materials, etc.</p>
                 </div>
@@ -1271,13 +1271,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       case 4:
         return (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Shipping & More</h2>
-            <p className="text-gray-600">Set shipping details, warranty, and other information</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Shipping & More</h2>
+            <p className="text-gray-600 dark:text-slate-400">Set shipping details, warranty, and other information</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shipping Cost (MMK) <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Shipping Cost (MMK) <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="number"
@@ -1286,20 +1286,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   name="shipping_cost"
                   value={formData.shipping_cost}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Shipping cost"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shipping Time <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Shipping Time <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="shipping_time"
                   value={formData.shipping_time}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="e.g., 3-5 business days"
                 />
               </div>
@@ -1307,14 +1307,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Warranty Type <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Warranty Type <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <select
                   name="warranty_type"
                   value={formData.warranty_type}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 >
                   <option value="">Select warranty type</option>
                   {warrantyTypes.map((type) => (
@@ -1325,15 +1325,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Warranty Period <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Warranty Period <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="warranty_period"
                   value={formData.warranty_period}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="e.g., 12 months, 2 years"
                 />
               </div>
@@ -1341,63 +1341,63 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Warranty Details <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Warranty Details <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="warranty"
                   value={formData.warranty}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="Warranty coverage details"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Return Policy <span className="text-xs text-gray-500">(Optional)</span>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Return Policy <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   name="return_policy"
                   value={formData.return_policy}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="e.g., 30 days return policy"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Packaging Details <span className="text-xs text-gray-500">(Optional)</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                Packaging Details <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
               </label>
               <textarea
                 name="packaging_details"
                 rows="3"
                 value={formData.packaging_details}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 placeholder="Describe how the product is packaged..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Information <span className="text-xs text-gray-500">(Optional)</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                Additional Information <span className="text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
               </label>
               <textarea
                 name="additional_info"
                 rows="3"
                 value={formData.additional_info}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                 placeholder="Any additional information about the product..."
               />
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <input
                   id="is_featured"
                   name="is_featured"
@@ -1406,12 +1406,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   onChange={handleChange}
                   className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="is_featured" className="text-sm font-medium text-gray-900">
+                <label htmlFor="is_featured" className="text-sm font-medium text-gray-900 dark:text-slate-100">
                   Feature this product on homepage
                 </label>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input
                   id="is_active"
                   name="is_active"
@@ -1420,12 +1420,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   onChange={handleChange}
                   className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
-                <label htmlFor="is_active" className="text-sm font-medium text-gray-900">
+                <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-slate-100">
                   Make this product active and visible to customers
                 </label>
               </div>
 
-              <div className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex items-center space-x-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
                 <input
                   id="is_new"
                   name="is_new"
@@ -1434,7 +1434,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   onChange={handleChange}
                   className="h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
                 />
-                <label htmlFor="is_new" className="text-sm font-medium text-gray-900">
+                <label htmlFor="is_new" className="text-sm font-medium text-gray-900 dark:text-slate-100">
                   Mark as new product (recommended for condition: New)
                 </label>
               </div>
@@ -1448,26 +1448,26 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8">
       <ImagePreviewModal />
 
       {cancelModal === 'leave' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Leave without saving?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Leave without saving?</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
               Your draft has been auto-saved. You can continue editing later.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setCancelModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Keep Editing
               </button>
               <button
                 onClick={confirmCancel}
-                className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
+                className="px-4 py-2 bg-gray-800 dark:bg-slate-700 text-white rounded-lg text-sm font-medium hover:bg-gray-900"
               >
                 Leave
               </button>
@@ -1478,15 +1478,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       {cancelModal === 'clear-images' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Remove all images?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Remove all images?</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">
               This will remove all uploaded images from the form. This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setCancelModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -1504,14 +1504,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       {/* Success Popup */}
       {showSuccessPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-xl">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md mx-4 shadow-xl">
             <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircleIcon className="h-10 w-10 text-green-600" />
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+                <CheckCircleIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Success!</h3>
-              <p className="text-gray-600 mb-6">{successMessage}</p>
-              <p className="text-sm text-gray-500">Redirecting...</p>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">Success!</h3>
+              <p className="text-gray-600 dark:text-slate-400 mb-6">{successMessage}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-500">Redirecting...</p>
             </div>
           </div>
         </div>
@@ -1519,7 +1519,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with progress */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 mb-8">
           <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div>
@@ -1621,9 +1621,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700">
           {error && (
-            <div className="mx-4 sm:mx-8 mt-4 sm:mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 flex items-start">
+            <div className="mx-4 sm:mx-8 mt-4 sm:mt-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 flex items-start">
               <ExclamationCircleIcon className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -1632,13 +1632,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           <div className="p-4 sm:p-8">{renderStepContent()}</div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 border-t border-gray-200">
+          <div className="flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6 border-t border-gray-200 dark:border-slate-700">
             <div className="flex space-x-3">
               {currentStep > 1 && (
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="flex items-center space-x-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium"
+                  className="flex items-center space-x-2 px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-all font-medium"
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
                   <span>Previous</span>

@@ -31,22 +31,22 @@ const Toast = ({ msg, type }) => msg ? (
 
 const FieldRow = ({ label, required, hint, children }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
+    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
       {label}{required && <span className="text-red-500 ml-0.5">*</span>}
     </label>
     {children}
-    {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    {hint && <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{hint}</p>}
   </div>
 );
 
 const Input = ({ className='', ...p }) => (
-  <input className={`w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none ${className}`} {...p}/>
+  <input className={`w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none hover:border-gray-300 dark:hover:border-slate-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 disabled:bg-gray-100 dark:disabled:bg-slate-700 disabled:text-gray-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 ${className}`} {...p}/>
 );
 const Textarea = ({ className='', ...p }) => (
-  <textarea className={`w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none ${className}`} {...p}/>
+  <textarea className={`w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none resize-none hover:border-gray-300 dark:hover:border-slate-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 disabled:bg-gray-100 dark:disabled:bg-slate-700 disabled:text-gray-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 ${className}`} {...p}/>
 );
 const Select = ({ children, className='', ...p }) => (
-  <select className={`w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none bg-white ${className}`} {...p}>
+  <select className={`w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none hover:border-gray-300 dark:hover:border-slate-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 disabled:bg-gray-100 dark:disabled:bg-slate-700 disabled:text-gray-500 dark:disabled:text-slate-400 disabled:cursor-not-allowed transition-all duration-200 ${className}`} {...p}>
     {children}
   </select>
 );
@@ -62,13 +62,13 @@ const ImageUploadBox = ({ label, hint, currentUrl, onUpload, onRemove, uploading
   const ref = useRef();
   return (
     <div>
-      <p className="text-sm font-medium text-gray-700 mb-2">{label}</p>
+      <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{label}</p>
       {currentUrl ? (
-        <div className="relative group rounded-xl overflow-hidden border border-gray-200" style={{ aspectRatio: aspect }}>
+        <div className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600" style={{ aspectRatio: aspect }}>
           <img src={currentUrl} alt={label} className="w-full h-full object-cover"/>
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button onClick={() => ref.current?.click()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-900 rounded-lg text-xs font-medium hover:bg-gray-100">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-slate-700">
               <PhotoIcon className="h-4 w-4"/> Change
             </button>
             <button onClick={onRemove}
@@ -84,7 +84,7 @@ const ImageUploadBox = ({ label, hint, currentUrl, onUpload, onRemove, uploading
         </div>
       ) : (
         <button onClick={() => ref.current?.click()} disabled={uploading}
-          className={`w-full border-2 border-dashed border-gray-300 hover:border-green-400 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50`}
+          className={`w-full border-2 border-dashed border-gray-300 dark:border-slate-600 hover:border-green-400 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-slate-400 hover:text-green-600 transition-colors disabled:opacity-50`}
           style={{ aspectRatio: aspect, minHeight: '120px' }}>
           {uploading
             ? <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"/>
@@ -106,20 +106,20 @@ const PolicyEditor = ({ label, name, value, onChange, placeholder }) => {
   const [preview, setPreview] = useState(false);
   const wordCount = value ? value.trim().split(/\s+/).filter(Boolean).length : 0;
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-700">{label}</span>
+    <div className="border border-gray-100 dark:border-slate-600 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-600">
+        <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">{label}</span>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">{wordCount} words</span>
+          <span className="text-xs text-gray-400 dark:text-slate-500">{wordCount} words</span>
           <button onClick={() => setPreview(v => !v)}
-            className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-colors ${preview ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:text-gray-700'}`}>
+            className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg transition-colors ${preview ? 'bg-green-100 text-green-700' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'}`}>
             <EyeIcon className="h-3.5 w-3.5"/>{preview ? 'Edit' : 'Preview'}
           </button>
         </div>
       </div>
       {preview ? (
-        <div className="px-4 py-3 min-h-[120px] text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-          {value || <span className="text-gray-400 italic">No content yet.</span>}
+        <div className="px-4 py-3 min-h-[120px] text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+          {value || <span className="text-gray-400 dark:text-slate-500 italic">No content yet.</span>}
         </div>
       ) : (
         <Textarea name={name} value={value} onChange={onChange} placeholder={placeholder}
@@ -134,27 +134,27 @@ const DocumentRow = ({ label, fieldName, value, onUpload, uploading, hint }) => 
   const ref = useRef();
   const isUrl = value && (value.startsWith('http') || value.startsWith('/storage'));
   return (
-    <div className="flex items-start gap-4 py-4 border-b border-gray-50 last:border-0">
+    <div className="flex items-start gap-4 py-4 border-b border-gray-50 dark:border-slate-700 last:border-0">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+        <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{label}</p>
+        {hint && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{hint}</p>}
         {isUrl && (
           <a href={value} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-green-600 hover:text-green-700 mt-1">
+            className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 mt-1">
             <EyeIcon className="h-3 w-3"/> View uploaded file
           </a>
         )}
       </div>
       <div className="flex-shrink-0">
         {uploading === fieldName ? (
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-slate-500">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent"/>
             Uploading…
           </div>
         ) : (
           <button onClick={() => ref.current?.click()}
             className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors
-              ${isUrl ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-green-200 text-green-700 bg-green-50 hover:bg-green-100'}`}>
+              ${isUrl ? 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700' : 'border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'}`}>
             <ArrowUpTrayIcon className="h-3.5 w-3.5"/>
             {isUrl ? 'Replace' : 'Upload'}
           </button>
@@ -163,7 +163,7 @@ const DocumentRow = ({ label, fieldName, value, onUpload, uploading, hint }) => 
           onChange={e => { if (e.target.files[0]) onUpload(fieldName, e.target.files[0]); e.target.value=''; }}/>
       </div>
       {isUrl && (
-        <div className="flex-shrink-0 text-green-500">
+        <div className="flex-shrink-0 text-green-500 dark:text-green-400">
           <CheckCircleIcon className="h-5 w-5"/>
         </div>
       )}
@@ -427,11 +427,11 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       <Toast msg={toast.msg} type={toast.type}/>
 
       {/* ── Tab Bar ─────────────────────────────────────────────────────── */}
-      <div className="flex overflow-x-auto gap-1 pb-1 mb-6 border-b border-gray-100 scrollbar-hide">
+      <div className="flex overflow-x-auto gap-1 pb-1 mb-6 border-b border-gray-100 dark:border-slate-700 scrollbar-hide">
         {TABS.map(t => (
           <button key={t.id} onClick={() => { setTab(t.id); if (t.id === 'notifications') fetchNotifPrefs(); }}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap flex-shrink-0 transition-colors
-              ${tab === t.id ? 'bg-green-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+              ${tab === t.id ? 'bg-green-600 text-white' : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'}`}>
             <t.icon className="h-4 w-4 flex-shrink-0"/>
             {t.label}
           </button>
@@ -469,8 +469,8 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
             <Textarea rows={4} value={data.store_description} onChange={e => set('store_description', e.target.value)} placeholder="Tell customers about your store…"/>
           </FieldRow>
 
-          <div className="border-t border-gray-100 pt-5">
-            <p className="text-sm font-semibold text-gray-700 mb-4">Store Address</p>
+          <div className="border-t border-gray-100 dark:border-slate-700 pt-5">
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-4">Store Address</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <FieldRow label="Street Address">
                 <Input value={data.address} onChange={e => set('address', e.target.value)} placeholder="Street / Building"/>
@@ -524,7 +524,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
               maxMB={5}
             />
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-xs text-amber-800 dark:text-amber-400">
             <strong>Tips:</strong> Use a square logo (min 200×200px) with a transparent or white background.
             Banner images look best at 1200×675px. Both images are shown on your public store page.
           </div>
@@ -534,7 +534,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── POLICIES ────────────────────────────────────────────────────── */}
       {tab === 'policies' && (
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 dark:text-slate-500 mb-2">
             Policies are shown on your public store page. Be clear and specific — buyers read these before purchasing.
           </p>
           {[
@@ -559,8 +559,8 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
         <div className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Show Business Hours</p>
-              <p className="text-xs text-gray-400 mt-0.5">Display your operating hours on your public store page</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">Show Business Hours</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Display your operating hours on your public store page</p>
             </div>
             <button onClick={() => set('business_hours_enabled', !data.business_hours_enabled)}
               className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${data.business_hours_enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
@@ -569,12 +569,12 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
           </div>
 
           {data.business_hours_enabled && (
-            <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <div className="border border-gray-100 dark:border-slate-600 rounded-xl overflow-hidden">
               {DAYS.map((day, i) => {
                 const h = data.business_hours?.[day] || { open:'09:00', close:'18:00', closed: false };
                 return (
-                  <div key={day} className={`flex items-center gap-4 px-5 py-3 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <span className="w-12 text-sm font-medium text-gray-700">{DAY_LABELS[day]}</span>
+                  <div key={day} className={`flex items-center gap-4 px-5 py-3 ${i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-gray-50/50 dark:bg-slate-800/50'}`}>
+                    <span className="w-12 text-sm font-medium text-gray-700 dark:text-slate-300">{DAY_LABELS[day]}</span>
                     <button onClick={() => setHour(day, 'closed', !h.closed)}
                       className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${!h.closed ? 'bg-green-500' : 'bg-gray-200'}`}>
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${!h.closed ? 'translate-x-4' : 'translate-x-0'}`}/>
@@ -582,13 +582,13 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
                     {!h.closed ? (
                       <div className="flex items-center gap-2 flex-1">
                         <input type="time" value={h.open} onChange={e => setHour(day, 'open', e.target.value)}
-                          className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:outline-none"/>
-                        <span className="text-gray-400 text-sm">–</span>
+                          className="border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"/>
+                        <span className="text-gray-400 dark:text-slate-500 text-sm">–</span>
                         <input type="time" value={h.close} onChange={e => setHour(day, 'close', e.target.value)}
-                          className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:outline-none"/>
+                          className="border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-sm focus:ring-1 focus:ring-green-500 focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"/>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400 italic flex-1">Closed</span>
+                      <span className="text-sm text-gray-400 dark:text-slate-500 italic flex-1">Closed</span>
                     )}
                   </div>
                 );
@@ -597,11 +597,11 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
           )}
 
           {/* Vacation mode */}
-          <div className="border-t border-gray-100 pt-5">
+          <div className="border-t border-gray-100 dark:border-slate-700 pt-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm font-semibold text-gray-900">Vacation Mode</p>
-                <p className="text-xs text-gray-400 mt-0.5">Pause your store while you're away. Customers will see your vacation message.</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">Vacation Mode</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Pause your store while you're away. Customers will see your vacation message.</p>
               </div>
               <button onClick={() => set('vacation_mode', !data.vacation_mode)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${data.vacation_mode ? 'bg-amber-500' : 'bg-gray-200'}`}>
@@ -635,7 +635,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── SOCIAL LINKS ────────────────────────────────────────────────── */}
       {tab === 'social' && (
         <div className="space-y-5">
-          <p className="text-sm text-gray-500">Social links appear on your public store page and help customers find and follow you.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500">Social links appear on your public store page and help customers find and follow you.</p>
           {[
             { name:'social_facebook',  label:'Facebook',  placeholder:'https://facebook.com/yourpage' },
             { name:'social_instagram', label:'Instagram', placeholder:'https://instagram.com/yourhandle' },
@@ -645,7 +645,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
           ].map(s => (
             <FieldRow key={s.name} label={s.label}>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400 w-24 flex-shrink-0">{s.placeholder.split('/')[2]}</span>
+                <span className="text-sm text-gray-400 dark:text-slate-500 w-24 flex-shrink-0">{s.placeholder.split('/')[2]}</span>
                 <Input type="url" value={data[s.name]} onChange={e => set(s.name, e.target.value)} placeholder={s.placeholder}/>
               </div>
             </FieldRow>
@@ -659,10 +659,10 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── DOCUMENTS ───────────────────────────────────────────────────── */}
       {tab === 'documents' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-slate-500 mb-4">
             Required documents for seller verification. Accepted formats: JPG, PNG, PDF, WebP · max 5MB each.
           </p>
-          <div className="bg-white border border-gray-100 rounded-xl divide-y divide-gray-50">
+          <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-600 rounded-xl divide-y divide-gray-50 dark:divide-slate-600">
             <DocumentRow
               label="Business Registration Certificate"
               fieldName="business_registration_document"
@@ -698,9 +698,9 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
           </div>
           {storeData?.verification_status && (
             <div className={`mt-4 flex items-center gap-2 px-4 py-3 rounded-xl text-sm
-              ${storeData.verification_status === 'verified' ? 'bg-green-50 border border-green-200 text-green-800'
-                : storeData.verification_status === 'rejected' ? 'bg-red-50 border border-red-200 text-red-800'
-                : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
+              ${storeData.verification_status === 'verified' ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-400'
+                : storeData.verification_status === 'rejected' ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400'
+                : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400'}`}>
               <CheckCircleIcon className="h-4 w-4 flex-shrink-0"/>
               <span>Verification status: <strong className="capitalize">{storeData.verification_status}</strong>
                 {storeData.verification_notes && ` — ${storeData.verification_notes}`}
@@ -713,7 +713,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── NOTIFICATIONS ─────────────────────────────────────────── */}
       {tab === 'notifications' && (
         <div className="max-w-lg space-y-5">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-500">
             Choose which emails Pyonea sends you. Saved to your account and synced across devices.
           </p>
           {notifPrefs === null ? (
@@ -733,7 +733,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       {/* ── PASSWORD ────────────────────────────────────────────────────── */}
       {tab === 'security' && (
         <div className="max-w-md space-y-5">
-          <p className="text-sm text-gray-500">Update your account password. Use at least 8 characters with a mix of letters and numbers.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500">Update your account password. Use at least 8 characters with a mix of letters and numbers.</p>
           {[
             { key:'current', label:'Current Password' },
             { key:'next',    label:'New Password',     hint:'Minimum 8 characters' },

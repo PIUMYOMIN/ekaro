@@ -390,7 +390,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
               {delivery ? (
                 <div className="space-y-4">
-                  <div className="flex flex-wrap gap-3 items-center bg-blue-50 p-3 rounded-lg text-sm">
+                  <div className="flex flex-wrap gap-3 items-center bg-blue-50 dark:bg-slate-900/50 p-3 rounded-lg text-sm">
                     <span className="font-medium">{delivery.delivery_method === "platform" ? "Platform Logistics" : "Self Delivery"}</span>
                     {delivery.tracking_number && (
                       <span className="font-mono bg-white dark:bg-slate-800 px-2 py-0.5 rounded border text-xs">{delivery.tracking_number}</span>
@@ -402,7 +402,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
 
                   {/* Stepper */}
                   <div className="relative pt-2">
-                    <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded-full" />
+                    <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 dark:bg-slate-700 rounded-full" />
                     <div className="absolute top-6 left-0 h-1 bg-green-500 rounded-full transition-all"
                       style={{ width: `${curStep >= 0 ? (curStep / (STEPS.length-1)) * 100 : 0}%` }} />
                     <div className="relative flex justify-between">
@@ -411,7 +411,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                         return (
                           <div key={s.key} className="flex flex-col items-center w-1/5">
                             <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all
-                              ${done ? "bg-green-500 border-green-500 text-white" : cur ? "bg-blue-500 border-blue-500 text-white" : "bg-white border-gray-300 text-gray-400"}`}>
+                              ${done ? "bg-green-500 border-green-500 text-white" : cur ? "bg-blue-500 border-blue-500 text-white" : "bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500"}`}>
                               <s.Icon className="h-4 w-4" />
                             </div>
                             <span className={`text-[10px] mt-1.5 text-center leading-tight hidden sm:block
@@ -428,11 +428,11 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   </div>
 
                   {delivery.status === "delivered" && delivery.delivered_at && (
-                    <div className="flex items-center gap-3 bg-green-50 border border-green-200 p-3 rounded-lg">
-                      <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <div className="flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-lg">
+                      <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
                       <div>
-                        <p className="text-sm font-medium text-green-800">Delivered</p>
-                        <p className="text-xs text-green-600">{formatDateTime(delivery.delivered_at)}</p>
+                        <p className="text-sm font-medium text-green-800 dark:text-green-300">Delivered</p>
+                        <p className="text-xs text-green-600 dark:text-green-400">{formatDateTime(delivery.delivered_at)}</p>
                       </div>
                     </div>
                   )}
@@ -617,7 +617,7 @@ const OrdersTab = ({ orders, onViewDetails, onCancel }) => {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">My Orders</h2>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}
-          className="border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
+          className="border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500">
           <option value="all">All Orders</option>
           {["pending","confirmed","processing","shipped","delivered","cancelled"].map((s) => (
             <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>
@@ -685,8 +685,8 @@ const PurchaseHistoryTab = ({ orders }) => {
         <div className="mt-4 relative">
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by order number, store or product…"
-            className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" />
-          <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-600" />
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:outline-none" />
+          <DocumentTextIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-500" />
         </div>
       </div>
 
@@ -707,9 +707,9 @@ const PurchaseHistoryTab = ({ orders }) => {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {history.map((o) => (
-                  <tr key={o.id} className="hover:bg-gray-50 dark:bg-slate-900 transition-colors">
+                  <tr key={o.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100 whitespace-nowrap">#{o.order_number || o.id}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-400 whitespace-nowrap">{formatDate(o.created_at)}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-400 whitespace-nowrap max-w-[120px] truncate">
@@ -718,7 +718,7 @@ const PurchaseHistoryTab = ({ orders }) => {
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{o.items?.length || 0}</td>
                     <td className="px-4 py-3 font-semibold text-green-600 whitespace-nowrap">{formatMMK(o.total_amount)}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${o.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${o.payment_status === "paid" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
                         {o.payment_status || "pending"}
                       </span>
                     </td>
@@ -736,7 +736,7 @@ const PurchaseHistoryTab = ({ orders }) => {
           </div>
 
           {/* Mobile cards */}
-          <div className="sm:hidden divide-y divide-gray-100">
+          <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
             {history.map((o) => (
               <div key={o.id} className="p-4 space-y-2">
                 <div className="flex justify-between items-start">
@@ -1133,7 +1133,9 @@ const SettingsTab = ({ user }) => {
         {subTabs.map(t => (
           <button key={t.id} onClick={() => setSection(t.id)}
             className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors
-              ${section === t.id ? "bg-white border border-gray-100 text-green-700" : "text-gray-500 hover:text-gray-700"}`}>
+              ${section === t.id 
+                ? "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-green-700 dark:text-green-400" 
+                : "text-gray-500 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300"}`}>
             {t.label}
           </button>
         ))}
@@ -1151,17 +1153,17 @@ const SettingsTab = ({ user }) => {
       {section === "password" && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Change Password</h2>
-          {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
+          {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>{msg.text}</div>}
           <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
             {[[t("buyer_dashboard.current_password"),"current_password"],[t("buyer_dashboard.new_password"),"new_password"],[t("buyer_dashboard.confirm_new_password"),"confirm_password"]].map(([label,name]) => (
               <div key={name}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type="password" name={name} value={pwd[name]} required minLength={name!=="current_password"?8:undefined}
                   onChange={(e) => setPwd({...pwd,[name]:e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
               </div>
             ))}
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 dark:bg-green-700 text-white rounded-lg text-sm disabled:opacity-50 hover:bg-green-700 dark:hover:bg-green-800">
               {loading ? t("buyer_dashboard.updating") : t("buyer_dashboard.update_password")}
             </button>
           </form>
@@ -1172,7 +1174,7 @@ const SettingsTab = ({ user }) => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 sm:p-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-3">Account</h2>
           <p className="text-sm text-gray-500 dark:text-slate-500 mb-4">Deactivating your account will remove your access. Your order history will be preserved.</p>
-          <button className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-colors">
+          <button className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border border-red-200 dark:border-red-800 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <ExclamationTriangleIcon className="h-4 w-4" />Request Account Deactivation
           </button>
         </div>

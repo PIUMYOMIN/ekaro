@@ -303,7 +303,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                         onChange={handleChange}
                         min="0"
                         step={formData.discount_type === "percentage" ? "0.1" : "0.01"}
-                        className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="pl-10 block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
                         placeholder={formData.discount_type === "percentage" ? "e.g., 20" : "e.g., 10.00"}
                         required
                       />
@@ -353,7 +353,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                         name="discount_start"
                         value={formData.discount_start}
                         onChange={handleChange}
-                        className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="pl-10 block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
                       />
                     </div>
                   </div>
@@ -368,7 +368,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                         name="discount_end"
                         value={formData.discount_end}
                         onChange={handleChange}
-                        className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="pl-10 block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
                       />
                     </div>
                   </div>
@@ -379,14 +379,14 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Sale Badge Text
                   </label>
-                  <input
-                    type="text"
-                    name="sale_badge"
-                    value={formData.sale_badge}
-                    onChange={handleChange}
-                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="e.g., Sale, Limited Offer, Flash Deal"
-                  />
+                      <input
+                        type="text"
+                        name="sale_badge"
+                        value={formData.sale_badge}
+                        onChange={handleChange}
+                        className="block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
+                        placeholder="e.g., Sale, Limited Offer, Flash Deal"
+                      />
                 </div>
 
                 {/* Compare At Price */}
@@ -405,7 +405,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                       onChange={handleChange}
                       min="0"
                       step="0.01"
-                      className="pl-7 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="pl-7 block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
                       placeholder="e.g., Original price to show as strikethrough"
                     />
                   </div>
@@ -425,7 +425,7 @@ const ProductDiscountModal = ({ product, onClose, onSuccess }) => {
                     value={formData.sale_quantity}
                     onChange={handleChange}
                     min="1"
-                    className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full border border-gray-300 dark:border-slate-600 rounded-md shadow-sm py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent sm:text-sm transition-colors"
                     placeholder="e.g., 100 (leave empty for unlimited)"
                   />
                   <p className="mt-1 text-sm text-gray-500">

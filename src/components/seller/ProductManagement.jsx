@@ -418,8 +418,8 @@ const ProductManagement = () => {
       {/* ── Delete image confirmation modal ── */}
       {deleteImageTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Image</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4 border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Delete Image</h3>
             <p className="text-sm text-gray-600 mb-6">
               Are you sure you want to delete this image? This cannot be undone.
             </p>
@@ -466,7 +466,7 @@ const ProductManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Search Products</label>
@@ -477,7 +477,7 @@ const ProductManagement = () => {
                 placeholder="Search by name, SKU, or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="pl-10 w-full border border-gray-300 dark:border-slate-600 rounded-md py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent"
               />
             </div>
           </div>
@@ -486,7 +486,7 @@ const ProductManagement = () => {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-md py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -498,7 +498,7 @@ const ProductManagement = () => {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-md py-2 px-3 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400 hover:border-gray-400 dark:hover:border-slate-500 transition-colors"
             >
               <option value="all">All Categories</option>
               {categories.map((category) => (
@@ -509,7 +509,7 @@ const ProductManagement = () => {
           <div className="flex items-end">
             <button
               onClick={() => { setSearchTerm(""); setStatusFilter("all"); setCategoryFilter("all"); }}
-              className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
             >
               <XMarkIcon className="mr-2 h-4 w-4" />
               Clear Filters
@@ -559,10 +559,10 @@ const ProductManagement = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("category")}>
@@ -582,7 +582,7 @@ const ProductManagement = () => {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {sortedProducts.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-6 py-12 text-center text-sm text-gray-500">
@@ -607,7 +607,7 @@ const ProductManagement = () => {
                   const stockStatus = getStockStatus(product.quantity);
                   const discountInfo = getDiscountInfo(product);
                   return (
-                    <tr key={product.id} className="hover:bg-gray-50">
+                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 relative group">

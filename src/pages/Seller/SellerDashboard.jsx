@@ -90,7 +90,7 @@ const SellerProfileTab = () => {
       <input
         type={type} name={name} value={formData[name]} onChange={handleChange}
         placeholder={placeholder}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 hover:border-gray-400 dark:hover:border-slate-500 text-sm transition-all" 
       />
     </div>
   );
@@ -99,7 +99,11 @@ const SellerProfileTab = () => {
     <div className="bg-white dark:bg-slate-800 rounded-xl border p-6 max-w-2xl">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Personal Profile</h3>
       {message && (
-        <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+        <div className={`mb-4 p-3 rounded-lg text-sm ${
+          message.type === "success" 
+            ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+            : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+        }`}>
           {message.text}
         </div>
       )}
@@ -453,7 +457,7 @@ const SellerDashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       {/* Mobile sidebar toggle */}
       <div className="md:hidden fixed top-4 left-4 z-20">
         <button
@@ -494,7 +498,7 @@ const SellerDashboard = () => {
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-80 bg-white/80 backdrop-blur-lg border-r border-gray-200/60 shadow-xl">
+        <div className="flex flex-col w-80 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-r border-gray-200/60 dark:border-slate-700/60 shadow-xl">
           <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
             {/* Store Header */}
             <div className="flex items-center px-6 mb-8">
@@ -543,8 +547,8 @@ const SellerDashboard = () => {
                   className={classNames(
                     "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200",
                     selectedTab === idx
-                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
-                      : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                      : "text-gray-600 hover:text-green-700 hover:bg-white"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5 transition-all duration-200 group-hover:scale-110" />
@@ -555,7 +559,7 @@ const SellerDashboard = () => {
           </div>
 
           {/* User Profile Footer */}
-          <div className="flex-shrink-0 border-t border-gray-200/60 p-6 bg-white/50">
+          <div className="flex-shrink-0 border-t border-gray-200/60 dark:border-slate-700/60 p-6 bg-white/50 dark:bg-slate-800/50">
             <div className="flex items-center">
               <div className="relative">
                 {user?.profile_photo ? (
@@ -572,12 +576,12 @@ const SellerDashboard = () => {
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-              <div className="text-center p-2 bg-green-50 rounded-lg">
-                <div className="font-bold text-green-700">{stats.totalProducts}</div>
+              <div className="text-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div className="font-bold text-green-700 dark:text-green-400">{stats.totalProducts}</div>
                 <div className="text-gray-600 dark:text-slate-400">Products</div>
               </div>
-              <div className="text-center p-2 bg-blue-50 rounded-lg">
-                <div className="font-bold text-blue-700">{stats.totalOrders}</div>
+              <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="font-bold text-blue-700 dark:text-blue-400">{stats.totalOrders}</div>
                 <div className="text-gray-600 dark:text-slate-400">Orders</div>
               </div>
             </div>
@@ -587,7 +591,7 @@ const SellerDashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-lg border-b border-gray-200/60">
+        <div className="flex-shrink-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200/60 dark:border-slate-700/60">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Seller Center</h1>
@@ -619,7 +623,7 @@ const SellerDashboard = () => {
           <div className="p-4 sm:p-6">
             {/* Mobile tab bar — plain buttons, no HeadlessUI */}
             <div className="md:hidden mb-6">
-              <div className="flex space-x-2 rounded-2xl bg-white/80 backdrop-blur-lg p-2 shadow-lg overflow-x-auto">
+              <div className="flex space-x-2 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-2 overflow-x-auto">
                 {navigation.map((item, idx) => (
                   <button
                     key={item.name}
