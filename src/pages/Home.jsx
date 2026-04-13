@@ -231,10 +231,10 @@ const Home = () => {
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
             {t("home.hero_title")}
           </h1>
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-green-100 max-w-3xl mx-auto px-4">
+          <p className="mt-3 sm:mt-6 text-sm sm:text-lg md:text-xl text-green-100 max-w-3xl mx-auto px-4">
             {t("home.hero_subtitle")}
           </p>
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-4">
@@ -274,7 +274,7 @@ const Home = () => {
     <section className="py-10 sm:py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
             {t("home.popular_categories")}
           </h2>
           <Link
@@ -321,7 +321,7 @@ const Home = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
               {t("home.featured_products")}
             </h2>
           </div>
@@ -358,7 +358,7 @@ const Home = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
               {t("home.top_sellers")}
             </h2>
           </div>
@@ -396,6 +396,7 @@ const Home = () => {
     const fetchAnnouncements = async () => {
       try {
         const res = await api.get('/announcements');
+        console.log(res);
         const list = res.data.data ?? [];
 
         const isEligible = (a) => {
@@ -538,7 +539,7 @@ const Home = () => {
               <h2 className="text-sm sm:text-base text-green-600 font-semibold tracking-wide uppercase">
                 {t("home.why_us")}
               </h2>
-              <p className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">
+              <p className="mt-2 text-xl sm:text-2xl lg:text-4xl font-bold tracking-tight text-gray-900">
                 {t("home.why_choose_us")}
               </p>
               <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg lg:text-xl text-gray-600 lg:mx-auto">
@@ -629,7 +630,7 @@ const Home = () => {
             <div className="bg-green-700 rounded-lg shadow-xl overflow-hidden">
               <div className="px-4 sm:px-6 py-10 sm:py-12 md:py-16 md:px-12 lg:flex lg:items-center">
                 <div className="lg:w-0 lg:flex-1">
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
                     {t("home.cta_title")}
                   </h2>
                   <p className="mt-3 sm:mt-4 max-w-3xl text-base sm:text-lg text-green-100">

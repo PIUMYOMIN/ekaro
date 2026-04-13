@@ -17,6 +17,17 @@ const BADGE_PREVIEW = {
   purple: 'bg-purple-500 text-white', orange: 'bg-orange-500 text-white',
 };
 
+// Converts a UTC ISO string (from API) → "YYYY-MM-DDTHH:mm" in local time
+// so datetime-local inputs display the correct local time.
+const toLocalInput = (iso) => {
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+// Converts a "YYYY-MM-DDTHH:mm" local string back to UTC ISO for the server.
+const toUtcIso = (localStr) => (localStr ? new Date(localStr).toISOString() : '');
+
 const EMPTY = {
   title: '', content: '', type: 'announcement',
   display_style: 'popup_card',
@@ -98,8 +109,8 @@ const AnnouncementManagement = () => {
       is_active: item.is_active ?? true,
       show_once: item.show_once ?? true,
       delay_seconds: item.delay_seconds ?? 1,
-      starts_at: item.starts_at ? item.starts_at.slice(0, 16) : '',
-      ends_at: item.ends_at ? item.ends_at.slice(0, 16) : '',
+      starts_at: item.starts_at ? toLocalInput(item.starts_at) : '',
+      ends_at:   item.ends_at   ? toLocalInput(item.ends_at)   : '',
       display_style: item.display_style ?? 'popup_card',
       banner_link_url: item.banner_link_url ?? '',
       banner_aspect_ratio: item.banner_aspect_ratio ?? '16:9',
@@ -139,7 +150,13 @@ const AnnouncementManagement = () => {
     setFieldErrors({});
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => {
+      // Convert datetime-local values (local time) → UTC ISO strings for the server
+      const formToSend = {
+        ...form,
+        starts_at: toUtcIso(form.starts_at),
+        ends_at:   toUtcIso(form.ends_at),
+      };
+      Object.entries(formToSend).forEach(([k, v]) => {
         if (v === null || v === undefined) return;
         if (typeof v === 'boolean') {
           fd.append(k, v ? '1' : '0');
@@ -197,7 +214,7 @@ const AnnouncementManagement = () => {
   // Simple input component – inline to avoid any HOC issues
   const renderInput = (label, name, type = 'text', required = false, placeholder = '') => (
     <div key={name}>
-      <label htmlFor={name} className="block text-xs font-semibold text-gray-600 mb-1">
+      <label htmlFor={name} className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
         {label} {required && '*'}
       </label>
       <input
@@ -207,10 +224,10 @@ const AnnouncementManagement = () => {
         value={form[name] ?? ''}
         onChange={handleChange(name)}
         placeholder={placeholder}
-        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent
-          ${fieldErrors[name] ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+        className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent
+          ${fieldErrors[name] ? 'border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-slate-600'}`}
       />
-      {fieldErrors[name] && <p className="mt-1 text-xs text-red-600">{fieldErrors[name][0]}</p>}
+      {fieldErrors[name] && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{fieldErrors[name][0]}</p>}
     </div>
   );
 
@@ -221,10 +238,10 @@ const AnnouncementManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
             <h3 className="font-bold text-gray-900 dark:text-slate-100 mb-2">Delete Announcement</h3>
-            <p className="text-sm text-gray-600 mb-5">This cannot be undone.</p>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-5">This cannot be undone.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50">
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-xl text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
                 Cancel
               </button>
               <button onClick={confirmDelete}
@@ -238,16 +255,16 @@ const AnnouncementManagement = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <MegaphoneIcon className="h-5 w-5 text-green-600" />
             Announcements & Banners
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             Manage popup banners shown on the homepage
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={fetch} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+          <button onClick={fetch} className="p-2 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">
             <ArrowPathIcon className="h-4 w-4" />
           </button>
           <button onClick={openCreate}
@@ -274,12 +291,12 @@ const AnnouncementManagement = () => {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">
                 {editing ? 'Edit Announcement' : 'New Announcement'}
               </h3>
-              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg">
                 <XCircleIcon className="h-5 w-5" />
               </button>
             </div>
@@ -293,28 +310,28 @@ const AnnouncementManagement = () => {
 
                 {/* Content */}
                 <div className="sm:col-span-2">
-                  <label htmlFor="content" className="block text-xs font-semibold text-gray-600 mb-1">Content</label>
+                  <label htmlFor="content" className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Content</label>
                   <textarea
                     id="content"
                     name="content"
                     rows={3}
                     value={form.content ?? ''}
                     onChange={handleChange('content')}
-                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500
-                      ${fieldErrors.content ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500
+                      ${fieldErrors.content ? 'border-red-500 dark:border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-slate-600'}`}
                   />
                   {fieldErrors.content && <p className="mt-1 text-xs text-red-600">{fieldErrors.content[0]}</p>}
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label htmlFor="type" className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                  <label htmlFor="type" className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Type</label>
                   <select
                     id="type"
                     name="type"
                     value={form.type}
                     onChange={handleChange('type')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
                   >
                     {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -366,13 +383,13 @@ const AnnouncementManagement = () => {
 
                 {/* Audience */}
                 <div>
-                  <label htmlFor="target_audience" className="block text-xs font-semibold text-gray-600 mb-1">Target Audience</label>
+                  <label htmlFor="target_audience" className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Target Audience</label>
                   <select
                     id="target_audience"
                     name="target_audience"
                     value={form.target_audience}
                     onChange={handleChange('target_audience')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
                   >
                     {AUDIENCES.map(a => <option key={a} value={a}>{a}</option>)}
                   </select>
@@ -384,13 +401,13 @@ const AnnouncementManagement = () => {
 
                 {/* CTA Style */}
                 <div>
-                  <label htmlFor="cta_style" className="block text-xs font-semibold text-gray-600 mb-1">CTA Style</label>
+                  <label htmlFor="cta_style" className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">CTA Style</label>
                   <select
                     id="cta_style"
                     name="cta_style"
                     value={form.cta_style}
                     onChange={handleChange('cta_style')}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
                   >
                     <option value="primary">Primary (filled)</option>
                     <option value="outline">Outline</option>
@@ -402,7 +419,7 @@ const AnnouncementManagement = () => {
 
                 {/* Badge Color */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Badge Color</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Badge Color</label>
                   <div className="flex gap-2 mt-1 flex-wrap">
                     {COLORS.map(c => (
                       <button
@@ -428,17 +445,17 @@ const AnnouncementManagement = () => {
                 <div className="sm:col-span-2 flex flex-wrap gap-6">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" checked={form.is_active} onChange={handleChange('is_active')} />
-                    <span className="text-sm font-medium text-gray-700">Active</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Active</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" checked={form.show_once} onChange={handleChange('show_once')} />
-                    <span className="text-sm font-medium text-gray-700">Show once per day</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">Show once per day</span>
                   </label>
                 </div>
 
                 {/* Image Upload */}
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-gray-600 mb-2">Banner Image</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2">Banner Image</label>
                   <div className="flex items-start gap-4">
                     {imagePreview ? (
                       <div className="relative w-40 h-24 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
@@ -458,12 +475,12 @@ const AnnouncementManagement = () => {
                       </div>
                     )}
                     <div>
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
                         <PhotoIcon className="h-4 w-4" />
                         {imagePreview ? 'Change image' : 'Upload image'}
                         <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                       </label>
-                      <p className="text-xs text-gray-400 mt-1">Max 4MB · JPG, PNG, WebP</p>
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Max 4MB · JPG, PNG, WebP</p>
                     </div>
                   </div>
                   {fieldErrors.image && <p className="mt-1 text-xs text-red-600">{fieldErrors.image[0]}</p>}
@@ -471,7 +488,7 @@ const AnnouncementManagement = () => {
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">
                   Cancel
                 </button>
                 <button type="submit" disabled={saving} className="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50">
@@ -484,36 +501,36 @@ const AnnouncementManagement = () => {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-14 text-gray-400">
+          <div className="text-center py-14 text-gray-400 dark:text-slate-500">
             <MegaphoneIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">No announcements yet.</p>
-            <button onClick={openCreate} className="mt-3 text-sm text-green-700 hover:text-green-900 underline">
+            <button onClick={openCreate} className="mt-3 text-sm text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 underline">
               Create your first one
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm divide-y divide-gray-100">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-slate-900">
                 <tr>
-                  {['Title', 'Type', 'Audience', 'Dates', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {['Title', 'Type', 'Style', 'Audience', 'Dates', 'Status', 'Actions'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {items.map(item => {
                   const effectiveActive = isEffectivelyActive(item);
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {item.image ? (
@@ -524,7 +541,7 @@ const AnnouncementManagement = () => {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-gray-900 line-clamp-1">{item.title}</p>
+                            <p className="font-medium text-gray-900 dark:text-slate-100 line-clamp-1">{item.title}</p>
                             {item.badge_label && (
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${BADGE_PREVIEW[item.badge_color] ?? BADGE_PREVIEW.green}`}>
                                 {item.badge_label}
@@ -533,22 +550,51 @@ const AnnouncementManagement = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 capitalize text-gray-600">{item.type}</td>
-                      <td className="px-4 py-3 capitalize text-gray-600">{item.target_audience}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
+                      <td className="px-4 py-3 capitalize text-gray-600 dark:text-slate-400">{item.type}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap
+                          ${item.display_style === 'page_banner'   ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
+                            item.display_style === 'popup_banner'  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                                                                     'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
+                          {item.display_style === 'page_banner'  ? '📌 Page' :
+                           item.display_style === 'popup_banner' ? '🖼 Banner' :
+                                                                    '🪟 Card'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 capitalize text-gray-600 dark:text-slate-400">{item.target_audience}</td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-slate-500 text-xs">
                         {item.starts_at ? new Date(item.starts_at).toLocaleDateString() : '—'} →{' '}
                         {item.ends_at ? new Date(item.ends_at).toLocaleDateString() : '∞'}
                       </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => handleToggle(item.id)}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        <div className="flex items-center gap-2">
+                          {/* Status badge — read-only display */}
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                             effectiveActive
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                              : item.is_active
+                                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                                : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                           }`}>
-                          {effectiveActive ? <CheckCircleIcon className="h-3 w-3" /> : <XCircleIcon className="h-3 w-3" />}
-                          {effectiveActive ? 'Active' : (item.is_active ? 'Inactive (date)' : 'Inactive')}
-                        </button>
+                            {effectiveActive
+                              ? <><CheckCircleIcon className="h-3 w-3" /> Active</>
+                              : item.is_active
+                                ? <><XCircleIcon className="h-3 w-3" /> Sched.</>
+                                : <><XCircleIcon className="h-3 w-3" /> Off</>}
+                          </span>
+                          {/* Toggle button — clearly separate */}
+                          <button
+                            onClick={() => handleToggle(item.id)}
+                            title={item.is_active ? 'Deactivate' : 'Activate'}
+                            className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                              item.is_active ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'
+                            }`}
+                          >
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
+                              item.is_active ? 'translate-x-4' : 'translate-x-0'
+                            }`} />
+                          </button>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

@@ -78,9 +78,6 @@ const PopupBanner = ({ announcement, close }) => {
           </Link>
         )
       ) : imageEl}
-      <p className="text-center text-white/60 text-xs py-2 bg-black/40 backdrop-blur-sm">
-        Tap anywhere to close
-      </p>
     </motion.div>
   );
 };

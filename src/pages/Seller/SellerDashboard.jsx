@@ -231,8 +231,8 @@ const SellerDashboard = () => {
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"), icon: CogIcon, key: "settings" },
     { name: "Referrals", icon: GiftIcon, key: "referrals" },
-    { name: "My Profile",               icon: UserCircleIcon,         key: "profile" },
-    { name: "Seller Wallet",               icon: WalletIcon,         key: "wallet" },
+    { name: "My Profile", icon: UserCircleIcon,         key: "profile" },
+    { name: "Seller Wallet", icon: WalletIcon,         key: "wallet" },
   ], [t]);
 
   // Render the active tab with current state — separated from the stable nav structure

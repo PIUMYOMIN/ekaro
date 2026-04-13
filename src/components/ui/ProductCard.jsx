@@ -96,7 +96,7 @@ const DeliveryZoneTicker = ({ zones }) => {
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
           key={idx}
-          className="absolute inset-0 flex items-center text-[10px] font-medium text-green-700"
+          className="absolute inset-0 flex items-center text-xs font-medium text-green-700"
           initial={{ y: 14, opacity: 0 }}
           animate={{ y: 0,  opacity: 1 }}
           exit={{    y: -14, opacity: 0 }}
@@ -135,12 +135,12 @@ const DeliveryZoneStrip = ({ sellerProfile }) => {
   }, [sellerProfile?.id]);
 
   return (
-    <div className="bg-green-50 border-t border-green-100 px-3 py-1.5">
+    <div className="bg-green-300 border-t border-green-100 px-3 py-1.5">
       <div className="flex items-center gap-1.5">
-        <MapPinIcon className="h-3 w-3 text-green-500 flex-shrink-0" />
+        <MapPinIcon className="h-3 w-3 text-green-900 flex-shrink-0" />
         {loaded
           ? <DeliveryZoneTicker zones={zones} />
-          : <span className="text-[10px] text-gray-400 dark:text-slate-600">Loading…</span>}
+          : <span className="text-xs text-gray-400 dark:text-slate-600">Loading…</span>}
       </div>
     </div>
   );

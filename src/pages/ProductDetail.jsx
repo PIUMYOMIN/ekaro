@@ -33,6 +33,7 @@ const ProductDetail = () => {
   const [reviewText, setReviewText] = useState("");
   const [reviewFlash, setReviewFlash] = useState(null);
   const flashReview = (msg, type="success") => { setReviewFlash({ msg, type }); setTimeout(() => setReviewFlash(null), 3500); };
+  const [reviewPopup, setReviewPopup] = useState(null); // { msg, type } for full popup errors
   const [rating, setRating] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -246,7 +247,7 @@ const ProductDetail = () => {
       setSuccessMessage(response.data.message || "Review submitted successfully!");
     } catch (error) {
       console.error("Failed to submit review:", error);
-      flashReview(error.response?.data?.message || "Failed to submit review.", "error");
+      setReviewPopup({ msg: error.response?.data?.message || "Failed to submit review.", type: "error" });
     } finally {
       setSubmittingReview(false);
     }
@@ -360,6 +361,47 @@ const ProductDetail = () => {
       {!product && !loading && !error && (
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Product Not Found</h2>
+        </div>
+      )}
+
+
+      {/* Review error/success popup modal */}
+      {reviewPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className={`relative w-full max-w-sm rounded-2xl shadow-2xl p-6
+            ${reviewPopup.type === "error"
+              ? "bg-white dark:bg-slate-800 border border-red-200 dark:border-red-700"
+              : "bg-white dark:bg-slate-800 border border-green-200 dark:border-green-700"}`}>
+            {/* Icon */}
+            <div className={`flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4
+              ${reviewPopup.type === "error"
+                ? "bg-red-100 dark:bg-red-900/40"
+                : "bg-green-100 dark:bg-green-900/40"}`}>
+              {reviewPopup.type === "error" ? (
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
+                </svg>
+              ) : (
+                <CheckIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+              )}
+            </div>
+            {/* Message */}
+            <p className={`text-center text-sm font-medium mb-5
+              ${reviewPopup.type === "error"
+                ? "text-red-700 dark:text-red-300"
+                : "text-green-700 dark:text-green-300"}`}>
+              {reviewPopup.msg}
+            </p>
+            {/* Close */}
+            <button
+              onClick={() => setReviewPopup(null)}
+              className={`block w-full py-2.5 rounded-xl text-sm font-semibold transition-colors
+                ${reviewPopup.type === "error"
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-green-600 hover:bg-green-700 text-white"}`}>
+              OK
+            </button>
+          </div>
         </div>
       )}
 
