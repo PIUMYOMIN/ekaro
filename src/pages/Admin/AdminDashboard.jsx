@@ -112,8 +112,8 @@ const AdminProfileTab = () => {
   };
 
   const msgClass = (msg) => msg?.type === "success"
-    ? "bg-green-50 text-green-700 border border-green-200"
-    : "bg-red-50 text-red-700 border border-red-200";
+    ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
+    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800";
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -135,7 +135,7 @@ const AdminProfileTab = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type={type} name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                 />
               </div>
             ))}
@@ -153,7 +153,7 @@ const AdminProfileTab = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type="text" name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                 />
               </div>
             ))}
@@ -265,10 +265,10 @@ const DeliveryFeeReview = () => {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {fees.map(d => (
-                  <tr key={d.id} className="hover:bg-gray-50 dark:bg-slate-900">
-                    <td className="px-4 py-3 font-medium">#{d.order?.order_number ?? d.order_id}</td>
+                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100">#{d.order?.order_number ?? d.order_id}</td>
                     <td className="px-4 py-3 text-gray-700 dark:text-slate-300">{d.supplier?.name ?? '—'}</td>
                     <td className="px-4 py-3 font-semibold text-green-700 whitespace-nowrap">{fmtMMK(d.platform_delivery_fee)}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-slate-500 text-xs whitespace-nowrap">
@@ -279,7 +279,7 @@ const DeliveryFeeReview = () => {
                       <div className="flex items-center gap-2">
                         <input type="text" value={confirming === d.id ? note : ''} onChange={e => setNote(e.target.value)}
                           onClick={() => setConfirming(d.id)} placeholder="Note (optional)"
-                          className="text-xs border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-1.5 w-28 focus:ring-2 focus:ring-green-500" />
+                          className="text-xs border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-1.5 w-28 focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500" />
                         <button onClick={() => confirmFee(d.id)} disabled={confirming === d.id}
                           className="text-xs font-semibold px-3 py-1.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
                           {confirming === d.id ? 'Confirming…' : '✓ Confirm'}
@@ -508,7 +508,7 @@ const AdminDashboard = () => {
         <div className="md:hidden fixed top-4 left-4 z-10">
           <button
             type="button"
-            className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-slate-500 hover:text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:bg-slate-800 focus:outline-none"
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 focus:outline-none"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <span className="sr-only">{t("sidebar.open")}</span>
@@ -529,8 +529,8 @@ const AdminDashboard = () => {
                     onClick={() => { setActiveTab(idx); setSidebarOpen(false); }}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left mb-1 ${
                       activeTab === idx
-                        ? "bg-green-50 text-green-700"
-                        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
+                        ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                        : "text-gray-600 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
                     }`}
                   >
                     <item.icon className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -557,8 +557,8 @@ const AdminDashboard = () => {
                     onClick={() => setActiveTab(idx)}
                     className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full text-left ${
                       activeTab === idx
-                        ? "bg-green-50 text-green-700"
-                        : "text-gray-600 hover:text-green-700 hover:bg-green-50"
+                        ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                        : "text-gray-600 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
                     }`}
                   >
                     <item.icon className="mr-3 h-6 w-6" aria-hidden="true" />
@@ -590,7 +590,7 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   placeholder={t("search.placeholder")}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md leading-5 bg-white dark:bg-slate-800 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md leading-5 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   value={mainSearchTerm}
                   onChange={(e) => setMainSearchTerm(e.target.value)}
                 />
@@ -609,15 +609,15 @@ const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto">
               {/* Mobile tab bar — plain buttons, no HeadlessUI Tab */}
               <div className="md:hidden mb-6">
-                <div className="flex space-x-1 rounded-xl bg-green-100 p-1 overflow-x-auto">
+                <div className="flex space-x-1 rounded-xl bg-green-100 dark:bg-slate-700 p-1 overflow-x-auto">
                   {navigation.map((item, idx) => (
                     <button
                       key={item.name}
                       onClick={() => setActiveTab(idx)}
                       className={`flex-shrink-0 rounded-lg py-2.5 px-3 text-sm font-medium leading-5 focus:outline-none transition-all ${
                         activeTab === idx
-                          ? "bg-white shadow text-green-700"
-                          : "text-gray-600 hover:bg-white/60 hover:text-green-700"
+                          ? "bg-white dark:bg-slate-800 shadow text-green-700 dark:text-green-400"
+                          : "text-gray-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-600 hover:text-green-700 dark:hover:text-green-400"
                       }`}
                     >
                       <div className="flex items-center justify-center whitespace-nowrap">

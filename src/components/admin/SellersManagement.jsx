@@ -12,28 +12,69 @@ import {
 import api from "../../utils/api";
 import DataTable from "../ui/DataTable";
 
+// ── Status badge helper ───────────────────────────────────────────────────────
+const getStatusBadge = (status) => {
+  switch (status) {
+    case "approved":
+    case "active":
+      return {
+        cls: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400",
+        icon: CheckCircleIcon,
+        label: "Approved",
+      };
+    case "pending":
+      return {
+        cls: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400",
+        icon: ClockIcon,
+        label: "Pending",
+      };
+    case "rejected":
+    case "suspended":
+      return {
+        cls: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400",
+        icon: XCircleIcon,
+        label: status === "suspended" ? "Suspended" : "Rejected",
+      };
+    case "closed":
+      return {
+        cls: "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300",
+        icon: null,
+        label: "Closed",
+      };
+    default:
+      return {
+        cls: "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300",
+        icon: null,
+        label: status || "Unknown",
+      };
+  }
+};
+
+// ── Main component ────────────────────────────────────────────────────────────
 const SellersManagement = () => {
   const [_toast, _setToast] = useState(null);
-  const flash = (msg, type='success') => { _setToast({msg,type}); setTimeout(()=>_setToast(null),3000); };
-  const [sellers, setSellers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState(null);
-  const [sortField, setSortField] = useState("created_at");
-  const [sortDirection, setSortDirection] = useState("desc");
+  const flash = (msg, type = "success") => {
+    _setToast({ msg, type });
+    setTimeout(() => _setToast(null), 3000);
+  };
+
+  const [sellers, setSellers]               = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState(null);
+  const [searchTerm, setSearchTerm]         = useState("");
+  const [statusFilter, setStatusFilter]     = useState("all");
+  const [currentPage, setCurrentPage]       = useState(1);
+  const [pagination, setPagination]         = useState(null);
+  const [sortField, setSortField]           = useState("created_at");
+  const [sortDirection, setSortDirection]   = useState("desc");
   const [selectedSellers, setSelectedSellers] = useState([]);
 
-  // Fetch sellers from API
   const fetchSellers = async (page = currentPage, search = searchTerm, status = statusFilter) => {
     setLoading(true);
     setError(null);
     try {
       const params = {
-        page,
-        per_page: 15,
+        page, per_page: 15,
         search: search || undefined,
         ...(status !== "all" && { status }),
       };
@@ -43,11 +84,11 @@ const SellersManagement = () => {
         setSellers(data.data || []);
         setPagination({
           current_page: data.current_page,
-          per_page: data.per_page,
-          total: data.total,
-          last_page: data.last_page,
-          from: data.from,
-          to: data.to,
+          per_page:     data.per_page,
+          total:        data.total,
+          last_page:    data.last_page,
+          from:         data.from,
+          to:           data.to,
         });
       } else {
         setSellers(response.data.data || []);
@@ -61,181 +102,90 @@ const SellersManagement = () => {
     }
   };
 
-  // Initial fetch
-  useEffect(() => {
-    fetchSellers(1, searchTerm, statusFilter);
-  }, []);
+  useEffect(() => { fetchSellers(1, searchTerm, statusFilter); }, []);
+  useEffect(() => { fetchSellers(currentPage, searchTerm, statusFilter); }, [searchTerm, statusFilter, currentPage]);
 
-  // Re-fetch when filters change
-  useEffect(() => {
-    fetchSellers(currentPage, searchTerm, statusFilter);
-  }, [searchTerm, statusFilter, currentPage]);
-
-  // Handle status update (approve/reject/suspend, etc.)
-  const handleStatusUpdate = async (sellerId, newStatus, reason = "") => {
+  const handleStatusUpdate = async (sellerId, newStatus) => {
     try {
-      const response = await api.put(`/admin/seller/${sellerId}/status`, {
-        status: newStatus,
-        reason,
-      });
+      const response = await api.put(`/admin/seller/${sellerId}/status`, { status: newStatus });
       if (response.data.success) {
         flash(`Seller status updated to ${newStatus} successfully.`);
-        // Update local state
         setSellers(prev =>
-          prev.map(seller =>
-            seller.id === sellerId ? { ...seller, status: newStatus } : seller
-          )
+          prev.map(s => s.id === sellerId ? { ...s, status: newStatus } : s)
         );
       }
     } catch (error) {
-      console.error("Error updating seller status:", error);
-      const message = error.response?.data?.message || error.message || "Failed to update seller status";
-      flash(message, 'error');
+      flash(error.response?.data?.message || error.message || "Failed to update seller status", "error");
     }
   };
 
-  // Toggle selection for bulk actions
-  const toggleSelection = (sellerId) => {
-    setSelectedSellers(prev =>
-      prev.includes(sellerId) ? prev.filter(id => id !== sellerId) : [...prev, sellerId]
-    );
-  };
+  const toggleSelection    = (id) => setSelectedSellers(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleAllSelection = () => setSelectedSellers(prev => prev.length === sellers.length ? [] : sellers.map(s => s.id));
 
-  const toggleAllSelection = () => {
-    if (selectedSellers.length === sellers.length) {
-      setSelectedSellers([]);
-    } else {
-      setSelectedSellers(sellers.map(s => s.id));
-    }
-  };
-
-  // Handle column sorting
   const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+    if (sortField === field) setSortDirection(d => d === "asc" ? "desc" : "asc");
+    else { setSortField(field); setSortDirection("asc"); }
   };
 
-  // Client‑side sorting (could be moved to server)
   const sortedSellers = [...sellers].sort((a, b) => {
-    let aVal = a[sortField] || "";
-    let bVal = b[sortField] || "";
-    if (sortField === "rating") {
-      aVal = parseFloat(a.reviews_avg_rating) || 0;
-      bVal = parseFloat(b.reviews_avg_rating) || 0;
-    }
-    if (sortField === "products_count") {
-      aVal = a.products_count || 0;
-      bVal = b.products_count || 0;
-    }
-    if (typeof aVal === "string") aVal = aVal.toLowerCase();
-    if (typeof bVal === "string") bVal = bVal.toLowerCase();
-    return sortDirection === "asc" ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
+    let av = a[sortField] || "";
+    let bv = b[sortField] || "";
+    if (sortField === "rating")          { av = parseFloat(a.reviews_avg_rating) || 0; bv = parseFloat(b.reviews_avg_rating) || 0; }
+    if (sortField === "products_count")  { av = a.products_count || 0; bv = b.products_count || 0; }
+    if (typeof av === "string") av = av.toLowerCase();
+    if (typeof bv === "string") bv = bv.toLowerCase();
+    return sortDirection === "asc" ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
   });
 
-  // Helper: format date
-  const formatDate = (dateStr) => (dateStr ? new Date(dateStr).toLocaleDateString() : "N/A");
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString() : "N/A";
 
-  // Helper: status badge styling
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "approved":
-      case "active":
-        return { bg: "bg-green-100", text: "text-green-800", icon: CheckCircleIcon, label: "Approved" };
-      case "pending":
-        return { bg: "bg-yellow-100", text: "text-yellow-800", icon: ClockIcon, label: "Pending" };
-      case "rejected":
-      case "suspended":
-        return { bg: "bg-red-100", text: "text-red-800", icon: XCircleIcon, label: "Rejected" };
-      case "closed":
-        return { bg: "bg-gray-100", text: "text-gray-800", icon: null, label: "Closed" };
-      default:
-        return { bg: "bg-gray-100", text: "text-gray-800", icon: null, label: status || "Unknown" };
-    }
-  };
+  const SortBtn = ({ field, label }) => (
+    <button onClick={() => handleSort(field)} className="flex items-center gap-1 whitespace-nowrap">
+      {label}
+      {sortField === field && <ArrowsUpDownIcon className="h-4 w-4" />}
+    </button>
+  );
 
-  // DataTable columns definition
   const columns = [
     {
       header: (
-        <input
-          type="checkbox"
+        <input type="checkbox"
           checked={selectedSellers.length === sellers.length && sellers.length > 0}
           onChange={toggleAllSelection}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
+          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-slate-600 rounded" />
       ),
-      accessor: "selection",
-      width: "50px",
+      accessor: "selection", width: "50px",
     },
-    { header: "Store ID", accessor: "store_id" },
-    { header: "Store Name", accessor: "store_name" },
-    { header: "Email", accessor: "contact_email" },
-    { header: "Phone", accessor: "contact_phone" },
+    { header: "Store ID",      accessor: "store_id" },
+    { header: "Store Name",    accessor: "store_name" },
+    { header: "Email",         accessor: "contact_email" },
+    { header: "Phone",         accessor: "contact_phone" },
     { header: "Business Type", accessor: "business_type" },
-    {
-      header: (
-        <button onClick={() => handleSort("status")} className="flex items-center">
-          Status
-          {sortField === "status" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
-        </button>
-      ),
-      accessor: "status",
-    },
-    {
-      header: (
-        <button onClick={() => handleSort("rating")} className="flex items-center">
-          Rating
-          {sortField === "rating" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
-        </button>
-      ),
-      accessor: "rating",
-    },
-    {
-      header: (
-        <button onClick={() => handleSort("products_count")} className="flex items-center">
-          Products
-          {sortField === "products_count" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
-        </button>
-      ),
-      accessor: "products_count",
-    },
-    {
-      header: (
-        <button onClick={() => handleSort("created_at")} className="flex items-center">
-          Created
-          {sortField === "created_at" && <ArrowsUpDownIcon className="h-4 w-4 ml-1" />}
-        </button>
-      ),
-      accessor: "created_at",
-    },
+    { header: <SortBtn field="status"         label="Status" />,         accessor: "status" },
+    { header: <SortBtn field="rating"         label="Rating" />,         accessor: "rating" },
+    { header: <SortBtn field="products_count" label="Products" />,       accessor: "products_count" },
+    { header: <SortBtn field="created_at"     label="Created" />,        accessor: "created_at" },
     { header: "Actions", accessor: "actions", width: "200px" },
   ];
 
-  // Map seller data to table rows
-  const sellerData = sortedSellers.map((seller) => {
+  const sellerData = sortedSellers.map(seller => {
     const badge = getStatusBadge(seller.status);
     const StatusIcon = badge.icon;
     return {
       ...seller,
       selection: (
-        <input
-          type="checkbox"
+        <input type="checkbox"
           checked={selectedSellers.includes(seller.id)}
           onChange={() => toggleSelection(seller.id)}
-          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-        />
+          className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-slate-600 rounded" />
       ),
-      store_id: seller.store_id || "N/A",
-      store_name: seller.store_name || "N/A",
+      store_id:      seller.store_id      || "N/A",
+      store_name:    seller.store_name    || "N/A",
       contact_email: seller.contact_email || "N/A",
       contact_phone: seller.contact_phone || "N/A",
       business_type: seller.business_type || "N/A",
       status: (
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.cls}`}>
           {StatusIcon && <StatusIcon className="h-3 w-3 mr-1" />}
           {badge.label}
         </span>
@@ -244,16 +194,16 @@ const SellersManagement = () => {
       products_count: (
         <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold
           ${(seller.products_count || 0) > 0
-            ? 'bg-blue-100 text-blue-800'
-            : 'bg-gray-100 text-gray-500'}`}>
+            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400"
+            : "bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400"}`}>
           {seller.products_count || 0}
         </span>
       ),
       created_at: formatDate(seller.created_at),
       actions: (
-        <div className="flex space-x-2 items-center">
+        <div className="flex items-center space-x-2">
           <button
-            className="p-1 text-gray-600 hover:text-gray-900"
+            className="p-1 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 transition-colors"
             title="View Store"
             onClick={() => window.open(`/sellers/${seller.store_slug || seller.id}`, "_blank")}
           >
@@ -261,8 +211,8 @@ const SellersManagement = () => {
           </button>
           <select
             value={seller.status}
-            onChange={(e) => handleStatusUpdate(seller.id, e.target.value)}
-            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-500"
+            onChange={e => handleStatusUpdate(seller.id, e.target.value)}
+            className="text-xs border border-gray-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500 transition-colors"
           >
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -276,47 +226,43 @@ const SellersManagement = () => {
     };
   });
 
+  const inputCls = "block w-full rounded-md border border-gray-300 dark:border-slate-600 px-3 py-2 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Seller Management</h1>
-          <p className="mt-1 text-sm text-gray-600">Manage all sellers in your marketplace</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Seller Management</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">Manage all sellers in your marketplace</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search Sellers</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Search Sellers</label>
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Store name, email..."
-                className="block w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                className={`${inputCls} pl-10`}
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               />
             </div>
           </div>
 
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Status</label>
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+              onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+              className={inputCls}
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -328,15 +274,11 @@ const SellersManagement = () => {
             </select>
           </div>
 
-          {/* Reset Filters */}
+          {/* Reset */}
           <div className="flex items-end">
             <button
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setCurrentPage(1);
-              }}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              onClick={() => { setSearchTerm(""); setStatusFilter("all"); setCurrentPage(1); }}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
             >
               <FunnelIcon className="h-4 w-4 mr-2" />
               Reset Filters
@@ -344,9 +286,8 @@ const SellersManagement = () => {
           </div>
         </div>
 
-        {/* Stats */}
         {pagination && (
-          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500 dark:text-slate-400">
             <span>Total: {pagination.total}</span>
             <span>•</span>
             <span>Showing {pagination.from}–{pagination.to}</span>
@@ -354,17 +295,17 @@ const SellersManagement = () => {
         )}
       </div>
 
-      {/* Loading State */}
+      {/* Loading */}
       {loading && (
-        <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
-          <p className="text-gray-600">Loading sellers...</p>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-8 flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4" />
+          <p className="text-gray-600 dark:text-slate-400">Loading sellers...</p>
         </div>
       )}
 
-      {/* Error State */}
+      {/* Error */}
       {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -372,18 +313,14 @@ const SellersManagement = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading sellers</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={() => fetchSellers(currentPage, searchTerm, statusFilter)}
-                  className="text-sm font-medium text-red-600 hover:text-red-500"
-                >
-                  Try again
-                </button>
-              </div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-400">Error loading sellers</h3>
+              <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>
+              <button
+                onClick={() => fetchSellers(currentPage, searchTerm, statusFilter)}
+                className="mt-4 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 transition-colors"
+              >
+                Try again
+              </button>
             </div>
           </div>
         </div>
@@ -391,20 +328,20 @@ const SellersManagement = () => {
 
       {/* Table */}
       {!loading && !error && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 overflow-hidden">
           {sortedSellers.length > 0 ? (
             <DataTable columns={columns} data={sellerData} striped hoverable />
           ) : (
             <div className="p-12 text-center">
-              <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-12 w-12 text-gray-400 dark:text-slate-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">
                 {searchTerm || statusFilter !== "all"
                   ? "No sellers found matching your criteria"
                   : "No sellers yet"}
               </h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-slate-400">
                 {searchTerm || statusFilter !== "all"
                   ? "Try adjusting your search or filters"
                   : "Sellers will appear here once they register."}
@@ -414,22 +351,22 @@ const SellersManagement = () => {
 
           {/* Pagination */}
           {pagination && pagination.last_page > 1 && (
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500">
+            <div className="bg-gray-50 dark:bg-slate-900 px-6 py-3 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between">
+              <p className="text-sm text-gray-500 dark:text-slate-400">
                 Page {pagination.current_page} of {pagination.last_page}
-              </div>
+              </p>
               <div className="flex space-x-2">
                 <button
                   disabled={pagination.current_page === 1}
                   onClick={() => setCurrentPage(pagination.current_page - 1)}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded text-sm text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   disabled={pagination.current_page === pagination.last_page}
                   onClick={() => setCurrentPage(pagination.current_page + 1)}
-                  className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                  className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded text-sm text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-40 transition-colors"
                 >
                   Next
                 </button>

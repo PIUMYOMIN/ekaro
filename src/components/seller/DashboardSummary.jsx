@@ -66,7 +66,7 @@ const TierCard = ({ storeData }) => {
             <span>{completed} completed orders</span>
             <span>{cfg.threshold} for {cfg.next}</span>
           </div>
-          <div className="w-full bg-white rounded-full h-2 border border-gray-200">
+          <div className="w-full bg-white dark:bg-slate-700 rounded-full h-2 border border-gray-200 dark:border-slate-600">
             <div className={`h-2 rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-500`}
               style={{ width: `${progress}%` }} />
           </div>
@@ -162,7 +162,7 @@ const SetupChecklist = ({ storeData, onSetupClick }) => {
         <div className="flex justify-between text-xs text-gray-600 mb-1">
           <span>Setup Progress</span><span>{Math.round((done / total) * 100)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
           <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full"
             style={{ width: `${(done / total) * 100}%` }} />
         </div>
@@ -583,7 +583,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* Delivery fee panel */}
       {deliveryFees.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-gray-900">Platform Delivery Fees</h3>
@@ -633,7 +633,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* ── Charts ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend (Last 7 Days)</h3>
           {(dash?.sales.monthlyTrend.length ?? 0) > 0 ? (
             <Bar data={salesTrendData} options={{ responsive: true, plugins: { legend: { position: "top" } }, scales: { y: { beginAtZero: true } } }} height={280} />
@@ -641,7 +641,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
             <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No sales data available</div>
           )}
         </div>
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status Distribution</h3>
           <div className="h-64 flex items-center justify-center">
             {(dash?.orders.total ?? 0) > 0 ? (
@@ -656,11 +656,11 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       {/* ── Recent orders + quick stats ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent orders */}
-        <div className="bg-white shadow rounded-lg p-6 lg:col-span-2">
+        <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6 lg:col-span-2">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
           <div className="space-y-3">
             {(dash?.orders.recent.length ?? 0) > 0 ? dash.orders.recent.map(o => (
-              <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-lg dark:bg-slate-800/50 hover:bg-gray-50">
                 <div className="flex items-center gap-3">
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                     o.status === "delivered" ? "bg-green-500" :
@@ -687,7 +687,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         </div>
 
         {/* Quick stats */}
-        <div className="bg-white shadow rounded-lg p-6 space-y-4">
+        <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Quick Stats</h3>
           {[
             { label: "Order Completion Rate",   value: `${completionRate}%`,            color: "text-green-600" },

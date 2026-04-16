@@ -9,6 +9,7 @@ import {
   GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import { useTranslation } from 'react-i18next';
 
 // ─── Myanmar Location Tree ────────────────────────────────────────────────────
 // 14 States/Regions + 1 Union Territory
@@ -157,7 +158,7 @@ const buildZoneMap = (zones) => {
 };
 
 // ─── FeeInput ────────────────────────────────────────────────────────────────
-const FeeInput = ({ value, onChange, placeholder = '0' }) => (
+const FeeInput = ({ value, onChange, placeholder }) => (
   <div className="flex items-center gap-1">
     <input
       type="number"
@@ -201,6 +202,7 @@ const DaysInput = ({ min, max, onChange }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const DeliveryZones = () => {
+  const { t } = useTranslation();
   // selected: Set of zone keys the seller has checked
   const [selected, setSelected]     = useState(new Set());
   // fees: Map<key, { fee, freeThreshold, daysMin, daysMax }>
@@ -485,10 +487,10 @@ const DeliveryZones = () => {
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <TruckIcon className="h-5 w-5 text-green-600" />
-            Delivery Zones
+            {t('seller.delivery_zones.title')}
           </h2>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-            Select the areas you deliver to and set the shipping fee for each.
+            {t('seller.delivery_zones.subtitle')}
           </p>
         </div>
         <button
@@ -497,9 +499,9 @@ const DeliveryZones = () => {
           className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? (
-            <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />Saving...</>
+            <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{t('seller.delivery_zones.saving')}</>
           ) : (
-            <>Save Zones</>
+            <>{t('seller.delivery_zones.save_zones')}</>
           )}
         </button>
       </div>
@@ -514,7 +516,7 @@ const DeliveryZones = () => {
       {success && (
         <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-700 dark:text-green-300">
           <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
-          Delivery zones saved.
+          {t('seller.delivery_zones.saved')}
         </div>
       )}
 
@@ -522,22 +524,22 @@ const DeliveryZones = () => {
       {selected.size > 0 && (
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="px-2.5 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full font-medium">
-            {summary.states} {summary.states === 1 ? 'state' : 'states'}
+            {summary.states} {summary.states === 1 ? t('seller.delivery_zones.state') : t('seller.delivery_zones.states')}
           </span>
           <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full font-medium">
-            {summary.cities} {summary.cities === 1 ? 'city' : 'cities'}
+            {summary.cities} {summary.cities === 1 ? t('seller.delivery_zones.city') : t('seller.delivery_zones.cities')}
           </span>
           <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300 rounded-full font-medium">
-            {summary.townships} {summary.townships === 1 ? 'township' : 'townships'}
+            {summary.townships} {summary.townships === 1 ? t('seller.delivery_zones.township') : t('seller.delivery_zones.townships')}
           </span>
         </div>
       )}
 
       {/* Column headers */}
       <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-slate-700/50 rounded-xl text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-        <span className="flex-1">Location</span>
-        <span className="w-32 text-right">Shipping Fee</span>
-        <span className="w-28 text-right">Est. Days</span>
+        <span className="flex-1">{t('seller.delivery_zones.location')}</span>
+        <span className="w-32 text-right">{t('seller.delivery_zones.shipping_fee')}</span>
+        <span className="w-28 text-right">{t('seller.delivery_zones.est_days')}</span>
       </div>
 
       {/* ── Whole Myanmar shortcut ── */}
@@ -553,8 +555,8 @@ const DeliveryZones = () => {
           />
           <GlobeAltIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
           <div>
-            <span className="text-sm font-semibold text-gray-900 dark:text-white">Whole Myanmar</span>
-            <p className="text-xs text-gray-500 dark:text-slate-400">Deliver to all states, cities and townships</p>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('seller.delivery_zones.whole_myanmar')}</span>
+            <p className="text-xs text-gray-500 dark:text-slate-400">{t('seller.delivery_zones.whole_myanmar_sub')}</p>
           </div>
         </label>
 
@@ -755,8 +757,8 @@ const DeliveryZones = () => {
       {selected.size === 0 && !wholeMyanmar && (
         <div className="text-center py-10 text-gray-400 dark:text-slate-500">
           <TruckIcon className="h-10 w-10 mx-auto mb-2" />
-          <p className="text-sm">No delivery zones selected.</p>
-          <p className="text-xs mt-1">Check "Whole Myanmar" or expand a state to choose specific areas.</p>
+          <p className="text-sm">{t('seller.delivery_zones.no_zones')}</p>
+          <p className="text-xs mt-1">{t('seller.delivery_zones.no_zones_hint')}</p>
         </div>
       )}
 
@@ -768,7 +770,7 @@ const DeliveryZones = () => {
             disabled={saving}
             className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : `Save ${selected.size} zones`}
+            {saving ? t('seller.delivery_zones.saving') : t('seller.delivery_zones.save_n_zones', { count: selected.size })}
           </button>
         </div>
       )}
