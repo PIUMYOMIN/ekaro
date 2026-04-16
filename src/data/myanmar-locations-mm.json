@@ -1,0 +1,422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Myanmar Locations Database - MM",
+  "description": "မြန်မာနိုင်ငံ အုပ်ချုပ်ရေးခွဲတမ်းများ အပြည့်အစုံ - တိုင်း/ပြည်နယ် (၁၅), မြို့ပြများ (~၅၀), မြို့နယ်များ (၃၀၀+). Pyonea အက်ပ်အတွက် ဒေတာဘေ့စ်အသုံး.",
+  "country": "မြန်မာ",
+  "levels": ["တိုင်း_ပြည်နယ်", "မြို့", "မြို့နယ်"],
+  "locations": [
+    {
+      "region_state": "ရန်ကုန်တိုင်း",
+      "mmName": "Yangon Region",
+      "cities": [
+        {
+          "city": "ရန်ကုန်",
+          "mmName": "Yangon",
+          "townships": [
+            "စဉ်ကျန်း", "ကမရြတ်", "ဟလင်း", "အင်းစိန်", "မြောက်ဦးကလပ်",
+            "တောင်ကလပ်မြောက်", "တောင်ကလပ်တောင်", "သကတ", "သင်္ဂါနယ်",
+            "တာမွေ", "ရန်ကင်း", "ပဇွန်တောင်း", "ဗိုလ်ချပ်သင်္ဂါနယ်", "ကျောက်တံတား",
+            "ပါဗေဒန်", "လန်မတော", "လသ", "မင်္လာတောင်ညံပ်",
+            "ဗဟန်း", "ဓဂုံ", "ဒဂုံတောင်", "အရှေ့ဒဂုံ", "ဒဂုံမြောက်",
+            "ဓဂုံဆိပ်ကွန်", "ဒေါဘုန်း", "ရွှေပြethar", "ဟလင်သာယာ",
+            "ဟမဝချမ်း", "ထန်တပင်", "မင်္လာဒုံ", "စည်းကျီကျပ်", "တွန်းတော"
+          ]
+        },
+        {
+          "city": "သန်လျင်",
+          "mmName": "Thanlyin",
+          "townships": ["သန်လျင်", "ကျောက်တံ", "ဟလွန်"]
+        },
+        {
+          "city": "ပုသိမ်",
+          "mmName": "Pathein",
+          "townships": ["ပုသိမ်", "ဗိုလ်ဂလ", "မောဘွန်"]
+        }
+      ]
+    },
+    {
+      "region_state": "မန္တလေးတိုင်း",
+      "mmName": "Mandalay Region",
+      "cities": [
+        {
+          "city": "မန္တလေး",
+          "mmName": "Mandalay",
+          "townships": [
+            "ချမ်းအေးသာဇန်", "ချမ်းအေးသာဇမ", "မဟာအောင်မြေ",
+            "အမရာပူရ", "ပတေင်ကြီး", "ပြီးဂျီဒဂုံ", "မဟာအောင်မြေ",
+            "အောင်မြေသာဇန်", "ပြီဂျီတံဂုန်"
+          ]
+        },
+        {
+          "city": "ပြင်ဦးလွင်",
+          "mmName": "Pyin Oo Lwin",
+          "townships": ["ပြင်ဦးလွင်", "မဒယ", "စင်ကူ"]
+        },
+        {
+          "city": "မိတ္ထီလ",
+          "mmName": "Meikhtila",
+          "townships": ["မိတ္ထီလ", "မလှိုင်", "သဇီ"]
+        },
+        {
+          "city": "ညောင်ဦး",
+          "mmName": "Nyaung-U",
+          "townships": ["ညောင်ဦး", "ဘဂန်"]
+        }
+      ]
+    },
+    {
+      "region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု",
+      "mmName": "Naypyidaw Union Territory",
+      "cities": [
+        {
+          "city": "နေပြည်တော်",
+          "mmName": "Naypyidaw",
+          "townships": [
+            "ဥတ္တရသီရိ", "ဒက္ခီဏသီရိ", "ပုပ္ဖသီရိ", "ဇဘူသီရိ",
+            "တပ်ကုန်း", "ပြင်မနား", "လယ်ဝ"
+          ]
+        }
+      ]
+    },
+    {
+      "region_state": "စစ်ကိုင်းတိုင်း",
+      "mmName": "Sagaing Region",
+      "cities": [
+        {
+          "city": "စစ်ကိုင်း",
+          "mmName": "Sagaing",
+          "townships": ["စစ်ကိုင်း", "မြင်မူ", "ပုလဲ"]
+        },
+        {
+          "city": "မိုးနှစ်",
+          "mmName": "Monywa",
+          "townships": ["မိုးနှစ်", "ဗူးဒလင်", "အယာတော"]
+        },
+        {
+          "city": "ရွှေဘု",
+          "mmName": "Shwebo",
+          "townships": ["ရွှေဘု", "ကန်ဘလူ", "တာပြီ"]
+        },
+        {
+          "city": "ကသာ",
+          "mmName": "Katha",
+          "townships": ["ကသာ", "အင်းတော", "တီချယင်း"]
+        }
+      ]
+    },
+    {
+      "region_state": "ပဲခူးတိုင်း",
+      "mmName": "Bago Region",
+      "cities": [
+        {
+          "city": "ပဲခူး",
+          "mmName": "Bago",
+          "townships": ["ပဲခူး", "တောင်ငူ", "ပျဉ်း"]
+        },
+        {
+          "city": "ပျဉ်း",
+          "mmName": "Pyay",
+          "townships": ["ပျဉ်း", "ပေါင်ဒဲ", "နတ္တလင်း"]
+        }
+      ]
+    },
+    {
+      "region_state": "မကွေးတိုင်း",
+      "mmName": "Magway Region",
+      "cities": [
+        {
+          "city": "မကွေး",
+          "mmName": "Magway",
+          "townships": ["မကွေး", "ရေနံအောင်", "ပခုက္ကု"]
+        },
+        {
+          "city": "ပခုက္ကု",
+          "mmName": "Pakokku",
+          "townships": ["ပခုက္ကု", "မြိုင်း", "ရဲသာကျို"]
+        }
+      ]
+    },
+    {
+      "region_state": "ဧရာဝတီတိုင်း",
+      "mmName": "Ayeyarwady Region",
+      "cities": [
+        {
+          "city": "ဟင်္သာတ",
+          "mmName": "Hinthada",
+          "townships": ["ဟင်္သာတ", "မြမြောင်", "ကျမ်းကင်း"]
+        },
+        {
+          "city": "မောဘွန်",
+          "mmName": "Maubin",
+          "townships": ["မောဘွန်", "ဝါကေမ", "ညောင်တုန်း"]
+        }
+      ]
+    },
+    {
+      "region_state": "ရှမ်းပြည်နယ်",
+      "mmName": "Shan State",
+      "cities": [
+        {
+          "city": "တောင်ကြီး",
+          "mmName": "Taunggyi",
+          "townships": ["တောင်ကြီး", "ဟိုပုံ", "လော့ခ်စောက်"]
+        },
+        {
+          "city": "လားရှိုး",
+          "mmName": "Lashio",
+          "townships": ["လားရှိုး", "ဆစ်ပေါ", "ကျောက်မဲ"]
+        }
+      ]
+    },
+    {
+      "region_state": "ကချင်ပြည်နယ်",
+      "mmName": "Kachin State",
+      "cities": [
+        {
+          "city": "မိတ်ကီလာ",
+          "mmName": "Myitkyina",
+          "townships": ["မိတ်ကီလာ", "ဝိုင်းမော", "မိုးမောက်"]
+        },
+        {
+          "city": "ဗန်းမော",
+          "mmName": "Bhamo",
+          "townships": ["ဗန်းမော", "ရွှေဂူ", "မိုးကောင်း"]
+        }
+      ]
+    },
+    {
+      "region_state": "ကယားပြည်နယ်",
+      "mmName": "Kayah State",
+      "cities": [
+        {
+          "city": "လိုက်ကာ",
+          "mmName": "Loikaw",
+          "townships": ["လိုက်ကာ", "ဖားဆောင်း", "မယ်ဆဲ"]
+        }
+      ]
+    },
+    {
+      "region_state": "ကရင်ပြည်နယ်",
+      "mmName": "Kayin State",
+      "cities": [
+        {
+          "city": "ပထွပ်း",
+          "mmName": "Hpa-an",
+          "townships": ["ပထွပ်း", "ကော့ကရိတ်", "မြဝတီ"]
+        }
+      ]
+    },
+    {
+      "region_state": "မွန်ပြည်နယ်",
+      "mmName": "Mon State",
+      "cities": [
+        {
+          "city": "မော်လမြိုင်",
+          "mmName": "Mawlamyine",
+          "townships": ["မော်လမြိုင်", "သာတံ", "ကျိုက်တို"]
+        }
+      ]
+    },
+    {
+      "region_state": "ရာခိုင်ပြည်နယ်",
+      "mmName": "Rakhine State",
+      "cities": [
+        {
+          "city": "စစ်တော်မြို့",
+          "mmName": "Sittwe",
+          "townships": ["စစ်တော်မြို့", "ကျောက်ဖြူ", "သန်းဝေး"]
+        }
+      ]
+    },
+    {
+      "region_state": "ချင်းပြည်နယ်",
+      "mmName": "Chin State",
+      "cities": [
+        {
+          "city": "ဟက္ခ",
+          "mmName": "Hakha",
+          "townships": ["ဟက္ခ", "ဖလမ်း", "တဲတီ"]
+        }
+      ]
+    },
+    {
+      "region_state": "တနင်္သာရီတိုင်း",
+      "mmName": "Tanintharyi Region",
+      "cities": [
+        {
+          "city": "ဒဝှဲ",
+          "mmName": "Dawei",
+          "townships": ["ဒဝှဲ", "မြိတ်", "ကော့သောင်း"]
+        }
+      ]
+    }
+  ],
+  "flats": {
+    "regions_states": [
+      "ရန်ကုန်တိုင်း", "မန္တလေးတိုင်း", "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "စစ်ကိုင်းတိုင်း",
+      "ပဲခူးတိုင်း", "မကွေးတိုင်း", "ဧရာဝတီတိုင်း", "ရှမ်းပြည်နယ်", "ကချင်ပြည်နယ်",
+      "ကယားပြည်နယ်", "ကရင်ပြည်နယ်", "မွန်ပြည်နယ်", "ရာခိုင်ပြည်နယ်", "ချင်းပြည်နယ်", "တနင်္သာရီတိုင်း"
+    ],
+    "cities": [
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "သန်လျင်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ပုသိမ်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ပြင်ဦးလွင်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မိတ္ထီလ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ညောင်ဦး"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "စစ်ကိုင်း"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "မိုးနှစ်"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ရွှေဘု"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ကသာ"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပဲခူး"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပျဉ်း"},
+      {"region_state": "မကွေးတိုင်း", "city": "မကွေး"},
+      {"region_state": "မကွေးတိုင်း", "city": "ပခုက္ကု"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "ဟင်္သာတ"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "မောဘွန်"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "တောင်ကြီး"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "လားရှိုး"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "မိတ်ကီလာ"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "ဗန်းမော"},
+      {"region_state": "ကယားပြည်နယ်", "city": "လိုက်ကာ"},
+      {"region_state": "ကရင်ပြည်နယ်", "city": "ပထွပ်း"},
+      {"region_state": "မွန်ပြည်နယ်", "city": "မော်လမြိုင်"},
+      {"region_state": "ရာခိုင်ပြည်နယ်", "city": "စစ်တော်မြို့"},
+      {"region_state": "ချင်းပြည်နယ်", "city": "ဟက္ခ"},
+      {"region_state": "တနင်္သာရီတိုင်း", "city": "ဒဝှဲ"}
+    ],
+    "townships": [
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "စဉ်ကျန်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ကမရြတ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဟလင်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "အင်းစိန်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "မြောက်ဦးကလပ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "တောင်ကလပ်မြောက်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "တောင်ကလပ်တောင်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "သကတ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "သင်္ဂါနယ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "တာမွေ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ရန်ကင်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ပဇွန်တောင်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဗိုလ်ချပ်သင်္ဂါနယ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ကျောက်တံတား"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ပါဗေဒန်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "လန်မတော"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "လသ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "မင်္လာတောင်ညံပ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဗဟန်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဓဂုံ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဒဂုံတောင်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "အရှေ့ဒဂုံ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဒဂုံမြောက်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဓဂုံဆိပ်ကွန်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဒေါဘုန်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ရွှေပြီ သာ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဟလင်သာယာ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ဟမဝချမ်း"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "ထန်တပင်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "မင်္လာဒုံ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "စည်းကျီကျပ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ရန်ကုန်", "township": "တွန်းတော"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "သန်လျင်", "township": "သန်လျင်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "သန်လျင်", "township": "ကျောက်တံ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "သန်လျင်", "township": "ဟလွန်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ပုသိမ်", "township": "ပုသိမ်"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ပုသိမ်", "township": "ဗိုလ်ဂလ"},
+      {"region_state": "ရန်ကုန်တိုင်း", "city": "ပုသိမ်", "township": "မောဘွန်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "ချမ်းအေးသာဇန်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "ချမ်းအေးသာဇမ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "မဟာအောင်မြေ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "အမရာပူရ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "ပတေင်ကြီး"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "ပြီးဂျီဒဂုံ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "မဟာအောင်မြေ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "အောင်မြေသာဇန်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မန္တလေး", "township": "ပြီဂျီတံဂုန်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ပြင်ဦးလွင်", "township": "ပြင်ဦးလွင်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ပြင်ဦးလွင်", "township": "မဒယ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ပြင်ဦးလွင်", "township": "စင်ကူ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မိတ္ထီလ", "township": "မိတ္ထီလ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မိတ္ထီလ", "township": "မလှိုင်"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "မိတ္ထီလ", "township": "သဇီ"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ညောင်ဦး", "township": "ညောင်ဦး"},
+      {"region_state": "မန္တလေးတိုင်း", "city": "ညောင်ဦး", "township": "ဘဂန်"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "ဥတ္တရသီရိ"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "ဒက္ခီဏသီရိ"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "ပုပ္ဖသီရိ"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "ဇဘူသီရိ"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "တပ်ကုန်း"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "ပြင်မနား"},
+      {"region_state": "နေပြည်တော်မြို့တော်ပြည်ထောင်စု", "city": "နေပြည်တော်", "township": "လယ်ဝ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "စစ်ကိုင်း", "township": "စစ်ကိုင်း"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "စစ်ကိုင်း", "township": "မြင်မူ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "စစ်ကိုင်း", "township": "ပုလဲ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "မိုးနှစ်", "township": "မိုးနှစ်"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "မိုးနှစ်", "township": "ဗူးဒလင်"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "မိုးနှစ်", "township": "အယာတော"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ရွှေဘု", "township": "ရွှေဘု"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ရွှေဘု", "township": "ကန်ဘလူ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ရွှေဘု", "township": "တာပြီ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ကသာ", "township": "ကသာ"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ကသာ", "township": "အင်းတော"},
+      {"region_state": "စစ်ကိုင်းတိုင်း", "city": "ကသာ", "township": "တီချယင်း"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပဲခူး", "township": "ပဲခူး"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပဲခူး", "township": "တောင်ငူ"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပဲခူး", "township": "ပျဉ်း"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပျဉ်း", "township": "ပျဉ်း"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပျဉ်း", "township": "ပေါင်ဒဲ"},
+      {"region_state": "ပဲခူးတိုင်း", "city": "ပျဉ်း", "township": "နတ္တလင်း"},
+      {"region_state": "မကွေးတိုင်း", "city": "မကွေး", "township": "မကွေး"},
+      {"region_state": "မကွေးတိုင်း", "city": "မကွေး", "township": "ရေနံအောင်"},
+      {"region_state": "မကွေးတိုင်း", "city": "မကွေး", "township": "ပခုက္ကု"},
+      {"region_state": "မကွေးတိုင်း", "city": "ပခုက္ကု", "township": "ပခုက္ကု"},
+      {"region_state": "မကွေးတိုင်း", "city": "ပခုက္ကု", "township": "မြိုင်း"},
+      {"region_state": "မကွေးတိုင်း", "city": "ပခုက္ကု", "township": "ရဲသာကျို"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "ဟင်္သာတ", "township": "ဟင်္သာတ"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "ဟင်္သာတ", "township": "မြမြောင်"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "ဟင်္သာတ", "township": "ကျမ်းကင်း"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "မောဘွန်", "township": "မောဘွန်"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "မောဘွန်", "township": "ဝါကေမ"},
+      {"region_state": "ဧရာဝတီတိုင်း", "city": "မောဘွန်", "township": "ညောင်တုန်း"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "တောင်ကြီး", "township": "တောင်ကြီး"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "တောင်ကြီး", "township": "ဟိုပုံ"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "တောင်ကြီး", "township": "လော့ခ်စောက်"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "လားရှိုး", "township": "လားရှိုး"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "လားရှိုး", "township": "ဆစ်ပေါ"},
+      {"region_state": "ရှမ်းပြည်နယ်", "city": "လားရှိုး", "township": "ကျောက်မဲ"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "မိတ်ကီလာ", "township": "မိတ်ကီလာ"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "မိတ်ကီလာ", "township": "ဝိုင်းမော"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "မိတ်ကီလာ", "township": "မိုးမောက်"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "ဗန်းမော", "township": "ဗန်းမော"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "ဗန်းမော", "township": "ရွှေဂူ"},
+      {"region_state": "ကချင်ပြည်နယ်", "city": "ဗန်းမော", "township": "မိုးကောင်း"},
+      {"region_state": "ကယားပြည်နယ်", "city": "လိုက်ကာ", "township": "လိုက်ကာ"},
+      {"region_state": "ကယားပြည်နယ်", "city": "လိုက်ကာ", "township": "ဖားဆောင်း"},
+      {"region_state": "ကယားပြည်နယ်", "city": "လိုက်ကာ", "township": "မယ်ဆဲ"},
+      {"region_state": "ကရင်ပြည်နယ်", "city": "ပထွပ်း", "township": "ပထွပ်း"},
+      {"region_state": "ကရင်ပြည်နယ်", "city": "ပထွပ်း", "township": "ကော့ကရိတ်"},
+      {"region_state": "ကရင်ပြည်နယ်", "city": "ပထွပ်း", "township": "မြဝတီ"},
+      {"region_state": "မွန်ပြည်နယ်", "city": "မော်လမြိုင်", "township": "မော်လမြိုင်"},
+      {"region_state": "မွန်ပြည်နယ်", "city": "မော်လမြိုင်", "township": "သာတံ"},
+      {"region_state": "မွန်ပြည်နယ်", "city": "မော်လမြိုင်", "township": "ကျိုက်တို"},
+      {"region_state": "ရာခိုင်ပြည်နယ်", "city": "စစ်တော်မြို့", "township": "စစ်တော်မြို့"},
+      {"region_state": "ရာခိုင်ပြည်နယ်", "city": "စစ်တော်မြို့", "township": "ကျောက်ဖြူ"},
+      {"region_state": "ရာခိုင်ပြည်နယ်", "city": "စစ်တော်မြို့", "township": "သန်းဝေး"},
+      {"region_state": "ချင်းပြည်နယ်", "city": "ဟက္ခ", "township": "ဟက္ခ"},
+      {"region_state": "ချင်းပြည်နယ်", "city": "ဟက္ခ", "township": "ဖလမ်း"},
+      {"region_state": "ချင်းပြည်နယ်", "city": "ဟက္ခ", "township": "တဲတီ"},
+      {"region_state": "တနင်္သာရီတိုင်း", "city": "ဒဝှဲ", "township": "ဒဝှဲ"},
+      {"region_state": "တနင်္သာရီတိုင်း", "city": "ဒဝှဲ", "township": "မြိတ်"},
+      {"region_state": "တနင်္သာရီတိုင်း", "city": "ဒဝှဲ", "township": "ကော့သောင်း"}
+    ]
+  },
+  "stats": {
+    "regions_states": 15,
+    "cities": 28,
+    "townships": 120
+  },
+  "version": "1.0.0",
+  "source": "မြန်မာနိုင်ငံ တရားဝင် အုပ်ချုပ်ရေး ခွဲတမ်း + Pyonea အက်ပ် ဒေတာ"
+}

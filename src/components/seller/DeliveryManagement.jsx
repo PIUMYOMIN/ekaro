@@ -24,15 +24,15 @@ function formatMMK(amount) {
 
 function getStatusColor(status) {
   switch (status) {
-    case "pending":           return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "awaiting_pickup":   return "bg-blue-100 text-blue-800 border-blue-200";
-    case "picked_up":         return "bg-indigo-100 text-indigo-800 border-indigo-200";
-    case "in_transit":        return "bg-purple-100 text-purple-800 border-purple-200";
-    case "out_for_delivery":  return "bg-orange-100 text-orange-800 border-orange-200";
-    case "delivered":         return "bg-green-100 text-green-800 border-green-200";
-    case "failed":            return "bg-red-100 text-red-800 border-red-200";
-    case "cancelled":         return "bg-gray-100 text-gray-800 border-gray-200";
-    default:                  return "bg-gray-100 text-gray-800 border-gray-200";
+    case "pending":           return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700";
+    case "awaiting_pickup":   return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700";
+    case "picked_up":         return "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700";
+    case "in_transit":        return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700";
+    case "out_for_delivery":  return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700";
+    case "delivered":         return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700";
+    case "failed":            return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700";
+    case "cancelled":         return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
+    default:                  return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600";
   }
 }
 
@@ -180,13 +180,13 @@ const DeliveryManagement = ({ refreshData }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Delivery Management</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Delivery Management</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             Choose delivery methods and track your order deliveries
           </p>
         </div>
         <button onClick={fetchDeliveries}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 bg-white dark:bg-slate-800">
           <ArrowPathIcon className="h-4 w-4" /> Refresh
         </button>
       </div>
@@ -194,23 +194,23 @@ const DeliveryManagement = ({ refreshData }) => {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Pending',    value: stats.pending,    color: 'text-yellow-600', bg: 'bg-yellow-50' },
-          { label: 'In Transit', value: stats.inTransit,  color: 'text-purple-600', bg: 'bg-purple-50' },
-          { label: 'Delivered',  value: stats.delivered,  color: 'text-green-600',  bg: 'bg-green-50'  },
-          { label: 'Failed',     value: stats.failed,     color: 'text-red-600',    bg: 'bg-red-50'    },
+          { label: 'Pending',    value: stats.pending,    color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-900/20' },
+          { label: 'In Transit', value: stats.inTransit,  color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+          { label: 'Delivered',  value: stats.delivered,  color: 'text-green-600 dark:text-green-400',   bg: 'bg-green-50 dark:bg-green-900/20'   },
+          { label: 'Failed',     value: stats.failed,     color: 'text-red-600 dark:text-red-400',       bg: 'bg-red-50 dark:bg-red-900/20'       },
         ].map(s => (
           <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-sm text-gray-500 mt-0.5">{s.label}</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* FIX: inline error banner instead of alert() */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg flex justify-between items-center">
           <span className="text-sm">{error}</span>
-          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+          <button onClick={() => setError(null)} className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
             <XCircleIcon className="h-5 w-5" />
           </button>
         </div>
@@ -226,37 +226,37 @@ const DeliveryManagement = ({ refreshData }) => {
         />
       )}
 
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-700/50">
               <tr>
                 {["Order ID", "Customer", "Delivery Method", "Status", "Delivery Fee", "Actions"].map((h) => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {deliveries.length > 0 ? (
                 deliveries.map((delivery) => (
-                  <tr key={delivery.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={delivery.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       #{delivery.order?.order_number ?? delivery.order_id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
                       {delivery.order?.shipping_address?.full_name ?? "N/A"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
                       {delivery.delivery_method === "platform" ? (
                         <span className="flex items-center gap-1">
-                          <BuildingStorefrontIcon className="h-4 w-4 text-blue-600" />
+                          <BuildingStorefrontIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           Platform Logistics
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
-                          <TruckIcon className="h-4 w-4 text-gray-600" />
+                          <TruckIcon className="h-4 w-4 text-gray-600 dark:text-slate-400" />
                           Self Delivery
                         </span>
                       )}
@@ -267,13 +267,13 @@ const DeliveryManagement = ({ refreshData }) => {
                         <span className="capitalize">{humanStatus(delivery.status)}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-slate-200">
                       {formatMMK(delivery.platform_delivery_fee)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                       <button
                         onClick={() => { setSelectedDelivery(delivery); setIsModalOpen(true); }}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                         title="View details"
                       >
                         <EyeIcon className="h-5 w-5" />
@@ -294,8 +294,8 @@ const DeliveryManagement = ({ refreshData }) => {
                       {delivery.status !== "pending" && delivery.delivery_method && (
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded border ${
                           delivery.delivery_method === "platform"
-                            ? "bg-purple-50 text-purple-700 border-purple-200"
-                            : "bg-gray-50 text-gray-600 border-gray-200"
+                            ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700"
+                            : "bg-gray-50 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"
                         } cursor-not-allowed opacity-70`}>
                           🔒 {delivery.delivery_method === "platform" ? "Platform Delivery" : "Self Delivery"}
                         </span>
@@ -336,9 +336,9 @@ const DeliveryManagement = ({ refreshData }) => {
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <TruckIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Deliveries Found</h3>
-                    <p className="text-gray-600">You don't have any deliveries to manage yet.</p>
+                    <TruckIcon className="h-16 w-16 text-gray-400 dark:text-slate-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Deliveries Found</h3>
+                    <p className="text-gray-600 dark:text-slate-400">You don't have any deliveries to manage yet.</p>
                   </td>
                 </tr>
               )}
@@ -383,12 +383,12 @@ const DeliveryMethodModal = ({ order, loading, onClose, onMethodSelect, calculat
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={onClose} />
+        <div className="fixed inset-0 bg-gray-500/60 dark:bg-black/60" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg z-10">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">Choose Delivery Method</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg z-10">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Choose Delivery Method</h3>
+            <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-500 dark:hover:text-slate-300">
               <XCircleIcon className="h-6 w-6" />
             </button>
           </div>
@@ -397,23 +397,23 @@ const DeliveryMethodModal = ({ order, loading, onClose, onMethodSelect, calculat
             {/* Self Delivery */}
             <div
               className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                selectedMethod === "supplier" ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-gray-300"
+                selectedMethod === "supplier" ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500"
               }`}
               onClick={() => setSelectedMethod("supplier")}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <TruckIcon className="h-5 w-5 text-gray-600" />
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                    <TruckIcon className="h-5 w-5 text-gray-600 dark:text-slate-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Self Delivery</h4>
-                    <p className="text-sm text-gray-600">You arrange and manage delivery</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">Self Delivery</h4>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">You arrange and manage delivery</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-green-600">Free</p>
-                  <p className="text-xs text-gray-500">No platform fee</p>
+                  <p className="font-bold text-green-600 dark:text-green-400">Free</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">No platform fee</p>
                 </div>
               </div>
             </div>
@@ -421,31 +421,31 @@ const DeliveryMethodModal = ({ order, loading, onClose, onMethodSelect, calculat
             {/* Platform Logistics */}
             <div
               className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                selectedMethod === "platform" ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+                selectedMethod === "platform" ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500"
               }`}
               onClick={() => setSelectedMethod("platform")}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <BuildingStorefrontIcon className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+                    <BuildingStorefrontIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Platform Logistics</h4>
-                    <p className="text-sm text-gray-600">We handle delivery for you</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">Platform Logistics</h4>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">We handle delivery for you</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-blue-600">{formatMMK(calculatePlatformFee(weight))}</p>
-                  <p className="text-xs text-gray-500">Platform service fee</p>
+                  <p className="font-bold text-blue-600 dark:text-blue-400">{formatMMK(calculatePlatformFee(weight))}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">Platform service fee</p>
                 </div>
               </div>
             </div>
 
             {/* Benefits */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h5 className="font-medium text-gray-900 mb-2">Benefits:</h5>
-              <ul className="text-sm text-gray-600 space-y-1">
+            <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+              <h5 className="font-medium text-gray-900 dark:text-white mb-2">Benefits:</h5>
+              <ul className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
                 {selectedMethod === "supplier" ? (
                   <>
                     <li>• Full control over delivery process</li>
@@ -466,7 +466,7 @@ const DeliveryMethodModal = ({ order, loading, onClose, onMethodSelect, calculat
 
             {/* FIX: pickup address input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                 Pickup Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -474,18 +474,18 @@ const DeliveryMethodModal = ({ order, loading, onClose, onMethodSelect, calculat
                 value={pickupAddress}
                 onChange={(e) => { setPickupAddress(e.target.value); setAddressError(""); }}
                 placeholder="e.g. No. 12, Merchant St, Yangon"
-                className={`w-full px-3 py-2 border rounded-lg text-sm ${
-                  addressError ? "border-red-400" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                className={`w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 ${
+                  addressError ? "border-red-400 dark:border-red-600" : "border-gray-300 dark:border-slate-600"
+                } focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400`}
               />
               {addressError && <p className="text-xs text-red-500 mt-1">{addressError}</p>}
             </div>
           </div>
 
-          <div className="bg-gray-50 px-6 py-3 flex justify-end gap-3">
+          <div className="bg-gray-50 dark:bg-slate-700/50 px-6 py-3 flex justify-end gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
             >
               Cancel
             </button>
@@ -541,14 +541,14 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={onClose} />
+        <div className="fixed inset-0 bg-gray-500/60 dark:bg-black/60" onClick={onClose} />
 
-        <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl z-10">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
+        <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-4xl z-10">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               Delivery Details — Order #{delivery.order?.order_number}
             </h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+            <button onClick={onClose} className="text-gray-400 dark:text-slate-500 hover:text-gray-500 dark:hover:text-slate-300">
               <XCircleIcon className="h-6 w-6" />
             </button>
           </div>
@@ -557,27 +557,27 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Delivery info */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Delivery Information</h4>
-                <div className="space-y-3 text-sm">
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Delivery Information</h4>
+                <div className="space-y-3 text-sm text-gray-900 dark:text-slate-200">
                   <div>
-                    <span className="font-medium text-gray-700">Method: </span>
+                    <span className="font-medium text-gray-700 dark:text-slate-400">Method: </span>
                     <span className="capitalize">{delivery.delivery_method}</span>
                     {delivery.delivery_method === "platform" && (
-                      <span className="ml-2 text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                      <span className="ml-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">
                         Platform Logistics
                       </span>
                     )}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Status: </span>
+                    <span className="font-medium text-gray-700 dark:text-slate-400">Status: </span>
                     <span className="capitalize">{humanStatus(delivery.status)}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Delivery Fee: </span>
+                    <span className="font-medium text-gray-700 dark:text-slate-400">Delivery Fee: </span>
                     {formatMMK(delivery.platform_delivery_fee)}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Tracking Number: </span>
+                    <span className="font-medium text-gray-700 dark:text-slate-400">Tracking Number: </span>
                     <span className="font-mono">{delivery.tracking_number ?? "Not assigned"}</span>
                   </div>
                 </div>
@@ -585,19 +585,19 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
 
               {/* Address info */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Address Information</h4>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Address Information</h4>
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="font-medium text-gray-700 flex items-center gap-1">
+                    <p className="font-medium text-gray-700 dark:text-slate-400 flex items-center gap-1">
                       <MapPinIcon className="h-4 w-4" /> Pickup Address
                     </p>
-                    <p className="text-gray-900 mt-1">{delivery.pickup_address ?? "Not specified"}</p>
+                    <p className="text-gray-900 dark:text-slate-200 mt-1">{delivery.pickup_address ?? "Not specified"}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-700 flex items-center gap-1">
+                    <p className="font-medium text-gray-700 dark:text-slate-400 flex items-center gap-1">
                       <MapPinIcon className="h-4 w-4" /> Delivery Address
                     </p>
-                    <p className="text-gray-900 mt-1">{delivery.delivery_address}</p>
+                    <p className="text-gray-900 dark:text-slate-200 mt-1">{delivery.delivery_address}</p>
                   </div>
                 </div>
               </div>
@@ -606,25 +606,25 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
             {/* Tracking timeline */}
             {updates.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Delivery Updates</h4>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Delivery Updates</h4>
                 <div className="space-y-3">
                   {updates.map((update, index) => (
-                    <div key={update.id ?? index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <DocumentTextIcon className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
+                    <div key={update.id ?? index} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
+                      <DocumentTextIcon className="h-5 w-5 text-gray-400 dark:text-slate-500 mt-0.5 shrink-0" />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <span className="text-sm font-medium text-gray-900 capitalize">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
                             {humanStatus(update.status)}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-slate-400">
                             {new Date(update.created_at).toLocaleString()}
                           </span>
                         </div>
                         {update.notes && (
-                          <p className="text-sm text-gray-600 mt-1">{update.notes}</p>
+                          <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{update.notes}</p>
                         )}
                         {update.location && (
-                          <p className="text-xs text-gray-500 mt-1">Location: {update.location}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Location: {update.location}</p>
                         )}
                       </div>
                     </div>
@@ -644,11 +644,11 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
                     Upload Delivery Proof
                   </button>
                 ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h5 className="font-medium text-yellow-800 mb-3">Upload Delivery Proof</h5>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <h5 className="font-medium text-yellow-800 dark:text-yellow-300 mb-3">Upload Delivery Proof</h5>
                     <div className="space-y-3">
                       {proofError && (
-                        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+                        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded px-3 py-2">
                           {proofError}
                         </p>
                       )}
@@ -656,21 +656,21 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
                         type="file"
                         accept="image/*"
                         onChange={(e) => setProofFile(e.target.files[0])}
-                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="w-full text-sm text-gray-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/40 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/60"
                       />
                       <input
                         type="text"
                         placeholder="Recipient Name"
                         value={recipientName}
                         onChange={(e) => setRecipientName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       />
                       <input
                         type="text"
                         placeholder="Recipient Phone"
                         value={recipientPhone}
                         onChange={(e) => setRecipientPhone(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       />
                       <div className="flex gap-2">
                         <button
@@ -694,10 +694,10 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onStat
             )}
           </div>
 
-          <div className="bg-gray-50 px-6 py-3 flex justify-end">
+          <div className="bg-gray-50 dark:bg-slate-700/50 px-6 py-3 flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
             >
               Close
             </button>

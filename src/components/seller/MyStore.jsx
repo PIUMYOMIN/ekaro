@@ -33,10 +33,10 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
   if (!storeData) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
-          <p className="text-gray-600">Loading store information...</p>
+          <p className="text-gray-600 dark:text-slate-400">Loading store information...</p>
         </div>
       </div>
     );
@@ -138,8 +138,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       {/* Header with Edit Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t("seller.my_store")}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t("seller.my_store_summary")}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("seller.my_store")}</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{t("seller.my_store_summary")}</p>
         </div>
         <button
           onClick={() => navigate("/seller/dashboard?tab=my-store&edit=true")}
@@ -151,7 +151,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
       </div>
 
       {/* Store Header with Banner */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
         {/* Banner section with hover overlay */}
         {bannerUrl && (
           <div className="relative h-48 bg-gradient-to-r from-green-500 to-emerald-600 group">
@@ -265,7 +265,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
             <div className="flex-1">
               <h1 className="text-2xl font-bold">{storeData.store_name}</h1>
-              <p className={`mt-1 ${bannerUrl ? "text-gray-600" : "text-green-100 opacity-90"}`}>
+              <p className={`mt-1 ${bannerUrl ? "text-gray-600 dark:text-slate-300" : "text-green-100 opacity-90"}`}>
                 {storeData.description || storeData.store_description || "No description provided"}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -288,7 +288,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                   {storeData.verification_status?.charAt(0).toUpperCase() +
                     storeData.verification_status?.slice(1)}
                 </span>
-                <span className={`text-sm ${bannerUrl ? "text-gray-600" : "text-green-100"}`}>
+                <span className={`text-sm ${bannerUrl ? "text-gray-600 dark:text-slate-300" : "text-green-100"}`}>
                   <CalendarIcon className="h-3 w-3 inline mr-1" />
                   Since {memberSince}
                 </span>
@@ -298,35 +298,35 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         </div>
 
         {/* Store Statistics */}
-        <div className="p-6 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Store Statistics</h3>
+        <div className="p-6 border-t border-gray-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Store Statistics</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats.totalProducts || 0}</div>
-              <div className="text-sm text-green-800 flex items-center justify-center">
+            <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalProducts || 0}</div>
+              <div className="text-sm text-green-800 dark:text-green-300 flex items-center justify-center">
                 <ShoppingBagIcon className="h-4 w-4 mr-1" />
                 Total Products
               </div>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalOrders || 0}</div>
-              <div className="text-sm text-blue-800 flex items-center justify-center">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalOrders || 0}</div>
+              <div className="text-sm text-blue-800 dark:text-blue-300 flex items-center justify-center">
                 <ShoppingBagIcon className="h-4 w-4 mr-1" />
                 Total Orders
               </div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {stats.totalRevenue ? `${parseInt(stats.totalRevenue).toLocaleString()} MMK` : "0 MMK"}
               </div>
-              <div className="text-sm text-purple-800 flex items-center justify-center">
+              <div className="text-sm text-purple-800 dark:text-purple-300 flex items-center justify-center">
                 <CurrencyDollarIcon className="h-4 w-4 mr-1" />
                 Total Revenue
               </div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{stats.pendingOrders || 0}</div>
-              <div className="text-sm text-orange-800 flex items-center justify-center">
+            <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.pendingOrders || 0}</div>
+              <div className="text-sm text-orange-800 dark:text-orange-300 flex items-center justify-center">
                 <ClockIcon className="h-4 w-4 mr-1" />
                 Pending Orders
               </div>
@@ -340,34 +340,34 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Contact Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start space-x-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <EnvelopeIcon className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <EnvelopeIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium text-gray-900">{storeData.contact_email || "Not provided"}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Email</p>
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.contact_email || "Not provided"}</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <PhoneIcon className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <PhoneIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Phone</p>
-                  <p className="font-medium text-gray-900">{storeData.contact_phone || "Not provided"}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Phone</p>
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.contact_phone || "Not provided"}</p>
                 </div>
               </div>
               {storeData.website && (
                 <div className="flex items-start space-x-3">
-                  <div className="p-2 bg-purple-50 rounded-lg">
-                    <GlobeAltIcon className="h-5 w-5 text-purple-600" />
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <GlobeAltIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Website</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Website</p>
                     <a
                       href={storeData.website}
                       target="_blank"
@@ -383,49 +383,49 @@ const MyStore = ({ storeData, stats, refreshData }) => {
           </div>
 
           {/* Address Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Location</h3>
             <div className="flex items-start space-x-3">
-              <div className="p-2 bg-red-50 rounded-lg">
-                <MapPinIcon className="h-5 w-5 text-red-600" />
+              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <MapPinIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-gray-900 dark:text-slate-100">
                   {storeData.address
                     ? `${storeData.address}, ${storeData.city}, ${storeData.state}, ${storeData.country}`
                     : "No address provided"}
                 </p>
                 {storeData.postal_code && (
-                  <p className="text-sm text-gray-500 mt-1">Postal Code: {storeData.postal_code}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Postal Code: {storeData.postal_code}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Business Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Information</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Business Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Business Type</p>
-                <p className="font-medium text-gray-900">{storeData.business_type || "Not specified"}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">Business Type</p>
+                <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.business_type || "Not specified"}</p>
               </div>
               {storeData.business_registration_number && (
                 <div>
-                  <p className="text-sm text-gray-500">Registration Number</p>
-                  <p className="font-medium text-gray-900">{storeData.business_registration_number}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Registration Number</p>
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.business_registration_number}</p>
                 </div>
               )}
               {storeData.tax_id && (
                 <div>
-                  <p className="text-sm text-gray-500">Tax ID</p>
-                  <p className="font-medium text-gray-900">{storeData.tax_id}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Tax ID</p>
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.tax_id}</p>
                 </div>
               )}
               {storeData.account_number && (
                 <div>
-                  <p className="text-sm text-gray-500">Account Number</p>
-                  <p className="font-medium text-gray-900">{storeData.account_number}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Account Number</p>
+                  <p className="font-medium text-gray-900 dark:text-slate-100">{storeData.account_number}</p>
                 </div>
               )}
             </div>
@@ -435,8 +435,8 @@ const MyStore = ({ storeData, stats, refreshData }) => {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Store Rating */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Rating</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Customer Rating</h3>
             <div className="flex items-center justify-center">
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -446,14 +446,14 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                         key={star}
                         className={`h-6 w-6 ${star <= rating
                           ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
+                          : "text-gray-300 dark:text-slate-600"
                           }`}
                       />
                     ))}
                   </div>
-                  <span className="text-2xl font-bold text-gray-900">{rating.toFixed(1)}</span>
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
                 </div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                   Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
                 </p>
               </div>
@@ -462,20 +462,20 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
           {/* Social Media Links */}
           {(storeData.social_facebook || storeData.social_instagram || storeData.social_twitter) && (
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Social Media</h3>
               <div className="space-y-3">
                 {storeData.social_facebook && (
                   <a
                     href={storeData.social_facebook}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                    className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
                   >
                     <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                       <span className="text-white font-bold">f</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">Facebook</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-slate-200">Facebook</span>
                   </a>
                 )}
                 {storeData.social_instagram && (
@@ -483,12 +483,12 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                     href={storeData.social_instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors"
+                    className="flex items-center space-x-3 p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg hover:bg-pink-100 dark:hover:bg-pink-900/30 transition-colors"
                   >
                     <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
                       <span className="text-white font-bold">IG</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">Instagram</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-slate-200">Instagram</span>
                   </a>
                 )}
                 {storeData.social_twitter && (
@@ -496,12 +496,12 @@ const MyStore = ({ storeData, stats, refreshData }) => {
                     href={storeData.social_twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-3 p-3 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors"
+                    className="flex items-center space-x-3 p-3 bg-sky-50 dark:bg-sky-900/20 rounded-lg hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors"
                   >
                     <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
                       <span className="text-white font-bold">𝕏</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">Twitter</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-slate-200">Twitter</span>
                   </a>
                 )}
               </div>
@@ -543,7 +543,7 @@ const MyStore = ({ storeData, stats, refreshData }) => {
 
       {/* Error message */}
       {uploadError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-300 text-sm">
           {uploadError}
         </div>
       )}

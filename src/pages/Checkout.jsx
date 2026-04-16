@@ -117,50 +117,50 @@ export default function Checkout() {
   const [taxRate, setTaxRate] = useState(0.05);
   const [taxPct, setTaxPct] = useState(5.0);
 
-  // ── Location data — loaded from server (aggregated from seller delivery zones) ─
+// ── Location data — loaded from server (aggregated from seller delivery zones) ─
   const [locationStates, setLocationStates] = useState([]);
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // Full Myanmar state/city list — used as client-side fallback if the
-  // /checkout-locations API is unavailable or returns no data.
-  const FALLBACK_MYANMAR_STATES = [
-    { state: 'Yangon Region',             cities: ['Yangon', 'Thanlyin', 'Hlegu', 'Pathein', 'Tharkayta', 'Dagon Seikkan'] },
-    { state: 'Mandalay Region',           cities: ['Mandalay', 'Pyin Oo Lwin', 'Meikhtila', 'Kyaukse', 'Nyaung-U', 'Sagaing'] },
-    { state: 'Naypyidaw Union Territory', cities: ['Naypyidaw', 'Pyinmana', 'Lewe', 'Tatkon'] },
-    { state: 'Sagaing Region',            cities: ['Sagaing', 'Monywa', 'Shwebo', 'Katha', 'Kalay'] },
-    { state: 'Bago Region',               cities: ['Bago', 'Toungoo', 'Pyay', 'Taungoo', 'Thayarwady'] },
-    { state: 'Magway Region',             cities: ['Magway', 'Pakokku', 'Yenangyaung', 'Chauk', 'Minbu'] },
-    { state: 'Ayeyarwady Region',         cities: ['Pathein', 'Hinthada', 'Myaungmya', 'Maubin', 'Pyapon'] },
-    { state: 'Tanintharyi Region',        cities: ['Dawei', 'Myeik', 'Kawthaung', 'Bokpyin'] },
-    { state: 'Mon State',                 cities: ['Mawlamyine', 'Thaton', 'Ye', 'Kyaikto'] },
-    { state: 'Karen State',               cities: ['Hpa-an', 'Myawaddy', 'Kawkareik', 'Hlaingbwe'] },
-    { state: 'Karenni State',             cities: ['Loikaw', 'Demoso', 'Pruso'] },
-    { state: 'Chin State',                cities: ['Hakha', 'Falam', 'Mindat', 'Tedim'] },
-    { state: 'Kachin State',              cities: ['Myitkyina', 'Bhamo', 'Putao', 'Mogaung'] },
-    { state: 'Shan State',                cities: ['Taunggyi', 'Lashio', 'Kengtung', 'Loilem', 'Hsipaw'] },
-    { state: 'Rakhine State',             cities: ['Sittwe', 'Kyaukpyu', 'Thandwe', 'Maungdaw'] },
-  ];
-
-  // Fetch covered states/cities from seller delivery zones (once on mount).
-  // The API aggregates from seller zones and always returns data (with a fallback
-  // to the full Myanmar list). Client-side fallback handles network errors.
+  // Load Myanmar locations with i18n support
+  const { i18n } = useTranslation();
   useEffect(() => {
+    // Try API first (seller zones)
     api.get('/checkout-locations')
       .then(res => {
-        const states = res.data?.data?.states;
+        const states = res.data?.data?.states || [];
         if (res.data?.success && Array.isArray(states) && states.length > 0) {
           setLocationStates(states);
         } else {
-          // API succeeded but returned empty — use full list
-          setLocationStates(FALLBACK_MYANMAR_STATES);
+          // Fallback to local DB
+          const db = i18n.language.startsWith('my') 
+            ? require('../data/myanmar-locations-mm.json')
+            : require('../data/myanmar-locations-eng.json');
+          const stateMap = {};
+          db.flats.regions_states.forEach(region => {
+            const loc = db.locations.find(l => l.region_state === region);
+            if (loc) {
+              stateMap[loc.region_state] = loc.cities.map(c => c.city);
+            }
+          });
+          setLocationStates(Object.entries(stateMap).map(([state, cities]) => ({ state, cities })));
         }
       })
       .catch(() => {
-        // Network error — use full hardcoded list so checkout still works
-        setLocationStates(FALLBACK_MYANMAR_STATES);
+        // Network error - direct DB fallback
+        const db = i18n.language.startsWith('my') 
+          ? require('../data/myanmar-locations-mm.json')
+          : require('../data/myanmar-locations-eng.json');
+        const stateMap = {};
+        db.flats.regions_states.forEach(region => {
+          const loc = db.locations.find(l => l.region_state === region);
+          if (loc) {
+            stateMap[loc.region_state] = loc.cities.map(c => c.city);
+          }
+        });
+        setLocationStates(Object.entries(stateMap).map(([state, cities]) => ({ state, cities })));
       })
       .finally(() => setLocationLoading(false));
-  }, []);
+  }, [i18n.language]);
 
   // Fetch fees with location params — re-runs when address city/state changes
   // Debounced 700ms so fast typing doesn't hammer the API

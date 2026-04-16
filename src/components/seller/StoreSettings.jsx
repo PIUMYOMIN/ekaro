@@ -278,21 +278,21 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Store Settings</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Store Settings</h1>
+            <p className="text-gray-600 dark:text-slate-400 mt-1">
               Manage your store preferences, policies, and account settings
             </p>
           </div>
           <div className="flex items-center space-x-2 text-sm">
             <div className={`px-3 py-1 rounded-full font-medium ${
               storeData.status === 'active' || storeData.status === 'approved'
-                ? 'bg-green-100 text-green-800' 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                 : storeData.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-gray-100 text-gray-800'
+                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                : 'bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-slate-300'
             }`}>
               {storeData.status?.charAt(0).toUpperCase() + storeData.status?.slice(1)}
             </div>
@@ -305,8 +305,8 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
         <div
           className={`p-4 rounded-xl flex items-start space-x-3 ${
             message.type === "success"
-              ? "bg-green-50 border border-green-200 text-green-700"
-              : "bg-red-50 border border-red-200 text-red-700"
+              ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300"
+              : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
           }`}
         >
           {message.type === "success" ? (
@@ -317,7 +317,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
           <span className="flex-1">{message.text}</span>
           <button
             onClick={() => setMessage({ type: "", text: "" })}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
           >
             <ExclamationTriangleIcon className="h-4 w-4" />
           </button>
@@ -343,14 +343,14 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
         <div className="p-6">
           {/* General Settings */}
           <section id="general" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <CogIcon className="h-5 w-5 mr-2 text-green-600" />
               General Settings
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Store Currency
                 </label>
                 <select
@@ -367,7 +367,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Display Settings
                 </label>
                 <div className="space-y-2">
@@ -377,9 +377,9 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       name="show_sold_out"
                       checked={formData.show_sold_out}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300"
+                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300 dark:border-slate-600"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Show sold out products</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Show sold out products</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -387,9 +387,9 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       name="show_reviews"
                       checked={formData.show_reviews}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300"
+                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300 dark:border-slate-600"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Display product reviews</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Display product reviews</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -397,9 +397,9 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       name="show_inventory_count"
                       checked={formData.show_inventory_count}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300"
+                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500 border-gray-300 dark:border-slate-600"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Show inventory count</span>
+                    <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Show inventory count</span>
                   </label>
                 </div>
               </div>
@@ -408,7 +408,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
           {/* Store Policies */}
           <section id="policies" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <ShieldCheckIcon className="h-5 w-5 mr-2 text-green-600" />
               Store Policies
             </h2>
@@ -460,14 +460,14 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
           {/* Payment Settings */}
           <section id="payment" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <CreditCardIcon className="h-5 w-5 mr-2 text-green-600" />
               Payment Settings
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Commission Rate (%)
                 </label>
                 <input
@@ -480,13 +480,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                   step="0.1"
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-2">
                   Platform commission rate on your sales
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   Preferred Payment Method
                 </label>
                 <select
@@ -506,10 +506,10 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
               <div className="md:col-span-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                       Enable Auto Withdrawal
                     </label>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
                       Automatically withdraw funds when threshold is reached
                     </p>
                   </div>
@@ -521,13 +521,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       onChange={handleInputChange}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                   </label>
                 </div>
 
                 {formData.auto_withdrawal && (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                       Auto Withdrawal Threshold (MMK)
                     </label>
                     <input
@@ -537,7 +537,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       onChange={handleInputChange}
                       min="0"
                       step="1000"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                     />
                   </div>
                 )}
@@ -547,7 +547,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
           {/* Notification Settings */}
           <section id="notifications" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <BellIcon className="h-5 w-5 mr-2 text-green-600" />
               Notification Settings
             </h2>
@@ -555,10 +555,10 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Email Notifications
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Receive email alerts for orders and updates
                   </p>
                 </div>
@@ -570,16 +570,16 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Order Notifications
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Get notified when new orders are placed
                   </p>
                 </div>
@@ -591,16 +591,16 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Inventory Alerts
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Receive alerts when products are running low
                   </p>
                 </div>
@@ -612,7 +612,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
             </div>
@@ -620,7 +620,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
           {/* Security Settings */}
           <section id="security" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <KeyIcon className="h-5 w-5 mr-2 text-green-600" />
               Security Settings
             </h2>
@@ -628,10 +628,10 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Two-Factor Authentication
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Add an extra layer of security to your account
                   </p>
                 </div>
@@ -643,16 +643,16 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Login Notifications
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Get notified when someone logs into your account
                   </p>
                 </div>
@@ -664,17 +664,17 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
             </div>
 
             {/* Change Password Form */}
-            <div className="mt-8 border-t border-gray-200 pt-8">
-              <h3 className="text-md font-medium text-gray-900 mb-4">Change Password</h3>
+            <div className="mt-8 border-t border-gray-200 dark:border-slate-700 pt-8">
+              <h3 className="text-md font-medium text-gray-900 dark:text-white mb-4">Change Password</h3>
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Current Password
                   </label>
                   <input
@@ -727,7 +727,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
           {/* Account Settings */}
           <section id="account" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <UserCircleIcon className="h-5 w-5 mr-2 text-green-600" />
               Account Settings
             </h2>
@@ -736,10 +736,10 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
               {/* Store Status */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Store Active
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Enable or disable your store temporarily
                   </p>
                 </div>
@@ -751,17 +751,17 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
               {/* Vacation Mode */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
                     Vacation Mode
                   </label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
                     Pause orders and show vacation message
                   </p>
                 </div>
@@ -773,14 +773,14 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     onChange={handleInputChange}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-slate-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
               {formData.vacation_mode && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                       Vacation Message
                     </label>
                     <textarea
@@ -788,13 +788,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                       value={formData.vacation_message}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                       placeholder="Let customers know when you'll be back..."
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         Start Date
                       </label>
                       <input
@@ -802,11 +802,11 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                         name="vacation_start_date"
                         value={formData.vacation_start_date}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                         End Date
                       </label>
                       <input
@@ -814,7 +814,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                         name="vacation_end_date"
                         value={formData.vacation_end_date}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
                       />
                     </div>
                   </div>
@@ -822,13 +822,13 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
               )}
 
               {/* Delete Account */}
-              <div className="border-t border-gray-200 pt-8">
-                <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+              <div className="border-t border-gray-200 dark:border-slate-700 pt-8">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
                   <div className="flex items-start">
-                    <TrashIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3" />
+                    <TrashIcon className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-3" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-medium text-red-800">Delete Account</h3>
-                      <p className="text-sm text-red-700 mt-1 mb-4">
+                      <h3 className="text-lg font-medium text-red-800 dark:text-red-300">Delete Account</h3>
+                      <p className="text-sm text-red-700 dark:text-red-400 mt-1 mb-4">
                         This will permanently delete your seller account and all associated data. 
                         This action cannot be undone.
                       </p>
@@ -846,11 +846,11 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
           </section>
 
           {/* Save Button */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+              className="px-8 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-all duration-200 font-medium"
             >
               Cancel
             </button>
@@ -867,33 +867,33 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
       {/* Delete Account Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-gray-600/60 dark:bg-black/60 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border border-gray-200 dark:border-slate-700 w-full max-w-md shadow-lg rounded-md bg-white dark:bg-slate-800">
             <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <TrashIcon className="h-6 w-6 text-red-600" />
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/40">
+                <TrashIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="mt-3 text-center">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                   Delete Account
                 </h3>
                 <div className="mt-2">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-slate-400">
                     This will permanently delete your seller account, store, products, and all associated data.
                   </p>
-                  <p className="text-sm text-red-600 font-medium mt-2">
+                  <p className="text-sm text-red-600 dark:text-red-400 font-medium mt-2">
                     This action cannot be undone!
                   </p>
                 </div>
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Type <span className="font-bold">DELETE</span> to confirm
                   </label>
                   <input
                     type="text"
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    className="w-full px-4 py-3 border border-red-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    className="w-full px-4 py-3 border border-red-300 dark:border-red-700 rounded-xl bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     placeholder="Type DELETE here"
                   />
                 </div>
@@ -904,7 +904,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     setShowDeleteModal(false);
                     setDeleteConfirmText("");
                   }}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                 >
                   Cancel
                 </button>

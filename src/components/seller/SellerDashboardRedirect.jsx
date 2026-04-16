@@ -50,11 +50,11 @@ const SellerDashboardRedirect = () => {
     }, [user, navigate]);
 
     return (
-        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="flex items-center justify-center h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-900 dark:to-slate-950">
             <div className="text-center">
                 <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-green-500 mx-auto mb-4" />
-                <p className="text-gray-700 font-medium">Setting up your seller account...</p>
-                <p className="text-gray-500 text-sm mt-1">Please wait</p>
+                <p className="text-gray-700 dark:text-slate-200 font-medium">Setting up your seller account...</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">Please wait</p>
             </div>
         </div>
     );

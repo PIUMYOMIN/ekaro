@@ -98,10 +98,10 @@ const NotificationsPanel = () => {
 
       {/* ── Header ──────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           {unread > 0
             ? <BellAlertIcon className="h-5 w-5 text-green-600" />
-            : <BellIcon      className="h-5 w-5 text-gray-500" />}
+            : <BellIcon      className="h-5 w-5 text-gray-500 dark:text-slate-400" />}
           Notifications
           {unread > 0 && (
             <span className="bg-green-600 text-white text-xs font-semibold
@@ -113,16 +113,16 @@ const NotificationsPanel = () => {
         <div className="flex gap-2">
           {unread > 0 && (
             <button onClick={markAllRead}
-              className="text-xs text-green-700 hover:text-green-900 font-medium
-                         border border-green-200 hover:border-green-400
+              className="text-xs text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 font-medium
+                         border border-green-200 dark:border-green-700 hover:border-green-400
                          px-2.5 py-1 rounded-lg transition-colors">
               Mark all read
             </button>
           )}
           {items.length > 0 && (
             <button onClick={clearAll}
-              className="text-xs text-red-500 hover:text-red-700 font-medium
-                         border border-red-200 hover:border-red-400
+              className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium
+                         border border-red-200 dark:border-red-700 hover:border-red-400
                          px-2.5 py-1 rounded-lg transition-colors">
               Clear all
             </button>
@@ -131,67 +131,67 @@ const NotificationsPanel = () => {
       </div>
 
       {/* ── Filter tabs ─────────────────────────────────────── */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 dark:bg-slate-700 p-1 rounded-xl w-fit">
         {['all', 'unread'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors
               ${filter === f
-                ? 'bg-white text-green-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'}`}>
+                ? 'bg-white dark:bg-slate-600 text-green-700 dark:text-green-400 shadow-sm'
+                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>
             {f === 'all' ? 'All' : `Unread${unread > 0 ? ` (${unread})` : ''}`}
           </button>
         ))}
       </div>
 
       {/* ── List ────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="space-y-0 divide-y divide-gray-50">
+          <div className="space-y-0 divide-y divide-gray-50 dark:divide-slate-700">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-start gap-3 p-4 animate-pulse">
-                <div className="h-8 w-8 bg-gray-200 rounded-full flex-shrink-0" />
+                <div className="h-8 w-8 bg-gray-200 dark:bg-slate-700 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-gray-400 dark:text-slate-500">
             <BellIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">
               {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-slate-700">
             {visible.map(n => {
               const data    = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
               const isUnread = !n.read_at;
               return (
                 <div key={n.id}
                   className={`flex items-start gap-3 p-4 transition-colors
-                    ${isUnread ? 'bg-green-50/60 hover:bg-green-50' : 'hover:bg-gray-50'}`}>
+                    ${isUnread ? 'bg-green-50/60 dark:bg-green-900/10 hover:bg-green-50 dark:hover:bg-green-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'}`}>
 
                   {/* icon */}
                   <div className={`mt-0.5 p-1.5 rounded-full flex-shrink-0
-                    ${isUnread ? 'bg-white shadow-sm' : 'bg-gray-100'}`}>
+                    ${isUnread ? 'bg-white dark:bg-slate-700 shadow-sm' : 'bg-gray-100 dark:bg-slate-700'}`}>
                     {typeIcon(data?.type)}
                   </div>
 
                   {/* content */}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm leading-snug
-                      ${isUnread ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                      ${isUnread ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-slate-400'}`}>
                       {data?.message || 'New notification'}
                     </p>
                     {data?.order_number && (
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                         Order #{data.order_number}
                       </p>
                     )}
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                       {relativeTime(n.created_at)}
                     </p>
                   </div>
@@ -201,15 +201,15 @@ const NotificationsPanel = () => {
                     {isUnread && (
                       <button onClick={() => markRead(n.id)}
                         title="Mark as read"
-                        className="p-1.5 text-green-500 hover:text-green-700
-                                   hover:bg-green-100 rounded-lg transition-colors">
+                        className="p-1.5 text-green-500 hover:text-green-700 dark:hover:text-green-400
+                                   hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors">
                         <CheckCircleIcon className="h-4 w-4" />
                       </button>
                     )}
                     <button onClick={() => remove(n.id)}
                       title="Remove"
-                      className="p-1.5 text-gray-300 hover:text-red-500
-                                 hover:bg-red-50 rounded-lg transition-colors">
+                      className="p-1.5 text-gray-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400
+                                 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>
@@ -228,7 +228,7 @@ const NotificationsPanel = () => {
                 <button
                   onClick={() => fetchNotifications(false)}
                   disabled={loadingMore}
-                  className="text-sm text-green-700 font-medium hover:text-green-900
+                  className="text-sm text-green-700 dark:text-green-400 font-medium hover:text-green-900 dark:hover:text-green-300
                              disabled:opacity-50">
                   {loadingMore ? 'Loading…' : 'Load more'}
                 </button>
@@ -261,8 +261,8 @@ export const NotificationBell = ({ onClick }) => {
 
   return (
     <button onClick={onClick}
-      className="relative p-2 text-gray-500 hover:text-gray-700
-                 hover:bg-gray-100 rounded-xl transition-colors">
+      className="relative p-2 text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200
+                 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors">
       {count > 0
         ? <BellAlertIcon className="h-5 w-5 text-green-600" />
         : <BellIcon      className="h-5 w-5" />}

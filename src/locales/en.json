@@ -144,7 +144,14 @@
     "orders": "Orders",
     "customers": "Customers",
     "payments": "Payments",
-    "settings": "Settings"
+    "settings": "Settings",
+    "theme": {
+      "title": "Appearance",
+      "description": "Customize how the dashboard looks for you",
+      "light": "Light Mode",
+      "dark": "Dark Mode",
+      "system": "System Preference"
+    }
   },
   "checkout": {
     "shipping_info": "Shipping Information",

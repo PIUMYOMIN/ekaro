@@ -416,7 +416,7 @@ const SellerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center">
+      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-slate-400">Loading your seller dashboard...</p>
@@ -428,7 +428,7 @@ const SellerDashboard = () => {
   // Onboarding incomplete screen (unchanged)
   if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
     return (
-      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 items-center justify-center p-4">
+      <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 items-center justify-center p-4">
         <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <BuildingStorefrontIcon className="h-10 w-10 text-white" />
@@ -523,12 +523,12 @@ const SellerDashboard = () => {
             {/* Setup Notification */}
             {showSetupNotification && (
               <div className="mx-4 mb-4">
-                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50">
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50">
                   <div className="flex items-start">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" />
+                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 dark:text-amber-400 mt-0.5 mr-2 flex-shrink-0" />
                     <div className="flex-1">
-                      <h4 className="text-sm font-medium text-amber-800 mb-1">{setupNotificationData.title}</h4>
-                      <p className="text-xs text-amber-700 mb-2">{setupNotificationData.message}</p>
+                      <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">{setupNotificationData.title}</h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">{setupNotificationData.message}</p>
                       <button onClick={handleStartSetup} className="w-full text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center">
                         Complete Setup <ArrowRightIcon className="h-3 w-3 ml-1" />
                       </button>
