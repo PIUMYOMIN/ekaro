@@ -23,7 +23,7 @@ const SellerCard = ({ seller }) => {
           {[...Array(5)].map((_, i) => (
             <StarIcon key={i} className="h-3 w-3 sm:h-4 sm:w-4 text-gray-300" />
           ))}
-          <span className="ml-1 text-xs sm:text-sm text-gray-500">No ratings</span>
+                  <span className="ml-1 text-xs sm:text-sm text-gray-500 dark:text-slate-400">No ratings</span>
         </div>
       );
     }
@@ -47,7 +47,7 @@ const SellerCard = ({ seller }) => {
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100"
+className="bg-white dark:bg-slate-800 rounded-lg shadow-md dark:shadow-slate-900/50 overflow-hidden hover:shadow-lg dark:hover:shadow-slate-900/75 transition-shadow duration-300 border border-gray-100 dark:border-slate-700"
       whileHover={{ y: -5 }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -62,7 +62,7 @@ const SellerCard = ({ seller }) => {
                 <img
                   src={storeLogo}
                   alt={storeName}
-                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-gray-200"
+className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-gray-200 dark:border-slate-600"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     const fallback = e.target.parentElement?.nextElementSibling;
@@ -73,13 +73,13 @@ const SellerCard = ({ seller }) => {
             ) : null}
             
             <div 
-              className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-dashed border-gray-300 rounded-full w-12 h-12 sm:w-16 sm:h-16 items-center justify-center`}
+              className={`${storeLogo ? 'hidden' : 'flex'} relative bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-600 border-2 border-dashed border-gray-300 dark:border-slate-500 rounded-full w-12 h-12 sm:w-16 sm:h-16 items-center justify-center`}
             >
-              <span className="text-gray-500 font-semibold text-base sm:text-lg">
+              <span className="text-gray-500 dark:text-slate-400 font-semibold text-base sm:text-lg">
                 {storeName.charAt(0).toUpperCase()}
               </span>
               {isVerified && (
-                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 rounded-full p-0.5">
                   <CheckBadgeIcon className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
                 </div>
               )}
@@ -89,17 +89,17 @@ const SellerCard = ({ seller }) => {
           {/* Seller Info */}
           <div className="flex-1 min-w-0">
             <Link to={`/sellers/${slug}`} className="block">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 hover:text-green-700 transition-colors duration-200 line-clamp-1">
+<h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-slate-100 hover:text-green-700 dark:hover:text-green-400 transition-colors duration-200 line-clamp-1">
                 {storeName}
               </h3>
             </Link>
             
             <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-0.5 sm:gap-1 mt-1">
-              <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-[120px] sm:max-w-none">
+                <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 truncate max-w-[120px] sm:max-w-none">
                 {businessType}
               </span>
               {city && (
-                <span className="text-xs text-gray-500 truncate">
+              <span className="text-xs text-gray-500 dark:text-slate-400 truncate">
                   {city}
                 </span>
               )}
@@ -109,15 +109,15 @@ const SellerCard = ({ seller }) => {
               <div className="flex items-center">
                 {renderStars(displayRating)}
                 {displayRating > 0 && (
-                  <span className="ml-1 text-xs sm:text-sm font-medium text-gray-900">
+                  <span className="ml-1 text-xs sm:text-sm font-medium text-gray-900 dark:text-slate-100">
                     {displayRating.toFixed(1)}
                   </span>
                 )}
               </div>
               {reviewsCount > 0 && (
                 <>
-                  <span className="mx-1 sm:mx-2 text-gray-300">•</span>
-                  <span className="text-xs sm:text-sm text-gray-500">
+                  <span className="mx-1 sm:mx-2 text-gray-300 dark:text-slate-600">•</span>
+                  <span className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
                     {reviewsCount}
                   </span>
                 </>
@@ -128,13 +128,13 @@ const SellerCard = ({ seller }) => {
 
         {/* Stats */}
         <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2">
-          <div className="bg-green-50 p-1.5 sm:p-2 rounded-lg text-center border border-green-100">
-            <p className="text-base sm:text-lg font-semibold text-green-700">{productsCount}</p>
-            <p className="text-xs text-green-600">Products</p>
+          <div className="bg-green-50 dark:bg-green-900/30 p-1.5 sm:p-2 rounded-lg text-center border border-green-100 dark:border-green-800">
+            <p className="text-base sm:text-lg font-semibold text-green-700 dark:text-green-400">{productsCount}</p>
+            <p className="text-xs text-green-600 dark:text-green-400">Products</p>
           </div>
-          <div className="bg-blue-50 p-1.5 sm:p-2 rounded-lg text-center border border-blue-100">
-            <p className="text-base sm:text-lg font-semibold text-blue-700">{reviewsCount}</p>
-            <p className="text-xs text-blue-600">Reviews</p>
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-1.5 sm:p-2 rounded-lg text-center border border-blue-100 dark:border-blue-800">
+            <p className="text-base sm:text-lg font-semibold text-blue-700 dark:text-blue-400">{reviewsCount}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">Reviews</p>
           </div>
         </div>
 

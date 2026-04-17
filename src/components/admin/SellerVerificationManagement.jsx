@@ -139,12 +139,12 @@ const SellerVerificationManagement = () => {
 
   const getStatusBadgeColor = (status) => {
     const map = {
-      pending:      "bg-yellow-100 text-yellow-800 border-yellow-300",
-      under_review: "bg-blue-100 text-blue-800 border-blue-300",
-      verified:     "bg-green-100 text-green-800 border-green-300",
-      rejected:     "bg-red-100 text-red-800 border-red-300",
+      pending:      "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700",
+      under_review: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700",
+      verified:     "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700",
+      rejected:     "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700",
     };
-    return map[status] ?? "bg-gray-100 text-gray-800 border-gray-300";
+    return map[status] ?? "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300 border-gray-300 dark:border-slate-600";
   };
 
   const getDocumentStatus = (seller) => {
@@ -170,13 +170,13 @@ const SellerVerificationManagement = () => {
               onError={(e) => { e.target.style.display = "none"; }}
             />
           ) : (
-            <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3 flex-shrink-0">
-              <BuildingStorefrontIcon className="h-6 w-6 text-gray-400" />
+            <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-slate-700 flex items-center justify-center mr-3 flex-shrink-0">
+              <BuildingStorefrontIcon className="h-6 w-6 text-gray-400 dark:text-slate-500" />
             </div>
           )}
           <div>
-            <div className="font-medium text-gray-900">{row.store_name}</div>
-            <div className="text-xs text-gray-500">ID: {row.store_id || "N/A"}</div>
+            <div className="font-medium text-gray-900 dark:text-slate-100">{row.store_name}</div>
+            <div className="text-xs text-gray-500 dark:text-slate-400">ID: {row.store_id || "N/A"}</div>
           </div>
         </div>
       ),
@@ -187,16 +187,16 @@ const SellerVerificationManagement = () => {
       cell: (row) => (
         <div className="space-y-1 text-sm">
           <div className="flex items-center gap-1">
-            <UserCircleIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-            <span>{row.user?.name || "Unknown"}</span>
+            <UserCircleIcon className="h-4 w-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+            <span className="dark:text-slate-200">{row.user?.name || "Unknown"}</span>
           </div>
-          <div className="flex items-center gap-1 text-gray-600">
-            <EnvelopeIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-1 text-gray-600 dark:text-slate-400">
+            <EnvelopeIcon className="h-4 w-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
             <span className="truncate max-w-[180px]">{row.contact_email}</span>
           </div>
           <div className="flex items-center gap-1">
-            <BuildingStorefrontIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-            <span>{row.business_type || "Not specified"}</span>
+            <BuildingStorefrontIcon className="h-4 w-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+            <span className="dark:text-slate-200">{row.business_type || "Not specified"}</span>
           </div>
         </div>
       ),
@@ -207,8 +207,8 @@ const SellerVerificationManagement = () => {
       cell: (row) => (
         <div className="space-y-1">
           <div className="flex items-center gap-1 text-sm">
-            <DocumentIcon className="h-4 w-4 text-gray-400" />
-            <span>{getDocumentStatus(row)}</span>
+            <DocumentIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
+            <span className="dark:text-slate-200">{getDocumentStatus(row)}</span>
           </div>
           {row.document_status && (
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${getStatusBadgeColor(row.document_status)}`}>
@@ -224,10 +224,10 @@ const SellerVerificationManagement = () => {
       cell: (row) => (
         <div className="text-sm">
           <div className="flex items-center gap-1">
-            <ClockIcon className="h-4 w-4 text-gray-400" />
-            <span>{new Date(row.documents_submitted_at || row.created_at).toLocaleDateString()}</span>
+            <ClockIcon className="h-4 w-4 text-gray-400 dark:text-slate-500" />
+            <span className="dark:text-slate-200">{new Date(row.documents_submitted_at || row.created_at).toLocaleDateString()}</span>
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">
+          <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
             {row.documents_submitted ? "Documents submitted" : "No submission"}
           </div>
         </div>
@@ -241,7 +241,7 @@ const SellerVerificationManagement = () => {
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusBadgeColor(row.verification_status)}`}>
             {row.verification_status}
           </span>
-          <div className="text-xs text-gray-500">Profile: {row.status}</div>
+          <div className="text-xs text-gray-500 dark:text-slate-400">Profile: {row.status}</div>
         </div>
       ),
     },
@@ -254,13 +254,13 @@ const SellerVerificationManagement = () => {
             href={`/sellers/${row.store_slug || row.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-900 text-sm flex items-center gap-1"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-sm flex items-center gap-1"
           >
             <EyeIcon className="h-4 w-4" /> View
           </a>
           <button
             onClick={() => setSelectedSeller(row)}
-            className="text-green-600 hover:text-green-900 text-sm flex items-center gap-1"
+            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 text-sm flex items-center gap-1"
           >
             <ShieldCheckIcon className="h-4 w-4" /> Review
           </button>
@@ -289,22 +289,22 @@ const SellerVerificationManagement = () => {
       {/* ── Confirm modal — replaces window.confirm ── */}
       {confirmModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
             {confirmModal === "approve" ? (
               <>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Verification</h3>
-                <p className="text-sm text-gray-600 mb-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Confirm Verification</h3>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mb-1">
                   Verify <strong>{selectedSeller?.store_name}</strong> as{" "}
                   <strong>{verificationData.verification_level}</strong>?
                 </p>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">
                   The seller will receive a verified badge and their store will become active.
                 </p>
               </>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Rejection</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Confirm Rejection</h3>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
                   Reject verification for <strong>{selectedSeller?.store_name}</strong>?
                   The seller will be notified with your reason.
                 </p>
@@ -312,7 +312,7 @@ const SellerVerificationManagement = () => {
             )}
 
             {actionError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
                 {actionError}
               </div>
             )}
@@ -321,7 +321,7 @@ const SellerVerificationManagement = () => {
               <button
                 onClick={() => { setConfirmModal(null); setActionError(null); }}
                 disabled={actionLoading}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -347,7 +347,7 @@ const SellerVerificationManagement = () => {
 
       {/* ── Global success / error banners ── */}
       {actionSuccess && (
-        <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800">
+        <div className="flex items-center gap-2 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-800 dark:text-green-300">
           <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />
           {actionSuccess}
           <button onClick={() => setActionSuccess(null)} className="ml-auto">
@@ -364,34 +364,34 @@ const SellerVerificationManagement = () => {
           { label: "Verified",        value: stats.verified,    color: "text-green-600"  },
           { label: "Rejected",        value: stats.rejected,    color: "text-red-600"    },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-lg shadow p-4">
+          <div key={s.label} className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-sm text-gray-500 mt-0.5">{s.label}</div>
+            <div className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex flex-wrap gap-3 items-center justify-between">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-3 items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Seller Verification Queue</h3>
-            <p className="mt-0.5 text-sm text-gray-500">Review and verify seller documents</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">Seller Verification Queue</h3>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-slate-400">Review and verify seller documents</p>
           </div>
           <div className="flex gap-3">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search sellers..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 text-sm w-56"
+                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-green-500 text-sm w-56 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
               onClick={fetchPendingSellers}
-              className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm gap-1.5"
+              className="flex items-center px-3 py-2 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 text-sm gap-1.5"
             >
               <ArrowPathIcon className="h-4 w-4" /> Refresh
             </button>
@@ -405,13 +405,13 @@ const SellerVerificationManagement = () => {
         )}
 
         {error && !loading && (
-          <div className="p-4 m-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 m-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-start gap-2">
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-red-800">Error loading data</p>
-                <p className="text-sm text-red-600 mt-0.5">{error}</p>
-                <button onClick={fetchPendingSellers} className="mt-2 text-sm text-red-700 underline">
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">Error loading data</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">{error}</p>
+                <button onClick={fetchPendingSellers} className="mt-2 text-sm text-red-700 dark:text-red-400 underline">
                   Try again
                 </button>
               </div>
@@ -424,8 +424,8 @@ const SellerVerificationManagement = () => {
         )}
 
         {!loading && !error && filteredSellers.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <ShieldCheckIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <div className="text-center py-12 text-gray-500 dark:text-slate-400">
+            <ShieldCheckIcon className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-slate-600" />
             <p className="font-medium">No sellers in verification queue</p>
             <p className="text-sm mt-1">Sellers who submit documents will appear here</p>
           </div>
@@ -434,21 +434,21 @@ const SellerVerificationManagement = () => {
 
       {/* ── Review Modal ── */}
       {selectedSeller && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-black/60 overflow-y-auto z-50">
           <div className="relative top-10 mx-auto p-5 w-full max-w-4xl">
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl overflow-hidden">
 
               {/* Modal header */}
-              <div className="flex justify-between items-start px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-start px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                     Review: {selectedSeller.store_name}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-0.5">Store ID: {selectedSeller.store_id}</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Store ID: {selectedSeller.store_id}</p>
                 </div>
                 <button
                   onClick={() => { setSelectedSeller(null); setActionError(null); }}
-                  className="text-gray-400 hover:text-gray-600 mt-0.5"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 mt-0.5"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -457,7 +457,7 @@ const SellerVerificationManagement = () => {
               <div className="px-6 py-4">
                 {/* Inline error */}
                 {actionError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex gap-2">
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 flex gap-2">
                     <ExclamationTriangleIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     {actionError}
                   </div>
@@ -466,7 +466,7 @@ const SellerVerificationManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   {/* Seller Info */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Seller Information</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-slate-100 mb-3">Seller Information</h4>
                     <div className="space-y-3 text-sm">
                       {[
                         [UserCircleIcon,       selectedSeller.user?.name || "Unknown",           "Owner"],
@@ -476,10 +476,10 @@ const SellerVerificationManagement = () => {
                         [MapPinIcon,           `${selectedSeller.address || "—"}, ${selectedSeller.city || "—"}`, `${selectedSeller.state || ""} ${selectedSeller.country || "Myanmar"}`],
                       ].map(([Icon, value, label], i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <Icon className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <Icon className="h-4 w-4 text-gray-400 dark:text-slate-500 mt-0.5 flex-shrink-0" />
                           <div>
-                            <div className="text-gray-900">{value}</div>
-                            <div className="text-xs text-gray-500">{label}</div>
+                            <div className="text-gray-900 dark:text-slate-100">{value}</div>
+                            <div className="text-xs text-gray-500 dark:text-slate-400">{label}</div>
                           </div>
                         </div>
                       ))}
@@ -488,16 +488,16 @@ const SellerVerificationManagement = () => {
 
                   {/* Verification form */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Verification Settings</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-slate-100 mb-3">Verification Settings</h4>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                           Verification Level
                         </label>
                         <select
                           value={verificationData.verification_level}
                           onChange={(e) => setVerificationData({ ...verificationData, verification_level: e.target.value })}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500"
+                          className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                         >
                           <option value="basic">Basic</option>
                           <option value="verified">Verified</option>
@@ -506,13 +506,13 @@ const SellerVerificationManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                           Badge Type
                         </label>
                         <select
                           value={verificationData.badge_type}
                           onChange={(e) => setVerificationData({ ...verificationData, badge_type: e.target.value })}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500"
+                          className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                         >
                           <option value="verified">Verified</option>
                           <option value="premium">Premium</option>
@@ -522,27 +522,27 @@ const SellerVerificationManagement = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                           Approval Notes
                         </label>
                         <textarea
                           value={verificationData.notes}
                           onChange={(e) => setVerificationData({ ...verificationData, notes: e.target.value })}
                           rows={2}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500"
+                          className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
                           placeholder="Optional notes..."
                         />
                       </div>
 
-                      <div className="pt-3 border-t border-gray-200">
-                        <label className="block text-sm font-medium text-red-600 mb-1">
-                          Rejection Reason <span className="text-gray-500 font-normal">(required to reject)</span>
+                      <div className="pt-3 border-t border-gray-200 dark:border-slate-700">
+                        <label className="block text-sm font-medium text-red-600 dark:text-red-400 mb-1">
+                          Rejection Reason <span className="text-gray-500 dark:text-slate-400 font-normal">(required to reject)</span>
                         </label>
                         <textarea
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
                           rows={2}
-                          className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400"
+                          className="w-full border border-red-200 dark:border-red-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500"
                           placeholder="Explain why this seller is rejected..."
                         />
                       </div>
@@ -551,8 +551,8 @@ const SellerVerificationManagement = () => {
                 </div>
 
                 {/* Documents */}
-                <div className="mb-6 pt-4 border-t border-gray-200">
-                  <h4 className="font-medium text-gray-900 mb-3">Uploaded Documents</h4>
+                <div className="mb-6 pt-4 border-t border-gray-200 dark:border-slate-700">
+                  <h4 className="font-medium text-gray-900 dark:text-slate-100 mb-3">Uploaded Documents</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                       ["identity_document_front",        "ID Front",    "blue"],
@@ -562,8 +562,8 @@ const SellerVerificationManagement = () => {
                     ].map(([field, label, color]) => {
                       const url = docUrl(selectedSeller[field]);
                       const colorClasses = color === 'blue'
-                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        : 'bg-green-50 text-green-700 hover:bg-green-100';
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                        : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50';
                       return url ? (
                         <a
                           key={field}
@@ -578,7 +578,7 @@ const SellerVerificationManagement = () => {
                       ) : (
                         <div
                           key={field}
-                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 text-gray-400 rounded-lg text-sm"
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-lg text-sm"
                         >
                           <DocumentIcon className="h-4 w-4 flex-shrink-0" />
                           {label} — not uploaded
@@ -590,12 +590,12 @@ const SellerVerificationManagement = () => {
               </div>
 
               {/* Modal footer actions */}
-              <div className="flex justify-between items-center px-6 py-4 bg-gray-50 border-t border-gray-200">
+              <div className="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-700">
                 <a
                   href={`/sellers/${selectedSeller.store_slug || selectedSeller.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white text-sm"
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-sm"
                 >
                   <EyeIcon className="h-4 w-4" /> View Store
                 </a>

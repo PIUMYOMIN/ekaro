@@ -27,7 +27,7 @@ const OrderTrackingPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
@@ -35,9 +35,9 @@ const OrderTrackingPage = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-4">Order Not Found</h2>
           <button
             onClick={() => navigate('/buyer')}
             className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700"
@@ -50,7 +50,7 @@ const OrderTrackingPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -60,8 +60,8 @@ const OrderTrackingPage = () => {
           >
             ← Back to Dashboard
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Track Your Order</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Track Your Order</h1>
+          <p className="text-gray-600 dark:text-slate-400 mt-2">
             Order #{order.order_number} • Placed on {new Date(order.created_at).toLocaleDateString()}
           </p>
         </div>

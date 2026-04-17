@@ -33,6 +33,8 @@ import HelpCenter from "./pages/HelpCenter";
 import ReturnPolicy from './pages/ReturnPolicy';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SellerGuidelines from "./pages/SellerGuidelines";
+import FAQ from "./pages/FAQ";
+import ShippingInfo from "./pages/ShippingInfo";
 import Contact from "./pages/Contact";
 
 // Auth Pages
@@ -142,6 +144,8 @@ function App() {
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/return-policy" element={<ReturnPolicy />} />
                         <Route path="/seller-guidelines" element={<SellerGuidelines />} />
+                        <Route path="/faq" element={<FAQ />} />
+                        <Route path="/shipping" element={<ShippingInfo />} />
                         <Route path="/contact" element={<Contact />} />
                         <Route path="/page-not-found" element={<Error />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

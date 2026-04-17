@@ -39,36 +39,36 @@ const Legal = () => {
     <>
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-8 text-center dark:text-slate-100">
           {t("legal.title")}
         </h1>
-        <p className="text-center text-gray-600 mb-8">{t("legal.subtitle")}</p>
+        <p className="text-center text-gray-600 dark:text-slate-400 mb-8">{t("legal.subtitle")}</p>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8">
           {legalSections.map((section, index) => (
             <div key={index} className="mb-8 last:mb-0">
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-bold mb-4 dark:text-slate-100">
                 {section.title}
               </h2>
-              <p className="text-gray-700 mb-6">
+              <p className="text-gray-700 dark:text-slate-300 mb-6">
                 {section.content}
               </p>
               {index < legalSections.length - 1 && (
-                <hr className="my-6" />
+                <hr className="my-6 dark:border-slate-700" />
               )}
             </div>
           ))}
         </div>
 
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4">
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold mb-4 dark:text-slate-100">
             {t("legal.contact.title")}
           </h2>
-          <p className="text-gray-700 mb-4">
+          <p className="text-gray-700 dark:text-slate-300 mb-4">
             {t("legal.contact.description")}
           </p>
-          <p className="text-gray-700">
-            <strong>{t("legal.contact.emailLabel")}</strong> <a href="mailto:contact@pyonea.com">contact@pyonea.com</a>
+          <p className="text-gray-700 dark:text-slate-300">
+            <strong>{t("legal.contact.emailLabel")}</strong> <a href="mailto:contact@pyonea.com" className="text-blue-600 dark:text-blue-400 hover:underline">contact@pyonea.com</a>
             <br />
             <strong>{t("legal.contact.addressLabel")}</strong>{" "}
             {t("legal.contact.address")}

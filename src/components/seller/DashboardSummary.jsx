@@ -27,9 +27,9 @@ const fmtMMK = (n) => `${fmtK(n)} MMK`;
 
 // ── Tier config ────────────────────────────────────────────────────────────────
 const TIER_CONFIG = {
-  bronze: { label: "Bronze", rate: "6%", next: "Silver", threshold: 50,  color: "from-amber-600 to-amber-500",   bg: "bg-amber-50",  border: "border-amber-200", text: "text-amber-700", emoji: "🥉" },
-  silver: { label: "Silver", rate: "5%", next: "Gold",   threshold: 500, color: "from-slate-400 to-slate-500",   bg: "bg-slate-50",  border: "border-slate-200", text: "text-slate-700", emoji: "🥈" },
-  gold:   { label: "Gold",   rate: "4%", next: null,     threshold: null, color: "from-yellow-500 to-yellow-400", bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", emoji: "🥇" },
+  bronze: { label: "Bronze", rate: "6%", next: "Silver", threshold: 50,  color: "from-amber-600 to-amber-500",   bg: "bg-amber-50 dark:bg-amber-900/20",  border: "border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-300", emoji: "🥉" },
+  silver: { label: "Silver", rate: "5%", next: "Gold",   threshold: 500, color: "from-slate-400 to-slate-500",   bg: "bg-slate-50 dark:bg-slate-700/30",  border: "border-slate-200 dark:border-slate-600", text: "text-slate-700 dark:text-slate-300", emoji: "🥈" },
+  gold:   { label: "Gold",   rate: "4%", next: null,     threshold: null, color: "from-yellow-500 to-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-200 dark:border-yellow-800", text: "text-yellow-700 dark:text-yellow-300", emoji: "🥇" },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -47,22 +47,22 @@ const TierCard = ({ storeData }) => {
     <div className={`rounded-xl border ${cfg.border} ${cfg.bg} p-4 sm:p-5`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Your Tier</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">Your Tier</p>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-2xl">{cfg.emoji}</span>
             <span className={`text-xl font-bold ${cfg.text}`}>{cfg.label}</span>
           </div>
-          {promoted && <p className="text-xs text-gray-400 mt-0.5">Since {promoted}</p>}
+          {promoted && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Since {promoted}</p>}
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-xs font-medium text-gray-500">Commission Rate</p>
+          <p className="text-xs font-medium text-gray-500 dark:text-slate-400">Commission Rate</p>
           <p className={`text-2xl font-bold ${cfg.text} mt-1`}>{cfg.rate}</p>
-          <p className="text-xs text-gray-400">per order</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500">per order</p>
         </div>
       </div>
       {cfg.threshold ? (
         <div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400 mb-1.5">
             <span>{completed} completed orders</span>
             <span>{cfg.threshold} for {cfg.next}</span>
           </div>
@@ -70,7 +70,7 @@ const TierCard = ({ storeData }) => {
             <div className={`h-2 rounded-full bg-gradient-to-r ${cfg.color} transition-all duration-500`}
               style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-xs text-gray-400 mt-1.5">
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">
             {cfg.threshold - completed > 0
               ? `${cfg.threshold - completed} more orders to reach ${cfg.next}`
               : `Ready to be promoted to ${cfg.next}!`}
@@ -88,24 +88,24 @@ const TierCard = ({ storeData }) => {
 
 const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent }) => {
   const accents = {
-    green:  "border-l-4 border-green-400 bg-green-50",
-    blue:   "border-l-4 border-blue-400 bg-blue-50",
-    amber:  "border-l-4 border-amber-400 bg-amber-50",
-    red:    "border-l-4 border-red-400 bg-red-50",
-    purple: "border-l-4 border-purple-400 bg-purple-50",
-    teal:   "border-l-4 border-teal-400 bg-teal-50",
-    gray:   "border-l-4 border-gray-300 bg-gray-50",
+    green:  "border-l-4 border-green-400 bg-green-50 dark:bg-green-900/20",
+    blue:   "border-l-4 border-blue-400 bg-blue-50 dark:bg-blue-900/20",
+    amber:  "border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-900/20",
+    red:    "border-l-4 border-red-400 bg-red-50 dark:bg-red-900/20",
+    purple: "border-l-4 border-purple-400 bg-purple-50 dark:bg-purple-900/20",
+    teal:   "border-l-4 border-teal-400 bg-teal-50 dark:bg-teal-900/20",
+    gray:   "border-l-4 border-gray-300 bg-gray-50 dark:bg-slate-700/30",
   };
   return (
     <div className={`rounded-xl p-4 shadow-sm ${accents[accent] ?? accents.gray}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{label}</p>
-          <p className="text-xl font-bold text-gray-900 mt-1 break-all">{value}</p>
-          {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+          <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide truncate">{label}</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1 break-all">{value}</p>
+          {sub && <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">{sub}</p>}
           {change !== undefined && (
             <div className={`flex items-center gap-0.5 mt-1.5 text-xs font-semibold ${
-              changeType === "positive" ? "text-green-600" : changeType === "negative" ? "text-red-500" : "text-gray-400"
+              changeType === "positive" ? "text-green-600" : changeType === "negative" ? "text-red-500" : "text-gray-400 dark:text-slate-500"
             }`}>
               {changeType === "positive"
                 ? <ArrowUpIcon className="h-3 w-3" />
@@ -116,7 +116,7 @@ const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent })
             </div>
           )}
         </div>
-        <Icon className="h-7 w-7 text-gray-200 flex-shrink-0 mt-1" />
+        <Icon className="h-7 w-7 text-gray-200 dark:text-slate-600 flex-shrink-0 mt-1" />
       </div>
     </div>
   );
@@ -135,10 +135,10 @@ const SetupChecklist = ({ storeData, onSetupClick }) => {
   if (done === total) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="font-semibold text-blue-900">Store Setup Checklist</h3>
-        <span className="text-sm text-blue-700">{done}/{total} completed</span>
+        <h3 className="font-semibold text-blue-900 dark:text-blue-300">Store Setup Checklist</h3>
+        <span className="text-sm text-blue-700 dark:text-blue-400">{done}/{total} completed</span>
       </div>
       <div className="space-y-3">
         {items.map(item => (
@@ -147,11 +147,11 @@ const SetupChecklist = ({ storeData, onSetupClick }) => {
               {item.done
                 ? <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
                 : <div className="w-5 h-5 rounded-full border-2 border-blue-300 mr-2" />}
-              <span className={`text-sm ${item.done ? "text-gray-500" : "text-gray-900"}`}>{item.label}</span>
+              <span className={`text-sm ${item.done ? "text-gray-500 dark:text-slate-400" : "text-gray-900 dark:text-slate-100"}`}>{item.label}</span>
             </div>
             {!item.done && item.id !== 5 && (
               <button onClick={() => onSetupClick?.(item.step)}
-                className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded-lg">
+                className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 px-3 py-1 rounded-lg">
                 {item.action}
               </button>
             )}
@@ -159,7 +159,7 @@ const SetupChecklist = ({ storeData, onSetupClick }) => {
         ))}
       </div>
       <div className="mt-4">
-        <div className="flex justify-between text-xs text-gray-600 mb-1">
+        <div className="flex justify-between text-xs text-gray-600 dark:text-slate-400 mb-1">
           <span>Setup Progress</span><span>{Math.round((done / total) * 100)}%</span>
         </div>
         <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
@@ -288,8 +288,8 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   }
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-        <p className="text-red-700 mb-4">{error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+        <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
         <button onClick={fetchAll} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Retry</button>
       </div>
     );
@@ -353,8 +353,8 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t("seller.overview")}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t("seller.dashboard_summary")}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{t("seller.overview")}</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{t("seller.dashboard_summary")}</p>
         </div>
         <button onClick={fetchAll}
           className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-2">
@@ -368,9 +368,9 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       {/* Store status banner */}
       {storeData && (
         <div className={`p-4 rounded-lg ${
-          storeData.status === "approved" ? "bg-green-50 border border-green-200" :
-          storeData.status === "pending"  ? "bg-yellow-50 border border-yellow-200" :
-                                            "bg-blue-50 border border-blue-200"
+          storeData.status === "approved" ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" :
+          storeData.status === "pending"  ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" :
+                                            "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
         }`}>
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
@@ -378,11 +378,11 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               storeData.status === "pending"  ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
             }`} />
             <div>
-              <h3 className="font-semibold text-sm">
+              <h3 className="font-semibold text-sm text-gray-800 dark:text-slate-100">
                 {storeData.status === "approved" ? "Store Active" :
                  storeData.status === "pending"  ? "Pending Approval" : "Setup Required"}
               </h3>
-              <p className="text-xs opacity-75">
+              <p className="text-xs opacity-75 text-gray-700 dark:text-slate-200">
                 {storeData.status === "approved" ? "Your store is live and accepting orders" :
                  storeData.status === "pending"  ? "Your store is under review by our team" :
                                                    "Please complete your store setup"}
@@ -438,11 +438,11 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* COD outstanding warning */}
       {metrics.codOutstanding > 0 && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+        <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
           <ExclamationTriangleIcon className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-800">COD Commission Outstanding</p>
-            <p className="text-sm text-red-700 mt-0.5">
+            <p className="text-sm font-semibold text-red-800 dark:text-red-300">COD Commission Outstanding</p>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-0.5">
               You owe <strong>{fmtMMK(metrics.codOutstanding)}</strong> in commission for COD orders.
               Please settle via the Wallet tab to avoid restrictions.
             </p>
@@ -452,7 +452,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* ── WALLET STATS ─────────────────────────────────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Wallet & Earnings</p>
+        <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">Wallet & Earnings</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
             icon={LockClosedIcon}
@@ -487,7 +487,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* ── ORDER STATS ───────────────────────────────────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Orders</p>
+        <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">Orders</p>
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <StatCard
             icon={CurrencyDollarIcon}
@@ -536,7 +536,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* ── PRODUCT & PERFORMANCE STATS ───────────────────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Products & Performance</p>
+        <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">Products & Performance</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
             icon={StarIcon}
@@ -584,10 +584,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       {/* Delivery fee panel */}
       {deliveryFees.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Platform Delivery Fees</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Submit fee confirmation once you have paid the delivery fee.</p>
+              <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100">Platform Delivery Fees</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Submit fee confirmation once you have paid the delivery fee.</p>
             </div>
             {feeToast && (
               <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
@@ -595,15 +595,15 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               }`}>{feeToast.msg}</span>
             )}
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-slate-700">
             {deliveryFees.map(d => {
               const submitted = !!d.fee_submitted_at;
               const confirmed = !!d.fee_confirmed_at;
               return (
                 <div key={d.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Order #{d.order?.order_number ?? d.order_id}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Order #{d.order?.order_number ?? d.order_id}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
                       Fee: <strong className="text-green-700">
                         {new Intl.NumberFormat("my-MM",{style:"currency",currency:"MMK",minimumFractionDigits:0}).format(d.platform_delivery_fee ?? 0)}
                       </strong>
@@ -617,7 +617,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <input type="text" value={feeNote} onChange={e => setFeeNote(e.target.value)}
                         placeholder="Optional note…"
-                        className="text-xs border border-gray-300 rounded-xl px-3 py-1.5 w-36 focus:ring-2 focus:ring-green-500" />
+                        className="text-xs border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-1.5 w-36 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500" />
                       <button onClick={() => handleSubmitFee(d.id)} disabled={feeSubmitting === d.id}
                         className="text-xs font-semibold px-4 py-1.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 whitespace-nowrap">
                         {feeSubmitting === d.id ? "Submitting…" : "Submit Payment"}
@@ -634,20 +634,20 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       {/* ── Charts ─────────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend (Last 7 Days)</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Sales Trend (Last 7 Days)</h3>
           {(dash?.sales.monthlyTrend.length ?? 0) > 0 ? (
             <Bar data={salesTrendData} options={{ responsive: true, plugins: { legend: { position: "top" } }, scales: { y: { beginAtZero: true } } }} height={280} />
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No sales data available</div>
+            <div className="h-64 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">No sales data available</div>
           )}
         </div>
         <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Status Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Order Status Distribution</h3>
           <div className="h-64 flex items-center justify-center">
             {(dash?.orders.total ?? 0) > 0 ? (
               <Doughnut data={orderStatusData} options={{ responsive: true, plugins: { legend: { position: "bottom" } } }} />
             ) : (
-              <p className="text-gray-400 text-sm">No orders yet</p>
+              <p className="text-gray-400 dark:text-slate-500 text-sm">No orders yet</p>
             )}
           </div>
         </div>
@@ -657,10 +657,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent orders */}
         <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6 lg:col-span-2">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Recent Orders</h3>
           <div className="space-y-3">
             {(dash?.orders.recent.length ?? 0) > 0 ? dash.orders.recent.map(o => (
-              <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-lg dark:bg-slate-800/50 hover:bg-gray-50">
+              <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-lg dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-700/30">
                 <div className="flex items-center gap-3">
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                     o.status === "delivered" ? "bg-green-500" :
@@ -668,18 +668,18 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                     o.status === "cancelled" ? "bg-red-500"    : "bg-blue-500"
                   }`} />
                   <div>
-                    <p className="font-medium text-sm text-gray-900">#{o.order_number}</p>
-                    <p className="text-xs text-gray-500">{o.buyer?.name || "Customer"}</p>
+                    <p className="font-medium text-sm text-gray-900 dark:text-slate-100">#{o.order_number}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">{o.buyer?.name || "Customer"}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-sm text-gray-900">{fmtMMK(o.total_amount)}</p>
-                  <p className="text-xs text-gray-500 capitalize">{o.status}</p>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-slate-100">{fmtMMK(o.total_amount)}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 capitalize">{o.status}</p>
                 </div>
               </div>
             )) : (
-              <div className="text-center py-8 text-gray-400">
-                <ShoppingBagIcon className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-gray-400 dark:text-slate-500">
+                <ShoppingBagIcon className="h-10 w-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
                 <p className="text-sm">No recent orders</p>
               </div>
             )}
@@ -688,18 +688,18 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
         {/* Quick stats */}
         <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Quick Stats</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-1">Quick Stats</h3>
           {[
             { label: "Order Completion Rate",   value: `${completionRate}%`,            color: "text-green-600" },
-            { label: "Avg. Order Value",         value: fmtMMK(metrics.avgOrderValue),  color: "text-gray-900" },
-            { label: "Low Stock Products",       value: metrics.lowStock.toString(),     color: metrics.lowStock > 0 ? "text-red-600" : "text-gray-900" },
+            { label: "Avg. Order Value",         value: fmtMMK(metrics.avgOrderValue),  color: "text-gray-900 dark:text-slate-100" },
+            { label: "Low Stock Products",       value: metrics.lowStock.toString(),     color: metrics.lowStock > 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-slate-100" },
             { label: "Delivery Success Rate",    value: dash?.deliveries.total > 0 ? Math.round((metrics.deliveryDone / dash.deliveries.total) * 100) + "%" : "—", color: "text-green-600" },
             { label: "Escrow (Locked)",          value: fmtMMK(metrics.escrowBalance),  color: "text-blue-600" },
             { label: "Available Payout",         value: fmtMMK(metrics.availableBalance), color: "text-emerald-600" },
-            { label: "Commission Paid (All Time)", value: fmtMMK(metrics.commissionPaid), color: "text-gray-600" },
+            { label: "Commission Paid (All Time)", value: fmtMMK(metrics.commissionPaid), color: "text-gray-600 dark:text-slate-400" },
           ].map(r => (
             <div key={r.label} className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">{r.label}</span>
+              <span className="text-sm text-gray-600 dark:text-slate-400">{r.label}</span>
               <span className={`font-semibold text-sm ${r.color}`}>{r.value}</span>
             </div>
           ))}

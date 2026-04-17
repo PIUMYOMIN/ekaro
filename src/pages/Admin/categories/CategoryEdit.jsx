@@ -34,7 +34,7 @@ const CategoryEdit = () => {
   }, [fetchCategory]); // Only run when fetchCategory changes
 
   const handleSuccess = () => {
-    navigate("/admin/dashboard");
+    navigate("/admin/categories");
   };
 
   // Loading state
@@ -50,7 +50,7 @@ const CategoryEdit = () => {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -58,13 +58,13 @@ const CategoryEdit = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-red-800">Error</h3>
-              <div className="mt-2 text-red-700">
+              <h3 className="text-lg font-medium text-red-800 dark:text-red-300">Error</h3>
+              <div className="mt-2 text-red-700 dark:text-red-400">
                 <p>{error}</p>
               </div>
               <div className="mt-4">
                 <button
-                  onClick={() => navigate("/admin/dashboard")}
+                  onClick={() => navigate("/admin/categories")}
                   className="text-sm font-medium text-red-600 hover:text-red-500"
                 >
                   ← Back to Categories
@@ -84,10 +84,10 @@ const CategoryEdit = () => {
           <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Category Not Found</h3>
-          <p className="text-gray-500 mb-6">The category you're looking for doesn't exist or has been removed.</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">Category Not Found</h3>
+          <p className="text-gray-500 dark:text-slate-400 mb-6">The category you're looking for doesn't exist or has been removed.</p>
           <button
-            onClick={() => navigate("/admin/dashboard")}
+            onClick={() => navigate("/admin/categories")}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             ← Back to Categories

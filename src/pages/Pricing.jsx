@@ -56,7 +56,7 @@ const Pricing = () => {
       <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Pricing Plans</h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">
           Choose the perfect plan for your business needs. No hidden fees,
           cancel anytime.
         </p>
@@ -66,9 +66,9 @@ const Pricing = () => {
         {plans.map((plan, index) =>
           <div
             key={index}
-            className={`relative rounded-lg shadow-md overflow-hidden ${plan.popular
+            className={`relative rounded-lg shadow-md overflow-hidden bg-white dark:bg-slate-800 ${plan.popular
               ? "ring-2 ring-blue-500"
-              : "border border-gray-200"}`}
+              : "border border-gray-200 dark:border-slate-700"}`}
           >
             {plan.popular &&
               <div className="absolute top-0 right-0 bg-blue-500 text-white px-4 py-1 text-sm font-medium rounded-bl-lg">
@@ -78,7 +78,7 @@ const Pricing = () => {
               <h2 className="text-2xl font-bold mb-2">
                 {plan.name}
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-slate-400 mb-4">
                 {plan.description}
               </p>
               <div className="mb-6">
@@ -86,7 +86,7 @@ const Pricing = () => {
                   {plan.price}
                 </span>
                 {plan.price !== "0 MMK" &&
-                  <span className="text-gray-600">/month</span>}
+                  <span className="text-gray-600 dark:text-slate-400">/month</span>}
               </div>
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, i) =>
@@ -113,7 +113,7 @@ const Pricing = () => {
               <button
                 className={`w-full py-3 px-4 rounded-lg font-medium ${plan.popular
                   ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"}`}
+                  : "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-600"}`}
               >
                 Get Started
               </button>
@@ -122,39 +122,39 @@ const Pricing = () => {
         )}
       </div>
 
-      <div className="mt-16 bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-center">
+      <div className="mt-16 bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6 text-center dark:text-slate-100">
           Frequently Asked Questions
         </h2>
         <div className="space-y-6">
           <div>
-            <h3 className="font-medium mb-2">Are there any setup fees?</h3>
-            <p className="text-gray-600">
+            <h3 className="font-medium mb-2 dark:text-slate-200">Are there any setup fees?</h3>
+            <p className="text-gray-600 dark:text-slate-400">
               No, there are no setup fees for any of our plans. You only pay the
               monthly subscription fee if you choose a paid plan.
             </p>
           </div>
           <div>
-            <h3 className="font-medium mb-2">Can I change plans later?</h3>
-            <p className="text-gray-600">
+            <h3 className="font-medium mb-2 dark:text-slate-200">Can I change plans later?</h3>
+            <p className="text-gray-600 dark:text-slate-400">
               Yes, you can upgrade or downgrade your plan at any time. Changes
               will take effect at the start of your next billing cycle.
             </p>
           </div>
           <div>
-            <h3 className="font-medium mb-2">
+            <h3 className="font-medium mb-2 dark:text-slate-200">
               What payment methods do you accept?
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               We accept all major payment methods in Myanmar including MMQR,
               mobile wallets (KBZ Pay, Wave Money), and bank transfers.
             </p>
           </div>
           <div>
-            <h3 className="font-medium mb-2">
+            <h3 className="font-medium mb-2 dark:text-slate-200">
               Is there a contract or long-term commitment?
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-slate-400">
               No, all plans are month-to-month with no long-term commitment. You
               can cancel anytime.
             </p>

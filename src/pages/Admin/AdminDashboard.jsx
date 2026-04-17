@@ -40,6 +40,7 @@ import SellerVerificationManagement from "../../components/admin/SellerVerificat
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import AnnouncementManagement from "../../components/admin/AnnouncementManagement";
 import Settings from "../../components/admin/Settings";
+import ChangePasswordForm from "../../components/Shared/ChangePasswordForm";
 import ContactMessagesManagement from '../../components/admin/ContactMessagesManagement';
 import DeliveryFeeManagement from "../../components/admin/DeliveryFeeManagement";
 import CodInvoiceManagement from "../../components/admin/CodInvoiceManagement";
@@ -47,6 +48,11 @@ import FinancialReports from "../../components/admin/FinancialReports";
 import SEO from "../../components/SEO/SEO";
 
 // ── Admin personal profile tab ────────────────────────────────────────────────
+const inputCls =
+  "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg " +
+  "focus:ring-2 focus:ring-green-500 focus:outline-none text-sm " +
+  "bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100";
+
 const AdminProfileTab = () => {
   const { user, updateUser } = useAuth();
 
@@ -62,14 +68,12 @@ const AdminProfileTab = () => {
     date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
   });
 
-  const [passwordData, setPasswordData] = React.useState({
-    current_password: "", new_password: "", confirm_password: "",
-  });
-
   const [profileLoading, setProfileLoading] = React.useState(false);
-  const [passwordLoading, setPasswordLoading] = React.useState(false);
-  const [profileMsg, setProfileMsg] = React.useState(null);
-  const [passwordMsg, setPasswordMsg] = React.useState(null);
+  const [profileMsg,     setProfileMsg]     = React.useState(null);
+
+  const msgClass = (msg) => msg?.type === "success"
+    ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
+    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800";
 
   const handleProfile = async (e) => {
     e.preventDefault();
@@ -88,37 +92,10 @@ const AdminProfileTab = () => {
     }
   };
 
-  const handlePassword = async (e) => {
-    e.preventDefault();
-    if (passwordData.new_password !== passwordData.confirm_password) {
-      setPasswordMsg({ type: "error", text: "New passwords do not match" });
-      return;
-    }
-    setPasswordLoading(true);
-    setPasswordMsg(null);
-    try {
-      await api.put("/users/profile/password", {
-        current_password:          passwordData.current_password,
-        new_password:              passwordData.new_password,
-        new_password_confirmation: passwordData.confirm_password,
-      });
-      setPasswordMsg({ type: "success", text: "Password changed successfully" });
-      setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
-    } catch (err) {
-      setPasswordMsg({ type: "error", text: err.response?.data?.message || "Failed to change password" });
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
-  const msgClass = (msg) => msg?.type === "success"
-    ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"
-    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800";
-
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Profile info */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Personal Information</h3>
         {profileMsg && (
           <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(profileMsg)}`}>{profileMsg.text}</div>
@@ -126,16 +103,16 @@ const AdminProfileTab = () => {
         <form onSubmit={handleProfile} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              ["Full Name *", "name", "text"],
-              ["Phone *",     "phone", "tel"],
-              ["Email",       "email", "email"],
-              ["Date of Birth", "date_of_birth", "date"],
+              ["Full Name *",    "name",          "text"],
+              ["Phone *",        "phone",         "tel"],
+              ["Email",          "email",         "email"],
+              ["Date of Birth",  "date_of_birth", "date"],
             ].map(([label, name, type]) => (
               <div key={name}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type={type} name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                  className={inputCls}
                 />
               </div>
             ))}
@@ -144,7 +121,7 @@ const AdminProfileTab = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Address</label>
             <input type="text" name="address" value={profileData.address}
               onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+              className={inputCls}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -153,48 +130,22 @@ const AdminProfileTab = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input type="text" name={name} value={profileData[name]}
                   onChange={(e) => setProfileData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
+                  className={inputCls}
                 />
               </div>
             ))}
           </div>
           <div className="flex justify-end">
             <button type="submit" disabled={profileLoading}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+              className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors">
               {profileLoading ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Password change */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Change Password</h3>
-        {passwordMsg && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${msgClass(passwordMsg)}`}>{passwordMsg.text}</div>
-        )}
-        <form onSubmit={handlePassword} className="space-y-4 max-w-md">
-          {[
-            ["Current Password", "current_password"],
-            ["New Password",     "new_password"],
-            ["Confirm New Password", "confirm_password"],
-          ].map(([label, name]) => (
-            <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
-              <input type="password" name={name} value={passwordData[name]} required
-                onChange={(e) => setPasswordData(p => ({ ...p, [e.target.name]: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-              />
-            </div>
-          ))}
-          <div className="flex justify-end">
-            <button type="submit" disabled={passwordLoading}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-              {passwordLoading ? "Changing…" : "Change Password"}
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Shared change-password card */}
+      <ChangePasswordForm />
     </div>
   );
 };

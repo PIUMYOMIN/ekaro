@@ -317,7 +317,7 @@ const ProductManagement = () => {
   const filteredProducts = getFilteredProducts();
   const sortedProducts = getSortedProducts();
 
-  const getStatusColor = (status) => (status ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800");
+  const getStatusColor = (status) => (status ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300");
   const getStatusText = (isActive) => (isActive ? "active" : "inactive");
 
   const formatPrice = (price) => {
@@ -351,9 +351,9 @@ const ProductManagement = () => {
   };
 
   const getStockStatus = (quantity) => {
-    if (quantity <= 0) return { text: "Out of Stock", color: "bg-red-100 text-red-800" };
-    if (quantity <= 10) return { text: "Low Stock", color: "bg-yellow-100 text-yellow-800" };
-    return { text: "In Stock", color: "bg-green-100 text-green-800" };
+    if (quantity <= 0) return { text: "Out of Stock", color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300" };
+    if (quantity <= 10) return { text: "Low Stock", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300" };
+    return { text: "In Stock", color: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" };
   };
 
   // NEW: Helper to get discount info for display
@@ -371,11 +371,11 @@ const ProductManagement = () => {
     return {
       display: (
         <div className="flex flex-col">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 w-fit">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 w-fit">
             <SparklesIcon className="h-3 w-3 mr-1" />
             {badge}
           </span>
-          {details && <span className="text-xs text-gray-600 mt-1">{details}</span>}
+          {details && <span className="text-xs text-gray-600 dark:text-slate-400 mt-1">{details}</span>}
         </div>
       ),
       badge
@@ -392,7 +392,7 @@ const ProductManagement = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -400,9 +400,9 @@ const ProductManagement = () => {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            <h3 className="text-sm font-medium text-red-800 dark:text-red-300">{error}</h3>
             <div className="mt-2">
-              <button onClick={() => fetchProducts(true)} className="text-sm text-red-700 underline hover:text-red-600">
+              <button onClick={() => fetchProducts(true)} className="text-sm text-red-700 dark:text-red-400 underline hover:text-red-600 dark:hover:text-red-300">
                 Try again
               </button>
             </div>
@@ -420,13 +420,13 @@ const ProductManagement = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4 border border-gray-200 dark:border-slate-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Delete Image</h3>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               Are you sure you want to delete this image? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteImageTarget(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -444,13 +444,13 @@ const ProductManagement = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t("seller.product_management")}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t("seller.manage_your_products")}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{t("seller.product_management")}</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{t("seller.manage_your_products")}</p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-3">
           <button
             onClick={() => fetchProducts(true)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
           >
             <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
             {t("seller.product.refresh")}
@@ -469,7 +469,7 @@ const ProductManagement = () => {
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search Products</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Search Products</label>
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -482,7 +482,7 @@ const ProductManagement = () => {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -494,7 +494,7 @@ const ProductManagement = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Category</label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -520,39 +520,39 @@ const ProductManagement = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
           <div className="flex items-center">
-            <div className="bg-blue-100 p-3 rounded-lg mr-4"><CubeIcon className="h-6 w-6 text-blue-600" /></div>
+            <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg mr-4"><CubeIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" /></div>
             <div>
-              <p className="text-sm text-gray-500">Total Products</p>
-              <p className="text-2xl font-bold text-gray-900">{products.length}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Total Products</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
           <div className="flex items-center">
-            <div className="bg-green-100 p-3 rounded-lg mr-4"><CheckCircleIcon className="h-6 w-6 text-green-600" /></div>
+            <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg mr-4"><CheckCircleIcon className="h-6 w-6 text-green-600 dark:text-green-400" /></div>
             <div>
-              <p className="text-sm text-gray-500">Active Products</p>
-              <p className="text-2xl font-bold text-gray-900">{products.filter(p => p.is_active).length}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Active Products</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.filter(p => p.is_active).length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
           <div className="flex items-center">
-            <div className="bg-yellow-100 p-3 rounded-lg mr-4"><TagIcon className="h-6 w-6 text-yellow-600" /></div>
+            <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg mr-4"><TagIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400" /></div>
             <div>
-              <p className="text-sm text-gray-500">On Sale</p>
-              <p className="text-2xl font-bold text-gray-900">{products.filter(p => isProductOnSale(p)).length}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">On Sale</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.filter(p => isProductOnSale(p)).length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
           <div className="flex items-center">
-            <div className="bg-red-100 p-3 rounded-lg mr-4"><CubeIcon className="h-6 w-6 text-red-600" /></div>
+            <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg mr-4"><CubeIcon className="h-6 w-6 text-red-600 dark:text-red-400" /></div>
             <div>
-              <p className="text-sm text-gray-500">Out of Stock</p>
-              <p className="text-2xl font-bold text-gray-900">{products.filter(p => p.quantity <= 0).length}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">Out of Stock</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.filter(p => p.quantity <= 0).length}</p>
             </div>
           </div>
         </div>
@@ -561,35 +561,35 @@ const ProductManagement = () => {
       {/* Table */}
       <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
             <thead className="bg-gray-50 dark:bg-slate-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("category")}>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("category")}>
                   <div className="flex items-center">Category <ChevronUpDownIcon className="ml-1 h-4 w-4" /></div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("price")}>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("price")}>
                   <div className="flex items-center">Price <ChevronUpDownIcon className="ml-1 h-4 w-4" /></div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("quantity")}>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("quantity")}>
                   <div className="flex items-center">Stock <ChevronUpDownIcon className="ml-1 h-4 w-4" /></div>
                 </th>
                 {/* NEW Discount Column */}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                   Discount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {sortedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-sm text-gray-500">
+                  <td colSpan="7" className="px-6 py-12 text-center text-sm text-gray-500 dark:text-slate-400">
                     <div className="flex flex-col items-center">
-                      <CubeIcon className="h-16 w-16 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-                      <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                      <CubeIcon className="h-16 w-16 text-gray-400 dark:text-slate-600 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">No products found</h3>
+                      <p className="text-gray-600 dark:text-slate-400 mb-4 max-w-md mx-auto">
                         {searchTerm || statusFilter !== "all" || categoryFilter !== "all"
                           ? "No products match your filters. Try adjusting your search criteria."
                           : "You haven't added any products yet. Start by creating your first product listing."}
@@ -628,27 +628,27 @@ const ProductManagement = () => {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{loc(product.name_en, product.name_mm) || "Unnamed Product"}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{loc(product.name_en, product.name_mm) || "Unnamed Product"}</div>
                             <div className="flex items-center space-x-2">
                               {isProductOnSale(product) ? (
                                 <>
-                                  <span className="text-sm font-bold text-red-600">{formatPrice(getCurrentPrice(product))}</span>
-                                  <span className="text-sm text-gray-400 line-through">{formatPrice(product.price)}</span>
+                                  <span className="text-sm font-bold text-red-600 dark:text-red-400">{formatPrice(getCurrentPrice(product))}</span>
+                                  <span className="text-sm text-gray-400 dark:text-slate-500 line-through">{formatPrice(product.price)}</span>
                                 </>
                               ) : (
-                                <span className="text-sm font-medium text-gray-900">{formatPrice(product.price)}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-slate-100">{formatPrice(product.price)}</span>
                               )}
                             </div>
-                            {product.sku && <div className="text-xs text-gray-500 mt-1">SKU: {product.sku}</div>}
+                            {product.sku && <div className="text-xs text-gray-500 dark:text-slate-400 mt-1">SKU: {product.sku}</div>}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{loc(product.category?.name_en, product.category?.name_mm) || "Uncategorized"}</td>
-                      <td className="px-6 py-4 font-medium text-gray-900">
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{loc(product.category?.name_en, product.category?.name_mm) || "Uncategorized"}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-slate-100">
                         {isProductOnSale(product) ? (
                           <div className="space-y-1">
-                            <div className="text-red-600 font-bold">{formatPrice(getCurrentPrice(product))}</div>
-                            <div className="text-xs text-gray-500 line-through">{formatPrice(product.price)}</div>
+                            <div className="text-red-600 dark:text-red-400 font-bold">{formatPrice(getCurrentPrice(product))}</div>
+                            <div className="text-xs text-gray-500 dark:text-slate-400 line-through">{formatPrice(product.price)}</div>
                           </div>
                         ) : (
                           formatPrice(product.price)
@@ -675,28 +675,28 @@ const ProductManagement = () => {
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => navigate(`/products/${product.id}`)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30"
                             title="View Product"
                           >
                             <ArrowTopRightOnSquareIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleOpenDiscountModal(product)}
-                            className={`p-1 rounded ${isProductOnSale(product) ? 'text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50' : 'text-blue-600 hover:text-blue-900 hover:bg-blue-50'}`}
+                            className={`p-1 rounded ${isProductOnSale(product) ? 'text-yellow-600 hover:text-yellow-900 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/30' : 'text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}
                             title={isProductOnSale(product) ? "Edit Discount" : "Add Discount"}
                           >
                             <TagIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => navigate(`/seller/products/${product.id}/edit`)}
-                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                            className="text-green-600 hover:text-green-900 dark:hover:text-green-400 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30"
                             title="Edit Product"
                           >
                             <PencilIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => confirmDelete(product)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                            className="text-red-600 hover:text-red-900 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30"
                             title="Delete Product"
                           >
                             <TrashIcon className="h-5 w-5" />
@@ -715,11 +715,11 @@ const ProductManagement = () => {
       {/* Modals (unchanged) */}
       {deleteModalOpen && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Delete</h3>
-            <p className="text-sm text-gray-600 mb-6">Are you sure you want to delete "{selectedProduct.name}"? This action cannot be undone.</p>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 w-full max-w-md border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Confirm Delete</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">Are you sure you want to delete "{selectedProduct.name}"? This action cannot be undone.</p>
             <div className="flex justify-end space-x-3">
-              <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+              <button onClick={() => setDeleteModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 dark:hover:bg-slate-600">Cancel</button>
               <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
             </div>
           </div>
@@ -728,15 +728,15 @@ const ProductManagement = () => {
 
       {statusModalOpen && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Status Change</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 w-full max-w-md border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Confirm Status Change</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               {statusTarget
                 ? `Are you sure you want to activate "${selectedProduct.name}"? The product will be visible to customers.`
                 : `Are you sure you want to deactivate "${selectedProduct.name}"? The product will be hidden from customers.`}
             </p>
             <div className="flex justify-end space-x-3">
-              <button onClick={() => setStatusModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+              <button onClick={() => setStatusModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-md hover:bg-gray-300 dark:hover:bg-slate-600">Cancel</button>
               <button onClick={handleProductStatus} className={`px-4 py-2 text-sm font-medium text-white rounded-md ${statusTarget ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'}`}>
                 {statusTarget ? 'Activate' : 'Deactivate'}
               </button>
@@ -755,14 +755,14 @@ const ProductManagement = () => {
 
       {imageModalOpen && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">{selectedProduct.name} - Images</h3>
-              <button onClick={() => setImageModalOpen(false)} className="text-gray-400 hover:text-gray-600"><XMarkIcon className="h-6 w-6" /></button>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-slate-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{selectedProduct.name} - Images</h3>
+              <button onClick={() => setImageModalOpen(false)} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"><XMarkIcon className="h-6 w-6" /></button>
             </div>
             <div className="p-4 overflow-y-auto max-h-96">
               {selectedImages.length === 0 ? (
-                <div className="text-center py-8"><PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" /><p className="text-gray-500">No images available for this product.</p></div>
+                <div className="text-center py-8"><PhotoIcon className="h-12 w-12 text-gray-400 dark:text-slate-500 mx-auto mb-4" /><p className="text-gray-500 dark:text-slate-400">No images available for this product.</p></div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {selectedImages.map((image, index) => (
@@ -782,15 +782,15 @@ const ProductManagement = () => {
                 </div>
               )}
             </div>
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500">{selectedImages.length} image(s)</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{selectedImages.length} image(s)</p>
                 <div className="flex space-x-2">
                   <label className="cursor-pointer bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700">
                     Add Images
                     <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(selectedProduct, Array.from(e.target.files))} />
                   </label>
-                  <button onClick={() => setImageModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Close</button>
+                  <button onClick={() => setImageModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700">Close</button>
                 </div>
               </div>
             </div>

@@ -21,12 +21,12 @@ const Wishlist = () => {
     <>
       {SeoComponent}
       <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Wishlist</h1>
+      <h1 className="text-3xl font-bold mb-8 dark:text-slate-100">Your Wishlist</h1>
 
       {wishlistItems.length === 0
-        ? <div className="bg-white rounded-lg shadow-md p-8 max-w-lg mx-auto text-center">
-            <h2 className="text-2xl font-bold mb-4">Your Wishlist is Empty</h2>
-            <p className="text-gray-600 mb-6">
+        ? <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 max-w-lg mx-auto text-center">
+            <h2 className="text-2xl font-bold mb-4 dark:text-slate-100">Your Wishlist is Empty</h2>
+            <p className="text-gray-600 dark:text-slate-400 mb-6">
               Save products you're interested in to your wishlist for easy
               access later.
             </p>
@@ -38,7 +38,7 @@ const Wishlist = () => {
             {wishlistItems.map(product =>
               <div key={product.id} className="relative">
                 <ProductCard product={product} />
-                <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-100">
+                <button className="absolute top-2 right-2 bg-white dark:bg-slate-700 p-2 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-600">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 text-red-500"

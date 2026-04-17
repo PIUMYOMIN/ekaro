@@ -142,27 +142,27 @@ const Sellers = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-          <p className="mt-4 text-gray-700">{t('sellers.loading')}</p>
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-4 text-gray-700 dark:text-slate-300">{t('sellers.loading')}</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   if (error) {
     return (
       <>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30">
+              <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">{t('sellers.error_title')}</h3>
-            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-slate-100">{t('sellers.error_title')}</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">{error}</p>
             <div className="mt-6">
               <button
                 onClick={() => window.location.reload()}
@@ -180,11 +180,11 @@ const Sellers = () => {
   return (
     <>
       {SeoComponent}
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gray-900 opacity-40" />
+            <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-900/60" />
           </div>
           <div className="relative max-w-7xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
             <div className="text-center">
@@ -210,19 +210,19 @@ const Sellers = () => {
 
         {/* Search and Filters */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               {/* Search Input */}
               <div className="flex-1">
                 <div className="relative rounded-md shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 dark:text-slate-500" />
                   </div>
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md leading-5 bg-white dark:bg-slate-800 placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:placeholder-gray-400 dark:focus:placeholder-slate-400 focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm"
                     placeholder={t("sellers.search_placeholder")}
                   />
                 </div>
@@ -231,7 +231,7 @@ const Sellers = () => {
               {/* Mobile Filters Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="md:hidden flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 <FunnelIcon className="h-5 w-5 mr-2" />
                 {t("sellers.filters")}
@@ -243,7 +243,7 @@ const Sellers = () => {
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   >
                     {categories.map(category => (
                       <option key={category.id} value={category.id}>
@@ -251,7 +251,7 @@ const Sellers = () => {
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-slate-300">
                     <ChevronDownIcon className="h-4 w-4" />
                   </div>
                 </div>
@@ -263,7 +263,7 @@ const Sellers = () => {
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   >
                     {sortOptions.map(option => (
                       <option key={option.id} value={option.id}>
@@ -271,7 +271,7 @@ const Sellers = () => {
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-slate-300">
                     <ChevronDownIcon className="h-4 w-4" />
                   </div>
                 </div>
@@ -282,13 +282,13 @@ const Sellers = () => {
             {showFilters && (
               <div className="mt-4 grid grid-cols-1 gap-4 md:hidden">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     {t("sellers.category")}
                   </label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   >
                     {categories.map(category => (
                       <option key={category.id} value={category.id}>
@@ -299,13 +299,13 @@ const Sellers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                     {t("sellers.sort_by")}
                   </label>
                   <select
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    className="block w-full pl-3 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-200 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   >
                     {sortOptions.map(option => (
                       <option key={option.id} value={option.id}>
@@ -322,11 +322,11 @@ const Sellers = () => {
         {/* Sellers Grid */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              {t("sellers.all_sellers")} <span className="text-green-600">({filteredSellers.length})</span>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
+              {t("sellers.all_sellers")} <span className="text-green-600 dark:text-green-400">({filteredSellers.length})</span>
             </h2>
             {filteredSellers.length > 0 && (
-              <p className="text-sm text-gray-500 hidden md:block">
+              <p className="text-sm text-gray-500 dark:text-slate-400 hidden md:block">
                 {t('sellers.showing_results', {
                   start: Math.min(indexOfFirstSeller + 1, filteredSellers.length),
                   end: Math.min(indexOfLastSeller, filteredSellers.length),
@@ -337,12 +337,12 @@ const Sellers = () => {
           </div>
 
           {currentSellers.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100">
-                <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow dark:shadow-slate-900/50 p-12 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-slate-800">
+                <MagnifyingGlassIcon className="h-6 w-6 text-gray-400 dark:text-slate-500" />
               </div>
-              <h3 className="mt-2 text-lg font-medium text-gray-900">{t('sellers.no_sellers_found')}</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-slate-100">{t('sellers.no_sellers_found')}</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
                 {sellers.length === 0
                   ? t('sellers.no_sellers_available')
                   : t('sellers.no_matching_sellers')

@@ -11,12 +11,18 @@ import api from '../../utils/api';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const TIER_LABELS = { 1: '🥉 Bronze', 2: '🥈 Silver', 3: '🥇 Gold' };
+
 const TYPE_LABELS = {
-  default:       { label: 'Platform Default', color: 'bg-gray-100 text-gray-700' },
-  account_level: { label: 'Seller Tier',      color: 'bg-blue-100 text-blue-700' },
-  category:      { label: 'Category',         color: 'bg-purple-100 text-purple-700' },
-  business_type: { label: 'Business Type',    color: 'bg-orange-100 text-orange-700' },
+  default:       { label: 'Platform Default', color: 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300' },
+  account_level: { label: 'Seller Tier',      color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  category:      { label: 'Category',         color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
+  business_type: { label: 'Business Type',    color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' },
 };
+
+// Shared input class used in both RateCell and NewRuleForm
+const inputCls = 'text-sm border rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:outline-none '
+  + 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 '
+  + 'placeholder-gray-400 dark:placeholder-slate-500';
 
 // ── Inline editable rate cell ────────────────────────────────────────────────
 const RateCell = ({ rule, onSave }) => {
@@ -42,27 +48,26 @@ const RateCell = ({ rule, onSave }) => {
         value={val}
         onChange={e => setVal(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
-        className="w-20 border border-blue-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none"
+        className={`w-20 ${inputCls}`}
       />
-      <span className="text-sm text-gray-500">%</span>
-      <button onClick={save} disabled={saving} className="text-green-600 hover:text-green-700 disabled:opacity-40">
+      <span className="text-sm text-gray-500 dark:text-slate-400">%</span>
+      <button onClick={save} disabled={saving}
+        className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 disabled:opacity-40">
         <CheckCircleIcon className="h-5 w-5" />
       </button>
-      <button onClick={() => setEditing(false)} className="text-gray-400 hover:text-gray-600">
+      <button onClick={() => setEditing(false)}
+        className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300">
         <XCircleIcon className="h-5 w-5" />
       </button>
     </div>
   );
 
   return (
-    <button
-      onClick={() => setEditing(true)}
-      className="flex items-center gap-1.5 group"
-    >
-      <span className="text-sm font-bold text-gray-900">
+    <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 group">
+      <span className="text-sm font-bold text-gray-900 dark:text-slate-100">
         {(Number(rule.rate) * 100).toFixed(1)}%
       </span>
-      <PencilSquareIcon className="h-3.5 w-3.5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+      <PencilSquareIcon className="h-3.5 w-3.5 text-gray-300 dark:text-slate-600 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
     </button>
   );
 };
@@ -101,14 +106,14 @@ const NewRuleForm = ({ categories, businessTypes, onCreated, onCancel }) => {
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
-      <p className="text-sm font-semibold text-blue-900">New Commission Rule</p>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-3">
+      <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">New Commission Rule</p>
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Type</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">Type</label>
           <select value={form.type} onChange={e => { set('type', e.target.value); set('reference_id', ''); }}
-            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white">
+            className={`w-full ${inputCls}`}>
             <option value="category">Category</option>
             <option value="business_type">Business Type</option>
             <option value="account_level">Seller Tier</option>
@@ -116,24 +121,25 @@ const NewRuleForm = ({ categories, businessTypes, onCreated, onCancel }) => {
         </div>
         {form.type !== 'default' && (
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Reference</label>
+            <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">Reference</label>
             <select value={form.reference_id} onChange={e => set('reference_id', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white">
+              className={`w-full ${inputCls}`}>
               <option value="">Select…</option>
               {refOptions().map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
             </select>
           </div>
         )}
         <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Rate (%)</label>
+          <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">Rate (%)</label>
           <input type="number" min="0" max="50" step="0.5" value={form.rate}
             onChange={e => set('rate', e.target.value)}
-            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
+            className={`w-full ${inputCls}`} />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Notes</label>
-          <input type="text" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional"
-            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-2 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
+          <label className="text-xs font-medium text-gray-600 dark:text-slate-400 block mb-1">Notes</label>
+          <input type="text" value={form.notes} onChange={e => set('notes', e.target.value)}
+            placeholder="Optional"
+            className={`w-full ${inputCls}`} />
         </div>
       </div>
       <div className="flex gap-2 pt-1">
@@ -142,7 +148,7 @@ const NewRuleForm = ({ categories, businessTypes, onCreated, onCancel }) => {
           {saving ? 'Saving…' : 'Create Rule'}
         </button>
         <button onClick={onCancel}
-          className="px-4 py-1.5 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+          className="px-4 py-1.5 border border-gray-200 dark:border-slate-600 text-sm text-gray-600 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
           Cancel
         </button>
       </div>
@@ -152,13 +158,13 @@ const NewRuleForm = ({ categories, businessTypes, onCreated, onCancel }) => {
 
 // ── Main Component ──────────────────────────────────────────────────────────
 const CommissionRulesManagement = () => {
-  const [rules,         setRules]        = useState([]);
-  const [categories,    setCategories]   = useState([]);
-  const [businessTypes, setBusinessTypes]= useState([]);
-  const [loading,       setLoading]      = useState(true);
-  const [error,         setError]        = useState(null);
-  const [showForm,      setShowForm]     = useState(false);
-  const [toast,         setToast]        = useState('');
+  const [rules,         setRules]         = useState([]);
+  const [categories,    setCategories]    = useState([]);
+  const [businessTypes, setBusinessTypes] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+  const [showForm,      setShowForm]      = useState(false);
+  const [toast,         setToast]         = useState('');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -174,7 +180,7 @@ const CommissionRulesManagement = () => {
       setRules(rulesRes.data?.data || []);
       setCategories(catsRes.data?.data || catsRes.data || []);
       setBusinessTypes(bizRes.data?.data || bizRes.data || []);
-    } catch (e) {
+    } catch {
       setError('Failed to load commission rules.');
     } finally {
       setLoading(false);
@@ -205,7 +211,6 @@ const CommissionRulesManagement = () => {
     return `#${rule.reference_id}`;
   };
 
-  // Group by type for display
   const grouped = {
     default:       rules.filter(r => r.type === 'default'),
     account_level: rules.filter(r => r.type === 'account_level'),
@@ -232,11 +237,11 @@ const CommissionRulesManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <CurrencyDollarIcon className="h-5 w-5 text-green-600" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
+            <CurrencyDollarIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
             Commission Rules
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
             Priority: Seller Tier → Business Type → Category → Platform Default
           </p>
         </div>
@@ -249,8 +254,9 @@ const CommissionRulesManagement = () => {
         </button>
       </div>
 
+      {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300">
           <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" /> {error}
         </div>
       )}
@@ -266,14 +272,14 @@ const CommissionRulesManagement = () => {
       )}
 
       {/* Priority callout */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-xs text-amber-800 dark:text-amber-300">
         <strong>How priority works:</strong> For each order, the platform checks rules in order.
         The first match wins: <strong>Tier</strong> → <strong>Business Type</strong> → <strong>Category</strong> → <strong>Default</strong>.
         A Gold seller always pays the Gold rate regardless of what category they sell in.
         Click any rate to edit it inline. Toggle the switch to activate/deactivate a rule.
       </div>
 
-      {/* Rules by group */}
+      {/* Rules grouped by type */}
       {[
         ['default',       'Platform Default'],
         ['account_level', 'Seller Tiers'],
@@ -285,17 +291,23 @@ const CommissionRulesManagement = () => {
         return (
           <div key={type}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${meta.color}`}>{meta.label}</span>
-              <span className="text-xs text-gray-400">{group.length} rule{group.length !== 1 ? 's' : ''}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${meta.color}`}>
+                {meta.label}
+              </span>
+              <span className="text-xs text-gray-400 dark:text-slate-500">
+                {group.length} rule{group.length !== 1 ? 's' : ''}
+              </span>
             </div>
-            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 overflow-hidden">
               {group.length === 0 ? (
-                <p className="text-xs text-gray-400 px-5 py-4">
-                  No {heading.toLowerCase()} rules yet.{type !== 'default' && ' Category and business type rules let you override the default rate for specific segments.'}
+                <p className="text-xs text-gray-400 dark:text-slate-500 px-5 py-4">
+                  No {heading.toLowerCase()} rules yet.
+                  {type !== 'default' && ' Category and business type rules let you override the default rate for specific segments.'}
                 </p>
               ) : (
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <thead className="bg-gray-50 dark:bg-slate-900/50 text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                     <tr>
                       <th className="px-5 py-2.5 text-left">Reference</th>
                       <th className="px-5 py-2.5 text-left">Rate</th>
@@ -303,21 +315,24 @@ const CommissionRulesManagement = () => {
                       <th className="px-5 py-2.5 text-right">Active</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
                     {group.map(rule => (
-                      <tr key={rule.id} className={`${!rule.is_active ? 'opacity-50' : ''} hover:bg-gray-50`}>
-                        <td className="px-5 py-3 font-medium text-gray-900">{refLabel(rule)}</td>
+                      <tr key={rule.id}
+                        className={`hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${!rule.is_active ? 'opacity-50' : ''}`}>
+                        <td className="px-5 py-3 font-medium text-gray-900 dark:text-slate-100">
+                          {refLabel(rule)}
+                        </td>
                         <td className="px-5 py-3">
                           <RateCell rule={rule} onSave={handleSave} />
                         </td>
-                        <td className="px-5 py-3 text-gray-400 text-xs hidden sm:table-cell">
+                        <td className="px-5 py-3 text-gray-400 dark:text-slate-500 text-xs hidden sm:table-cell">
                           {rule.notes || '—'}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <button
                             onClick={() => handleToggle(rule)}
                             className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                              rule.is_active ? 'bg-green-500' : 'bg-gray-200'
+                              rule.is_active ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-600'
                             }`}
                           >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${

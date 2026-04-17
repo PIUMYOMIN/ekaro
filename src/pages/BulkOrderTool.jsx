@@ -61,29 +61,29 @@ const BulkOrderTool = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Bulk Order Tool</h1>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Select Products</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4 dark:text-slate-100">Select Products</h2>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-slate-700">
               <tr>
-                <th className="p-4 text-left">Product</th>
-                <th className="p-4 text-left">Price</th>
-                <th className="p-4 text-left">MOQ</th>
-                <th className="p-4 text-left">Quantity</th>
+                <th className="p-4 text-left dark:text-slate-200">Product</th>
+                <th className="p-4 text-left dark:text-slate-200">Price</th>
+                <th className="p-4 text-left dark:text-slate-200">MOQ</th>
+                <th className="p-4 text-left dark:text-slate-200">Quantity</th>
               </tr>
             </thead>
             <tbody>
               {products.map(product =>
-                <tr key={product.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4">
+                <tr key={product.id} className="border-b dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                  <td className="p-4 dark:text-slate-200">
                     {product.name}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 dark:text-slate-300">
                     {product.price}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 dark:text-slate-300">
                     {product.moq}
                   </td>
                   <td className="p-4">
@@ -92,7 +92,7 @@ const BulkOrderTool = () => {
                       value={product.quantity}
                       onChange={e =>
                         handleQuantityChange(product.id, e.target.value)}
-                      className="w-24 border rounded p-2"
+                      className="w-24 border border-gray-300 dark:border-slate-600 rounded p-2 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                       min={product.moq.match(/\d+/)[0]}
                       placeholder="0"
                     />
@@ -104,32 +104,32 @@ const BulkOrderTool = () => {
         </div>
 
         <div className="mt-6 flex justify-between items-center">
-          <button className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">
+          <button className="bg-gray-200 dark:bg-slate-700 text-gray-800 dark:text-slate-200 px-6 py-2 rounded hover:bg-gray-300 dark:hover:bg-slate-600">
             Add More Products
           </button>
-          <div className="text-lg font-medium">
+          <div className="text-lg font-medium dark:text-slate-100">
             Estimated Total: {calculateTotal().toLocaleString()} MMK
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Select Supplier</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-xl font-semibold mb-4 dark:text-slate-100">Select Supplier</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {suppliers.map(supplier =>
             <div
               key={supplier.id}
               onClick={() => setSelectedSupplier(supplier.id)}
-              className={`border rounded-lg p-4 cursor-pointer hover:border-blue-500 ${selectedSupplier ===
+              className={`border dark:border-slate-600 rounded-lg p-4 cursor-pointer hover:border-blue-500 dark:hover:border-blue-400 ${selectedSupplier ===
               supplier.id
-                ? "border-blue-500 bg-blue-50"
-                : ""}`}
+                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                : "dark:bg-slate-700/50"}`}
             >
-              <h3 className="font-medium mb-1">
+              <h3 className="font-medium mb-1 dark:text-slate-100">
                 {supplier.name}
               </h3>
-              <p className="text-gray-600 text-sm mb-2">
+              <p className="text-gray-600 dark:text-slate-400 text-sm mb-2">
                 {supplier.location}
               </p>
               <div className="flex items-center">
@@ -146,7 +146,7 @@ const BulkOrderTool = () => {
                     </svg>
                   )}
                 </div>
-                <span className="text-gray-600 text-sm">
+                <span className="text-gray-600 dark:text-slate-400 text-sm">
                   {supplier.rating}
                 </span>
               </div>
@@ -155,14 +155,14 @@ const BulkOrderTool = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold mb-4 dark:text-slate-100">Order Summary</h2>
 
         <div className="mb-6">
-          <h3 className="font-medium mb-2">Selected Products</h3>
+          <h3 className="font-medium mb-2 dark:text-slate-200">Selected Products</h3>
           <ul className="space-y-2">
             {products.filter(p => p.quantity).map(product =>
-              <li key={product.id} className="flex justify-between">
+              <li key={product.id} className="flex justify-between dark:text-slate-300">
                 <span>
                   {product.name} ({product.quantity})
                 </span>
@@ -178,15 +178,15 @@ const BulkOrderTool = () => {
 
         {selectedSupplier &&
           <div className="mb-6">
-            <h3 className="font-medium mb-2">Selected Supplier</h3>
-            <p>
+            <h3 className="font-medium mb-2 dark:text-slate-200">Selected Supplier</h3>
+            <p className="dark:text-slate-300">
               {suppliers.find(s => s.id === selectedSupplier).name}
             </p>
           </div>}
 
         <div className="mb-6">
-          <h3 className="font-medium mb-2">Total Amount</h3>
-          <p className="text-2xl font-bold">
+          <h3 className="font-medium mb-2 dark:text-slate-200">Total Amount</h3>
+          <p className="text-2xl font-bold dark:text-slate-100">
             {calculateTotal().toLocaleString()} MMK
           </p>
         </div>

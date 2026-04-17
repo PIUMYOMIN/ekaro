@@ -61,9 +61,9 @@ const LocalDeals = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Local Deals</h1>
-      
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+      <h1 className="text-3xl font-bold mb-8 dark:text-slate-100">Local Deals</h1>
+
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
         <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
           <div className="flex-1">
             <input
@@ -71,7 +71,7 @@ const LocalDeals = () => {
               placeholder="Search deals..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border rounded-lg p-3"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg p-3 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div className="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
@@ -80,7 +80,7 @@ const LocalDeals = () => {
                 key={region.id}
                 onClick={() => setActiveRegion(region.id)}
                 className={`whitespace-nowrap px-4 py-2 rounded-lg ${
-                  activeRegion === region.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'
+                  activeRegion === region.id ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200'
                 }`}
               >
                 {region.name}
@@ -91,12 +91,12 @@ const LocalDeals = () => {
         
         {filteredDeals.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600">No deals found matching your criteria</p>
+            <p className="text-gray-600 dark:text-slate-400">No deals found matching your criteria</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredDeals.map(deal => (
-              <div key={deal.id} className="border rounded-lg overflow-hidden hover:shadow-md">
+              <div key={deal.id} className="border dark:border-slate-600 rounded-lg overflow-hidden hover:shadow-md">
                 <div className="bg-blue-600 text-white p-4">
                   <div className="flex justify-between items-start">
                     <h2 className="text-xl font-bold">{deal.title}</h2>
@@ -106,18 +106,18 @@ const LocalDeals = () => {
                   </div>
                   <p className="text-blue-100">{deal.supplier}</p>
                 </div>
-                <div className="p-4">
-                  <p className="text-gray-700 mb-4">{deal.description}</p>
+                <div className="p-4 dark:bg-slate-800">
+                  <p className="text-gray-700 dark:text-slate-300 mb-4">{deal.description}</p>
                   <div className="flex justify-between items-center">
-                    <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                    <span className="bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200 px-3 py-1 rounded-full text-sm">
                       {regions.find(r => r.id === deal.region)?.name}
                     </span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 dark:text-slate-400">
                       Expires: {deal.expiry}
                     </span>
                   </div>
                 </div>
-                <div className="border-t p-4 bg-gray-50">
+                <div className="border-t dark:border-slate-600 p-4 bg-gray-50 dark:bg-slate-700">
                   <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
                     View Deal
                   </button>
@@ -128,13 +128,13 @@ const LocalDeals = () => {
         )}
       </div>
       
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold mb-4">About Local Deals</h2>
-        <p className="text-gray-700 mb-4">
-          Our Local Deals program connects buyers with special offers from suppliers in their region. 
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold mb-4 dark:text-slate-100">About Local Deals</h2>
+        <p className="text-gray-700 dark:text-slate-300 mb-4">
+          Our Local Deals program connects buyers with special offers from suppliers in their region.
           These deals help you save on transportation costs and support local businesses across Myanmar.
         </p>
-        <p className="text-gray-700">
+        <p className="text-gray-700 dark:text-slate-300">
           Check back regularly as we add new deals weekly. Suppliers can create deals through their 
           seller dashboard to promote their products to local buyers.
         </p>

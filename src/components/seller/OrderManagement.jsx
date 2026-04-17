@@ -729,14 +729,14 @@ const OrderManagement = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs">
                       {needsMethod ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 gap-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 gap-1">
                           <ExclamationCircleIcon className="h-3.5 w-3.5" />
                           Choose method
                         </span>
                       ) : deliveryMethod ? (
                         <div className="space-y-0.5">
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${
-                            deliveryMethod === "platform" ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+                            deliveryMethod === "platform" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300" : "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                           }`}>
                             {deliveryMethod === "platform" ? "Platform" : "Self"}
                           </span>
@@ -755,7 +755,7 @@ const OrderManagement = () => {
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400 space-x-2">
                       <button
                         onClick={() => { setSelectedOrder(order); setIsModalOpen(true); }}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-green-600 hover:text-green-900 dark:hover:text-green-400"
                         title="View details"
                       >
                         <EyeIcon className="h-5 w-5" />
@@ -764,7 +764,7 @@ const OrderManagement = () => {
                         <button
                           onClick={() => updateOrderStatus(order.id, "confirmed")}
                           disabled={actionLoading === order.id}
-                          className="text-blue-600 hover:text-blue-900 text-xs font-medium disabled:opacity-50"
+                          className="text-blue-600 hover:text-blue-900 dark:hover:text-blue-400 text-xs font-medium disabled:opacity-50"
                         >
                           {actionLoading === order.id ? "..." : "Confirm"}
                         </button>

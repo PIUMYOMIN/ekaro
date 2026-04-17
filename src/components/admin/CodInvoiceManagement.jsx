@@ -23,10 +23,10 @@ const fmtMMK   = (n) => `${fmtK(n)} MMK`;
 const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 const STATUS_CONFIG = {
-  outstanding: { label: 'Outstanding', bg: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  overdue:     { label: 'Overdue',     bg: 'bg-red-100 text-red-800 border-red-200' },
-  paid:        { label: 'Paid',        bg: 'bg-green-100 text-green-800 border-green-200' },
-  waived:      { label: 'Waived',      bg: 'bg-gray-100 text-gray-600 border-gray-200' },
+  outstanding: { label: 'Outstanding', bg: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' },
+  overdue:     { label: 'Overdue',     bg: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800' },
+  paid:        { label: 'Paid',        bg: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800' },
+  waived:      { label: 'Waived',      bg: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400 border-gray-200 dark:border-slate-600' },
 };
 
 // ── Confirm Modal ──────────────────────────────────────────────────────────
@@ -37,55 +37,55 @@ function ConfirmModal({ invoice, mode, onClose, onConfirm, loading }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md">
+        <div className="p-6 border-b border-gray-100 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
             {isConfirm ? 'Confirm COD Payment Receipt' : 'Waive Invoice'}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">{invoice.invoice_number}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{invoice.invoice_number}</p>
         </div>
         <div className="p-6 space-y-4">
-          <div className="rounded-lg border border-gray-200 p-4 text-sm space-y-2">
+          <div className="rounded-lg border border-gray-200 dark:border-slate-600 p-4 text-sm space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-500">Seller</span>
-              <span className="font-medium">{invoice.seller?.name}</span>
+              <span className="text-gray-500 dark:text-slate-400">Seller</span>
+              <span className="font-medium dark:text-slate-200">{invoice.seller?.name}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Order</span>
-              <span className="font-medium">{invoice.order?.order_number}</span>
+              <span className="text-gray-500 dark:text-slate-400">Order</span>
+              <span className="font-medium dark:text-slate-200">{invoice.order?.order_number}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Commission Due</span>
-              <span className="font-bold text-gray-900">{fmtMMK(invoice.commission_amount)}</span>
+              <span className="text-gray-500 dark:text-slate-400">Commission Due</span>
+              <span className="font-bold text-gray-900 dark:text-slate-100">{fmtMMK(invoice.commission_amount)}</span>
             </div>
             {isConfirm && invoice.payment_reference && (
               <div className="flex justify-between">
-                <span className="text-gray-500">Payment Ref</span>
-                <span className="font-medium text-green-700">{invoice.payment_reference}</span>
+                <span className="text-gray-500 dark:text-slate-400">Payment Ref</span>
+                <span className="font-medium text-green-700 dark:text-green-400">{invoice.payment_reference}</span>
               </div>
             )}
             {isConfirm && invoice.payment_method && (
               <div className="flex justify-between">
-                <span className="text-gray-500">Method</span>
-                <span className="font-medium">{invoice.payment_method?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                <span className="text-gray-500 dark:text-slate-400">Method</span>
+                <span className="font-medium dark:text-slate-200">{invoice.payment_method?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
               </div>
             )}
             {isConfirm && invoice.seller_notes && (
-              <div className="pt-2 border-t border-gray-100">
-                <p className="text-gray-500 text-xs">Seller Note:</p>
-                <p className="text-gray-700 mt-0.5">{invoice.seller_notes}</p>
+              <div className="pt-2 border-t border-gray-100 dark:border-slate-600">
+                <p className="text-gray-500 dark:text-slate-400 text-xs">Seller Note:</p>
+                <p className="text-gray-700 dark:text-slate-300 mt-0.5">{invoice.seller_notes}</p>
               </div>
             )}
           </div>
 
           {!isConfirm && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-xs text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 text-xs text-yellow-800 dark:text-yellow-300">
               Waiving removes the obligation — the seller will not need to pay this commission. Use only for disputes or refunds.
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Admin Notes {!isConfirm && <span className="text-red-500">*</span>}
             </label>
             <textarea
@@ -93,12 +93,12 @@ function ConfirmModal({ invoice, mode, onClose, onConfirm, loading }) {
               placeholder={isConfirm ? 'Optional notes for records...' : 'Reason for waiving (required)'}
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
             />
           </div>
         </div>
-        <div className="p-6 border-t border-gray-100 flex gap-3 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+        <div className="p-6 border-t border-gray-100 dark:border-slate-700 flex gap-3 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">
             Cancel
           </button>
           <button
@@ -208,10 +208,10 @@ export default function CodInvoiceManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">COD Commission Invoices</h1>
-          <p className="text-sm text-gray-500 mt-1">Track and confirm commission payments from sellers who received cash on delivery.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">COD Commission Invoices</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Track and confirm commission payments from sellers who received cash on delivery.</p>
         </div>
-        <button onClick={() => load()} className="flex items-center gap-2 text-sm text-gray-600 border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50">
+        <button onClick={() => load()} className="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-700">
           <ArrowPathIcon className="h-4 w-4" /> Refresh
         </button>
       </div>
@@ -219,19 +219,19 @@ export default function CodInvoiceManagement() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Outstanding',         value: summary.outstanding_count || 0,  sub: fmtMMK(summary.outstanding_amount), icon: ClockIcon,              color: 'border-yellow-400 bg-yellow-50' },
-          { label: 'Overdue',             value: summary.overdue_count || 0,      sub: 'Past due date',                    icon: ExclamationTriangleIcon, color: 'border-red-400 bg-red-50' },
-          { label: 'Total Outstanding',   value: fmtMMK(summary.outstanding_amount), sub: 'To be collected',              icon: BanknotesIcon,           color: 'border-orange-400 bg-orange-50' },
-          { label: 'Collected This Month',value: fmtMMK(summary.collected_this_month), sub: 'COD commissions',            icon: CheckCircleIcon,         color: 'border-green-400 bg-green-50' },
+          { label: 'Outstanding',         value: summary.outstanding_count || 0,  sub: fmtMMK(summary.outstanding_amount), icon: ClockIcon,              color: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' },
+          { label: 'Overdue',             value: summary.overdue_count || 0,      sub: 'Past due date',                    icon: ExclamationTriangleIcon, color: 'border-red-400 bg-red-50 dark:bg-red-900/20' },
+          { label: 'Total Outstanding',   value: fmtMMK(summary.outstanding_amount), sub: 'To be collected',              icon: BanknotesIcon,           color: 'border-orange-400 bg-orange-50 dark:bg-orange-900/20' },
+          { label: 'Collected This Month',value: fmtMMK(summary.collected_this_month), sub: 'COD commissions',            icon: CheckCircleIcon,         color: 'border-green-400 bg-green-50 dark:bg-green-900/20' },
         ].map(card => (
           <div key={card.label} className={`rounded-xl border-l-4 p-5 shadow-sm ${card.color}`}>
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{card.label}</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900">{card.value}</p>
-                <p className="mt-0.5 text-xs text-gray-500">{card.sub}</p>
+                <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide">{card.label}</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-slate-100">{card.value}</p>
+                <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">{card.sub}</p>
               </div>
-              <card.icon className="h-8 w-8 text-gray-300 flex-shrink-0" />
+              <card.icon className="h-8 w-8 text-gray-300 dark:text-slate-600 flex-shrink-0" />
             </div>
           </div>
         ))}
@@ -240,13 +240,13 @@ export default function CodInvoiceManagement() {
       {/* Filters + Search */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-48">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
             placeholder="Search invoice, seller, order…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -257,7 +257,7 @@ export default function CodInvoiceManagement() {
               className={`text-xs px-3 py-1.5 rounded-full border font-medium ${
                 filter === s
                   ? 'bg-green-600 text-white border-green-600'
-                  : 'text-gray-600 border-gray-300 hover:bg-gray-50'
+                  : 'text-gray-600 dark:text-slate-400 border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
               }`}
             >
               {s === '' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -268,17 +268,17 @@ export default function CodInvoiceManagement() {
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-16"><ArrowPathIcon className="h-8 w-8 text-gray-400 animate-spin" /></div>
+        <div className="flex justify-center py-16"><ArrowPathIcon className="h-8 w-8 text-gray-400 dark:text-slate-500 animate-spin" /></div>
       ) : invoices.length === 0 ? (
-        <div className="bg-gray-50 rounded-xl p-12 text-center">
-          <DocumentTextIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No invoices found.</p>
+        <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-12 text-center">
+          <DocumentTextIcon className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-slate-400">No invoices found.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-slate-900/50 text-gray-500 dark:text-slate-400 text-xs uppercase tracking-wide border-b border-gray-200 dark:border-slate-700">
                 <tr>
                   <th className="px-5 py-3 text-left">Invoice</th>
                   <th className="px-5 py-3 text-left">Seller</th>
@@ -290,30 +290,30 @@ export default function CodInvoiceManagement() {
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {invoices.map(inv => {
                   const cfg = STATUS_CONFIG[inv.status] || STATUS_CONFIG.outstanding;
                   const pendingPayment = ['outstanding', 'overdue'].includes(inv.status) && inv.paid_at;
                   const canAct = ['outstanding', 'overdue'].includes(inv.status);
 
                   return (
-                    <tr key={inv.id} className="hover:bg-gray-50">
+                    <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                       <td className="px-5 py-4">
-                        <p className="font-mono text-xs font-semibold text-gray-800">{inv.invoice_number}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{fmtDate(inv.created_at)}</p>
+                        <p className="font-mono text-xs font-semibold text-gray-800 dark:text-slate-100">{inv.invoice_number}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{fmtDate(inv.created_at)}</p>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="font-medium text-gray-900">{inv.seller?.name || '—'}</p>
-                        <p className="text-xs text-gray-400">{inv.seller?.email}</p>
+                        <p className="font-medium text-gray-900 dark:text-slate-100">{inv.seller?.name || '—'}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{inv.seller?.email}</p>
                       </td>
-                      <td className="px-5 py-4 font-mono text-xs text-gray-700">
+                      <td className="px-5 py-4 font-mono text-xs text-gray-700 dark:text-slate-300">
                         {inv.order?.order_number || inv.order_id}
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <p className="font-bold text-gray-900">{fmtMMK(inv.commission_amount)}</p>
-                        <p className="text-xs text-gray-400">{(inv.commission_rate * 100).toFixed(1)}% commission</p>
+                        <p className="font-bold text-gray-900 dark:text-slate-100">{fmtMMK(inv.commission_amount)}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{(inv.commission_rate * 100).toFixed(1)}% commission</p>
                       </td>
-                      <td className={`px-5 py-4 text-sm ${inv.status === 'overdue' ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
+                      <td className={`px-5 py-4 text-sm ${inv.status === 'overdue' ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-slate-400'}`}>
                         {fmtDate(inv.due_date)}
                       </td>
                       <td className="px-5 py-4">
@@ -321,12 +321,12 @@ export default function CodInvoiceManagement() {
                           {cfg.label}
                         </span>
                         {pendingPayment && (
-                          <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                             Pending Confirmation
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-xs text-gray-500 max-w-32 truncate">
+                      <td className="px-5 py-4 text-xs text-gray-500 dark:text-slate-400 max-w-32 truncate">
                         {inv.payment_reference || '—'}
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -340,14 +340,14 @@ export default function CodInvoiceManagement() {
                             </button>
                             <button
                               onClick={() => setModal({ invoice: inv, mode: 'waive' })}
-                              className="text-xs font-medium text-gray-600 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                              className="text-xs font-medium text-gray-600 dark:text-slate-300 border border-gray-300 dark:border-slate-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
                             >
                               Waive
                             </button>
                           </div>
                         )}
                         {inv.status === 'paid' && (
-                          <span className="text-xs text-gray-400">Confirmed {fmtDate(inv.confirmed_at)}</span>
+                          <span className="text-xs text-gray-400 dark:text-slate-500">Confirmed {fmtDate(inv.confirmed_at)}</span>
                         )}
                       </td>
                     </tr>

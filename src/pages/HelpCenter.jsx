@@ -72,13 +72,13 @@ const HelpCenter = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Help Center</h1>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <button
               onClick={() => setActiveCategory("buying")}
               className={`px-6 py-3 rounded-lg ${activeCategory === "buying"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-800"}`}
+                : "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200"}`}
             >
               Buying on Pyonea
             </button>
@@ -86,7 +86,7 @@ const HelpCenter = () => {
               onClick={() => setActiveCategory("selling")}
               className={`px-6 py-3 rounded-lg ${activeCategory === "selling"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-800"}`}
+                : "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200"}`}
             >
               Selling on Pyonea
             </button>
@@ -94,7 +94,7 @@ const HelpCenter = () => {
               onClick={() => setActiveCategory("payments")}
               className={`px-6 py-3 rounded-lg ${activeCategory === "payments"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-800"}`}
+                : "bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200"}`}
             >
               Payments & Security
             </button>
@@ -105,7 +105,7 @@ const HelpCenter = () => {
               <div key={item.id} className="border rounded-lg overflow-hidden">
                 <button
                   onClick={() => setActiveQuestion(activeQuestion === item.id ? null : item.id)}
-                  className="w-full text-left p-4 bg-gray-50 hover:bg-gray-100 flex justify-between items-center"
+                  className="w-full text-left p-4 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 flex justify-between items-center dark:text-slate-100"
                 >
                   <span className="font-medium">{item.question}</span>
                   <svg
@@ -119,8 +119,8 @@ const HelpCenter = () => {
                 </button>
 
                 {activeQuestion === item.id && (
-                  <div className="p-4 bg-white">
-                    <p className="text-gray-700">{item.answer}</p>
+                  <div className="p-4 bg-white dark:bg-slate-800">
+                    <p className="text-gray-700 dark:text-slate-300">{item.answer}</p>
                   </div>
                 )}
               </div>
@@ -128,29 +128,29 @@ const HelpCenter = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4">Still need help?</h2>
-          <p className="text-gray-700 mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-4 dark:text-slate-100">Still need help?</h2>
+          <p className="text-gray-700 dark:text-slate-300 mb-6">
             Contact our customer support team for personalized assistance.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Email Support</h3>
-              <p className="text-gray-600 mb-3">support@pyonea.com</p>
-              <p className="text-sm text-gray-500">Typically responds within 24 hours</p>
+            <div className="border dark:border-slate-600 rounded-lg p-4">
+              <h3 className="font-semibold mb-2 dark:text-slate-100">Email Support</h3>
+              <p className="text-gray-600 dark:text-slate-400 mb-3">support@pyonea.com</p>
+              <p className="text-sm text-gray-500 dark:text-slate-500">Typically responds within 24 hours</p>
             </div>
 
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Phone Support</h3>
-              <p className="text-gray-600 mb-3">09 792 115 547</p>
-              <p className="text-sm text-gray-500">Mon-Fri, 9AM-5PM</p>
+            <div className="border dark:border-slate-600 rounded-lg p-4">
+              <h3 className="font-semibold mb-2 dark:text-slate-100">Phone Support</h3>
+              <p className="text-gray-600 dark:text-slate-400 mb-3">09 792 115 547</p>
+              <p className="text-sm text-gray-500 dark:text-slate-500">Mon-Fri, 9AM-5PM</p>
             </div>
 
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Live Chat</h3>
-              <p className="text-gray-600 mb-3">No available on the website</p>
-              <p className="text-sm text-gray-500">Please contact with the email or direct phone</p>
+            <div className="border dark:border-slate-600 rounded-lg p-4">
+              <h3 className="font-semibold mb-2 dark:text-slate-100">Live Chat</h3>
+              <p className="text-gray-600 dark:text-slate-400 mb-3">No available on the website</p>
+              <p className="text-sm text-gray-500 dark:text-slate-500">Please contact with the email or direct phone</p>
             </div>
           </div>
         </div>

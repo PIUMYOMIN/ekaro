@@ -37,15 +37,15 @@ const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
   const displayedPages = getDisplayedPages();
 
   return (
-    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-8">
+    <div className="bg-white dark:bg-slate-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-slate-700 sm:px-6 mt-8">
       <div className="flex-1 flex justify-between sm:hidden">
         <button
           onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
           disabled={currentPage === 1}
-          className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage ===
+          className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md ${currentPage ===
           1
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            ? "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed"
+            : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"}`}
         >
           Previous
         </button>
@@ -53,17 +53,17 @@ const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
           onClick={() =>
             paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
           disabled={currentPage === totalPages}
-          className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${currentPage ===
+          className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md ${currentPage ===
           totalPages
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            ? "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500 cursor-not-allowed"
+            : "bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"}`}
         >
           Next
         </button>
       </div>
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-700 dark:text-slate-300">
             Showing{" "}
             <span className="font-medium">
               {(currentPage - 1) * itemsPerPage + 1}
@@ -83,10 +83,10 @@ const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
             <button
               onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
               disabled={currentPage === 1}
-              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${currentPage ===
+              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium ${currentPage ===
               1
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-500 hover:bg-gray-50"}`}
+                ? "text-gray-300 dark:text-slate-600 cursor-not-allowed"
+                : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"}`}
             >
               <span className="sr-only">Previous</span>
               <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -99,8 +99,8 @@ const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
                   typeof number === "number" ? paginate(number) : null}
                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${number ===
                 currentPage
-                  ? "z-10 bg-green-50 border-green-500 text-green-600"
-                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"} ${typeof number !==
+                  ? "z-10 bg-green-50 dark:bg-green-900/20 border-green-500 dark:border-green-600 text-green-600 dark:text-green-400"
+                  : "bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"} ${typeof number !==
                 "number"
                   ? "pointer-events-none"
                   : ""}`}
@@ -115,10 +115,10 @@ const Pagination = ({ itemsPerPage, totalItems, currentPage, paginate }) => {
                   currentPage < totalPages ? currentPage + 1 : totalPages
                 )}
               disabled={currentPage === totalPages}
-              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${currentPage ===
+              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium ${currentPage ===
               totalPages
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-500 hover:bg-gray-50"}`}
+                ? "text-gray-300 dark:text-slate-600 cursor-not-allowed"
+                : "text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"}`}
             >
               <span className="sr-only">Next</span>
               <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
