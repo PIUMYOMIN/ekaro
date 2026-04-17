@@ -16,33 +16,33 @@ const VerificationStatusBadge = ({ status, badge, size = 'md' }) => {
       case 'verified':
         return {
           icon: CheckCircleIcon,
-          color: 'green',
-          bgColor: 'bg-green-100',
-          textColor: 'text-green-800',
+          iconColor: 'text-green-500',
+          bgColor: 'bg-green-100 dark:bg-green-900/30',
+          textColor: 'text-green-800 dark:text-green-300',
           label: 'Verified'
         };
       case 'pending':
         return {
           icon: ClockIcon,
-          color: 'yellow',
-          bgColor: 'bg-yellow-100',
-          textColor: 'text-yellow-800',
+          iconColor: 'text-yellow-500',
+          bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
+          textColor: 'text-yellow-800 dark:text-yellow-300',
           label: 'Pending Verification'
         };
       case 'rejected':
         return {
           icon: XCircleIcon,
-          color: 'red',
-          bgColor: 'bg-red-100',
-          textColor: 'text-red-800',
+          iconColor: 'text-red-500',
+          bgColor: 'bg-red-100 dark:bg-red-900/30',
+          textColor: 'text-red-800 dark:text-red-300',
           label: 'Rejected'
         };
       default:
         return {
           icon: ShieldCheckIcon,
-          color: 'gray',
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-800',
+          iconColor: 'text-gray-500 dark:text-slate-400',
+          bgColor: 'bg-gray-100 dark:bg-slate-700',
+          textColor: 'text-gray-800 dark:text-slate-300',
           label: 'Not Verified'
         };
     }
@@ -53,33 +53,33 @@ const VerificationStatusBadge = ({ status, badge, size = 'md' }) => {
       case 'premium':
         return {
           icon: StarIcon,
-          color: 'gold',
-          bgColor: 'bg-yellow-100',
-          textColor: 'text-yellow-800',
+          iconColor: 'text-yellow-500',
+          bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
+          textColor: 'text-yellow-800 dark:text-yellow-300',
           label: 'Premium Seller'
         };
       case 'top_rated':
         return {
           icon: TrophyIcon,
-          color: 'blue',
-          bgColor: 'bg-blue-100',
-          textColor: 'text-blue-800',
+          iconColor: 'text-blue-500',
+          bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+          textColor: 'text-blue-800 dark:text-blue-300',
           label: 'Top Rated'
         };
       case 'fast_shipper':
         return {
           icon: RocketIcon,
-          color: 'purple',
-          bgColor: 'bg-purple-100',
-          textColor: 'text-purple-800',
+          iconColor: 'text-purple-500',
+          bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+          textColor: 'text-purple-800 dark:text-purple-300',
           label: 'Fast Shipper'
         };
       case 'verified':
         return {
           icon: CheckCircleIcon,
-          color: 'green',
-          bgColor: 'bg-green-100',
-          textColor: 'text-green-800',
+          iconColor: 'text-green-500',
+          bgColor: 'bg-green-100 dark:bg-green-900/30',
+          textColor: 'text-green-800 dark:text-green-300',
           label: 'Verified'
         };
       default:
@@ -102,14 +102,14 @@ const VerificationStatusBadge = ({ status, badge, size = 'md' }) => {
     <div className="flex items-center space-x-2">
       {/* Status Badge */}
       <div className={`inline-flex items-center ${sizeClasses[size]} rounded-full ${statusConfig.bgColor} ${statusConfig.textColor} font-medium`}>
-        <StatusIcon className={`h-4 w-4 mr-1 text-${statusConfig.color}-500`} />
+        <StatusIcon className={`h-4 w-4 mr-1 ${statusConfig.iconColor}`} />
         <span>{statusConfig.label}</span>
       </div>
 
       {/* Additional Badge (if any) */}
       {badgeConfig && (
         <div className={`inline-flex items-center ${sizeClasses[size]} rounded-full ${badgeConfig.bgColor} ${badgeConfig.textColor} font-medium`}>
-          <BadgeIcon className={`h-4 w-4 mr-1 text-${badgeConfig.color}-500`} />
+          <BadgeIcon className={`h-4 w-4 mr-1 ${badgeConfig.iconColor}`} />
           <span>{badgeConfig.label}</span>
         </div>
       )}

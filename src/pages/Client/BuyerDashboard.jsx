@@ -31,22 +31,22 @@ function classNames(...cls) { return cls.filter(Boolean).join(" "); }
 
 // ─── Status Badges ────────────────────────────────────────────────────────────
 const ORDER_STATUS = {
-  pending:    { color: "bg-yellow-100 text-yellow-800 border-yellow-200", Icon: ClockIcon,        key: "pending"     },
-  confirmed:  { color: "bg-blue-100 text-blue-800 border-blue-200",       Icon: CheckCircleIcon,  key: "confirmed"   },
-  processing: { color: "bg-indigo-100 text-indigo-800 border-indigo-200", Icon: ClockIcon,        key: "processing"  },
-  shipped:    { color: "bg-purple-100 text-purple-800 border-purple-200", Icon: TruckIcon,        key: "shipped"     },
-  delivered:  { color: "bg-green-100 text-green-800 border-green-200",    Icon: CheckCircleIcon,  key: "delivered"   },
-  cancelled:  { color: "bg-red-100 text-red-800 border-red-200",          Icon: XCircleIcon,      key: "cancelled"   },
+  pending:    { color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700", Icon: ClockIcon,        key: "pending"     },
+  confirmed:  { color: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700",             Icon: CheckCircleIcon,  key: "confirmed"   },
+  processing: { color: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700", Icon: ClockIcon,        key: "processing"  },
+  shipped:    { color: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700", Icon: TruckIcon,        key: "shipped"     },
+  delivered:  { color: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700",       Icon: CheckCircleIcon,  key: "delivered"   },
+  cancelled:  { color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700",                  Icon: XCircleIcon,      key: "cancelled"   },
 };
 const DELIVERY_STATUS = {
-  pending:          { color: "bg-gray-100 text-gray-700",       key: "pending"          },
-  awaiting_pickup:  { color: "bg-yellow-100 text-yellow-800",   key: "awaiting_pickup"  },
-  picked_up:        { color: "bg-blue-100 text-blue-800",       key: "picked_up"        },
-  in_transit:       { color: "bg-purple-100 text-purple-800",   key: "in_transit"       },
-  out_for_delivery: { color: "bg-orange-100 text-orange-800",   key: "out_for_delivery" },
-  delivered:        { color: "bg-green-100 text-green-800",     key: "delivered"        },
-  failed:           { color: "bg-red-100 text-red-800",         key: "failed"           },
-  cancelled:        { color: "bg-gray-100 text-gray-700",       key: "cancelled"        },
+  pending:          { color: "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300",             key: "pending"          },
+  awaiting_pickup:  { color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300",   key: "awaiting_pickup"  },
+  picked_up:        { color: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300",           key: "picked_up"        },
+  in_transit:       { color: "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300",   key: "in_transit"       },
+  out_for_delivery: { color: "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300",   key: "out_for_delivery" },
+  delivered:        { color: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",       key: "delivered"        },
+  failed:           { color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",               key: "failed"           },
+  cancelled:        { color: "bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300",             key: "cancelled"        },
 };
 
 const StatusBadge = ({ status }) => {
@@ -293,18 +293,18 @@ const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
         <div className="flex flex-wrap gap-1.5">
           {onPaySlip && (
             <button onClick={() => onPaySlip(order)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100">
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50">
               <PrinterIcon className="h-3.5 w-3.5" />Pay Slip
             </button>
           )}
           {canCancel && (
             <button onClick={() => onCancel(order)}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50">
               <XCircleIcon className="h-3.5 w-3.5" />Cancel
             </button>
           )}
           <button onClick={() => onViewDetails(order)}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100">
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50">
             <EyeIcon className="h-3.5 w-3.5" />Details
           </button>
         </div>
@@ -368,7 +368,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => downloadPaySlip(order, delivery)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100">
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50">
                 <PrinterIcon className="h-3.5 w-3.5" />Pay Slip
               </button>
               <button onClick={onClose} className="text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:text-slate-400">
@@ -533,10 +533,10 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
   const recentOrders = orders.slice(0, 4);
 
   const stats = [
-    { label: "Total Orders",  value: orders.length,                                                    color: "text-blue-600",   bg: "bg-blue-50",   Icon: ShoppingBagIcon  },
-    { label: "Delivered",     value: orders.filter((o) => o.status === "delivered").length,             color: "text-green-600",  bg: "bg-green-50",  Icon: CheckCircleIcon  },
-    { label: "In Progress",   value: orders.filter((o) => ["pending","confirmed","processing"].includes(o.status)).length, color: "text-indigo-600", bg: "bg-indigo-50", Icon: ClockIcon },
-    { label: "Total Spent",   value: formatMMK(totalSpent),                                             color: "text-purple-600", bg: "bg-purple-50", Icon: CreditCardIcon   },
+    { label: "Total Orders",  value: orders.length,                                                    color: "text-blue-600 dark:text-blue-400",   bg: "bg-blue-50 dark:bg-blue-900/30",   Icon: ShoppingBagIcon  },
+    { label: "Delivered",     value: orders.filter((o) => o.status === "delivered").length,             color: "text-green-600 dark:text-green-400",  bg: "bg-green-50 dark:bg-green-900/30",  Icon: CheckCircleIcon  },
+    { label: "In Progress",   value: orders.filter((o) => ["pending","confirmed","processing"].includes(o.status)).length, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-900/30", Icon: ClockIcon },
+    { label: "Total Spent",   value: formatMMK(totalSpent),                                             color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-900/30", Icon: CreditCardIcon   },
   ];
 
   return (
@@ -725,7 +725,7 @@ const PurchaseHistoryTab = ({ orders }) => {
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3">
                       <button onClick={() => downloadPaySlip(o)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 whitespace-nowrap">
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 whitespace-nowrap">
                         <PrinterIcon className="h-3.5 w-3.5" />Print
                       </button>
                     </td>
@@ -837,7 +837,7 @@ const WishlistTab = ({ navigate }) => {
                 <p className="text-sm text-green-600 font-bold mt-0.5">{formatMMK(item.price)}</p>
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => navigate(`/products/${item.slug || item.id}`)}
-                    className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2.5 py-1 rounded hover:bg-gray-200">View</button>
+                    className="text-xs bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2.5 py-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700">View</button>
                   <button onClick={() => setRemoveModal(item.id)}
                     className="text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded hover:bg-red-100">Remove</button>
                 </div>
@@ -959,7 +959,7 @@ const CartTab = ({ navigate }) => {
                 Please review before checkout.
               </div>
             )}
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-slate-700">
               {cartItems.map((item) => (
                 <li key={item.id} className={`py-4 flex gap-3 ${removingId === item.id ? "opacity-40" : ""}`}>
                   <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
@@ -985,13 +985,13 @@ const CartTab = ({ navigate }) => {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center border border-gray-200 dark:border-slate-700 rounded overflow-hidden">
                         <button onClick={() => handleQty(item.id, item.quantity - 1)} disabled={item.quantity <= 1 || updatingId === item.id || !item.is_available}
-                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-40 text-sm">−</button>
+                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 text-sm">−</button>
                         <div className="relative w-8 text-center text-sm">
                           {item.quantity}
-                          {updatingId === item.id && <div className="absolute inset-0 flex items-center justify-center bg-white/80"><div className="animate-spin h-3 w-3 rounded-full border-b-2 border-green-500" /></div>}
+                          {updatingId === item.id && <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-slate-800/80"><div className="animate-spin h-3 w-3 rounded-full border-b-2 border-green-500" /></div>}
                         </div>
                         <button onClick={() => handleQty(item.id, item.quantity + 1)} disabled={item.quantity >= item.stock || updatingId === item.id || !item.is_available}
-                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 disabled:opacity-40 text-sm">+</button>
+                          className="px-2.5 py-1 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 text-sm">+</button>
                       </div>
                       <button onClick={() => setRemoveModal(item.id)} disabled={removingId === item.id}
                         className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 disabled:opacity-40">
@@ -1014,7 +1014,7 @@ const CartTab = ({ navigate }) => {
                 <div className="flex justify-between border-t pt-2 font-bold text-gray-900 dark:text-slate-100"><dt>Total</dt><dd>{formatMMK(cartSummary?.total || 0)}</dd></div>
               </dl>
               <button onClick={() => navigate("/checkout")} disabled={!canCheckout}
-                className={`mt-4 w-full py-2.5 rounded-lg font-medium text-white text-sm transition ${canCheckout ? "bg-green-600 hover:bg-green-700" : "bg-gray-300 cursor-not-allowed"}`}>
+                className={`mt-4 w-full py-2.5 rounded-lg font-medium text-white text-sm transition ${canCheckout ? "bg-green-600 hover:bg-green-700" : "bg-gray-300 dark:bg-slate-600 cursor-not-allowed"}`}>
                 Proceed to Checkout
               </button>
               <button onClick={() => navigate("/products")}
@@ -1050,7 +1050,7 @@ const ProfileTab = ({ user, onUpdate }) => {
     <div key={name}>
       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
       <input type={type} name={name} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
     </div>
   );
 
@@ -1277,7 +1277,7 @@ const BuyerDashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="flex h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-slate-900 dark:to-slate-900">
 
       {/* ── Cancel Confirm Modal ── */}
       {cancelModal && (
@@ -1316,7 +1316,7 @@ const BuyerDashboard = () => {
               {TABS.map((tab, idx) => (
                 <button key={tab.id} onClick={() => { setActiveTab(idx); setSidebarOpen(false); }}
                   className={classNames("flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-sm font-medium mb-1 transition-all",
-                    activeTab === idx ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md" : "text-gray-600 hover:bg-gray-50")}>
+                    activeTab === idx ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md" : "text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700")}>
                   <tab.Icon className="h-5 w-5 flex-shrink-0" />{tab.label}
                 </button>
               ))}
@@ -1335,7 +1335,7 @@ const BuyerDashboard = () => {
 
       {/* ── Desktop sidebar ── */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-72 bg-white/80 backdrop-blur-lg border-r border-gray-200/60 shadow-xl">
+        <div className="flex flex-col w-72 bg-white/80 dark:bg-slate-900/90 backdrop-blur-lg border-r border-gray-200/60 dark:border-slate-700/60 shadow-xl">
           <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto">
 
             {/* Profile header */}
@@ -1344,7 +1344,7 @@ const BuyerDashboard = () => {
                 <span className="text-white font-bold text-base">{user?.name?.charAt(0)?.toUpperCase() || "B"}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-base font-bold text-gray-900 dark:text-slate-100 truncate">{user?.name || "Buyer"}</p>
+                <p className="text-base font-bold text-gray-900 dark:text-slate-100 truncate theme-transition">{user?.name || "Buyer"}</p>
                 <p className="text-sm text-green-600 font-medium">Buyer Account</p>
               </div>
             </div>
@@ -1355,8 +1355,8 @@ const BuyerDashboard = () => {
                 <button key={tab.id} onClick={() => setActiveTab(idx)}
                   className={classNames("group flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-sm font-medium transition-all",
                     activeTab === idx
-                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
-                      : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md")}>
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                      : "text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md")}>
                   <tab.Icon className="h-5 w-5 group-hover:scale-110 transition-transform flex-shrink-0" />
                   {tab.label}
                 </button>
@@ -1365,14 +1365,14 @@ const BuyerDashboard = () => {
           </div>
 
           {/* Footer stats */}
-          <div className="border-t border-gray-200/60 p-5 bg-white/50">
+          <div className="border-t border-gray-200/60 dark:border-slate-700/60 p-5 bg-white/50 dark:bg-slate-900/50">
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="text-center p-2 bg-green-50 rounded-xl">
-                <div className="font-bold text-green-700 text-lg">{orders.length}</div>
+              <div className="text-center p-2 bg-green-50 dark:bg-green-900/30 rounded-xl">
+                <div className="font-bold text-green-700 dark:text-green-400 text-lg">{orders.length}</div>
                 <div className="text-gray-500 dark:text-slate-500">Orders</div>
               </div>
-              <div className="text-center p-2 bg-blue-50 rounded-xl">
-                <div className="font-bold text-blue-700 text-lg">{orders.filter((o) => o.status === "delivered").length}</div>
+              <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                <div className="font-bold text-blue-700 dark:text-blue-400 text-lg">{orders.filter((o) => o.status === "delivered").length}</div>
                 <div className="text-gray-500 dark:text-slate-500">Delivered</div>
               </div>
             </div>
@@ -1387,7 +1387,7 @@ const BuyerDashboard = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Top bar */}
-        <div className="flex-shrink-0 bg-white/80 backdrop-blur-lg border-b border-gray-200/60 px-6 py-4">
+        <div className="flex-shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200/60 dark:border-slate-700/60 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
@@ -1400,8 +1400,8 @@ const BuyerDashboard = () => {
 
         {/* Email verification banner */}
         {!isEmailVerified?.() && (
-          <div className="flex-shrink-0 bg-yellow-50 border-b border-yellow-200 px-4 sm:px-6 py-3">
-            <p className="text-xs sm:text-sm text-yellow-700 flex items-center gap-2">
+          <div className="flex-shrink-0 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 sm:px-6 py-3">
+            <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
               <EnvelopeIcon className="h-4 w-4 flex-shrink-0" />
               Your email is not verified. Check your inbox for the verification link.
             </p>
@@ -1413,13 +1413,13 @@ const BuyerDashboard = () => {
 
             {/* Mobile scrollable tab bar */}
             <div className="md:hidden mb-5">
-              <div className="flex gap-1.5 rounded-2xl bg-white/80 backdrop-blur-lg p-1.5 shadow-lg overflow-x-auto no-scrollbar">
+              <div className="flex gap-1.5 rounded-2xl bg-white/80 dark:bg-slate-800/90 backdrop-blur-lg p-1.5 shadow-lg overflow-x-auto no-scrollbar">
                 {TABS.map((tab, idx) => (
                   <button key={tab.id} onClick={() => setActiveTab(idx)}
                     className={classNames("flex-shrink-0 rounded-xl py-2.5 px-3 text-xs font-medium transition-all focus:outline-none",
                       activeTab === idx
                         ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"
-                        : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow")}>
+                        : "text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow")}>
                     <div className="flex flex-col items-center gap-1">
                       <tab.Icon className="h-4 w-4" />
                       <span className="whitespace-nowrap">{tab.label}</span>

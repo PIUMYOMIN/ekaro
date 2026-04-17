@@ -334,8 +334,8 @@ const ProductDetail = () => {
       {successMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`px-4 py-3 rounded-md shadow-lg flex items-center justify-between max-w-md ${successMessage.type === 'error'
-              ? 'bg-red-100 border-red-400 text-red-700'
-              : 'bg-green-100 border-green-400 text-green-700'
+              ? 'bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300'
+              : 'bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300'
             }`}>
             <span>{typeof successMessage === 'string' ? successMessage : successMessage.message}</span>
             <button onClick={closeSuccessMessage} className="ml-4">
@@ -440,7 +440,7 @@ const ProductDetail = () => {
                     <button
                       key={index}
                       onClick={() => setActiveImage(index)}
-                      className={`bg-gray-100 dark:bg-slate-800 rounded h-20 flex items-center justify-center overflow-hidden border-2 ${activeImage === index ? "border-green-500" : "border-transparent"
+                      className={`bg-gray-100 dark:bg-slate-800 rounded h-20 flex items-center justify-center overflow-hidden border-2 transition-colors ${activeImage === index ? "border-green-500" : "border-transparent dark:border-transparent hover:border-slate-600"
                         }`}
                     >
                       <img
@@ -476,7 +476,7 @@ const ProductDetail = () => {
                       key={star}
                       className={`h-5 w-5 ${star <= Math.round(product.average_rating || 0)
                         ? "text-yellow-400"
-                        : "text-gray-300"
+                        : "text-gray-300 dark:text-slate-600"
                         }`}
                     />
                   ))}
@@ -565,7 +565,7 @@ const ProductDetail = () => {
                       )
                     )
                   }
-                  className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md"
+                  className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-md"
                 />
                 <span className="text-gray-600 dark:text-slate-400">
                   {product.quantity || 0} in stock
@@ -603,7 +603,7 @@ const ProductDetail = () => {
                 <button
                   onClick={handleAddToWishlist}
                   disabled={wishlistLoading}
-                  className="p-3 rounded-md border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:bg-slate-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-3 rounded-md border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
                 >
                   {wishlistLoading ? (
@@ -622,8 +622,8 @@ const ProductDetail = () => {
                   title="Share this product"
                   className={`p-3 rounded-md border transition flex items-center justify-center
                     ${copied
-                      ? "border-green-500 bg-green-50 text-green-600"
-                      : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                      ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                      : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
                 >
                   {copied
@@ -634,7 +634,7 @@ const ProductDetail = () => {
               </div>
 
               {product.quantity === 0 && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
                   This product is currently out of stock
                 </div>
               )}
@@ -645,10 +645,10 @@ const ProductDetail = () => {
                   <h3 className="text-lg font-semibold mb-3">Seller Information</h3>
                   <Link
                     to={`/sellers/${product.seller.seller_profile?.store_slug || product.seller.id}`}
-                    className="flex items-center hover:bg-gray-50 dark:bg-slate-900 p-2 rounded-lg transition-colors"
+                    className="flex items-center hover:bg-gray-50 dark:hover:bg-slate-800 p-2 rounded-lg transition-colors"
                   >
-                    <div className="bg-gray-200 border-2 border-dashed rounded-full w-12 h-12 flex items-center justify-center">
-                      <span className="text-gray-500 dark:text-slate-500 text-sm">Shop</span>
+                    <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-full w-12 h-12 flex items-center justify-center">
+                      <span className="text-gray-500 dark:text-slate-400 text-sm">Shop</span>
                     </div>
                     <div className="ml-4">
                       <p className="font-medium text-green-600 hover:text-green-700">
@@ -685,8 +685,8 @@ const ProductDetail = () => {
                   {reviewFlash && (
                     <div className={`mb-3 px-4 py-2.5 rounded-xl text-sm font-medium ${
                       reviewFlash.type === "success"
-                        ? "bg-green-50 border border-green-200 text-green-800"
-                        : "bg-red-50 border border-red-200 text-red-700"}`}>
+                        ? "bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-300"
+                        : "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300"}`}>
                       {reviewFlash.msg}
                     </div>
                   )}
@@ -702,7 +702,7 @@ const ProductDetail = () => {
                           className="focus:outline-none mr-1"
                         >
                           <StarIcon
-                            className={`h-8 w-8 ${star <= rating ? "text-yellow-400" : "text-gray-300"
+                            className={`h-8 w-8 ${star <= rating ? "text-yellow-400" : "text-gray-300 dark:text-slate-600"
                               }`}
                           />
                         </button>
@@ -716,7 +716,7 @@ const ProductDetail = () => {
                     <textarea
                       id="review"
                       rows="4"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       value={reviewText}
                       onChange={(e) => setReviewText(e.target.value)}
                       required
@@ -727,7 +727,7 @@ const ProductDetail = () => {
                     <button
                       type="button"
                       onClick={() => setShowReviewForm(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900"
+                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
                     >
                       Cancel
                     </button>
@@ -763,8 +763,8 @@ const ProductDetail = () => {
                 reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-200 dark:border-slate-700 pb-6">
                     <div className="flex items-start">
-                      <div className="bg-gray-200 border-2 border-dashed rounded-full w-10 h-10 flex items-center justify-center">
-                        <span className="text-gray-500 dark:text-slate-500 text-xs">User</span>
+                      <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-full w-10 h-10 flex items-center justify-center">
+                        <span className="text-gray-500 dark:text-slate-400 text-xs">User</span>
                       </div>
                       <div className="ml-4 flex-1">
                         <h4 className="font-medium">
@@ -778,7 +778,7 @@ const ProductDetail = () => {
                             {[1, 2, 3, 4, 5].map((star) => (
                               <StarIcon
                                 key={star}
-                                className={`h-4 w-4 ${star <= review.rating ? "text-yellow-400" : "text-gray-300"
+                                className={`h-4 w-4 ${star <= review.rating ? "text-yellow-400" : "text-gray-300 dark:text-slate-600"
                                   }`}
                               />
                             ))}

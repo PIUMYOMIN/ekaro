@@ -288,10 +288,10 @@ const DiscountManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             {t("seller.discount.title", "Product Discounts")}
           </h2>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
             Price reductions applied directly to product listings — no code required.
           </p>
         </div>
@@ -306,7 +306,7 @@ const DiscountManagement = () => {
 
       {/* Error banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex justify-between items-center text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex justify-between items-center text-red-700 dark:text-red-300">
           <span className="text-sm">{error}</span>
           <button onClick={() => setError("")}><XCircleIcon className="h-5 w-5" /></button>
         </div>
@@ -315,15 +315,15 @@ const DiscountManagement = () => {
       {/* Delete confirmation modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Discount</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Delete Discount</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               Are you sure you want to delete this discount? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -349,7 +349,7 @@ const DiscountManagement = () => {
             {/* Name + Type + Value */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Name *</label>
                 <input
                   type="text" name="name" value={formData.name}
                   onChange={handleChange} required
@@ -359,7 +359,7 @@ const DiscountManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Type *</label>
                 <select
                   name="type" value={formData.type}
                   onChange={handleChange} required
@@ -373,7 +373,7 @@ const DiscountManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   {formData.type === "percentage" ? "Percentage (0–100)" : "Amount (MMK)"}
                 </label>
                 <input
@@ -459,12 +459,12 @@ const DiscountManagement = () => {
             {/* Product picker */}
             {formData.applicable_to === "specific_products" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Select products ({formData.applicable_product_ids.length} selected)
                 </label>
-                <div className="max-h-52 overflow-y-auto border rounded-lg divide-y">
+                <div className="max-h-52 overflow-y-auto border border-gray-300 dark:border-slate-600 rounded-lg divide-y divide-gray-200 dark:divide-slate-700 bg-white dark:bg-slate-700">
                   {products.length === 0
-                    ? <p className="p-3 text-sm text-gray-500">No products found</p>
+                    ? <p className="p-3 text-sm text-gray-500 dark:text-slate-400">No products found</p>
                     : products.map((p) => (
                       <label key={p.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700">
                         <input
@@ -485,21 +485,21 @@ const DiscountManagement = () => {
             {/* Category picker */}
             {formData.applicable_to === "specific_categories" && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Select categories ({formData.applicable_category_ids.length} selected)
                 </label>
-                <div className="max-h-52 overflow-y-auto border rounded-lg divide-y">
+                <div className="max-h-52 overflow-y-auto border border-gray-300 dark:border-slate-600 rounded-lg divide-y divide-gray-200 dark:divide-slate-700 bg-white dark:bg-slate-700">
                   {relevantCategories.length === 0
-                    ? <p className="p-3 text-sm text-gray-500">No relevant categories found</p>
+                    ? <p className="p-3 text-sm text-gray-500 dark:text-slate-400">No relevant categories found</p>
                     : relevantCategories.map((c) => (
-                      <label key={c.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50">
+                      <label key={c.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-600">
                         <input
                           type="checkbox"
                           checked={formData.applicable_category_ids.includes(c.id)}
                           onChange={() => toggleSelection("applicable_category_ids", c.id)}
-                          className="h-4 w-4 text-green-600"
+                          className="h-4 w-4 text-green-600 dark:text-green-400"
                         />
-                        <span className="text-sm">{loc(c.name_en, c.name_mm)}</span>
+                        <span className="text-sm text-gray-900 dark:text-slate-100">{loc(c.name_en, c.name_mm)}</span>
                       </label>
                     ))
                   }
@@ -514,7 +514,7 @@ const DiscountManagement = () => {
                 checked={formData.is_one_time_use} onChange={handleChange}
                 className="h-4 w-4 text-green-600 focus:ring-2 focus:ring-green-500 dark:text-green-400 rounded"
               />
-              <label htmlFor="is_one_time_use" className="text-sm text-gray-700">
+              <label htmlFor="is_one_time_use" className="text-sm text-gray-700 dark:text-slate-300">
                 One-time use per customer
               </label>
             </div>
@@ -539,31 +539,31 @@ const DiscountManagement = () => {
       )}
 
       {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+            <thead className="bg-gray-50 dark:bg-slate-900/50">
               <tr>
                 {["Name", "Type / Value", "Applies to", "Validity", "Uses", "Status", "Actions"].map((h) => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
               {discounts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-400 dark:text-slate-500 text-sm">
                     No discounts yet. Create one to get started.
                   </td>
                 </tr>
               ) : discounts.map((d) => (
-                <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{d.name}</td>
+                <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-100">{d.name}</td>
 
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
                       {d.type === "percentage" && <TagIcon className="h-4 w-4 text-blue-500" />}
                       {d.type === "fixed"       && <CurrencyDollarIcon className="h-4 w-4 text-green-500" />}
                       {d.type === "free_shipping" && <TruckIcon className="h-4 w-4 text-purple-500" />}
@@ -575,15 +575,15 @@ const DiscountManagement = () => {
                     </div>
                     {/* FIX: read min_order_amount (correct field name) */}
                     {d.min_order_amount && (
-                      <div className="text-xs text-gray-400 mt-0.5">
+                      <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                         Min: {formatMMK(d.min_order_amount)}
                       </div>
                     )}
                   </td>
 
-                  <td className="px-6 py-4 text-sm text-gray-600">{scopeSummary(d)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-slate-400">{scopeSummary(d)}</td>
 
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                     <div className="flex items-center gap-1">
                       <CalendarIcon className="h-3.5 w-3.5" />
                       {formatDate(d.starts_at)}
@@ -594,7 +594,7 @@ const DiscountManagement = () => {
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                     {/* FIX: read max_uses (was max_uses_total) */}
                     {d.max_uses ? `${d.used_count ?? 0} / ${d.max_uses}` : `${d.used_count ?? 0} / ∞`}
                   </td>
@@ -604,8 +604,8 @@ const DiscountManagement = () => {
                       onClick={() => toggleStatus(d)}
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
                         d.is_active
-                          ? "bg-green-100 text-green-800 hover:bg-green-200"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                          : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600"
                       }`}
                     >
                       {d.is_active ? "Active" : "Inactive"}
@@ -614,10 +614,10 @@ const DiscountManagement = () => {
 
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(d)} className="text-green-600 hover:text-green-800" title="Edit">
+                      <button onClick={() => openEdit(d)} className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300" title="Edit">
                         <PencilIcon className="h-5 w-5" />
                       </button>
-                      <button onClick={() => setDeleteTarget(d.id)} className="text-red-500 hover:text-red-700" title="Delete">
+                      <button onClick={() => setDeleteTarget(d.id)} className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300" title="Delete">
                         <TrashIcon className="h-5 w-5" />
                       </button>
                     </div>
@@ -633,58 +633,58 @@ const DiscountManagement = () => {
         <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
                 Product Price Discounts
               </h3>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
                 Set via the <span className="font-medium">discount icon</span> (✨) in Product Management.
                 These are direct price reductions on individual products — separate from the discount rules above.
               </p>
             </div>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-sm text-amber-800">
-            <strong>Note:</strong> These products have <code className="bg-amber-100 px-1 rounded">discount_price</code> or
-            <code className="bg-amber-100 px-1 ml-1 rounded">discount_percentage</code> set directly on the product record.
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 mb-3 text-sm text-amber-800 dark:text-amber-300">
+            <strong>Note:</strong> These products have <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">discount_price</code> or
+            <code className="bg-amber-100 dark:bg-amber-900/40 px-1 ml-1 rounded">discount_percentage</code> set directly on the product record.
             They show a sale badge on the listing automatically without needing a discount rule.
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                <thead className="bg-gray-50 dark:bg-slate-900/50 text-gray-500 dark:text-slate-400 text-xs uppercase tracking-wide">
                   <tr>
                     {["Product","Price","Discount","Sale Price","Valid Until","Status"].map(h => (
                       <th key={h} className="px-4 py-3 text-left font-semibold whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                   {onSaleProducts.map(p => {
                     const salePrice = p.discount_price
                       || (p.discount_percentage ? p.price * (1 - p.discount_percentage / 100) : null);
                     return (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-900 max-w-[180px] truncate">
+                      <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-100 max-w-[180px] truncate">
                           {p.name_en || p.name}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        <td className="px-4 py-3 text-gray-600 dark:text-slate-400 whitespace-nowrap">
                           {formatMMK(p.price)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {p.discount_percentage
-                            ? <span className="text-blue-700 font-semibold">-{p.discount_percentage}%</span>
+                            ? <span className="text-blue-700 dark:text-blue-400 font-semibold">-{p.discount_percentage}%</span>
                             : p.discount_price
-                            ? <span className="text-green-700 font-semibold">-{formatMMK(p.price - p.discount_price)}</span>
+                            ? <span className="text-green-700 dark:text-green-400 font-semibold">-{formatMMK(p.price - p.discount_price)}</span>
                             : "—"}
                         </td>
-                        <td className="px-4 py-3 text-red-600 font-semibold whitespace-nowrap">
+                        <td className="px-4 py-3 text-red-600 dark:text-red-400 font-semibold whitespace-nowrap">
                           {salePrice ? formatMMK(salePrice) : "—"}
                         </td>
-                        <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                        <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">
                           {p.discount_end ? new Date(p.discount_end).toLocaleDateString() : "No expiry"}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                            p.is_on_sale ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                            p.is_on_sale ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" : "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400"
                           }`}>
                             {p.is_on_sale ? "On Sale" : "Inactive"}
                           </span>

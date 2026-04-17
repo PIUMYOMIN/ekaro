@@ -547,8 +547,8 @@ export default function Checkout() {
                               document.getElementById(`otp-input-${Math.min(pasted.length, 5)}`)?.focus();
                             }}
                             className={classNames(
-                              'w-11 h-12 text-center text-xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors',
-                              otpError ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-green-500'
+                              'w-11 h-12 text-center text-xl font-bold border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100',
+                              otpError ? 'border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/30' : 'border-gray-200 dark:border-slate-600 focus:border-green-500'
                             )}
                           />
                         ))}
@@ -618,7 +618,7 @@ export default function Checkout() {
           {showPaymentModal && currentOrder && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
               <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-4 border-b flex items-center justify-between">
+                <div className="p-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Complete Your Payment</h3>
                   <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:text-slate-400">
                     <XMarkIcon className="h-6 w-6" />
@@ -650,14 +650,14 @@ export default function Checkout() {
           {toast && (
             <div className="fixed top-4 right-4 z-50 max-w-sm">
               <div className={`rounded-lg shadow-lg p-4 flex items-center gap-3 ${toast.type === "success"
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200"
+                  ? "bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700"
+                  : "bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700"
                 }`}>
                 {toast.type === "success"
                   ? <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
                   : <XCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
                 }
-                <p className={`text-sm font-medium flex-1 ${toast.type === "success" ? "text-green-800" : "text-red-800"
+                <p className={`text-sm font-medium flex-1 ${toast.type === "success" ? "text-green-800 dark:text-green-300" : "text-red-800 dark:text-red-300"
                   }`}>
                   {toast.message}
                 </p>
@@ -780,8 +780,8 @@ export default function Checkout() {
                       className={classNames(
                         "border-2 rounded-lg p-4 cursor-pointer transition-all",
                         paymentMethod === method.id
-                          ? "border-green-500 bg-green-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                          : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
                       )}
                     >
                       <div className="flex items-center">
@@ -794,7 +794,7 @@ export default function Checkout() {
                         </div>
                         <div className={classNames(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                          paymentMethod === method.id ? "border-green-500 bg-green-500" : "border-gray-300 dark:border-slate-600"
+                          paymentMethod === method.id ? "border-green-500 bg-green-500" : "border-gray-300 dark:border-slate-500"
                         )}>
                           {paymentMethod === method.id && <div className="w-2 h-2 rounded-full bg-white dark:bg-slate-800" />}
                         </div>
@@ -804,15 +804,15 @@ export default function Checkout() {
                 </div>
 
                 {paymentMethod === "mmqr" && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       <strong>How MMQR works:</strong> After confirming your order, you'll see a QR code to scan with any mobile banking app.
                     </p>
                   </div>
                 )}
                 {paymentMethod === "cash_on_delivery" && (
-                  <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
-                    <p className="text-sm text-yellow-800">
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
                       <strong>Cash on Delivery:</strong> Pay the delivery person when you receive your order.
                     </p>
                   </div>
@@ -874,14 +874,14 @@ export default function Checkout() {
                   </h3>
 
                   {appliedCoupon ? (
-                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <TagIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <TagIcon className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                         <div>
-                          <span className="text-sm font-semibold text-green-800 font-mono tracking-wide">
+                          <span className="text-sm font-semibold text-green-800 dark:text-green-300 font-mono tracking-wide">
                             {appliedCoupon.coupon.code}
                           </span>
-                          <p className="text-xs text-green-700 mt-0.5">
+                          <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">
                             {appliedCoupon.coupon.type === "percentage"
                               ? `${appliedCoupon.coupon.value}% off`
                               : `${formatMMK(appliedCoupon.coupon.value)} off`
@@ -907,8 +907,8 @@ export default function Checkout() {
                           onChange={e => { setCouponInput(e.target.value.toUpperCase()); if (couponError) setCouponError(""); }}
                           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleApplyCoupon(); } }}
                           className={classNames(
-                            "flex-1 px-4 py-2.5 border rounded-lg text-sm font-mono uppercase focus:ring-2 focus:ring-green-500 focus:border-transparent",
-                            couponError ? "border-red-300 bg-red-50" : "border-gray-300 dark:border-slate-600"
+                            "flex-1 px-4 py-2.5 border rounded-lg text-sm font-mono uppercase focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500",
+                            couponError ? "border-red-300 dark:border-red-600 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-slate-600"
                           )}
                           placeholder="Enter coupon code"
                           maxLength={50}
@@ -994,8 +994,8 @@ export default function Checkout() {
 
                 {/* Seller Policy Agreement */}
                 {sellerPolicies.length > 0 && (
-                  <div id="seller-policies" className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3 mt-4">
-                    <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
+                  <div id="seller-policies" className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 space-y-3 mt-4">
+                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 flex items-center gap-2">
                       <svg className="h-4 w-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
@@ -1039,7 +1039,7 @@ export default function Checkout() {
                             />
                             <div className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-colors ${agreedSellers[p.seller_id]
                                 ? 'bg-green-600 border-green-600'
-                                : 'border-gray-300 hover:border-green-400'
+                                : 'border-gray-300 dark:border-slate-500 hover:border-green-400'
                               }`}>
                               {agreedSellers[p.seller_id] && (
                                 <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={3}>
@@ -1071,7 +1071,7 @@ export default function Checkout() {
                   className={classNames(
                     "w-full mt-6 py-4 px-6 rounded-lg font-semibold text-white transition-all",
                     loading || feesLoading
-                      ? "bg-gray-400 cursor-not-allowed"
+                      ? "bg-gray-400 dark:bg-slate-600 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl"
                   )}
                 >
@@ -1088,7 +1088,7 @@ export default function Checkout() {
 
                 <button
                   onClick={() => navigate("/products")}
-                  className="w-full mt-3 py-3 px-6 border border-gray-300 dark:border-slate-600 rounded-lg font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:bg-slate-900 transition-colors"
+                  className="w-full mt-3 py-3 px-6 border border-gray-300 dark:border-slate-600 rounded-lg font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   Continue Shopping
                 </button>

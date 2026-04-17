@@ -449,7 +449,7 @@ const SellerDashboard = () => {
             </button>
             <button
               onClick={() => navigate('/')}
-              className="w-full py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 font-medium rounded-xl hover:bg-gray-50 dark:bg-slate-900 transition-colors"
+              className="w-full py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
             >
               Return to Home
             </button>
@@ -487,7 +487,7 @@ const SellerDashboard = () => {
                     "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200 mb-1",
                     selectedTab === idx
                       ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-200"
-                      : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                      : "text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
@@ -551,7 +551,7 @@ const SellerDashboard = () => {
                     "group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200",
                     selectedTab === idx
                       ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
-                      : "text-gray-600 hover:text-green-700 hover:bg-white"
+                      : "text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-white dark:hover:bg-slate-700"
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5 transition-all duration-200 group-hover:scale-110" />
@@ -614,7 +614,7 @@ const SellerDashboard = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-600 dark:text-slate-400">Setup Progress: {setupNotificationData.progress}%</span>
-                <div className="w-64 bg-gray-200 rounded-full h-2">
+                <div className="w-64 bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                   <div className="bg-green-500 h-2 rounded-full transition-all duration-300" style={{ width: `${setupNotificationData.progress}%` }}></div>
                 </div>
               </div>
@@ -635,7 +635,7 @@ const SellerDashboard = () => {
                       "flex-shrink-0 min-w-[100px] rounded-xl py-3 px-2 text-sm font-medium leading-5 transition-all duration-200 focus:outline-none",
                       selectedTab === idx
                         ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                        : "text-gray-600 hover:text-green-700 hover:bg-white hover:shadow-md"
+                        : "text-gray-600 dark:text-slate-300 hover:text-green-700 dark:hover:text-green-400 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md"
                     )}
                   >
                     <div className="flex flex-col items-center justify-center space-y-1">

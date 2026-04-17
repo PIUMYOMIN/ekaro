@@ -81,11 +81,11 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
 
   if (loading) {
     return (
-      <div className="animate-pulse bg-white rounded-lg shadow p-6">
-        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+      <div className="animate-pulse bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded w-1/4 mb-4"></div>
         <div className="space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-full"></div>
+          <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4"></div>
         </div>
       </div>
     );
@@ -93,8 +93,8 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
 
   if (!verificationData) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-500">Unable to load verification data</p>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+        <p className="text-gray-500 dark:text-slate-400">Unable to load verification data</p>
       </div>
     );
   }
@@ -107,13 +107,13 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Store Verification</h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">Store Verification</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
               Complete verification to unlock selling features
             </p>
           </div>
@@ -128,7 +128,9 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
       {/* Message Alert */}
       {message.text && (
         <div className={`px-6 py-3 ${
-          message.type === 'success' ? 'bg-green-50' : 'bg-red-50'
+          message.type === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20'
+            : 'bg-red-50 dark:bg-red-900/20'
         }`}>
           <div className="flex items-center">
             {message.type === 'success' ? (
@@ -137,7 +139,9 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
               <ExclamationCircleIcon className="h-5 w-5 text-red-500 mr-2" />
             )}
             <p className={`text-sm ${
-              message.type === 'success' ? 'text-green-700' : 'text-red-700'
+              message.type === 'success'
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-red-700 dark:text-red-300'
             }`}>
               {message.text}
             </p>
@@ -150,10 +154,10 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between text-sm mb-2">
-            <span className="font-medium text-gray-700">Profile Completion</span>
-            <span className="text-gray-500">{getProgressPercentage()}%</span>
+            <span className="font-medium text-gray-700 dark:text-slate-300">Profile Completion</span>
+            <span className="text-gray-500 dark:text-slate-400">{getProgressPercentage()}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
             <div 
               className="bg-green-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${getProgressPercentage()}%` }}
@@ -163,23 +167,23 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
 
         {/* Requirements Checklist */}
         <div className="mb-6">
-          <h4 className="font-medium text-gray-900 mb-3">Verification Requirements</h4>
+          <h4 className="font-medium text-gray-900 dark:text-slate-100 mb-3">Verification Requirements</h4>
           <div className="space-y-3">
             {verificationData.requirements?.map((requirement, index) => (
               <div key={index} className="flex items-center">
                 {requirement.completed ? (
-                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3" />
+                  <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
                 ) : (
-                  <div className="h-5 w-5 rounded-full border-2 border-gray-300 mr-3"></div>
+                  <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-slate-600 mr-3 flex-shrink-0"></div>
                 )}
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-slate-100">
                     {requirement.name}
                     {!requirement.required && (
-                      <span className="ml-2 text-xs text-gray-500">(Optional)</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-slate-500">(Optional)</span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">{requirement.description}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">{requirement.description}</p>
                 </div>
               </div>
             ))}
@@ -188,15 +192,15 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
 
         {/* Missing Fields (if any) */}
         {verificationData.missing_fields && verificationData.missing_fields.length > 0 && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="font-medium text-yellow-800 mb-2 flex items-center">
+          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2 flex items-center">
               <ExclamationCircleIcon className="h-5 w-5 mr-2" />
               Missing Required Information
             </h4>
-            <ul className="text-sm text-yellow-700 space-y-1">
+            <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
               {verificationData.missing_fields.map((field, index) => (
                 <li key={index} className="flex items-center">
-                  <span className="h-1.5 w-1.5 bg-yellow-500 rounded-full mr-2"></span>
+                  <span className="h-1.5 w-1.5 bg-yellow-500 dark:bg-yellow-400 rounded-full mr-2"></span>
                   {field}
                 </li>
               ))}
@@ -206,9 +210,9 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
 
         {/* Verification Details */}
         {verificationData.verified_at && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-2">Verification Details</h4>
-            <div className="text-sm text-blue-700 space-y-1">
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Verification Details</h4>
+            <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
               <p>Verified on: {new Date(verificationData.verified_at).toLocaleDateString()}</p>
               <p>Verified by: {verificationData.verified_by || 'System Administrator'}</p>
               {verificationData.admin_notes && (
@@ -223,7 +227,7 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
           <button
             onClick={fetchVerificationData}
             disabled={submitting}
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
           >
             <ArrowPathIcon className="h-4 w-4 mr-2" />
             Refresh
@@ -251,8 +255,8 @@ const SellerVerificationPanel = ({ onStatusChange }) => {
         </div>
 
         {/* Help Text */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500">
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+          <p className="text-xs text-gray-500 dark:text-slate-400">
             <strong>Note:</strong> Verification typically takes 1-3 business days. 
             Once verified, you'll receive a verification badge and full access to selling features.
           </p>

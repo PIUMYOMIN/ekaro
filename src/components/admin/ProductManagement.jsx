@@ -276,13 +276,13 @@ const ProductManagement = () => {
   const getApprovalBadge = (status) => {
     switch (status) {
       case 'approved':
-        return { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircleIcon, label: 'Approved' };
+        return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300', icon: CheckCircleIcon, label: 'Approved' };
       case 'pending':
-        return { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: ClockIcon, label: 'Pending' };
+        return { bg: 'bg-yellow-100 dark:bg-yellow-900/30', text: 'text-yellow-800 dark:text-yellow-300', icon: ClockIcon, label: 'Pending' };
       case 'rejected':
-        return { bg: 'bg-red-100', text: 'text-red-800', icon: XCircleIcon, label: 'Rejected' };
+        return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-300', icon: XCircleIcon, label: 'Rejected' };
       default:
-        return { bg: 'bg-gray-100', text: 'text-gray-800', icon: null, label: status || 'Unknown' };
+        return { bg: 'bg-gray-100 dark:bg-slate-700', text: 'text-gray-800 dark:text-slate-300', icon: null, label: status || 'Unknown' };
     }
   };
 
@@ -317,11 +317,11 @@ const ProductManagement = () => {
     return {
       display: (
         <div className="flex flex-col">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 w-fit">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 w-fit">
             <SparklesIcon className="h-3 w-3 mr-1" />
             {badge}
           </span>
-          {details && <span className="text-xs text-gray-600 mt-1">{details}</span>}
+          {details && <span className="text-xs text-gray-600 dark:text-slate-400 mt-1">{details}</span>}
         </div>
       ),
       badge
@@ -352,7 +352,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("name_en")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Name
           {sortField === "name_en" && (
@@ -367,7 +367,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("category.name_en")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Category
           {sortField === "category.name_en" && (
@@ -381,7 +381,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("price")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Price
           {sortField === "price" && (
@@ -396,7 +396,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("quantity")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Stock
           {sortField === "quantity" && (
@@ -416,7 +416,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("status")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Approval Status
           {sortField === "status" && (
@@ -430,7 +430,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("is_active")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Active/Inactive
           {sortField === "is_active" && (
@@ -444,7 +444,7 @@ const ProductManagement = () => {
       header: (
         <button
           onClick={() => handleSort("created_at")}
-          className="flex items-center hover:text-gray-900"
+          className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Created
           {sortField === "created_at" && (
@@ -474,7 +474,7 @@ const ProductManagement = () => {
         />
       ),
       image: (
-        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-700 flex-shrink-0">
           <img
             src={getProductImage(product.images)}
             alt={product.name_en || 'Product'}
@@ -485,36 +485,36 @@ const ProductManagement = () => {
       ),
       name: (
         <div>
-          <div className="font-medium text-gray-900">{product.name_en}</div>
+          <div className="font-medium text-gray-900 dark:text-slate-100">{product.name_en}</div>
           {product.name_mm && (
-            <div className="text-sm text-gray-500">{product.name_mm}</div>
+            <div className="text-sm text-gray-500 dark:text-slate-400">{product.name_mm}</div>
           )}
         </div>
       ),
       sku: (
-        <span className="font-mono text-sm text-gray-600">
+        <span className="font-mono text-sm text-gray-600 dark:text-slate-400">
           {product.sku || "N/A"}
         </span>
       ),
       category: (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
           {product.category?.name_en || "Uncategorized"}
         </span>
       ),
       price: formatMMK(product.price),
       stock: (
         <div className="flex items-center">
-          <span className={`font-medium ${product.quantity <= 0 ? 'text-red-600' : 'text-gray-900'}`}>
+          <span className={`font-medium ${product.quantity <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-slate-100'}`}>
             {product.quantity || 0}
           </span>
           {product.quantity <= 0 && (
-            <span className="ml-2 text-xs text-red-500">Out of stock</span>
+            <span className="ml-2 text-xs text-red-500 dark:text-red-400">Out of stock</span>
           )}
         </div>
       ),
       discount: discountInfo.display,
       min_order: (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300">
           {product.min_order || product.moq || 1}
         </span>
       ),
@@ -531,7 +531,7 @@ const ProductManagement = () => {
           </span>
           {/* FIX: show rejection reason when present so admin can see reason at a glance */}
           {product.rejection_reason && (
-            <span className="text-xs text-red-600 max-w-[180px] truncate" title={product.rejection_reason}>
+            <span className="text-xs text-red-600 dark:text-red-400 max-w-[180px] truncate" title={product.rejection_reason}>
               ↳ {product.rejection_reason}
             </span>
           )}
@@ -540,8 +540,8 @@ const ProductManagement = () => {
       status: (
         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
           product.is_active
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
         }`}>
           {product.is_active ? (
             <>
@@ -560,21 +560,21 @@ const ProductManagement = () => {
       actions: (
         <div className="flex space-x-2 items-center">
           <button
-            className="inline-flex items-center p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded"
+            className="inline-flex items-center p-1.5 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-50 dark:hover:bg-slate-700 rounded"
             onClick={() => navigate(`/admin/products/${product.id}`)}
             title="View Product"
           >
             <EyeIcon className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex items-center p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded"
+            className="inline-flex items-center p-1.5 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded"
             onClick={() => navigate(`/admin/products/${product.id}/edit`)}
             title="Edit Product"
           >
             <PencilIcon className="h-4 w-4" />
           </button>
           <button
-            className="inline-flex items-center p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+            className="inline-flex items-center p-1.5 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
             onClick={() => setDeleteModal(product.id)}
             title="Delete Product"
           >
@@ -586,14 +586,14 @@ const ProductManagement = () => {
             <>
               <button
                 onClick={() => setApproveModal(product.id)}
-                className="inline-flex items-center p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded"
+                className="inline-flex items-center p-1.5 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
                 title="Approve"
               >
                 <CheckCircleIcon className="h-4 w-4" />
               </button>
               <button
                 onClick={() => { setRejectModal(product.id); setRejectReason(""); }}
-                className="inline-flex items-center p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+                className="inline-flex items-center p-1.5 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                 title="Reject"
               >
                 <XCircleIcon className="h-4 w-4" />
@@ -605,7 +605,7 @@ const ProductManagement = () => {
           {product.status === 'rejected' && (
             <button
               onClick={() => setApproveModal(product.id)}
-              className="inline-flex items-center px-2 py-1 text-xs text-green-700 bg-green-50 hover:bg-green-100 rounded border border-green-200"
+              className="inline-flex items-center px-2 py-1 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 rounded border border-green-200 dark:border-green-800"
               title="Re-approve this rejected product"
             >
               Re-approve
@@ -617,7 +617,7 @@ const ProductManagement = () => {
             <select
               value={product.is_active ? "active" : "inactive"}
               onChange={(e) => handleProductStatus(product.id, e.target.value === "active")}
-              className="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-green-500"
+              className="text-xs border border-gray-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-1 focus:ring-green-500"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -634,15 +634,15 @@ const ProductManagement = () => {
       {/* ── Approve confirmation modal ── */}
       {approveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Approve Product</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Approve Product</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               Are you sure you want to approve this product? It will become visible to buyers immediately.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setApproveModal(null)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -660,13 +660,13 @@ const ProductManagement = () => {
       {/* ── Delete confirmation modal ── */}
       {deleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Product</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Delete Product</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               Are you sure you want to delete this product? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setDeleteModal(null)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
               <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Delete</button>
             </div>
           </div>
@@ -676,18 +676,18 @@ const ProductManagement = () => {
       {/* ── Reject reason modal ── */}
       {rejectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reject Product</h3>
-            <p className="text-sm text-gray-600 mb-3">Optionally provide a reason for the seller:</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Reject Product</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">Optionally provide a reason for the seller:</p>
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm dark:text-slate-100 bg-white dark:bg-slate-700 mb-4 focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500"
               placeholder="Rejection reason (optional)"
             />
             <div className="flex justify-end gap-3">
-              <button onClick={() => { setRejectModal(null); setRejectReason(""); }} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => { setRejectModal(null); setRejectReason(""); }} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
               <button onClick={handleReject} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Reject Product</button>
             </div>
           </div>
@@ -697,13 +697,13 @@ const ProductManagement = () => {
       {/* ── Bulk action confirmation modal ── */}
       {bulkModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Bulk Action</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Confirm Bulk Action</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-6">
               Are you sure you want to <strong>{bulkAction}</strong> {selectedProducts.length} product(s)?
             </p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setBulkModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => setBulkModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
               <button onClick={executeBulkAction} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Confirm</button>
             </div>
           </div>
@@ -713,8 +713,8 @@ const ProductManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Product Management</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">
             Manage all products in your marketplace
           </p>
         </div>
@@ -722,17 +722,17 @@ const ProductManagement = () => {
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <span className="text-sm font-medium text-green-800 mr-4">
+              <span className="text-sm font-medium text-green-800 dark:text-green-300 mr-4">
                 {selectedProducts.length} product(s) selected
               </span>
               <div className="flex items-center space-x-2">
                 <select
                   value={bulkAction}
                   onChange={(e) => setBulkAction(e.target.value)}
-                  className="block w-40 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="block w-40 rounded-md border border-gray-300 dark:border-slate-600 px-3 py-1.5 text-sm text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                 >
                   <option value="">Choose action...</option>
                   <option value="activate">Activate Selected</option>
@@ -749,7 +749,7 @@ const ProductManagement = () => {
                 </button>
                 <button
                   onClick={() => setSelectedProducts([])}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   Clear Selection
                 </button>
@@ -760,19 +760,19 @@ const ProductManagement = () => {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Search Products
             </label>
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by name, SKU..."
-                className="block w-full rounded-md border border-gray-300 pl-10 pr-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 dark:border-slate-600 pl-10 pr-3 py-2 text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -781,13 +781,13 @@ const ProductManagement = () => {
 
           {/* Approval Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Approval Status
             </label>
             <select
               value={approvalFilter}
               onChange={(e) => setApprovalFilter(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 dark:border-slate-600 px-3 py-2 text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -798,13 +798,13 @@ const ProductManagement = () => {
 
           {/* Active/Inactive Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Active/Inactive
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 dark:border-slate-600 px-3 py-2 text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
             >
               <option value="all">All</option>
               <option value="active">Active</option>
@@ -814,13 +814,13 @@ const ProductManagement = () => {
 
           {/* Category Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Category
             </label>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 dark:border-slate-600 px-3 py-2 text-gray-900 dark:text-slate-100 bg-white dark:bg-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
             >
               <option value="all">All Categories</option>
               {categories.map(category => (
@@ -840,7 +840,7 @@ const ProductManagement = () => {
                 setApprovalFilter("all");
                 setCategoryFilter("all");
               }}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full justify-center"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full justify-center"
             >
               <FunnelIcon className="h-4 w-4 mr-2" />
               Reset Filters
@@ -849,7 +849,7 @@ const ProductManagement = () => {
         </div>
 
         {/* Stats */}
-        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+        <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500 dark:text-slate-400">
           <span>Total: {products.length}</span>
           <span>•</span>
           <span>Showing: {filteredProducts.length}</span>
@@ -864,15 +864,15 @@ const ProductManagement = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center justify-center">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-8 flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
+          <p className="text-gray-600 dark:text-slate-400">Loading products...</p>
         </div>
       )}
 
       {/* Error State */}
       {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -880,14 +880,14 @@ const ProductManagement = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading products</h3>
-              <div className="mt-2 text-sm text-red-700">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Error loading products</h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-400">
                 <p>{error}</p>
               </div>
               <div className="mt-4">
                 <button
                   onClick={fetchProducts}
-                  className="text-sm font-medium text-red-600 hover:text-red-500"
+                  className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300"
                 >
                   Try again
                 </button>
@@ -899,7 +899,7 @@ const ProductManagement = () => {
 
       {/* Products Table */}
       {!loading && !error && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
           {filteredProducts.length > 0 ? (
             <DataTable
               columns={columns}
@@ -909,16 +909,16 @@ const ProductManagement = () => {
             />
           ) : (
             <div className="p-12 text-center">
-              <svg className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-12 w-12 text-gray-400 dark:text-slate-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">
                 {searchTerm || statusFilter !== "all" || approvalFilter !== "all" || categoryFilter !== "all"
                   ? "No products found matching your criteria"
                   : "No products yet"
                 }
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-gray-500 dark:text-slate-400 mb-6">
                 {searchTerm || statusFilter !== "all" || approvalFilter !== "all" || categoryFilter !== "all"
                   ? "Try adjusting your search or filters"
                   : "Get started by adding your first product"
@@ -937,13 +937,13 @@ const ProductManagement = () => {
           )}
 
           {/* Table Footer */}
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+          <div className="bg-gray-50 dark:bg-slate-900/50 px-6 py-3 border-t border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-slate-400">
                 Showing <span className="font-medium">{filteredProducts.length}</span> of{" "}
                 <span className="font-medium">{products.length}</span> products
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-slate-400">
                 {selectedProducts.length > 0 && (
                   <span className="text-green-600 font-medium">
                     {selectedProducts.length} selected
