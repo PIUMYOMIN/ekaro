@@ -10,6 +10,7 @@ import {
   TrashIcon, XMarkIcon, EyeIcon, BellIcon
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import NrcInput from './NrcInput';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import NotificationPreferences from '../Shared/NotificationPreferences';
@@ -240,6 +241,12 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
       // Business Hours
       business_hours_enabled: storeData.business_hours_enabled ?? false,
       business_hours: storeData.business_hours || DEFAULT_HOURS,
+      // NRC
+      nrc_division:      storeData.nrc_division      || '',
+      nrc_township_code: storeData.nrc_township_code || '',
+      nrc_township_mm:   storeData.nrc_township_mm   || '',
+      nrc_type:          storeData.nrc_type          || '',
+      nrc_number:        storeData.nrc_number        || '',
       // Social
       social_facebook:  storeData.social_facebook  || '',
       social_instagram: storeData.social_instagram || '',
@@ -275,6 +282,12 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
         year_established: data.year_established || null,
         employees_count: data.employees_count || null,
         account_number: data.account_number || null,
+        // NRC
+        nrc_division:      data.nrc_division      || null,
+        nrc_township_code: data.nrc_township_code || null,
+        nrc_township_mm:   data.nrc_township_mm   || null,
+        nrc_type:          data.nrc_type          || null,
+        nrc_number:        data.nrc_number        || null,
       });
       flash('Store information saved.');
       if (refreshData) await refreshData();
@@ -679,13 +692,26 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
               uploading={docUploading}
               hint="TIN or tax registration certificate"
             />
+            {/* NRC structured input */}
+            <div className="mb-6 p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+              <NrcInput
+                value={{
+                  nrc_division:      data?.nrc_division      || '',
+                  nrc_township_code: data?.nrc_township_code || '',
+                  nrc_township_mm:   data?.nrc_township_mm   || '',
+                  nrc_type:          data?.nrc_type          || '',
+                  nrc_number:        data?.nrc_number        || '',
+                }}
+                onChange={(nrc) => setData(prev => ({ ...prev, ...nrc }))}
+              />
+            </div>
             <DocumentRow
               label="Identity Document (Front)"
               fieldName="identity_document_front"
               value={storeData?.identity_document_front}
               onUpload={uploadDocument}
               uploading={docUploading}
-              hint="NRC, passport, or driving licence — front side"
+              hint="NRC front side — photo or scan"
             />
             <DocumentRow
               label="Identity Document (Back)"
@@ -693,7 +719,7 @@ const StoreProfileEditor = ({ storeData, refreshData }) => {
               value={storeData?.identity_document_back}
               onUpload={uploadDocument}
               uploading={docUploading}
-              hint="NRC, passport, or driving licence — back side"
+              hint="NRC back side — photo or scan"
             />
           </div>
           {storeData?.verification_status && (

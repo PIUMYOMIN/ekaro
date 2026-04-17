@@ -22,6 +22,7 @@ import {
 } from "@heroicons/react/24/solid";
 import DataTable from "../ui/DataTable";
 import api from "../../utils/api";
+import { NRC_TYPES } from "../seller/NrcInput";
 
 // Safe document URL helper — never crashes on null values
 const docUrl = (path) => {
@@ -49,6 +50,10 @@ const SellerVerificationManagement = () => {
   // ── Confirm modal state — replaces window.confirm ─────────────────────
   // type: 'approve' | 'reject' | null
   const [confirmModal, setConfirmModal]    = useState(null);
+  const [nrcPanel, setNrcPanel]     = useState(null);  // { seller, status, notes }
+  const [statusPanel, setStatusPanel] = useState(null);  // { seller, status, reason }
+  const [nrcLoading, setNrcLoading]   = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   const fetchPendingSellers = async () => {
     setLoading(true);
@@ -135,6 +140,54 @@ const SellerVerificationManagement = () => {
     }
     setActionError(null);
     setConfirmModal(type);
+  };
+
+  const NRC_STATUS_CFG = {
+    unverified: { label: 'Unverified',  cls: 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400' },
+    pending:    { label: 'Pending',     cls: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' },
+    verified:   { label: '✓ Verified',  cls: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' },
+    mismatch:   { label: '⚠ Mismatch', cls: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300' },
+    rejected:   { label: '✕ Rejected',  cls: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' },
+  };
+
+  const STORE_STATUS_OPTS = [
+    { v: 'active',        label: '🟢 Active' },
+    { v: 'approved',      label: '✅ Approved' },
+    { v: 'pending',       label: '⏳ Pending Review' },
+    { v: 'suspended',     label: '🔴 Suspended' },
+    { v: 'rejected',      label: '❌ Rejected' },
+    { v: 'closed',        label: '🚫 Closed' },
+    { v: 'setup_pending', label: '🔧 Setup Pending' },
+  ];
+
+  const handleNrcVerify = async () => {
+    if (!nrcPanel) return;
+    setNrcLoading(true);
+    try {
+      await api.post(`/admin/seller/${nrcPanel.seller.id}/verify-nrc`, {
+        nrc_verification_status: nrcPanel.status,
+        nrc_verification_notes:  nrcPanel.notes || null,
+      });
+      setNrcPanel(null);
+      setActionSuccess('NRC verification status updated.');
+      await fetchPendingSellers();
+    } catch (e) { setActionError(e.response?.data?.message || 'NRC verify failed.'); }
+    finally { setNrcLoading(false); }
+  };
+
+  const handleSetStatus = async () => {
+    if (!statusPanel) return;
+    setStatusLoading(true);
+    try {
+      await api.patch(`/admin/seller/${statusPanel.seller.id}/set-status`, {
+        status: statusPanel.status,
+        reason: statusPanel.reason || null,
+      });
+      setStatusPanel(null);
+      setActionSuccess(`Seller status changed to ${statusPanel.status}.`);
+      await fetchPendingSellers();
+    } catch (e) { setActionError(e.response?.data?.message || 'Status change failed.'); }
+    finally { setStatusLoading(false); }
   };
 
   const getStatusBadgeColor = (status) => {
@@ -550,6 +603,75 @@ const SellerVerificationManagement = () => {
                   </div>
                 </div>
 
+                {/* NRC side-by-side verification */}
+                {(selectedSeller.nrc_full || selectedSeller.nrc_division) && (
+                  <div className="mb-5 pt-4 border-t border-gray-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-900 dark:text-slate-100">🪪 NRC Verification</h4>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        (NRC_STATUS_CFG[selectedSeller.nrc_verification_status] || NRC_STATUS_CFG.unverified).cls
+                      }`}>
+                        {(NRC_STATUS_CFG[selectedSeller.nrc_verification_status] || NRC_STATUS_CFG.unverified).label}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {/* NRC number breakdown */}
+                      <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">Submitted NRC</p>
+                        <p className="font-mono text-lg font-bold text-indigo-900 dark:text-indigo-200 tracking-widest">
+                          {selectedSeller.nrc_full || '—'}
+                        </p>
+                        {selectedSeller.nrc_full_mm && (
+                          <p className="text-sm text-indigo-700 dark:text-indigo-300 mt-0.5">{selectedSeller.nrc_full_mm}</p>
+                        )}
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          {[
+                            ["Division", selectedSeller.nrc_division],
+                            ["Township", (selectedSeller.nrc_township_code || '') + (selectedSeller.nrc_township_mm ? ' (' + selectedSeller.nrc_township_mm + ')' : '')],
+                            ["Type", (NRC_TYPES.find(t => t.value === selectedSeller.nrc_type) || {}).en || selectedSeller.nrc_type],
+                            ["Number", selectedSeller.nrc_number],
+                          ].filter(([,v]) => v).map(([k,v]) => (
+                            <div key={k}>
+                              <span className="text-indigo-500 dark:text-indigo-400">{k}</span>
+                              <p className="font-medium text-indigo-900 dark:text-indigo-200">{v}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* NRC image + quick verdict buttons */}
+                      <div className="flex flex-col gap-3">
+                        {selectedSeller.identity_document_front && (
+                          <a href={docUrl(selectedSeller.identity_document_front)} target="_blank" rel="noopener noreferrer"
+                            className="block overflow-hidden rounded-xl border-2 border-indigo-300 dark:border-indigo-700 hover:border-indigo-500 transition-colors">
+                            <img src={docUrl(selectedSeller.identity_document_front)} alt="NRC Front"
+                              className="w-full h-36 object-cover" />
+                            <div className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium text-center">NRC Front — click to enlarge</div>
+                          </a>
+                        )}
+                        {selectedSeller.identity_document_back && (
+                          <a href={docUrl(selectedSeller.identity_document_back)} target="_blank" rel="noopener noreferrer"
+                            className="block overflow-hidden rounded-xl border-2 border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 transition-colors">
+                            <img src={docUrl(selectedSeller.identity_document_back)} alt="NRC Back"
+                              className="w-full h-28 object-cover" />
+                            <div className="px-3 py-1.5 bg-indigo-400 text-white text-xs font-medium text-center">NRC Back</div>
+                          </a>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          {["verified","mismatch","rejected","pending"].map(st => (
+                            <button key={st}
+                              onClick={() => setNrcPanel({ seller: selectedSeller, status: st, notes: '' })}
+                              className={`py-1.5 px-2 text-xs font-semibold rounded-lg border-2 transition-colors ${
+                                (NRC_STATUS_CFG[st] || NRC_STATUS_CFG.unverified).cls
+                              } border-current hover:opacity-80`}>
+                              {(NRC_STATUS_CFG[st] || NRC_STATUS_CFG.unverified).label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Documents */}
                 <div className="mb-6 pt-4 border-t border-gray-200 dark:border-slate-700">
                   <h4 className="font-medium text-gray-900 dark:text-slate-100 mb-3">Uploaded Documents</h4>
@@ -602,6 +724,12 @@ const SellerVerificationManagement = () => {
 
                 <div className="flex gap-3">
                   <button
+                    onClick={() => setStatusPanel({ seller: selectedSeller, status: selectedSeller.status || "pending", reason: "" })}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 text-sm font-medium"
+                  >
+                    ⚡ Change Status
+                  </button>
+                  <button
                     onClick={() => openConfirm("reject")}
                     disabled={actionLoading}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm disabled:opacity-50"
@@ -626,5 +754,90 @@ const SellerVerificationManagement = () => {
     </div>
   );
 };
+
+      {/* ── NRC Verify Modal ──────────────────────────────────── */}
+      {nrcPanel && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">🪪 NRC Verification</h3>
+              <button onClick={() => setNrcPanel(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"><XMarkIcon className="h-5 w-5" /></button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 font-mono text-lg font-bold text-indigo-900 dark:text-indigo-200 tracking-widest text-center">
+                {nrcPanel.seller.nrc_full || '—'}
+              </div>
+              {nrcPanel.seller.nrc_full_mm && (
+                <p className="text-center text-sm text-indigo-600 dark:text-indigo-400">{nrcPanel.seller.nrc_full_mm}</p>
+              )}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">NRC Verification Result</label>
+                <select value={nrcPanel.status} onChange={e => setNrcPanel(p => ({ ...p, status: e.target.value }))}
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                  {Object.entries(NRC_STATUS_CFG).map(([v, {label}]) => (
+                    <option key={v} value={v}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Admin Notes (optional)</label>
+                <textarea rows={3} value={nrcPanel.notes} onChange={e => setNrcPanel(p => ({ ...p, notes: e.target.value }))}
+                  placeholder="e.g. NRC matches document, photo clear..."
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none" />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
+              <button onClick={() => setNrcPanel(null)} className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
+              <button onClick={handleNrcVerify} disabled={nrcLoading}
+                className="px-5 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                {nrcLoading ? 'Saving…' : 'Save NRC Status'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Status Change Modal ──────────────────────────────────── */}
+      {statusPanel && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">⚡ Change Seller Status</h3>
+              <button onClick={() => setStatusPanel(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"><XMarkIcon className="h-5 w-5" /></button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-slate-400">Store: <strong className="text-gray-900 dark:text-slate-100">{statusPanel.seller.store_name}</strong></p>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-2">New Status</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {STORE_STATUS_OPTS.map(opt => (
+                    <button key={opt.v} onClick={() => setStatusPanel(p => ({ ...p, status: opt.v }))}
+                      className={`py-2 px-3 text-xs font-semibold rounded-xl border-2 transition-all ${
+                        statusPanel.status === opt.v
+                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                          : 'border-gray-200 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-400'
+                      } text-gray-800 dark:text-slate-200`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Reason (optional)</label>
+                <textarea rows={2} value={statusPanel.reason} onChange={e => setStatusPanel(p => ({ ...p, reason: e.target.value }))}
+                  placeholder="Reason for status change..."
+                  className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500 focus:outline-none resize-none" />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
+              <button onClick={() => setStatusPanel(null)} className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">Cancel</button>
+              <button onClick={handleSetStatus} disabled={statusLoading}
+                className="px-5 py-2 text-sm font-semibold bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50">
+                {statusLoading ? 'Saving…' : 'Apply Status'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 export default SellerVerificationManagement;

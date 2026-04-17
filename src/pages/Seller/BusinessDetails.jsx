@@ -11,6 +11,7 @@ import {
     ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
+import NrcInput, { NRC_TOWNSHIPS } from '../../components/seller/NrcInput';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
 const BusinessDetails = () => {
@@ -18,6 +19,13 @@ const BusinessDetails = () => {
     const { formData, saveStep, isLoading, businessTypeInfo } = useOnboardingState();
     const [error, setError] = useState('');
     const [isIndividual, setIsIndividual] = useState(false);
+    const [nrcValue, setNrcValue] = useState({
+        nrc_division:      formData?.business_details?.nrc_division      || '',
+        nrc_township_code: formData?.business_details?.nrc_township_code || '',
+        nrc_township_mm:   formData?.business_details?.nrc_township_mm   || '',
+        nrc_type:          formData?.business_details?.nrc_type          || '',
+        nrc_number:        formData?.business_details?.nrc_number        || '',
+    });
 
     const {
         register,
@@ -59,7 +67,7 @@ const BusinessDetails = () => {
             }
         }
 
-        const result = await saveStep('business-details', data);
+        const result = await saveStep('business-details', { ...data, ...nrcValue });
         
         if (result.success) {
             navigate(`/seller/onboarding/${result.nextStep}`);
@@ -252,6 +260,18 @@ const BusinessDetails = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Myanmar NRC */}
+                <div className="border-b border-gray-200 pb-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-1 flex items-center">
+                        <span className="mr-2">🪪</span> Myanmar NRC Number
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-4">မှတ်ပုံတင်နံပါတ် — ဝင်ငွေနှင့် ငွေပေးချေမှုအတွက် လိုအပ်ပါသည်</p>
+                    <NrcInput
+                        value={nrcValue}
+                        onChange={setNrcValue}
+                    />
                 </div>
 
                 {/* Information Card */}

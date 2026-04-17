@@ -11,7 +11,6 @@ import {
   ShieldCheckIcon,
   ChevronDownIcon,
   ArrowRightIcon,
-  PhoneIcon,
   CheckCircleIcon,
   XCircleIcon,
   GlobeAltIcon,
