@@ -603,9 +603,8 @@ const SellerVerificationManagement = () => {
                   </div>
                 </div>
 
-                {/* NRC side-by-side verification */}
-                {(selectedSeller.nrc_full || selectedSeller.nrc_division) && (
-                  <div className="mb-5 pt-4 border-t border-gray-200 dark:border-slate-700">
+                {/* NRC side-by-side verification — always visible so admin can check/verify */}
+                <div className="mb-5 pt-4 border-t border-gray-200 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900 dark:text-slate-100">🪪 NRC Verification</h4>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
@@ -669,8 +668,7 @@ const SellerVerificationManagement = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Documents */}
                 <div className="mb-6 pt-4 border-t border-gray-200 dark:border-slate-700">
@@ -751,10 +749,6 @@ const SellerVerificationManagement = () => {
           </div>
         </div>
       )}
-    </div>
-  );
-};
-
       {/* ── NRC Verify Modal ──────────────────────────────────── */}
       {nrcPanel && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -839,5 +833,8 @@ const SellerVerificationManagement = () => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
 
 export default SellerVerificationManagement;
