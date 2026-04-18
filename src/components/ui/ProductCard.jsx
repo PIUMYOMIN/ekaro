@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PhotoIcon, ShoppingCartIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid, StarIcon } from "@heroicons/react/24/solid";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
-import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
@@ -46,12 +45,12 @@ const Stars = ({ rating, count }) => {
         {[1, 2, 3, 4, 5].map((i) => (
           <StarIcon
             key={i}
-            className={`h-3 w-3 ${i <= filled ? "text-amber-400" : "text-gray-200"}`}
+            className={`h-3 w-3 ${i <= filled ? "text-amber-400" : "text-gray-200 dark:text-gray-600"}`}
           />
         ))}
       </div>
       {(rating > 0 || count > 0) && (
-        <span className="text-[10px] text-gray-400 dark:text-slate-600 leading-none">
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 leading-none">
           {rating ? Number(rating).toFixed(1) : ""}
           {count > 0 && ` (${count})`}
         </span>
@@ -60,16 +59,14 @@ const Stars = ({ rating, count }) => {
   );
 };
 
-// ── Mini toast (inline, not fixed) ───────────────────────────────────────────
+// ── Mini toast ────────────────────────────────────────────────────────────────
 const MiniToast = ({ msg, type }) => (
   <AnimatePresence>
     {msg && (
       <motion.div
         className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap
                     text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg
-                    ${type === "success"
-                      ? "bg-green-600 text-white"
-                      : "bg-red-500 text-white"}`}
+                    ${type === "success" ? "bg-green-600 text-white" : "bg-red-500 text-white"}`}
         initial={{ opacity: 0, y: -8, scale: 0.9 }}
         animate={{ opacity: 1, y: 0,  scale: 1   }}
         exit={{    opacity: 0, y: -8, scale: 0.9 }}
@@ -81,34 +78,6 @@ const MiniToast = ({ msg, type }) => (
   </AnimatePresence>
 );
 
-
-// ── Delivery zone swipe-up ticker (same pattern as CategoryCard) ──────────────
-const DeliveryZoneTicker = ({ zones }) => {
-  const [idx, setIdx] = React.useState(0);
-  React.useEffect(() => {
-    if (zones.length <= 1) return;
-    const id = setInterval(() => setIdx((p) => (p + 1) % zones.length), 2400);
-    return () => clearInterval(id);
-  }, [zones.length]);
-  if (!zones.length) return null;
-  return (
-    <div className="relative h-5 overflow-hidden">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={idx}
-          className="absolute inset-0 flex items-center text-xs font-medium text-green-700"
-          initial={{ y: 14, opacity: 0 }}
-          animate={{ y: 0,  opacity: 1 }}
-          exit={{    y: -14, opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          {zones[idx]}
-        </motion.span>
-      </AnimatePresence>
-    </div>
-  );
-};
-
 // ── Main component ────────────────────────────────────────────────────────────
 const ProductCard = ({ product, className = "" }) => {
   const { i18n } = useTranslation();
@@ -118,9 +87,9 @@ const ProductCard = ({ product, className = "" }) => {
   const { cartItems, addToCart } = useCart();
   const navigate = useNavigate();
 
-  const [toast, setToast]         = useState(null); // { msg, type }
-  const [imageError, setImageError] = useState(false);
-  const [isInCart, setIsInCart]   = useState(false);
+  const [toast, setToast]             = useState(null);
+  const [imageError, setImageError]   = useState(false);
+  const [isInCart, setIsInCart]       = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
   const [wishLoading, setWishLoading] = useState(false);
 
@@ -129,10 +98,8 @@ const ProductCard = ({ product, className = "" }) => {
   const imageUrl  = product.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
   const isInWishlist = !!wishlist?.some((w) => w.id === productId);
 
-  // Use server-computed fields when available (ProductResource now always returns them);
-  // fall back to client-side calculation for backward compat.
-  const isOnSale     = product.is_currently_on_sale
-                    ?? (product.is_on_sale && (product.discount_price > 0 || product.discount_percentage > 0));
+  const isOnSale = product.is_currently_on_sale
+    ?? (product.is_on_sale && (product.discount_price > 0 || product.discount_percentage > 0));
   const effectivePrice = isOnSale
     ? (product.selling_price ?? product.discount_price ?? product.price)
     : product.price;
@@ -154,7 +121,6 @@ const ProductCard = ({ product, className = "" }) => {
     setTimeout(() => setToast(null), 2200);
   }, []);
 
-  // ── Wishlist ────────────────────────────────────────────────────────────────
   const toggleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -179,7 +145,6 @@ const ProductCard = ({ product, className = "" }) => {
     }
   };
 
-  // ── Add to cart ─────────────────────────────────────────────────────────────
   const handleAddToCart = async () => {
     if (!user) {
       navigate("/login", { state: { returnTo: window.location.pathname } });
@@ -197,50 +162,49 @@ const ProductCard = ({ product, className = "" }) => {
     }
   };
 
-  // ── Derived display values ──────────────────────────────────────────────────
   const sellerName =
     product.seller?.seller_profile?.store_name ||
     product.seller?.store_name ||
     product.seller?.name;
 
-  const cartLabel = isUnavailable
-    ? "Unavailable"
-    : isOutOfStock
-    ? "Out of Stock"
-    : isInCart
-    ? "In Cart"
-    : cartLoading
-    ? "Adding…"
-    : "Add to Cart";
+  const cartLabel = isUnavailable  ? "Unavailable"
+    : isOutOfStock                 ? "Out of Stock"
+    : isInCart                     ? "In Cart"
+    : cartLoading                  ? "Adding…"
+    :                                "Add to Cart";
 
   return (
     <motion.div
-      className={`group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden flex flex-col h-full
-                  border border-gray-100 shadow-sm
-                  hover:shadow-lg hover:border-gray-200
+      className={`group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
+                  flex flex-col h-full
+                  border border-gray-100 dark:border-gray-700
+                  shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-gray-900/40
+                  hover:border-gray-200 dark:hover:border-gray-600
                   transition-all duration-300 ease-out ${className}`}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0  }}
       transition={{ duration: 0.3 }}
     >
       {/* ── Image ───────────────────────────────────────────────────────────── */}
-      <div className="relative flex-shrink-0 overflow-hidden bg-gray-50 dark:bg-slate-900 aspect-square">
+      <div className="relative flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700 aspect-square">
         <Link to={`/products/${slug}`} className="block w-full h-full">
           {!imageError ? (
             <LazyLoadImage
               src={imageUrl}
               alt={loc(product.name_en, product.name_mm) || "Product"}
               effect="blur"
-              className="w-full h-full object-center object-contain
+              wrapperClassName="w-full h-full"
+              className="w-full h-full object-cover
                          transition-transform duration-500 ease-out
                          group-hover:scale-105"
-              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f9fafb'/%3E%3C/svg%3E"
+              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23e5e7eb'/%3E%3C/svg%3E"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900">
-              <PhotoIcon className="h-10 w-10 text-gray-300 mb-1" />
-              <span className="text-xs text-gray-400 dark:text-slate-600">No image</span>
+            <div className="w-full h-full flex flex-col items-center justify-center
+                            bg-gray-100 dark:bg-gray-700">
+              <PhotoIcon className="h-10 w-10 text-gray-300 dark:text-gray-500 mb-1" />
+              <span className="text-xs text-gray-400 dark:text-gray-500">No image</span>
             </div>
           )}
         </Link>
@@ -249,27 +213,27 @@ const ProductCard = ({ product, className = "" }) => {
         <MiniToast msg={toast?.msg} type={toast?.type} />
 
         {/* ── Badges ── */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
           {discountPct > 0 && !isOutOfStock && !isUnavailable && (
             <span className="bg-red-500 text-white text-[10px] font-bold
-                             px-2 py-0.5 rounded-full leading-tight">
+                             px-2 py-0.5 rounded-full leading-tight shadow-sm">
               -{Math.round(discountPct)}%
             </span>
           )}
           {product.is_new && !isOutOfStock && !isUnavailable && (
             <span className="bg-green-500 text-white text-[10px] font-bold
-                             px-2 py-0.5 rounded-full leading-tight">
+                             px-2 py-0.5 rounded-full leading-tight shadow-sm">
               NEW
             </span>
           )}
           {isOutOfStock && (
-            <span className="bg-gray-700/80 text-white text-[10px] font-bold
+            <span className="bg-gray-800/75 text-white text-[10px] font-bold
                              px-2 py-0.5 rounded-full leading-tight backdrop-blur-sm">
               Sold Out
             </span>
           )}
           {isUnavailable && !isOutOfStock && (
-            <span className="bg-gray-400 text-white text-[10px] font-bold
+            <span className="bg-gray-400/90 text-white text-[10px] font-bold
                              px-2 py-0.5 rounded-full leading-tight">
               N/A
             </span>
@@ -281,18 +245,19 @@ const ProductCard = ({ product, className = "" }) => {
           <button
             onClick={toggleWishlist}
             disabled={wishLoading}
-            className="absolute top-2.5 right-2.5
-                       w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow
+            className="absolute top-2 right-2
+                       w-7 h-7 rounded-full
+                       bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm shadow
                        flex items-center justify-center
-                       hover:bg-white hover:scale-110 active:scale-95
+                       hover:scale-110 active:scale-95
                        transition-all duration-150 focus:outline-none
                        focus:ring-2 focus:ring-green-400 focus:ring-offset-1
                        disabled:opacity-60"
             aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
             {isInWishlist
-              ? <HeartSolid className="h-3.5 w-3.5 text-red-500" />
-              : <HeartOutline className="h-3.5 w-3.5 text-gray-500 dark:text-slate-500 group-hover:text-red-400 transition-colors" />
+              ? <HeartSolid   className="h-3.5 w-3.5 text-red-500" />
+              : <HeartOutline className="h-3.5 w-3.5 text-gray-400 group-hover:text-red-400 transition-colors" />
             }
           </button>
         )}
@@ -300,8 +265,10 @@ const ProductCard = ({ product, className = "" }) => {
         {/* ── Category chip (bottom-left) ── */}
         {(product.category?.name_en || product.category?.name_mm) && (
           <div className="absolute bottom-2 left-2">
-            <span className="text-[10px] font-medium text-gray-500
-                             bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium
+                             text-gray-700 dark:text-gray-200
+                             bg-white/80 dark:bg-gray-900/75 backdrop-blur-sm
+                             px-2 py-0.5 rounded-full">
               {loc(product.category?.name_en, product.category?.name_mm)}
             </span>
           </div>
@@ -309,12 +276,14 @@ const ProductCard = ({ product, className = "" }) => {
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col flex-grow px-3 pt-3 pb-3 sm:px-4 sm:pt-3.5">
+      <div className="flex flex-col flex-grow px-3 pt-2.5 pb-3">
 
         {/* Product name */}
-        <Link to={`/products/${slug}`} className="block mb-1.5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100 line-clamp-2 leading-snug
-                         group-hover:text-green-700 transition-colors duration-150">
+        <Link to={`/products/${slug}`} className="block mb-1">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100
+                         line-clamp-2 leading-snug
+                         group-hover:text-green-600 dark:group-hover:text-green-400
+                         transition-colors duration-150">
             {loc(product.name_en, product.name_mm) || product.name || "Unnamed Product"}
           </h3>
         </Link>
@@ -324,29 +293,28 @@ const ProductCard = ({ product, className = "" }) => {
 
         {/* Seller name */}
         {sellerName && (
-          <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-600 truncate">
+          <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500 truncate">
             by {sellerName}
           </p>
         )}
 
-        {/* Spacer */}
         <div className="flex-grow" />
 
         {/* ── Price ─────────────────────────────────────────────────────────── */}
-        <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-800">
+        <div className="mt-2.5 pt-2 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-end justify-between gap-1 flex-wrap">
             <div className="flex items-baseline gap-1.5 flex-wrap">
               {discountPct > 0 ? (
                 <>
-                  <span className="text-base font-bold text-red-600 leading-none">
+                  <span className="text-sm font-bold text-red-600 dark:text-red-400 leading-none">
                     {formatMMK(effectivePrice)}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-slate-600 line-through leading-none">
+                  <span className="text-[11px] text-gray-400 dark:text-gray-500 line-through leading-none">
                     {formatMMK(product.price)}
                   </span>
                 </>
               ) : (
-                <span className="text-base font-bold text-green-700 leading-none">
+                <span className="text-sm font-bold text-green-700 dark:text-green-400 leading-none">
                   {formatMMK(product.price)}
                 </span>
               )}
@@ -354,8 +322,11 @@ const ProductCard = ({ product, className = "" }) => {
 
             {/* MOQ chip */}
             {product.moq > 1 && (
-              <span className="text-[10px] text-gray-400 dark:text-slate-600 bg-gray-50 dark:bg-slate-900 border border-gray-200
-                               px-1.5 py-0.5 rounded-md font-medium whitespace-nowrap">
+              <span className="text-[10px] font-medium whitespace-nowrap
+                               text-gray-500 dark:text-gray-400
+                               bg-gray-100 dark:bg-gray-700
+                               border border-gray-200 dark:border-gray-600
+                               px-1.5 py-0.5 rounded-md">
                 MOQ {product.moq}
               </span>
             )}
@@ -367,15 +338,16 @@ const ProductCard = ({ product, className = "" }) => {
           <button
             onClick={handleAddToCart}
             disabled={isUnavailable || isOutOfStock || isInCart || cartLoading}
-            className={`mt-2.5 w-full rounded-xl py-2 text-xs font-semibold
+            className={`mt-2 w-full rounded-xl py-1.5 text-xs font-semibold
                         flex items-center justify-center gap-1.5
                         transition-all duration-150 focus:outline-none
                         focus:ring-2 focus:ring-green-500 focus:ring-offset-1
+                        dark:focus:ring-offset-gray-800
                         ${isUnavailable || isOutOfStock
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                           : isInCart
-                          ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
-                          : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm hover:shadow"
+                          ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 cursor-default"
+                          : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm"
                         }`}
             aria-label={cartLabel}
           >

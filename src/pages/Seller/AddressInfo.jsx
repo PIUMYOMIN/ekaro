@@ -33,9 +33,7 @@ const AddressInfo = () => {
         }
     });
 
-    const countries = [
-        'Myanmar'
-    ];
+    const countries = ['Myanmar'];
 
     const myanmarStates = [
         'Yangon Region', 'Mandalay Region', 'Sagaing Region', 'Tanintharyi Region',
@@ -47,7 +45,7 @@ const AddressInfo = () => {
     const onSubmit = async (data) => {
         setError('');
         const result = await saveStep('address', data);
-        
+
         if (result.success) {
             navigate(`/seller/onboarding/${result.nextStep}`);
         } else {
@@ -62,6 +60,11 @@ const AddressInfo = () => {
         }
     };
 
+    const inputClass = (hasError) =>
+        `mt-1 block w-full px-4 py-3 border ${
+            hasError ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+        } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`;
+
     return (
         <OnboardingLayout
             title="Address Information"
@@ -74,10 +77,10 @@ const AddressInfo = () => {
         >
             <form onSubmit={handleSubmit(onSubmit)} className="p-6">
                 {error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
                         <div className="flex items-center">
                             <ExclamationCircleIcon className="h-5 w-5 text-red-500 mr-2" />
-                            <p className="text-red-700">{error}</p>
+                            <p className="text-red-700 dark:text-red-400">{error}</p>
                         </div>
                     </div>
                 )}
@@ -85,14 +88,12 @@ const AddressInfo = () => {
                 <div className="space-y-6">
                     {/* Address */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Full Address *
                         </label>
                         <textarea
                             rows={3}
-                            className={`mt-1 block w-full px-4 py-3 border ${
-                                errors.address ? "border-red-300" : "border-gray-300"
-                            } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                            className={inputClass(errors.address)}
                             placeholder="Building number, street name, ward, township"
                             {...register("address", {
                                 required: "Address is required",
@@ -103,9 +104,9 @@ const AddressInfo = () => {
                             })}
                         />
                         {errors.address && (
-                            <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.address.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Include building number, street name, ward, and township
                         </p>
                     </div>
@@ -113,33 +114,29 @@ const AddressInfo = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* City */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 City/Township *
                             </label>
                             <input
                                 type="text"
-                                className={`mt-1 block w-full px-4 py-3 border ${
-                                    errors.city ? "border-red-300" : "border-gray-300"
-                                } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                className={inputClass(errors.city)}
                                 placeholder="Enter your city or township"
                                 {...register("city", {
                                     required: "City/Township is required"
                                 })}
                             />
                             {errors.city && (
-                                <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
+                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.city.message}</p>
                             )}
                         </div>
 
                         {/* State/Region */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 State/Region *
                             </label>
                             <select
-                                className={`mt-1 block w-full px-4 py-3 border ${
-                                    errors.state ? "border-red-300" : "border-gray-300"
-                                } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                className={inputClass(errors.state)}
                                 {...register("state", {
                                     required: "State/Region is required"
                                 })}
@@ -150,7 +147,7 @@ const AddressInfo = () => {
                                 ))}
                             </select>
                             {errors.state && (
-                                <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
+                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.state.message}</p>
                             )}
                         </div>
                     </div>
@@ -158,15 +155,15 @@ const AddressInfo = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Country */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Country *
                             </label>
                             <div className="relative">
-                                <GlobeAltIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                                <GlobeAltIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
                                 <select
                                     className={`mt-1 block w-full pl-11 pr-4 py-3 border ${
-                                        errors.country ? "border-red-300" : "border-gray-300"
-                                    } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                        errors.country ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
+                                    } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                                     {...register("country", {
                                         required: "Country is required"
                                     })}
@@ -177,18 +174,18 @@ const AddressInfo = () => {
                                 </select>
                             </div>
                             {errors.country && (
-                                <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>
+                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.country.message}</p>
                             )}
                         </div>
 
                         {/* Postal Code */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Postal Code (Optional)
                             </label>
                             <input
                                 type="text"
-                                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                className={inputClass(false)}
                                 placeholder="Postal code"
                                 {...register("postal_code")}
                             />
@@ -197,30 +194,30 @@ const AddressInfo = () => {
 
                     {/* Location/Map (Optional) */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Location Pin (Optional)
                         </label>
                         <input
                             type="text"
-                            className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className={inputClass(false)}
                             placeholder="Google Maps link or coordinates"
                             {...register("location")}
                         />
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Helps customers find your physical location. You can add this later.
                         </p>
                     </div>
                 </div>
 
                 {/* Information Card */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                     <div className="flex items-start">
-                        <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <InformationCircleIcon className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
                         <div>
-                            <p className="text-sm text-blue-700">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
                                 <span className="font-medium">Next Step:</span> You'll need to upload documents for verification.
                             </p>
-                            <p className="text-xs text-blue-600 mt-1">
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                                 Required documents depend on your business type selected earlier.
                             </p>
                         </div>

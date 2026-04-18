@@ -64,7 +64,6 @@ const StoreBasicInfo = () => {
             contact_phone:     saved.contact_phone || '',
             description:       saved.store_description || saved.description || '',
         });
-        // Restore logo/banner state if already uploaded
         if (saved.store_logo) {
             setStoreLogoPreview(saved.store_logo);
             setLogoPath(saved.store_logo);
@@ -82,7 +81,6 @@ const StoreBasicInfo = () => {
     }, []);
 
     const selectedBusinessSlug = watch('business_type_slug');
-    // FIX: match on both slug_en and legacy slug field
     const selectedBusinessType = businessTypes.find(
         bt => bt.slug_en === selectedBusinessSlug || bt.slug === selectedBusinessSlug
     );
@@ -113,10 +111,10 @@ const StoreBasicInfo = () => {
 
     const handleLogoUpload = async (file) => {
         if (!file) return;
-        
+
         setUploadingLogo(true);
         setError('');
-        
+
         const formData = new FormData();
         formData.append('image', file);
 
@@ -124,14 +122,13 @@ const StoreBasicInfo = () => {
             const response = await api.post('/seller/onboarding/storeLogo', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            
+
             if (response.data.success) {
                 const { url, path } = response.data.data;
-                setStoreLogoPreview(url);   // keep full URL for <img> preview only
+                setStoreLogoPreview(url);
                 setLogoPath(path);
                 setLogoUploaded(true);
                 setValue('store_logo', path, { shouldValidate: true });
-
                 return path;
             } else {
                 setError(response.data.message || 'Failed to upload logo');
@@ -147,10 +144,10 @@ const StoreBasicInfo = () => {
 
     const handleBannerUpload = async (file) => {
         if (!file) return;
-        
+
         setUploadingBanner(true);
         setError('');
-        
+
         const formData = new FormData();
         formData.append('image', file);
 
@@ -158,16 +155,13 @@ const StoreBasicInfo = () => {
             const response = await api.post('/seller/onboarding/storeBanner', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            
+
             if (response.data.success) {
                 const { url, path } = response.data.data;
-                setStoreBannerPreview(url);  // keep full URL for <img> preview only
+                setStoreBannerPreview(url);
                 setBannerPath(path);
                 setBannerUploaded(true);
-
-                // FIX: same as logo — store relative path, not full URL
                 setValue('store_banner', path, { shouldValidate: true });
-
                 return path;
             } else {
                 setError(response.data.message || 'Failed to upload banner');
@@ -197,8 +191,7 @@ const StoreBasicInfo = () => {
 
     const onSubmit = async (data) => {
         setError('');
-        
-        // Validate required fields
+
         if (!data.store_name?.trim()) {
             setError(t('Store name is required'));
             return;
@@ -226,13 +219,11 @@ const StoreBasicInfo = () => {
         };
 
         const result = await saveStep('store-basic', submitData);
-        
+
         if (result.success) {
-            // Check next step from response
             const nextStep = result.nextStep || 'business-details';
             navigate(`/seller/onboarding/${nextStep}`);
         } else {
-            // Handle backend errors
             if (result.errors) {
                 const errorMessages = Object.values(result.errors).flat().join(', ');
                 setError(errorMessages);
@@ -248,7 +239,6 @@ const StoreBasicInfo = () => {
             const formValues = watch();
             await onSubmit(formValues);
         } else {
-            // Scroll to first error
             const firstError = Object.keys(errors)[0];
             if (firstError) {
                 const element = document.getElementsByName(firstError)[0];
@@ -272,10 +262,10 @@ const StoreBasicInfo = () => {
         >
             <form onSubmit={handleSubmit(onSubmit)} className="p-6">
                 {error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
                         <div className="flex items-center">
                             <ExclamationCircleIcon className="h-5 w-5 text-red-500 mr-2" />
-                            <p className="text-red-700">{error}</p>
+                            <p className="text-red-700 dark:text-red-400">{error}</p>
                         </div>
                     </div>
                 )}
@@ -285,12 +275,12 @@ const StoreBasicInfo = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Logo Upload */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                 Store Logo {!logoUploaded && '*'}
                             </label>
                             <div className="space-y-3">
                                 <div className="relative">
-                                    <div className={`w-32 h-32 rounded-2xl border-2 ${logoUploaded ? 'border-green-300' : 'border-dashed border-gray-300'} flex items-center justify-center ${logoUploaded ? 'bg-green-50' : 'bg-gray-50'} overflow-hidden mx-auto`}>
+                                    <div className={`w-32 h-32 rounded-2xl border-2 ${logoUploaded ? 'border-green-300 dark:border-green-700' : 'border-dashed border-gray-300 dark:border-gray-600'} flex items-center justify-center ${logoUploaded ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'} overflow-hidden mx-auto`}>
                                         {storeLogoPreview ? (
                                             <>
                                                 <img
@@ -305,7 +295,7 @@ const StoreBasicInfo = () => {
                                                 )}
                                             </>
                                         ) : (
-                                            <BuildingStorefrontIcon className="h-8 w-8 text-gray-400" />
+                                            <BuildingStorefrontIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                                         )}
                                     </div>
                                 </div>
@@ -322,9 +312,9 @@ const StoreBasicInfo = () => {
                                         <label
                                             htmlFor="logo-upload"
                                             className={`flex-1 text-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
-                                                uploadingLogo 
-                                                    ? 'bg-blue-50 border-blue-300 text-blue-700' 
-                                                    : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                                                uploadingLogo
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400'
+                                                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                             }`}
                                         >
                                             {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
@@ -333,13 +323,13 @@ const StoreBasicInfo = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveLogo}
-                                                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                                                className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                             >
                                                 Remove
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-xs text-gray-500 text-center">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                                         Recommended: 400x400px, Max 2MB (JPG, PNG, SVG)
                                     </p>
                                 </div>
@@ -348,12 +338,12 @@ const StoreBasicInfo = () => {
 
                         {/* Banner Upload */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                 {t("Store Banner")} {t("(Optional)")}
                             </label>
                             <div className="space-y-3">
                                 <div className="relative">
-                                    <div className={`w-full h-32 rounded-2xl border-2 ${bannerUploaded ? 'border-green-300' : 'border-dashed border-gray-300'} flex items-center justify-center ${bannerUploaded ? 'bg-green-50' : 'bg-gray-50'} overflow-hidden`}>
+                                    <div className={`w-full h-32 rounded-2xl border-2 ${bannerUploaded ? 'border-green-300 dark:border-green-700' : 'border-dashed border-gray-300 dark:border-gray-600'} flex items-center justify-center ${bannerUploaded ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700'} overflow-hidden`}>
                                         {storeBannerPreview ? (
                                             <>
                                                 <img
@@ -368,7 +358,7 @@ const StoreBasicInfo = () => {
                                                 )}
                                             </>
                                         ) : (
-                                            <PhotoIcon className="h-8 w-8 text-gray-400" />
+                                            <PhotoIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                                         )}
                                     </div>
                                 </div>
@@ -385,9 +375,9 @@ const StoreBasicInfo = () => {
                                         <label
                                             htmlFor="banner-upload"
                                             className={`flex-1 text-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
-                                                uploadingBanner 
-                                                    ? 'bg-blue-50 border-blue-300 text-blue-700' 
-                                                    : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                                                uploadingBanner
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400'
+                                                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                             }`}
                                         >
                                             {uploadingBanner ? 'Uploading...' : 'Upload Banner'}
@@ -396,13 +386,13 @@ const StoreBasicInfo = () => {
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveBanner}
-                                                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+                                                className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                             >
                                                 Remove
                                             </button>
                                         )}
                                     </div>
-                                    <p className="text-xs text-gray-500 text-center">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                                         Recommended: 1200x300px, Max 5MB (JPG, PNG)
                                     </p>
                                 </div>
@@ -416,15 +406,15 @@ const StoreBasicInfo = () => {
 
                     {/* Store Name */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             {t("Store Name")} *
                         </label>
                         <input
                             type="text"
                             name="store_name"
                             className={`mt-1 block w-full px-4 py-3 border ${
-                                errors.store_name ? "border-red-300" : "border-gray-300"
-                            } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                errors.store_name ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
+                            } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder="Enter your store name"
                             {...register("store_name", {
                                 required: "Store name is required",
@@ -435,24 +425,24 @@ const StoreBasicInfo = () => {
                             })}
                         />
                         {errors.store_name && (
-                            <p className="mt-1 text-sm text-red-600">{errors.store_name.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.store_name.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             {t("This will appear as your store's public name")}
                         </p>
                     </div>
 
                     {/* Business Type */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             {t("Business Type *")}
                         </label>
                         <div className="mt-1 relative">
                             <select
                                 name="business_type_slug"
                                 className={`block w-full px-4 py-3 border ${
-                                    errors.business_type_slug ? "border-red-300" : "border-gray-300"
-                                } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none bg-white`}
+                                    errors.business_type_slug ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
+                                } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none`}
                                 {...register("business_type_slug", {
                                     required: "Business type is required"
                                 })}
@@ -465,25 +455,25 @@ const StoreBasicInfo = () => {
                                 ))}
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                                <ChevronDownIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                             </div>
                         </div>
                         {errors.business_type_slug && (
-                            <p className="mt-1 text-sm text-red-600">{errors.business_type_slug.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.business_type_slug.message}</p>
                         )}
                     </div>
 
                     {/* Contact Email */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Contact Email *
                         </label>
                         <input
                             type="email"
                             name="contact_email"
                             className={`mt-1 block w-full px-4 py-3 border ${
-                                errors.contact_email ? "border-red-300" : "border-gray-300"
-                            } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                errors.contact_email ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
+                            } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder="contact@yourstore.com"
                             {...register("contact_email", {
                                 required: "Contact email is required",
@@ -494,24 +484,24 @@ const StoreBasicInfo = () => {
                             })}
                         />
                         {errors.contact_email && (
-                            <p className="mt-1 text-sm text-red-600">{errors.contact_email.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.contact_email.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             This email will be used for store-related communications
                         </p>
                     </div>
 
                     {/* Contact Phone */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Contact Phone *
                         </label>
                         <input
                             type="tel"
                             name="contact_phone"
                             className={`mt-1 block w-full px-4 py-3 border ${
-                                errors.contact_phone ? "border-red-300" : "border-gray-300"
-                            } rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                errors.contact_phone ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
+                            } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder="+95 123 456 789"
                             {...register("contact_phone", {
                                 required: "Contact phone is required",
@@ -522,22 +512,22 @@ const StoreBasicInfo = () => {
                             })}
                         />
                         {errors.contact_phone && (
-                            <p className="mt-1 text-sm text-red-600">{errors.contact_phone.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.contact_phone.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Include country code (e.g., +95 for Myanmar)
                         </p>
                     </div>
 
                     {/* Store Description */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Store Description (Optional)
                         </label>
                         <textarea
                             rows={3}
                             name="store_description"
-                            className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             placeholder="Describe your store and what you offer..."
                             {...register("store_description", {
                                 maxLength: {
@@ -547,9 +537,9 @@ const StoreBasicInfo = () => {
                             })}
                         />
                         {errors.description && (
-                            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
                         )}
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             This will be displayed on your store page. Max 2000 characters.
                         </p>
                     </div>
@@ -557,24 +547,24 @@ const StoreBasicInfo = () => {
 
                 {/* Business Type Info */}
                 {selectedBusinessType && (
-                    <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                         <div className="flex items-start">
-                            <div className={`p-2 rounded-lg bg-blue-100 mr-3`}>
+                            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-800/40 mr-3">
                                 {getBusinessTypeIcon(selectedBusinessType.icon)}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-medium text-blue-900">{loc(selectedBusinessType.name_en, selectedBusinessType.name_mm)}</h4>
-                                <p className="text-sm text-blue-700 mt-1">{loc(selectedBusinessType.description_en, selectedBusinessType.description_mm)}</p>
+                                <h4 className="font-medium text-blue-900 dark:text-blue-200">{loc(selectedBusinessType.name_en, selectedBusinessType.name_mm)}</h4>
+                                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">{loc(selectedBusinessType.description_en, selectedBusinessType.description_mm)}</p>
                                 <div className="mt-3">
-                                    <p className="text-xs font-medium text-blue-800">Document Requirements:</p>
-                                    <ul className="mt-1 text-xs text-blue-700 space-y-1">
+                                    <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Document Requirements:</p>
+                                    <ul className="mt-1 text-xs text-blue-700 dark:text-blue-400 space-y-1">
                                         {selectedBusinessType.document_requirements?.map((req, index) => (
                                             <li key={index} className="flex items-start">
                                                 <span className="mr-2">•</span>
                                                 <span>{req.label} {req.required ? '(Required)' : '(Optional)'}</span>
                                             </li>
                                         )) || (
-                                            <li className="text-blue-600">No specific document requirements</li>
+                                            <li className="text-blue-600 dark:text-blue-400">No specific document requirements</li>
                                         )}
                                     </ul>
                                 </div>
@@ -584,23 +574,23 @@ const StoreBasicInfo = () => {
                 )}
 
                 {/* Form Status */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-900">Form Status</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Form Status</p>
                             <div className="flex items-center space-x-4 mt-2">
                                 <div className="flex items-center">
                                     <div className={`w-3 h-3 rounded-full mr-2 ${logoUploaded ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                    <span className="text-xs text-gray-600">Logo: {logoUploaded ? 'Uploaded' : 'Required'}</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">Logo: {logoUploaded ? 'Uploaded' : 'Required'}</span>
                                 </div>
                                 <div className="flex items-center">
-                                    <div className={`w-3 h-3 rounded-full mr-2 ${bannerUploaded ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                    <span className="text-xs text-gray-600">Banner: {bannerUploaded ? 'Uploaded' : 'Optional'}</span>
+                                    <div className={`w-3 h-3 rounded-full mr-2 ${bannerUploaded ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-500'}`}></div>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">Banner: {bannerUploaded ? 'Uploaded' : 'Optional'}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-gray-500">Required fields are marked with *</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Required fields are marked with *</p>
                         </div>
                     </div>
                 </div>

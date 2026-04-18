@@ -1,5 +1,5 @@
 // src/pages/Seller/StorePolicies.jsx
-import React,{useState} from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -52,38 +52,46 @@ const StorePolicies = () => {
     }
   };
 
+  const inputClass = "mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:bg-gray-900 dark:from-gray-900 dark:to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-green-600 rounded-full flex items-center justify-center">
             <ShieldCheckIcon className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Store Policies & Social Media
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+            Store Policies &amp; Social Media
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Configure your store policies and social media presence
           </p>
           <div className="mt-4 flex justify-center space-x-2">
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-            <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+            <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6 bg-white p-8 rounded-2xl shadow-lg">
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+            <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Return Policy */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Return Policy
               </label>
               <textarea
                 rows={3}
-                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className={inputClass}
                 placeholder="Describe your return policy..."
                 {...register("return_policy")}
               />
@@ -91,11 +99,11 @@ const StorePolicies = () => {
 
             {/* Warranty Information */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Warranty Type
               </label>
               <select
-                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className={inputClass}
                 {...register("warranty_type")}
               >
                 <option value="">Select warranty type</option>
@@ -106,12 +114,12 @@ const StorePolicies = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Warranty Period
               </label>
               <input
                 type="text"
-                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className={inputClass}
                 placeholder="e.g., 1 year, 6 months"
                 {...register("warranty_period")}
               />
@@ -119,23 +127,23 @@ const StorePolicies = () => {
 
             {/* Social Media */}
             <div className="md:col-span-2">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Social Media Links</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Social Media Links</h3>
               <div className="space-y-4">
                 <input
                   type="url"
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className={inputClass}
                   placeholder="Facebook URL"
                   {...register("social_facebook")}
                 />
                 <input
                   type="url"
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className={inputClass}
                   placeholder="Instagram URL"
                   {...register("social_instagram")}
                 />
                 <input
                   type="url"
-                  className="block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className={inputClass}
                   placeholder="Twitter URL"
                   {...register("social_twitter")}
                 />
@@ -144,25 +152,25 @@ const StorePolicies = () => {
 
             {/* Shipping Information */}
             <div className="md:col-span-2">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Shipping Information</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Shipping Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Shipping Cost (MMK)
                   </label>
                   <input
                     type="number"
-                    className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className={inputClass}
                     {...register("shipping_cost")}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Minimum Order Quantity
                   </label>
                   <input
                     type="number"
-                    className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className={inputClass}
                     {...register("moq")}
                   />
                 </div>
@@ -174,7 +182,7 @@ const StorePolicies = () => {
             <button
               type="button"
               onClick={() => navigate("/seller/onboarding/business-details")}
-              className="flex-1 py-4 px-6 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium flex items-center justify-center"
+              className="flex-1 py-4 px-6 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium flex items-center justify-center"
             >
               <ArrowLeftIcon className="h-5 w-5 mr-2" />
               Back
@@ -182,7 +190,7 @@ const StorePolicies = () => {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-4 px-6 border border-transparent text-white rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium flex items-center justify-center"
+              className="flex-1 py-4 px-6 border border-transparent text-white rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>

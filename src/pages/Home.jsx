@@ -1,4 +1,4 @@
-// Home.jsx (fixed)
+// Home.jsx
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import AnnouncementModal from "../components/ui/AnnouncementModal";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -16,41 +16,40 @@ import useSEO from "../hooks/useSEO";
 
 // Skeleton components for better loading states
 const ProductCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col h-full animate-pulse">
-    <div className="w-full aspect-square bg-gray-300"></div>
-    <div className="p-2 sm:p-3 flex flex-col flex-grow">
-      <div className="flex-grow space-y-2">
-        <div className="h-3 sm:h-4 bg-gray-300 rounded w-3/4"></div>
-        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-      </div>
-      <div className="mt-2 pt-2 border-t border-gray-100">
-        <div className="h-6 sm:h-8 bg-gray-300 rounded"></div>
+  <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col h-full animate-pulse">
+    <div className="w-full aspect-square bg-gray-200 dark:bg-gray-700"></div>
+    <div className="p-3 flex flex-col flex-grow gap-2">
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+      <div className="flex-grow" />
+      <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
       </div>
     </div>
   </div>
 );
 
 const CategoryCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse">
-    <div className="aspect-square bg-gray-300"></div>
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
+    <div className="aspect-square bg-gray-200 dark:bg-gray-700"></div>
     <div className="p-3 sm:p-4 space-y-2">
-      <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-      <div className="h-6 bg-gray-300 rounded w-1/3"></div>
-      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
     </div>
   </div>
 );
 
 const SellerCardSkeleton = () => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
     <div className="flex items-center space-x-3">
-      <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+      <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
       <div className="flex-1">
-        <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-        <div className="mt-1 h-3 bg-gray-300 rounded w-1/2"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+        <div className="mt-1 h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
         <div className="mt-2 flex space-x-2">
-          <div className="h-4 bg-gray-300 rounded w-16"></div>
-          <div className="h-4 bg-gray-300 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
         </div>
       </div>
     </div>
@@ -67,7 +66,7 @@ const Home = () => {
   const [topSellers, setTopSellers] = useState([]);
   const [transformedSellers, setTransformedSellers] = useState([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
-  const [activeBanner, setActiveBanner]           = useState(null); // page_banner replaces hero
+  const [activeBanner, setActiveBanner]           = useState(null);
   const [bannerDismissed, setBannerDismissed]      = useState(false);
   const announcementFetched = useRef(false);
   const [loading, setLoading] = useState({
@@ -87,25 +86,18 @@ const Home = () => {
     url: "/"
   });
 
-  // Memoize fetch functions to prevent unnecessary re-renders
   const fetchCategories = useCallback(async () => {
     try {
       const res = await api.get("/categories");
 
-      // Handle different response structures
       let categoriesData = [];
       if (res.data.success && res.data.data) {
         categoriesData = res.data.data;
       } else if (Array.isArray(res.data)) {
         categoriesData = res.data;
-      } else {
-        categoriesData = [];
       }
 
-      // Process categories to get root categories
       const rootCategories = categoriesData.filter(cat => !cat.parent_id || cat.parent_id === null);
-
-      // Just show categories with their children count
       const processedCategories = rootCategories.map((category) => ({
         ...category,
         productCount: category.products_count || 0,
@@ -164,61 +156,36 @@ const Home = () => {
 
     const fetchAllData = async () => {
       if (!isMounted) return;
-
       setLoading({ categories: true, products: true, sellers: true });
-
       try {
-        await Promise.all([
-          fetchCategories(),
-          fetchTopSellers(),
-          fetchProducts()
-        ]);
+        await Promise.all([fetchCategories(), fetchTopSellers(), fetchProducts()]);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        if (isMounted) {
-          setLoading({ categories: false, products: false, sellers: false });
-        }
+        if (isMounted) setLoading({ categories: false, products: false, sellers: false });
       }
     };
 
     fetchAllData();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [t]);
 
-  // Memoize derived values as functions
   const getCTAButtonText = useCallback(() => {
-    if (!isAuthenticated) {
-      return t("home.become_seller");
-    } else if (isSeller()) {
-      return t("home.sell_now");
-    } else if (isBuyer()) {
-      return t("home.shop_now");
-    } else if (isAdmin()) {
-      return t("home.dashboard");
-    } else {
-      return t("home.get_started");
-    }
+    if (!isAuthenticated) return t("home.become_seller");
+    if (isSeller())         return t("home.sell_now");
+    if (isBuyer())          return t("home.shop_now");
+    if (isAdmin())          return t("home.dashboard");
+    return t("home.get_started");
   }, [isAuthenticated, isSeller, isBuyer, isAdmin, t]);
 
   const getCTAButtonLink = useCallback(() => {
-    if (!isAuthenticated) {
-      return "/register";
-    } else if (isSeller()) {
-      return "/seller/dashboard";
-    } else if (isBuyer()) {
-      return "/products";
-    } else if (isAdmin()) {
-      return "/admin/dashboard";
-    } else {
-      return "/register";
-    }
+    if (!isAuthenticated) return "/register";
+    if (isSeller())        return "/seller/dashboard";
+    if (isBuyer())         return "/products";
+    if (isAdmin())         return "/admin/dashboard";
+    return "/register";
   }, [isAuthenticated, isSeller, isBuyer, isAdmin]);
 
-  // Optimize re-renders by memoizing sections
   const renderHeroSection = useMemo(() => (
     <div className="relative bg-gradient-to-r from-green-600 to-emerald-700">
       <div className="absolute inset-0">
@@ -271,15 +238,15 @@ const Home = () => {
   ), [getCTAButtonLink, getCTAButtonText, isAuthenticated, isBuyer, t]);
 
   const renderCategoriesSection = useMemo(() => (
-    <section className="py-10 sm:py-12 bg-white">
+    <section className="py-10 sm:py-12 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
             {t("home.popular_categories")}
           </h2>
           <Link
             to="/categories"
-            className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+            className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
           >
             {t("home.browse_all_categories")} →
           </Link>
@@ -287,25 +254,20 @@ const Home = () => {
 
         {loading.categories ? (
           <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {[...Array(6)].map((_, i) => (
-              <CategoryCardSkeleton key={i} />
-            ))}
+            {[...Array(6)].map((_, i) => <CategoryCardSkeleton key={i} />)}
           </div>
         ) : categories.length > 0 ? (
           <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {categories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-              />
+              <CategoryCard key={category.id} category={category} />
             ))}
           </div>
         ) : (
           <div className="mt-8 sm:mt-10 text-center py-10 sm:py-12">
-            <p className="text-gray-500 text-base sm:text-lg">{t("home.no_categories_found")}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">{t("home.no_categories_found")}</p>
             <Link
               to="/categories"
-              className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+              className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 font-medium transition-colors"
             >
               {t("home.browse_categories")}
             </Link>
@@ -315,25 +277,22 @@ const Home = () => {
     </section>
   ), [loading.categories, categories, t]);
 
-
   const renderProductsSection = useMemo(() => (
-    <section className="py-10 sm:py-12 bg-gray-50">
+    <section className="py-10 sm:py-12 bg-gray-50 dark:bg-gray-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              {t("home.featured_products")}
-            </h2>
-          </div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            {t("home.featured_products")}
+          </h2>
           <Link
             to="/products"
-            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+            className="text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
           >
             {t("home.view_all")} →
           </Link>
         </div>
 
-        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {loading.products ? (
             [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
           ) : products.length > 0 ? (
@@ -345,7 +304,7 @@ const Home = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-10 sm:py-12">
-              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_featured_products")}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">{t("home.no_featured_products")}</p>
             </div>
           )}
         </div>
@@ -354,33 +313,29 @@ const Home = () => {
   ), [loading.products, products, t]);
 
   const renderSellersSection = useMemo(() => (
-    <section className="py-10 sm:py-12 bg-white">
+    <section className="py-10 sm:py-12 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
-              {t("home.top_sellers")}
-            </h2>
-          </div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            {t("home.top_sellers")}
+          </h2>
           <Link
             to="/sellers"
-            className="text-sm sm:text-base text-green-600 hover:text-green-800 font-medium transition-colors"
+            className="text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
           >
             {t("home.view_all")} →
           </Link>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {loading.sellers ? (
-            [...Array(4)].map((_, i) => (
-              <SellerCardSkeleton key={i} />
-            ))
+            [...Array(4)].map((_, i) => <SellerCardSkeleton key={i} />)
           ) : transformedSellers.length > 0 ? (
             transformedSellers.map(seller => (
               <SellerCard key={seller.id} seller={seller} />
             ))
           ) : (
             <div className="col-span-full text-center py-10 sm:py-12">
-              <p className="text-gray-500 text-base sm:text-lg">{t("home.no_top_sellers")}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">{t("home.no_top_sellers")}</p>
             </div>
           )}
         </div>
@@ -388,7 +343,6 @@ const Home = () => {
     </section>
   ), [loading.sellers, transformedSellers, t]);
 
-  // ── Announcement modal fetch ──────────────────────────────────────────
   useEffect(() => {
     if (announcementFetched.current) return;
     announcementFetched.current = true;
@@ -405,14 +359,10 @@ const Home = () => {
           return !localStorage.getItem(key);
         };
 
-        // page_banner → replaces hero section (Option B)
         const heroBanner = list.find(a => a.display_style === 'page_banner' && isEligible(a));
         if (heroBanner) setActiveBanner(heroBanner);
 
-        // popup_card / popup_banner → modal (show after delay)
-        const popupAnn = list.find(a =>
-          a.display_style !== 'page_banner' && isEligible(a)
-        );
+        const popupAnn = list.find(a => a.display_style !== 'page_banner' && isEligible(a));
         if (popupAnn) {
           const delay = (popupAnn.delay_seconds ?? 1) * 1000;
           setTimeout(() => setActiveAnnouncement(popupAnn), delay);
@@ -434,8 +384,8 @@ const Home = () => {
         />
       )}
       {SeoComponent}
-      <div className="bg-gray-50">
-        {/* Hero area — page_banner replaces gradient hero when active */}
+      <div className="bg-gray-50 dark:bg-gray-900">
+        {/* Hero area */}
         <AnimatePresence mode="wait">
           {activeBanner && !bannerDismissed ? (
             <motion.div
@@ -446,7 +396,6 @@ const Home = () => {
               transition={{ duration: 0.4, ease: 'easeInOut' }}
               className="relative w-full overflow-hidden bg-black"
             >
-              {/* Full-bleed banner image */}
               {activeBanner.banner_link_url ? (
                 activeBanner.banner_link_url.startsWith('http') ? (
                   <a href={activeBanner.banner_link_url} target="_blank" rel="noopener noreferrer"
@@ -486,7 +435,6 @@ const Home = () => {
                 />
               )}
 
-              {/* Badge overlay */}
               {activeBanner.badge_label && (
                 <span className={`absolute top-3 left-4 sm:top-4 sm:left-6 z-10
                                   text-xs font-bold px-2.5 py-1 rounded-full shadow
@@ -498,7 +446,6 @@ const Home = () => {
                 </span>
               )}
 
-              {/* Dismiss button */}
               <button
                 onClick={() => {
                   if (activeBanner.show_once) {
@@ -533,99 +480,64 @@ const Home = () => {
         {renderSellersSection}
 
         {/* Value Proposition */}
-        <section className="py-12 sm:py-16 bg-gradient-to-r from-green-50 to-emerald-100">
+        <section className="py-12 sm:py-16 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-gray-800 dark:to-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:text-center">
-              <h2 className="text-sm sm:text-base text-green-600 font-semibold tracking-wide uppercase">
+              <h2 className="text-sm sm:text-base text-green-600 dark:text-green-400 font-semibold tracking-wide uppercase">
                 {t("home.why_us")}
               </h2>
-              <p className="mt-2 text-xl sm:text-2xl lg:text-4xl font-bold tracking-tight text-gray-900">
+              <p className="mt-2 text-xl sm:text-2xl lg:text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {t("home.why_choose_us")}
               </p>
-              <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg lg:text-xl text-gray-600 lg:mx-auto">
+              <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 lg:mx-auto">
                 {t("home.why_choose_us_subtitle")}
               </p>
             </div>
             <div className="mt-8 sm:mt-10">
               <div className="space-y-8 sm:space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-green-500 text-white">
-                      <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
+                {[
+                  {
+                    icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+                    title: t("home.secure_payments"),
+                    desc:  t("home.secure_payments_desc"),
+                  },
+                  {
+                    icon: "M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3",
+                    title: t("home.business_specific"),
+                    desc:  t("home.business_specific_desc"),
+                  },
+                  {
+                    icon: "M13 10V3L4 14h7v7l9-11h-7z",
+                    title: t("home.fast_transactions"),
+                    desc:  t("home.fast_transactions_desc"),
+                  },
+                  {
+                    icon: "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z",
+                    title: t("home.support"),
+                    desc:  t("home.support_desc"),
+                  },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex">
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-green-500 text-white">
+                        <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={icon} />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">{title}</h3>
+                      <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">{desc}</p>
                     </div>
                   </div>
-                  <div className="ml-4">
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                      {t("home.secure_payments")}
-                    </h3>
-                    <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-                      {t("home.secure_payments_desc")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-green-500 text-white">
-                      <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                      {t("home.business_specific")}
-                    </h3>
-                    <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-                      {t("home.business_specific_desc")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-green-500 text-white">
-                      <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                      {t("home.fast_transactions")}
-                    </h3>
-                    <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-                      {t("home.fast_transactions_desc")}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-md bg-green-500 text-white">
-                      <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                      {t("home.support")}
-                    </h3>
-                    <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-                      {t("home.support_desc")}
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="py-12 sm:py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-green-700 rounded-lg shadow-xl overflow-hidden">
               <div className="px-4 sm:px-6 py-10 sm:py-12 md:py-16 md:px-12 lg:flex lg:items-center">
