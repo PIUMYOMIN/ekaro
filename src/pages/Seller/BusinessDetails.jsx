@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import {
     DocumentTextIcon,
     BuildingOfficeIcon,
@@ -15,6 +16,7 @@ import NrcInput, { NRC_TOWNSHIPS } from '../../components/seller/NrcInput';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
 const BusinessDetails = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { formData, saveStep, isLoading, businessTypeInfo } = useOnboardingState();
     const [error, setError] = useState('');
@@ -57,11 +59,11 @@ const BusinessDetails = () => {
 
         if (!isIndividual) {
             if (!data.business_registration_number?.trim()) {
-                setError('Business registration number is required');
+                setError(t('seller_onboarding.businessDetails.error_reg_required'));
                 return;
             }
             if (!data.tax_id?.trim()) {
-                setError('Tax ID is required');
+                setError(t('seller_onboarding.businessDetails.error_tax_required'));
                 return;
             }
         }
@@ -71,7 +73,7 @@ const BusinessDetails = () => {
         if (result.success) {
             navigate(`/seller/onboarding/${result.nextStep}`);
         } else {
-            setError(result.message || 'Failed to save business details');
+            setError(result.message || t('seller_onboarding.businessDetails.error_save'));
         }
     };
 
@@ -92,11 +94,11 @@ const BusinessDetails = () => {
 
     return (
         <OnboardingLayout
-            title="Business Details"
-            description={isIndividual ? "Add your business information" : "Enter your company registration details"}
+            title={t("seller_onboarding.businessDetails.title")}
+            description={t("seller_onboarding.businessDetails.subtitle")}
             onBack={() => navigate('/seller/onboarding/store-basic')}
             onNext={handleContinue}
-            nextLabel="Continue to Address"
+            nextLabel={t("seller_onboarding.businessDetails.continue_to_address")}
             nextDisabled={isLoading}
             loading={isLoading}
         >
@@ -116,17 +118,17 @@ const BusinessDetails = () => {
                         <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                                 <BuildingOfficeIcon className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                                Business Registration
+                                {t("seller_onboarding.businessDetails.section_registration")}
                             </h3>
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Business Registration Number *
+                                        {t("seller_onboarding.businessDetails.registrationNumber.label")} *
                                     </label>
                                     <input
                                         type="text"
                                         className={inputClass(errors.business_registration_number)}
-                                        placeholder="Enter your business registration number"
+                                        placeholder={t("seller_onboarding.businessDetails.registrationNumber.placeholder")}
                                         {...register("business_registration_number", {
                                             required: !isIndividual ? "Business registration number is required" : false
                                         })}
@@ -135,18 +137,18 @@ const BusinessDetails = () => {
                                         <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.business_registration_number.message}</p>
                                     )}
                                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        As shown on your business registration certificate
+                                        {t("seller_onboarding.businessDetails.reg_hint")}
                                     </p>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Tax Identification Number *
+                                        {t("seller_onboarding.businessDetails.taxId.label")} *
                                     </label>
                                     <input
                                         type="text"
                                         className={inputClass(errors.tax_id)}
-                                        placeholder="Enter your tax ID"
+                                        placeholder={t("seller_onboarding.businessDetails.taxId.placeholder")}
                                         {...register("tax_id", {
                                             required: !isIndividual ? "Tax ID is required" : false
                                         })}
@@ -155,7 +157,7 @@ const BusinessDetails = () => {
                                         <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.tax_id.message}</p>
                                     )}
                                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        Your official tax identification number
+                                        {t("seller_onboarding.businessDetails.tax_hint")}
                                     </p>
                                 </div>
                             </div>
@@ -166,21 +168,21 @@ const BusinessDetails = () => {
                     <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                             <CreditCardIcon className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                            Financial Information (Optional)
+                            {t("seller_onboarding.businessDetails.section_financial")} ({t("seller_onboarding.businessDetails.optional")})
                         </h3>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Bank Account Number
+                                    {t("seller_onboarding.businessDetails.accountNumber.label")}
                                 </label>
                                 <input
                                     type="text"
                                     className={inputClass(false)}
-                                    placeholder="Enter your bank account number"
+                                    placeholder={t("seller_onboarding.businessDetails.accountNumber.placeholder")}
                                     {...register("account_number")}
                                 />
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    For receiving payments from sales (can be added later)
+                                    {t("seller_onboarding.businessDetails.bank_hint")}
                                 </p>
                             </div>
                         </div>
@@ -190,12 +192,12 @@ const BusinessDetails = () => {
                     <div>
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                             <GlobeAltIcon className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" />
-                            Online Presence (Optional)
+                            {t("seller_onboarding.businessDetails.section_online")} ({t("seller_onboarding.businessDetails.optional")})
                         </h3>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Website
+                                    {t("seller_onboarding.businessDetails.website.label")}
                                 </label>
                                 <div className="mt-1 flex rounded-xl shadow-sm">
                                     <span className={prefixClass}>
@@ -212,7 +214,7 @@ const BusinessDetails = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Social Media Links
+                                    {t("seller_onboarding.businessDetails.social_media")}
                                 </label>
                                 <div className="space-y-3">
                                     <div className="flex items-center">
@@ -240,9 +242,9 @@ const BusinessDetails = () => {
                 {/* Myanmar NRC */}
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1 flex items-center">
-                        <span className="mr-2">🪪</span> Myanmar NRC Number
+                        <span className="mr-2">🪪</span> {t("seller_onboarding.businessDetails.nrc_title")}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">မှတ်ပုံတင်နံပါတ် — ဝင်ငွေနှင့် ငွေပေးချေမှုအတွက် လိုအပ်ပါသည်</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t("seller_onboarding.businessDetails.nrc_subtitle")}</p>
                     <NrcInput
                         value={nrcValue}
                         onChange={setNrcValue}
@@ -255,10 +257,10 @@ const BusinessDetails = () => {
                         <InformationCircleIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
                         <div>
                             <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                                <span className="font-medium">Next Step:</span> You'll need to provide your business address next.
+                                <span className="font-medium">{t("seller_onboarding.businessDetails.info_next")}</span> {t("seller_onboarding.businessDetails.info_next_text")}
                             </p>
                             <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-1">
-                                Address information is required for customer deliveries and business verification.
+                                {t("seller_onboarding.businessDetails.info_doc_note")}
                             </p>
                         </div>
                     </div>

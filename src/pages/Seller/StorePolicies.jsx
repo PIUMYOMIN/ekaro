@@ -46,7 +46,7 @@ const StorePolicies = () => {
 
       navigate("/seller/onboarding/address");
     } catch (error) {
-      setError(error.response?.data?.message || "Failed to update store policies");
+      setError(error.response?.data?.message || t("seller_onboarding.storePolicies.error_save"));
     } finally {
       setLoading(false);
     }
@@ -63,10 +63,10 @@ const StorePolicies = () => {
             <ShieldCheckIcon className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-            Store Policies &amp; Social Media
+            {t("seller_onboarding.storePolicies.title")}
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Configure your store policies and social media presence
+            {t("seller_onboarding.storePolicies.description")}
           </p>
           <div className="mt-4 flex justify-center space-x-2">
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
@@ -87,12 +87,12 @@ const StorePolicies = () => {
             {/* Return Policy */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Return Policy
+                {t("seller_onboarding.storePolicies.return_policy")}
               </label>
               <textarea
                 rows={3}
                 className={inputClass}
-                placeholder="Describe your return policy..."
+                placeholder={t("seller_onboarding.storePolicies.return_placeholder")}
                 {...register("return_policy")}
               />
             </div>
@@ -100,51 +100,51 @@ const StorePolicies = () => {
             {/* Warranty Information */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Warranty Type
+                {t("seller_onboarding.storePolicies.warranty_type")}
               </label>
               <select
                 className={inputClass}
                 {...register("warranty_type")}
               >
-                <option value="">Select warranty type</option>
-                <option value="manufacturer">Manufacturer Warranty</option>
-                <option value="seller">Seller Warranty</option>
-                <option value="none">No Warranty</option>
+                <option value="">{t("seller_onboarding.storePolicies.warranty_select")}</option>
+                <option value="manufacturer">{t("seller_onboarding.storePolicies.warranty_manufacturer")}</option>
+                <option value="seller">{t("seller_onboarding.storePolicies.warranty_seller")}</option>
+                <option value="none">{t("seller_onboarding.storePolicies.warranty_none")}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Warranty Period
+                {t("seller_onboarding.storePolicies.warranty_period")}
               </label>
               <input
                 type="text"
                 className={inputClass}
-                placeholder="e.g., 1 year, 6 months"
+                placeholder={t("seller_onboarding.storePolicies.warranty_period_placeholder")}
                 {...register("warranty_period")}
               />
             </div>
 
             {/* Social Media */}
             <div className="md:col-span-2">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Social Media Links</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">{t("seller_onboarding.storePolicies.social_media")}</h3>
               <div className="space-y-4">
                 <input
                   type="url"
                   className={inputClass}
-                  placeholder="Facebook URL"
+                  placeholder={t("seller_onboarding.storePolicies.facebook_placeholder")}
                   {...register("social_facebook")}
                 />
                 <input
                   type="url"
                   className={inputClass}
-                  placeholder="Instagram URL"
+                  placeholder={t("seller_onboarding.storePolicies.instagram_placeholder")}
                   {...register("social_instagram")}
                 />
                 <input
                   type="url"
                   className={inputClass}
-                  placeholder="Twitter URL"
+                  placeholder={t("seller_onboarding.storePolicies.twitter_placeholder")}
                   {...register("social_twitter")}
                 />
               </div>
@@ -152,11 +152,11 @@ const StorePolicies = () => {
 
             {/* Shipping Information */}
             <div className="md:col-span-2">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Shipping Information</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">{t("seller_onboarding.storePolicies.shipping_info")}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Shipping Cost (MMK)
+                    {t("seller_onboarding.storePolicies.shipping_cost")}
                   </label>
                   <input
                     type="number"
@@ -166,7 +166,7 @@ const StorePolicies = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Minimum Order Quantity
+                    {t("seller_onboarding.storePolicies.moq")}
                   </label>
                   <input
                     type="number"
@@ -185,7 +185,7 @@ const StorePolicies = () => {
               className="flex-1 py-4 px-6 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 font-medium flex items-center justify-center"
             >
               <ArrowLeftIcon className="h-5 w-5 mr-2" />
-              Back
+              {t("seller_onboarding.storePolicies.back")}
             </button>
             <button
               type="submit"
@@ -196,7 +196,7 @@ const StorePolicies = () => {
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
               ) : (
                 <>
-                  <span>Continue</span>
+                  <span>{t("seller_onboarding.storePolicies.continue")}</span>
                   <ArrowRightIcon className="ml-2 h-5 w-5" />
                 </>
               )}

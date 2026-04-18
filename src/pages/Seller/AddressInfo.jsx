@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import {
     MapPinIcon,
     GlobeAltIcon,
@@ -12,6 +13,7 @@ import OnboardingLayout from '../../components/OnboardingLayout';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
 const AddressInfo = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { formData, saveStep, isLoading } = useOnboardingState();
     const [error, setError] = useState('');
@@ -49,7 +51,7 @@ const AddressInfo = () => {
         if (result.success) {
             navigate(`/seller/onboarding/${result.nextStep}`);
         } else {
-            setError(result.message || 'Failed to save address information');
+            setError(result.message || t('seller_onboarding.addressInfo.error_save'));
         }
     };
 
@@ -67,11 +69,11 @@ const AddressInfo = () => {
 
     return (
         <OnboardingLayout
-            title="Address Information"
-            description="Where is your business located?"
+            title={t("seller_onboarding.addressInfo.title")}
+            description={t("seller_onboarding.addressInfo.subtitle")}
             onBack={() => navigate('/seller/onboarding/business-details')}
             onNext={handleContinue}
-            nextLabel="Continue to Documents"
+            nextLabel={t("seller_onboarding.addressInfo.continue_to_documents")}
             nextDisabled={isLoading}
             loading={isLoading}
         >
@@ -89,12 +91,12 @@ const AddressInfo = () => {
                     {/* Address */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Full Address *
+                            {t("seller_onboarding.addressInfo.full_address")} *
                         </label>
                         <textarea
                             rows={3}
                             className={inputClass(errors.address)}
-                            placeholder="Building number, street name, ward, township"
+                            placeholder={t("seller_onboarding.addressInfo.address_hint")}
                             {...register("address", {
                                 required: "Address is required",
                                 minLength: {
@@ -107,7 +109,7 @@ const AddressInfo = () => {
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.address.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Include building number, street name, ward, and township
+                            {t("seller_onboarding.addressInfo.address_hint")}
                         </p>
                     </div>
 
@@ -115,12 +117,12 @@ const AddressInfo = () => {
                         {/* City */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                City/Township *
+                                {t("seller_onboarding.addressInfo.city_township")} *
                             </label>
                             <input
                                 type="text"
                                 className={inputClass(errors.city)}
-                                placeholder="Enter your city or township"
+                                placeholder={t("seller_onboarding.addressInfo.city.placeholder")}
                                 {...register("city", {
                                     required: "City/Township is required"
                                 })}
@@ -133,7 +135,7 @@ const AddressInfo = () => {
                         {/* State/Region */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                State/Region *
+                                {t("seller_onboarding.addressInfo.stateRegion.label")} *
                             </label>
                             <select
                                 className={inputClass(errors.state)}
@@ -141,7 +143,7 @@ const AddressInfo = () => {
                                     required: "State/Region is required"
                                 })}
                             >
-                                <option value="">Select State/Region</option>
+                                <option value="">{t("seller_onboarding.addressInfo.select_state")}</option>
                                 {myanmarStates.map((state) => (
                                     <option key={state} value={state}>{state}</option>
                                 ))}
@@ -156,7 +158,7 @@ const AddressInfo = () => {
                         {/* Country */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Country *
+                                {t("seller_onboarding.addressInfo.country.label")} *
                             </label>
                             <div className="relative">
                                 <GlobeAltIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -181,7 +183,7 @@ const AddressInfo = () => {
                         {/* Postal Code */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Postal Code (Optional)
+                                {t("seller_onboarding.addressInfo.postalCode.label")} ({t("seller_onboarding.businessDetails.optional")})
                             </label>
                             <input
                                 type="text"
@@ -195,16 +197,16 @@ const AddressInfo = () => {
                     {/* Location/Map (Optional) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Location Pin (Optional)
+                            {t("seller_onboarding.addressInfo.location_pin")} ({t("seller_onboarding.businessDetails.optional")})
                         </label>
                         <input
                             type="text"
                             className={inputClass(false)}
-                            placeholder="Google Maps link or coordinates"
+                            placeholder={t("seller_onboarding.addressInfo.location_placeholder")}
                             {...register("location")}
                         />
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Helps customers find your physical location. You can add this later.
+                            {t("seller_onboarding.addressInfo.location_hint")}
                         </p>
                     </div>
                 </div>
@@ -215,10 +217,10 @@ const AddressInfo = () => {
                         <InformationCircleIcon className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
                         <div>
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                <span className="font-medium">Next Step:</span> You'll need to upload documents for verification.
+                                <span className="font-medium">{t("seller_onboarding.addressInfo.info_next")}</span> {t("seller_onboarding.addressInfo.info_next_text")}
                             </p>
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                Required documents depend on your business type selected earlier.
+                                {t("seller_onboarding.addressInfo.info_doc_note")}
                             </p>
                         </div>
                     </div>

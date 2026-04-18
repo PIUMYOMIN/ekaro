@@ -193,22 +193,22 @@ const StoreBasicInfo = () => {
         setError('');
 
         if (!data.store_name?.trim()) {
-            setError(t('Store name is required'));
+            setError(t('store_basic.error_store_name'));
             return;
         }
 
         if (!data.business_type_slug) {
-            setError(t('Please select a business type'));
+            setError(t('store_basic.error_business_type'));
             return;
         }
 
         if (!data.contact_email?.trim()) {
-            setError(t('Contact email is required'));
+            setError(t('store_basic.error_email'));
             return;
         }
 
         if (!data.contact_phone?.trim()) {
-            setError(t('Contact phone is required'));
+            setError(t('store_basic.error_phone'));
             return;
         }
 
@@ -252,11 +252,11 @@ const StoreBasicInfo = () => {
 
     return (
         <OnboardingLayout
-            title={t("Store Basic Information")}
-            description={t("Let's start by setting up your store's basic information")}
+            title={t("store_basic.title")}
+            description={t("store_basic.description")}
             onBack={() => navigate('/seller')}
             onNext={handleContinue}
-            nextLabel={t("Continue to Business Details")}
+            nextLabel={t("store_basic.continue_business")}
             nextDisabled={isLoading || uploadingLogo || uploadingBanner}
             loading={isLoading}
         >
@@ -276,7 +276,7 @@ const StoreBasicInfo = () => {
                         {/* Logo Upload */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                Store Logo {!logoUploaded && '*'}
+                                {t("store_basic.store_logo")} {!logoUploaded && '*'}
                             </label>
                             <div className="space-y-3">
                                 <div className="relative">
@@ -317,7 +317,7 @@ const StoreBasicInfo = () => {
                                                     : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                             }`}
                                         >
-                                            {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                                            {uploadingLogo ? t("store_basic.uploading") : t("store_basic.upload_logo")}
                                         </label>
                                         {logoUploaded && (
                                             <button
@@ -325,12 +325,12 @@ const StoreBasicInfo = () => {
                                                 onClick={handleRemoveLogo}
                                                 className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                             >
-                                                Remove
+                                                {t("store_basic.remove")}
                                             </button>
                                         )}
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                        Recommended: 400x400px, Max 2MB (JPG, PNG, SVG)
+                                        {t("store_basic.logo_recommended")}
                                     </p>
                                 </div>
                             </div>
@@ -339,7 +339,7 @@ const StoreBasicInfo = () => {
                         {/* Banner Upload */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                {t("Store Banner")} {t("(Optional)")}
+                                {t("store_basic.store_banner")}
                             </label>
                             <div className="space-y-3">
                                 <div className="relative">
@@ -380,7 +380,7 @@ const StoreBasicInfo = () => {
                                                     : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                                             }`}
                                         >
-                                            {uploadingBanner ? 'Uploading...' : 'Upload Banner'}
+                                            {uploadingBanner ? t("store_basic.uploading") : t("store_basic.upload_banner")}
                                         </label>
                                         {bannerUploaded && (
                                             <button
@@ -388,12 +388,12 @@ const StoreBasicInfo = () => {
                                                 onClick={handleRemoveBanner}
                                                 className="px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                             >
-                                                Remove
+                                                {t("store_basic.remove")}
                                             </button>
                                         )}
                                     </div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                        Recommended: 1200x300px, Max 5MB (JPG, PNG)
+                                        {t("store_basic.banner_recommended")}
                                     </p>
                                 </div>
                             </div>
@@ -407,7 +407,7 @@ const StoreBasicInfo = () => {
                     {/* Store Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {t("Store Name")} *
+                            {t("store_basic.store_name")} *
                         </label>
                         <input
                             type="text"
@@ -415,7 +415,7 @@ const StoreBasicInfo = () => {
                             className={`mt-1 block w-full px-4 py-3 border ${
                                 errors.store_name ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
                             } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
-                            placeholder="Enter your store name"
+                            placeholder={t("store_basic.enter_store_name")}
                             {...register("store_name", {
                                 required: "Store name is required",
                                 minLength: {
@@ -428,14 +428,14 @@ const StoreBasicInfo = () => {
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.store_name.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            {t("This will appear as your store's public name")}
+                            {t("store_basic.store_name_hint")}
                         </p>
                     </div>
 
                     {/* Business Type */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {t("Business Type *")}
+                            {t("store_basic.business_type")} *
                         </label>
                         <div className="mt-1 relative">
                             <select
@@ -447,7 +447,7 @@ const StoreBasicInfo = () => {
                                     required: "Business type is required"
                                 })}
                             >
-                                <option value="">Select business type</option>
+                                <option value="">{t("store_basic.select_business_type")}</option>
                                 {businessTypes.map((type) => (
                                     <option key={type.slug_en} value={type.slug_en}>
                                         {loc(type.name_en, type.name_mm)}
@@ -466,7 +466,7 @@ const StoreBasicInfo = () => {
                     {/* Contact Email */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Contact Email *
+                            {t("store_basic.contact_email")} *
                         </label>
                         <input
                             type="email"
@@ -487,14 +487,14 @@ const StoreBasicInfo = () => {
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.contact_email.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            This email will be used for store-related communications
+                            {t("store_basic.email_hint")}
                         </p>
                     </div>
 
                     {/* Contact Phone */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Contact Phone *
+                            {t("store_basic.contact_phone")} *
                         </label>
                         <input
                             type="tel"
@@ -515,20 +515,20 @@ const StoreBasicInfo = () => {
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.contact_phone.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Include country code (e.g., +95 for Myanmar)
+                            {t("store_basic.phone_hint")}
                         </p>
                     </div>
 
                     {/* Store Description */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Store Description (Optional)
+                            {t("store_basic.store_description")}
                         </label>
                         <textarea
                             rows={3}
                             name="store_description"
                             className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                            placeholder="Describe your store and what you offer..."
+                            placeholder={t("store_basic.description_placeholder")}
                             {...register("store_description", {
                                 maxLength: {
                                     value: 2000,
@@ -540,7 +540,7 @@ const StoreBasicInfo = () => {
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
                         )}
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            This will be displayed on your store page. Max 2000 characters.
+                            {t("store_basic.description_hint")}
                         </p>
                     </div>
                 </div>
@@ -556,15 +556,15 @@ const StoreBasicInfo = () => {
                                 <h4 className="font-medium text-blue-900 dark:text-blue-200">{loc(selectedBusinessType.name_en, selectedBusinessType.name_mm)}</h4>
                                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">{loc(selectedBusinessType.description_en, selectedBusinessType.description_mm)}</p>
                                 <div className="mt-3">
-                                    <p className="text-xs font-medium text-blue-800 dark:text-blue-300">Document Requirements:</p>
+                                    <p className="text-xs font-medium text-blue-800 dark:text-blue-300">{t("store_basic.document_requirements")}:</p>
                                     <ul className="mt-1 text-xs text-blue-700 dark:text-blue-400 space-y-1">
                                         {selectedBusinessType.document_requirements?.map((req, index) => (
                                             <li key={index} className="flex items-start">
                                                 <span className="mr-2">•</span>
-                                                <span>{req.label} {req.required ? '(Required)' : '(Optional)'}</span>
+                                                <span>{req.label} {req.required ? `(${t("store_basic.required")})` : `(${t("store_basic.optional")})`}</span>
                                             </li>
                                         )) || (
-                                            <li className="text-blue-600 dark:text-blue-400">No specific document requirements</li>
+                                            <li className="text-blue-600 dark:text-blue-400">{t("store_basic.no_documents")}</li>
                                         )}
                                     </ul>
                                 </div>
@@ -577,20 +577,20 @@ const StoreBasicInfo = () => {
                 <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Form Status</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t("store_basic.form_status")}</p>
                             <div className="flex items-center space-x-4 mt-2">
                                 <div className="flex items-center">
                                     <div className={`w-3 h-3 rounded-full mr-2 ${logoUploaded ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                                    <span className="text-xs text-gray-600 dark:text-gray-400">Logo: {logoUploaded ? 'Uploaded' : 'Required'}</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">Logo: {logoUploaded ? t("store_basic.logo_uploaded") : t("store_basic.logo_required")}</span>
                                 </div>
                                 <div className="flex items-center">
                                     <div className={`w-3 h-3 rounded-full mr-2 ${bannerUploaded ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-500'}`}></div>
-                                    <span className="text-xs text-gray-600 dark:text-gray-400">Banner: {bannerUploaded ? 'Uploaded' : 'Optional'}</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">Banner: {bannerUploaded ? t("store_basic.banner_uploaded") : t("store_basic.banner_optional")}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Required fields are marked with *</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{t("store_basic.required_mark")}</p>
                         </div>
                     </div>
                 </div>
