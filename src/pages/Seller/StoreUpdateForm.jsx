@@ -54,7 +54,6 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
         const response = await api.get("/business-types");
         setBusinessTypes(response.data.data);
       } catch (error) {
-        console.log("Using default business types");
         setBusinessTypes([
           { value: "individual", label: "Individual/Sole Proprietorship" },
           { value: "company", label: "Private Limited Company" },
@@ -134,10 +133,6 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
     try {
       const formData = new FormData();
 
-      console.log("=== FORM DATA DEBUG ===");
-      console.log("Logo file:", logoFile);
-      console.log("Banner file:", bannerFile);
-      console.log("Form fields to send:", formFields);
 
       // Append ALL form fields, including empty ones (let backend handle validation)
       Object.keys(formFields).forEach(key => {
@@ -150,33 +145,26 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
 
       // Append files if they exist
       if (logoFile) {
-        console.log("Appending logo file:", logoFile.name);
         formData.append('store_logo', logoFile);
       }
 
       if (bannerFile) {
-        console.log("Appending banner file:", bannerFile.name);
         formData.append('store_banner', bannerFile);
       }
 
       // Log all FormData entries for debugging
-      console.log("All FormData entries:");
       for (let [key, value] of formData.entries()) {
         if (value instanceof File) {
-          console.log(`- ${key}: File(${value.name}, ${value.type}, ${value.size} bytes)`);
         } else {
-          console.log(`- ${key}: ${value}`);
         }
       }
 
-      console.log("Making API request to /dashboard/seller/my-store");
       const response = await api.put("/dashboard/seller/my-store", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      console.log("API Response:", response.data);
 
       if (response.data.success) {
         setMessage({
@@ -207,7 +195,6 @@ const StoreUpdateForm = ({ storeData, onCancel, onSuccess }) => {
       
       if (error.response?.data?.errors) {
         const errors = error.response.data.errors;
-        console.log("Validation errors:", errors);
         errorMessage = Object.values(errors).flat().join(', ');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

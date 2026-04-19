@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
-    DocumentTextIcon,
     BuildingOfficeIcon,
     CreditCardIcon,
     GlobeAltIcon,
@@ -12,7 +11,7 @@ import {
     ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
-import NrcInput, { NRC_TOWNSHIPS } from '../../components/seller/NrcInput';
+import NrcInput from '../../components/seller/NrcInput';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
 const BusinessDetails = () => {

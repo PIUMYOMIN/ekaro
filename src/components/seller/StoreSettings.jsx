@@ -254,7 +254,10 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
     try {
       const response = await api.delete(`/users/${user.id}`);
       if (response.data.success) {
-        localStorage.clear();
+        // Clear only app-specific keys — don't nuke unrelated storage
+        ['token','user','seller_onboarding_data','seller_setup_notification_dismissed',
+         'product_draft','image_previews','pyonea-theme']
+          .forEach(k => localStorage.removeItem(k));
         window.location.href = "/";
       }
     } catch (error) {

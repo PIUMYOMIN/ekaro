@@ -66,13 +66,21 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
           if (err.name === 'CanceledError' || err.name === 'AbortError') return;
           console.error('Failed to load user from API', err);
-          // Try to load from localStorage as fallback
+          // Fallback to cached user for display only.
+          // SECURITY: roles are stripped so ProtectedRoute denies access
+          // until the next successful /auth/me refresh.
           const savedUser = localStorage.getItem('user');
           if (savedUser) {
             try {
               const parsedUser = JSON.parse(savedUser);
-              const normalizedUser = normalizeUserRoles(parsedUser);
-              setUser(normalizedUser);
+              // Strip roles/type to prevent privilege escalation from cached data
+              const safeUser = {
+                ...parsedUser,
+                roles: [],
+                role: null,
+                type: parsedUser.type,  // preserve type for display only
+              };
+              setUser(safeUser);
             } catch (parseError) {
               console.error('Failed to parse saved user', parseError);
               logout();

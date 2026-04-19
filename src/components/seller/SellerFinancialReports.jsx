@@ -12,7 +12,6 @@ import {
   ShoppingBagIcon,
   BanknotesIcon,
   TruckIcon,
-  ClockIcon,
   CheckCircleIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
@@ -67,17 +66,26 @@ const GROUP_OPTIONS = [
 // ── Excel Export ───────────────────────────────────────────────────────────────
 
 async function exportToExcel(data, storeName) {
-  const XLSX = await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js')
-    .then(() => window.XLSX)
-    .catch(() => { alert('Could not load Excel library. Please check your connection.'); return null; });
-  if (!XLSX) return;
+  // xlsx must be installed: npm install xlsx
+  let XLSX;
+  try {
+    XLSX = await import('xlsx');
+  } catch {
+    alert('Excel library not available. Run: npm install xlsx');
+    return;
+  }
 
   const { summary: s, orders, trend } = data;
 
   const buildSheet = (rows) => {
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    const maxW = rows.reduce((acc, row) =>
-      row.map((cell, i) => Math.max(acc[i] || 8, String(cell ?? '').length + 2)), []);
+    // Fix: properly accumulate max width across ALL rows (not just the last)
+    const maxW = rows.reduce((acc, row) => {
+      row.forEach((cell, i) => {
+        acc[i] = Math.max(acc[i] || 8, String(cell ?? '').length + 2);
+      });
+      return acc;
+    }, []);
     ws['!cols'] = maxW.map(w => ({ wch: Math.min(w, 40) }));
     return ws;
   };
@@ -203,6 +211,7 @@ export default function SellerFinancialReports({ storeName }) {
   const [search,   setSearch]   = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // Using a ref-based approach to avoid stale closure in useEffect
   const fetchReport = useCallback(async (p = period, gb = groupBy) => {
     setLoading(true);
     setError('');
@@ -223,7 +232,8 @@ export default function SellerFinancialReports({ storeName }) {
     }
   }, [period, groupBy, fromDate, toDate]);
 
-  useEffect(() => { fetchReport(); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchReport('month', 'day'); }, []); // mount-only initial load
 
   const handlePeriodChange = (p) => {
     setPeriod(p);
@@ -463,7 +473,7 @@ export default function SellerFinancialReports({ storeName }) {
                   <Tooltip
                     formatter={(v, name) => [fmtMMK(v), name]}
                     contentStyle={{
-                      background: 'var(--tw-bg-opacity,1) #1e293b',
+                      background: '#1e293b',
                       border: 'none', borderRadius: 10, fontSize: 12,
                     }}
                   />
@@ -494,8 +504,8 @@ export default function SellerFinancialReports({ storeName }) {
                   className="text-xs border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-900 text-gray-700 dark:text-slate-300 focus:ring-2 focus:ring-green-500 focus:outline-none"
                 >
                   <option value="all">All Status</option>
-                  {['delivered','pending','confirmed','processing','shipped','cancelled'].map(s => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  {['delivered','pending','confirmed','processing','shipped','cancelled'].map(st => (
+                    <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>
                   ))}
                 </select>
                 {/* Search */}

@@ -4,10 +4,19 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  BuildingStorefrontIcon, PhotoIcon, DocumentTextIcon,
-  ClockIcon, GlobeAltIcon, FolderArrowDownIcon, KeyIcon,
-  CheckCircleIcon, ExclamationCircleIcon, ArrowUpTrayIcon,
-  TrashIcon, XMarkIcon, EyeIcon, BellIcon
+  BuildingStorefrontIcon,
+  PhotoIcon,
+  DocumentTextIcon,
+  ClockIcon,
+  GlobeAltIcon,
+  FolderArrowDownIcon,
+  KeyIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ArrowUpTrayIcon,
+  TrashIcon,
+  EyeIcon,
+  BellIcon
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import NrcInput from './NrcInput';

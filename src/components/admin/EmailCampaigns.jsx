@@ -7,6 +7,7 @@ import {
   ExclamationCircleIcon, CheckCircleIcon, UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import DOMPurify from 'dompurify';
 
 const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
 
@@ -127,7 +128,7 @@ const CampaignForm = ({ initial, onSaved, onCancel }) => {
         </div>
         {preview ? (
           <div className="border border-gray-200 dark:border-slate-600 rounded-xl min-h-[200px] max-h-[400px] overflow-y-auto p-4 text-sm text-gray-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-700"
-            dangerouslySetInnerHTML={{ __html: form.body_html || '<em class="text-gray-400">No content yet.</em>' }}/>
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.body_html || '<em class="text-gray-400">No content yet.</em>') }}/>
         ) : (
           <textarea value={form.body_html} onChange={e => set('body_html', e.target.value)}
             placeholder="<h2>Subject headline</h2><p>Your message here. You can use HTML for formatting.</p><p><a href='https://pyonea.com'>Shop Now</a></p>"

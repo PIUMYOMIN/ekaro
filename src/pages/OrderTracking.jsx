@@ -16,12 +16,12 @@ const ORDER_STEPS = [
 ];
 
 const DELIVERY_STEPS = [
-  { key: "pending",          label: "Awaiting Pickup",   icon: "⏳" },
-  { key: "awaiting_pickup",  label: "Ready for Pickup",  icon: "📍" },
-  { key: "picked_up",        label: "Picked Up",         icon: "✋" },
-  { key: "in_transit",       label: "In Transit",        icon: "🚛" },
-  { key: "out_for_delivery", labelKey: "order_tracking.out_for_delivery",  icon: "🏃" },
-  { key: "delivered",        label: "Delivered",         icon: "🎉" },
+  { key: "pending",          labelKey: "order_tracking.delivery_pending",          icon: "⏳" },
+  { key: "awaiting_pickup",  labelKey: "order_tracking.delivery_awaiting_pickup",  icon: "📍" },
+  { key: "picked_up",        labelKey: "order_tracking.delivery_picked_up",        icon: "✋" },
+  { key: "in_transit",       labelKey: "order_tracking.delivery_in_transit",       icon: "🚛" },
+  { key: "out_for_delivery", labelKey: "order_tracking.out_for_delivery",          icon: "🏃" },
+  { key: "delivered",        labelKey: "order_tracking.delivery_delivered",        icon: "🎉" },
 ];
 
 const STATUS_COLORS = {
@@ -158,7 +158,7 @@ const OrderTracking = () => {
   const doSearch = async (num = input) => {
     const trimmed = (num || "").trim().toUpperCase();
     if (!trimmed) {
-      setError("Please enter an order number.");
+      setError(t("order_tracking.enter_required"));
       return;
     }
     setLoading(true);
@@ -173,12 +173,12 @@ const OrderTracking = () => {
         setSearchParams({ order: trimmed }, { replace: true });
         setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       } else {
-        setError(res.data.message || "Order not found.");
+        setError(res.data.message || t("order_tracking.not_found"));
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        "Order not found. Please check your order number and try again."
+        t("order_tracking.not_found_sub")
       );
     } finally {
       setLoading(false);
@@ -203,13 +203,13 @@ const OrderTracking = () => {
           </div>
           <div className="relative max-w-3xl mx-auto px-4 pt-14 pb-20 text-center">
             <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-5">
-              <span className="text-white/90 text-xs font-medium tracking-wide uppercase">Real-time tracking</span>
+              <span className="text-white/90 text-xs font-medium tracking-wide uppercase">{t("order_tracking.realtime_label")}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-              Track Your Order
+              {t("order_tracking.title")}
             </h1>
             <p className="text-green-100 text-base sm:text-lg max-w-xl mx-auto">
-              Enter your order number to get live updates on your shipment status.
+              {t("order_tracking.hero_desc")}
             </p>
           </div>
         </div>
@@ -220,14 +220,14 @@ const OrderTracking = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Order Number <span className="text-red-500">*</span>
+                  {t("order_tracking.order_number_label")} <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-3">
                   <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value.toUpperCase())}
-                    placeholder="e.g. ORD-2024-000123"
+                    placeholder={t("order_tracking.order_number_placeholder")}
                     className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                       focus:outline-none focus:border-green-500 transition-colors placeholder:font-sans placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     autoFocus
@@ -242,10 +242,10 @@ const OrderTracking = () => {
                     {loading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Searching…
+                        {t("order_tracking.searching")}
                       </>
                     ) : (
-                      <>🔍 Track</>
+                      <>🔍 {t("order_tracking.track")}</>
                     )}
                   </button>
                 </div>
@@ -255,14 +255,14 @@ const OrderTracking = () => {
               <details className="group">
                 <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer select-none hover:text-green-600 dark:hover:text-green-400 transition-colors list-none flex items-center gap-1">
                   <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
-                  Add email for additional verification (optional)
+                  {t("order_tracking.email_verification")}
                 </summary>
                 <div className="mt-3">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email used when ordering"
+                    placeholder={t("order_tracking.email_placeholder")}
                     className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                       focus:outline-none focus:border-green-500 transition-colors placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
@@ -278,8 +278,8 @@ const OrderTracking = () => {
             </form>
 
             <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-x-6 gap-y-2 text-xs text-gray-400 dark:text-gray-500">
-              <span className="flex items-center gap-1.5"><span>📧</span> Check your confirmation email for order number</span>
-              <span className="flex items-center gap-1.5"><span>🔒</span> Your data is kept private</span>
+              <span className="flex items-center gap-1.5"><span>📧</span> {t("order_tracking.tip_email")}</span>
+              <span className="flex items-center gap-1.5"><span>🔒</span> {t("order_tracking.tip_privacy")}</span>
             </div>
           </div>
         </div>
@@ -294,7 +294,7 @@ const OrderTracking = () => {
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-1">Order Number</p>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white font-mono">{order.order_number}</h2>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Placed on {fmtDate(order.created_at)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("order_tracking.placed_on")} {fmtDate(order.created_at)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
@@ -320,7 +320,7 @@ const OrderTracking = () => {
                 <div className="mt-4 flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-800 rounded-xl">
                   <span className="text-2xl">🎉</span>
                   <div>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">Delivered On</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 font-medium">{t("order_tracking.delivered_on")}</p>
                     <p className="text-sm font-semibold text-green-800 dark:text-green-300">{fmtDate(order.delivered_at)}</p>
                   </div>
                 </div>
@@ -331,14 +331,14 @@ const OrderTracking = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-6 flex items-center gap-2">
                 <span className="w-1.5 h-4 bg-green-500 rounded-full block" />
-                Order Progress
+                {t("order_tracking.order_progress")}
               </h3>
               {order.status === "cancelled" || order.status === "refunded" ? (
                 <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded-xl">
                   <span className="text-2xl">❌</span>
                   <div>
                     <p className="font-semibold text-red-700 dark:text-red-300">{statusLabel(order.status)}</p>
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">This order has been {order.status}.</p>
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{t("order_tracking.order_cancelled_msg", { status: statusLabel(order.status) })}</p>
                   </div>
                 </div>
               ) : (
@@ -381,19 +381,19 @@ const OrderTracking = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
                   {order.delivery.carrier_name && (
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Carrier</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t("order_tracking.carrier")}</p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-white">{order.delivery.carrier_name}</p>
                     </div>
                   )}
                   {order.delivery.method && (
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Method</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t("order_tracking.method")}</p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-white capitalize">{order.delivery.method}</p>
                     </div>
                   )}
                   {order.delivery.estimated_delivery_date && (
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3">
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Est. Delivery</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">{t("order_tracking.est_delivery")}</p>
                       <p className="text-sm font-semibold text-gray-800 dark:text-white">{fmtDateShort(order.delivery.estimated_delivery_date)}</p>
                     </div>
                   )}
@@ -402,7 +402,7 @@ const OrderTracking = () => {
                 {/* Update timeline */}
                 {order.delivery.updates?.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Update History</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{t("order_tracking.update_history")}</p>
                     <div className="space-y-0">
                       {[...order.delivery.updates].reverse().map((upd, i) => (
                         <div key={i} className="flex gap-4 relative">
@@ -433,7 +433,7 @@ const OrderTracking = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-purple-500 rounded-full block" />
-                  Items Ordered ({order.items.length})
+                  {t("order_tracking.items_ordered", { count: order.items.length })}
                 </h3>
                 <div className="divide-y divide-gray-50 dark:divide-gray-700">
                   {order.items.map((item, i) => (
@@ -465,15 +465,15 @@ const OrderTracking = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-amber-500 rounded-full block" />
-                  Payment Summary
+                  {t("order_tracking.payment_summary")}
                 </h3>
                 <div className="space-y-2 text-sm">
                   {[
-                    { label: "Subtotal",  value: fmt(order.subtotal_amount) },
-                    { label: "Shipping",  value: fmt(order.shipping_fee) },
-                    { label: "Tax",       value: fmt(order.tax_amount) },
+                    { label: t("order_tracking.subtotal"),      value: fmt(order.subtotal_amount) },
+                    { label: t("order_tracking.shipping_label"), value: fmt(order.shipping_fee) },
+                    { label: t("order_tracking.tax_label"),     value: fmt(order.tax_amount) },
                     ...(order.coupon_discount_amount > 0
-                      ? [{ label: "Coupon Discount", value: `− ${fmt(order.coupon_discount_amount)}`, red: true }]
+                      ? [{ label: t("order_tracking.coupon_discount"), value: `− ${fmt(order.coupon_discount_amount)}`, red: true }]
                       : []),
                   ].map((row) => (
                     <div key={row.label} className="flex justify-between text-gray-500 dark:text-gray-400">
@@ -482,11 +482,11 @@ const OrderTracking = () => {
                     </div>
                   ))}
                   <div className="flex justify-between font-bold text-gray-900 dark:text-white pt-3 border-t border-gray-100 dark:border-gray-700 mt-2">
-                    <span>Total</span>
+                    <span>{t("order_tracking.total")}</span>
                     <span className="text-green-700 dark:text-green-400">{fmt(order.total_amount)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 pt-1">
-                    <span>Payment Method</span>
+                    <span>{t("order_tracking.payment_method_label")}</span>
                     <span className="capitalize font-medium text-gray-600 dark:text-gray-400">{statusLabel(order.payment_method)}</span>
                   </div>
                 </div>
@@ -496,7 +496,7 @@ const OrderTracking = () => {
               <div className="space-y-4">
                 {order.seller && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Sold by</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t("order_tracking.sold_by")}</p>
                     <div className="flex items-center gap-3">
                       {order.seller.store_logo ? (
                         <img src={order.seller.store_logo} alt={order.seller.store_name} className="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600" />
@@ -512,7 +512,7 @@ const OrderTracking = () => {
 
                 {order.shipping_address && (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Shipping To</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t("order_tracking.shipping_to")}</p>
                     <div className="text-sm text-gray-700 dark:text-gray-300 space-y-0.5">
                       {order.shipping_address.name && <p className="font-semibold">{order.shipping_address.name}</p>}
                       {order.shipping_address.address && <p>{order.shipping_address.address}</p>}
@@ -534,7 +534,7 @@ const OrderTracking = () => {
                 onClick={() => { setOrder(null); setInput(""); setEmail(""); setSearchParams({}); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                 className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors underline underline-offset-2"
               >
-                Track a different order
+                {t("order_tracking.track_different")}
               </button>
             </div>
           </div>
@@ -543,12 +543,12 @@ const OrderTracking = () => {
         {/* ── Info section ── */}
         {!order && !loading && (
           <div className="max-w-3xl mx-auto px-4 py-14">
-            <h2 className="text-center text-base font-semibold text-gray-500 dark:text-gray-400 mb-8">How Tracking Works</h2>
+            <h2 className="text-center text-base font-semibold text-gray-500 dark:text-gray-400 mb-8">{t("order_tracking.how_it_works")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {[
-                { icon: "📋", title: "Find Your Order Number", desc: "Check your order confirmation email or your account's order history for the order number." },
-                { icon: "🔍", title: "Enter & Search", desc: "Type your order number in the search field above and click Track to see real-time status." },
-                { icon: "📦", title: "Follow Your Package", desc: "See a full timeline from order placement through to delivery at your door." },
+                { icon: "📋", title: t("order_tracking.how_step_0_title"), desc: t("order_tracking.how_step_0_desc") },
+                { icon: "🔍", title: t("order_tracking.how_step_1_title"), desc: t("order_tracking.how_step_1_desc") },
+                { icon: "📦", title: t("order_tracking.how_step_2_title"), desc: t("order_tracking.how_step_2_desc") },
               ].map((card) => (
                 <div key={card.title} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 text-center">
                   <div className="text-4xl mb-3">{card.icon}</div>
@@ -559,13 +559,13 @@ const OrderTracking = () => {
             </div>
 
             <div className="mt-10 bg-green-50 dark:bg-green-900/30 border border-green-100 dark:border-green-800 rounded-2xl p-6 text-center">
-              <p className="text-sm text-green-800 dark:text-green-300 font-medium mb-1">Need help with your order?</p>
-              <p className="text-xs text-green-600 dark:text-green-400 mb-4">Our support team is happy to assist you with any questions.</p>
+              <p className="text-sm text-green-800 dark:text-green-300 font-medium mb-1">{t("order_tracking.need_help")}</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mb-4">{t("order_tracking.need_help_desc")}</p>
               <Link
                 to="/contact"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 dark:bg-green-700 text-white text-sm font-semibold rounded-xl hover:bg-green-700 dark:hover:bg-green-800 transition-colors"
               >
-                Contact Support
+                {t("order_tracking.contact_support")}
               </Link>
             </div>
           </div>

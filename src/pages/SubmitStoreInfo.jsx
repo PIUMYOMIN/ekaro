@@ -18,7 +18,6 @@ const SubmitStoreInfo = () => {
   useEffect(() => {
     if (isLoaded) {
       const storedData = localStorage.getItem("seller_onboarding_data");
-      console.log("🔍 SubmitStoreInfo - Raw localStorage:", storedData);
     }
   }, [onboardingData, isLoaded]);
 
@@ -69,13 +68,11 @@ const SubmitStoreInfo = () => {
     setError("");
 
     try {
-      console.log("🚀 Submitting onboarding data:", onboardingData);
 
       // Use the new onboarding complete endpoint
       const response = await api.post("/seller/onboarding/complete", onboardingData);
 
       if (response.data.success) {
-        console.log("✅ Onboarding completed successfully:", response.data);
         clearOnboardingData();
         navigate("/seller", {
           replace: true,
