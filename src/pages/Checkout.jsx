@@ -21,7 +21,7 @@ import {
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
-import MMQRPayment from "./MMQRPayment";
+import PaymentProcessor from "../components/payments/PaymentProcessor";
 import PaymentSuccess from "./PaymentSuccess";
 
 function classNames(...classes) {
@@ -624,12 +624,29 @@ export default function Checkout() {
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-                <MMQRPayment
-                  key={paymentAttempts}
-                  amount={total}
-                  orderNumber={currentOrder.order_number}
-                  onPaymentSuccess={handleMMQRSuccess}
-                  onPaymentFailed={handleMMQRFailed}
+                <PaymentProcessor
+                  order={currentOrder}
+                  onSuccess={async (confirmedOrder) => {
+                    // Payment confirmed by gateway — fetch full order and show receipt
+                    try {
+                      const orderRes = await api.get(`/orders/${currentOrder.id}`);
+                      if (orderRes.data.success) {
+                        setSuccessOrder(orderRes.data.data);
+                        setSuccessPaymentData(confirmedOrder);
+                        setPaymentSuccess(true);
+                        setShowPaymentModal(false);
+                        clearCart();
+                      }
+                    } catch {
+                      showToast("error", "Payment confirmed but failed to load receipt. Check your orders page.");
+                      navigate("/buyer");
+                    }
+                  }}
+                  onCancel={() => {
+                    setShowPaymentModal(false);
+                    setCurrentOrder(null);
+                    showToast("error", "Payment cancelled. Your order has been saved — you can retry from your orders page.");
+                  }}
                 />
                 <div className="p-4 border-t bg-gray-50 dark:bg-slate-900 text-center">
                   <p className="text-sm text-gray-600 dark:text-slate-400">

@@ -1,6 +1,6 @@
 // components/PaymentSuccess.jsx
 import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   CheckCircleIcon,
   CheckIcon,
@@ -16,8 +16,12 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import api from '../utils/api';
 
-const PaymentSuccess = ({ order, paymentData, onClose }) => {
-  const navigate = useNavigate();
+const PaymentSuccess = ({ order: orderProp, paymentData: paymentDataProp, onClose }) => {
+  const navigate    = useNavigate();
+  const location    = useLocation();
+  // Support both: embedded (props from Checkout) and standalone (/payment-success?state)
+  const order       = orderProp       ?? location.state?.order ?? null;
+  const paymentData = paymentDataProp ?? location.state?.paymentData ?? null;
   const slipRef = useRef();
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -37,13 +41,14 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
           setError('Failed to load order details');
         }
       } catch (err) {
-        console.error('Error fetching order details:', err);
         setError('Failed to load order details');
       } finally {
         setLoading(false);
       }
     };
 
+    // No order — redirect to buyer dashboard
+    if (!order) { navigate('/buyer', { replace: true }); return; }
     if (order && order.id) {
       fetchOrderDetails();
     } else {
@@ -278,7 +283,6 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
 
       pdf.save(`Payment_Slip_${getOrderNumber()}.pdf`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
       alert('Failed to download PDF. Please try again.');
     } finally {
       setDownloading(false);
