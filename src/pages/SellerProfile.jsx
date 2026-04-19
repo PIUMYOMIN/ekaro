@@ -7,7 +7,7 @@ import { Tab } from '@headlessui/react';
 import {
   StarIcon, MapPinIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon,
   ShoppingBagIcon, UserGroupIcon, ChatBubbleLeftIcon,
-  CheckBadgeIcon, ShareIcon, ClockIcon, BuildingStorefrontIcon,
+  CheckBadgeIcon, CheckIcon, ShareIcon, ClockIcon, BuildingStorefrontIcon,
   ArrowUpIcon, ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 import {
@@ -308,9 +308,19 @@ const SellerProfile = () => {
 
               {/* Action buttons */}
               <div className="flex items-center gap-2 pb-1">
-                <button onClick={handleShare}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:bg-slate-800 transition-colors">
-                  <ShareIcon className="h-4 w-4" />
+                <button
+                  onClick={handleShare}
+                  aria-label={copied ? 'Link copied' : 'Share store'}
+                  className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-sm font-medium transition-colors
+                    ${copied
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                      : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                    }`}
+                >
+                  {copied
+                    ? <CheckIcon className="h-4 w-4" />
+                    : <ShareIcon className="h-4 w-4" />
+                  }
                   {copied ? 'Copied!' : 'Share'}
                 </button>
                 {/* Follow button — hide on own store, sellers viewing another store, admins */}

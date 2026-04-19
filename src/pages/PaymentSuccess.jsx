@@ -2,7 +2,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  CheckCircleIcon, 
+  CheckCircleIcon,
+  CheckIcon,
   DocumentArrowDownIcon,
   PrinterIcon,
   ShareIcon,
@@ -19,6 +20,7 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
   const navigate = useNavigate();
   const slipRef = useRef();
   const [downloading, setDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -285,21 +287,22 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
 
   // Share function
   const handleShare = async () => {
+    const url = window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Payment Slip - ${getOrderNumber()}`,
           text: `Payment confirmation for order ${getOrderNumber()}`,
-          url: window.location.href,
+          url,
         });
-      } catch (error) {
-        console.log('Sharing cancelled or failed');
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('Link copied to clipboard!');
-      });
+        return;
+      } catch {}
     }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {}
   };
 
   // Loading state
@@ -398,10 +401,18 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
                     </button>
                     <button
                       onClick={handleShare}
-                      className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      aria-label={copied ? 'Link copied' : 'Share payment slip'}
+                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg border transition-colors
+                        ${copied
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
                     >
-                      <ShareIcon className="h-4 w-4 mr-2" />
-                      Share
+                      {copied
+                        ? <CheckIcon className="h-4 w-4 mr-2" />
+                        : <ShareIcon className="h-4 w-4 mr-2" />
+                      }
+                      {copied ? 'Copied!' : 'Share'}
                     </button>
                   </div>
                 </div>

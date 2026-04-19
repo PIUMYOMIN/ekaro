@@ -617,6 +617,7 @@ const ProductDetail = () => {
                 <button
                   onClick={handleShare}
                   title="Share this product"
+                  aria-label={copied ? 'Link copied' : 'Share product'}
                   className={`p-3 rounded-md border transition flex items-center justify-center
                     ${copied
                       ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
