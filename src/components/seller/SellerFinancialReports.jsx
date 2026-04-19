@@ -1,8 +1,4 @@
 // src/components/seller/FinancialReports.jsx
-// Seller-scoped financial report: summary cards, trend chart, order table
-// and one-click Excel export (3 sheets: Summary, Orders, Trend).
-// API: GET /api/v1/seller/financial-report?period=...&group_by=...
-
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   ArrowPathIcon,
