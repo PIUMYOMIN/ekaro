@@ -359,14 +359,14 @@ const OrderConfirmation = () => {
         <div className="mt-12 max-w-3xl mx-auto flex flex-col sm:flex-row justify-center gap-4">
           <Link
             to="/products"
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 border border-transparent text-sm sm:text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
           >
             <ShoppingBagIcon className="h-5 w-5 mr-2" />
             Continue Shopping
           </Link>
           <Link
             to="/buyer"
-            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+            className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 border border-gray-300 text-sm sm:text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-700 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600"
           >
             <TruckIcon className="h-5 w-5 mr-2" />
             View Order Status

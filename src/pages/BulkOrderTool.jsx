@@ -59,7 +59,7 @@ const BulkOrderTool = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Bulk Order Tool</h1>
+      <h1 className="text-xl sm:text-3xl font-bold mb-8">Bulk Order Tool</h1>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4 dark:text-slate-100">Select Products</h2>

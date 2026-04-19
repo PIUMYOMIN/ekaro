@@ -7,6 +7,7 @@ import { StarIcon, ChevronDownIcon, FunnelIcon, MagnifyingGlassIcon } from "@her
 
 import SellerCard from "../components/ui/SellerCard";
 import Pagination from "../components/ui/Pagination";
+import { SkeletonSellersPage } from "../components/ui/Skeleton";
 import api from "../utils/api";
 import useSEO from "../hooks/useSEO";
 
@@ -140,16 +141,7 @@ const Sellers = () => {
     url: "/sellers"
   });
 
-  if (loading) {
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-4 text-gray-700 dark:text-slate-300">{t('sellers.loading')}</p>
-          </div>
-        </div>
-    );
-  }
+  if (loading) return <SkeletonSellersPage />;
 
   if (error) {
     return (

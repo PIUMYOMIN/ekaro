@@ -16,7 +16,7 @@ const AboutUs = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-center dark:text-slate-100">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-8 text-center dark:text-slate-100">
             {t("about.title")}
           </h1>
 

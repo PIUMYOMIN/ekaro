@@ -62,7 +62,7 @@ const OrderTrackingPage = () => {
           >
             ← {t("order_tracking.back_to_dashboard")}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">{t("order_tracking.title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">{t("order_tracking.title")}</h1>
           <p className="text-gray-600 dark:text-slate-400 mt-2">
             Order #{order.order_number} • Placed on {new Date(order.created_at).toLocaleDateString()}
           </p>

@@ -55,8 +55,8 @@ const Pricing = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Pricing Plans</h1>
-        <p className="text-xl text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-4">Pricing Plans</h1>
+        <p className="text-base sm:text-xl text-gray-600 dark:text-slate-400 max-w-2xl mx-auto">
           Choose the perfect plan for your business needs. No hidden fees,
           cancel anytime.
         </p>

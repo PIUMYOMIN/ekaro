@@ -246,7 +246,7 @@ const ProductCard = ({ product, className = "" }) => {
             onClick={toggleWishlist}
             disabled={wishLoading}
             className="absolute top-2 right-2
-                       w-7 h-7 rounded-full
+                       w-9 h-9 rounded-full
                        bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm shadow
                        flex items-center justify-center
                        hover:scale-110 active:scale-95
@@ -256,8 +256,8 @@ const ProductCard = ({ product, className = "" }) => {
             aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
             {isInWishlist
-              ? <HeartSolid   className="h-3.5 w-3.5 text-red-500" />
-              : <HeartOutline className="h-3.5 w-3.5 text-gray-400 group-hover:text-red-400 transition-colors" />
+              ? <HeartSolid   className="h-4 w-4 text-red-500" />
+              : <HeartOutline className="h-4 w-4 text-gray-400 group-hover:text-red-400 transition-colors" />
             }
           </button>
         )}
@@ -338,7 +338,7 @@ const ProductCard = ({ product, className = "" }) => {
           <button
             onClick={handleAddToCart}
             disabled={isUnavailable || isOutOfStock || isInCart || cartLoading}
-            className={`mt-2 w-full rounded-xl py-1.5 text-xs font-semibold
+            className={`mt-2 w-full rounded-xl py-2 text-xs font-semibold
                         flex items-center justify-center gap-1.5
                         transition-all duration-150 focus:outline-none
                         focus:ring-2 focus:ring-green-500 focus:ring-offset-1

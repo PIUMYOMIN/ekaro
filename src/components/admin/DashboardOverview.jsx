@@ -17,14 +17,14 @@ const fmtK = (n) => {
 };
 
 const KPI = ({ title, value, subtitle, icon: Icon, iconColor = "text-green-600", bg = "bg-green-50", isString = false }) => (
-  <div className={`${bg} rounded-2xl p-4 sm:p-5 flex items-start gap-4`}>
-    <div className="rounded-xl p-2.5 bg-white shadow-sm flex-shrink-0">
+  <div className={`${bg} dark:bg-slate-700/50 rounded-2xl p-4 sm:p-5 flex items-start gap-4`}>
+    <div className="rounded-xl p-2.5 bg-white dark:bg-slate-800 shadow-sm flex-shrink-0">
       <Icon className={`h-5 w-5 ${iconColor}`} />
     </div>
     <div className="min-w-0">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide truncate">{title}</p>
+      <p className="text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wide truncate">{title}</p>
       <p className={`text-xl font-bold mt-0.5 ${iconColor}`}>{isString ? value : fmtK(value)}</p>
-      {subtitle && <p className="text-[11px] text-gray-400 mt-0.5 truncate">{subtitle}</p>}
+      {subtitle && <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5 truncate">{subtitle}</p>}
     </div>
   </div>
 );

@@ -33,11 +33,11 @@ const MMQRPayment = () => {
   const seconds = countdown % 60;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h3 className="text-lg font-medium text-gray-900">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">
         {t("payment.mmqr_instructions")}
       </h3>
-      <p className="mt-2 text-sm text-gray-500">
+      <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
         {t("payment.mmqr_instructions_desc")}
       </p>
 
@@ -54,10 +54,10 @@ const MMQRPayment = () => {
                 className="w-48 h-48 border-4 border-green-500 rounded-lg"
               />
             </motion.div>
-          : <div className="bg-gray-200 border-2 border-dashed rounded-xl w-48 h-48 animate-pulse" />}
+          : <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed rounded-xl w-48 h-48 animate-pulse" />}
 
         <div className="mt-4 flex items-center">
-          <div className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+          <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-3 py-1 rounded-full text-sm font-medium flex items-center">
             <svg
               className="h-4 w-4 mr-1"
               fill="currentColor"
@@ -71,13 +71,13 @@ const MMQRPayment = () => {
             </svg>
             {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
           </div>
-          <span className="ml-2 text-sm text-gray-500">
+          <span className="ml-2 text-sm text-gray-500 dark:text-slate-400">
             {t("payment.expires_in")}
           </span>
         </div>
       </div>
 
-      <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+      <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
@@ -94,7 +94,7 @@ const MMQRPayment = () => {
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
               {t("payment.mmqr_note")}
             </p>
           </div>

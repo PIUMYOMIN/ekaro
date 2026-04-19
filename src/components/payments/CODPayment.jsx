@@ -8,16 +8,16 @@ const CODPayment = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
       <div className="flex items-center">
-        <div className="flex-shrink-0 bg-green-100 p-3 rounded-full">
-          <TruckIcon className="h-8 w-8 text-green-600" />
+        <div className="flex-shrink-0 bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
+          <TruckIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
         <div className="ml-4">
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100">
             {t("payment.cod_title")}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             {t("payment.cod_description")}
           </p>
         </div>
@@ -31,7 +31,7 @@ const CODPayment = () => {
           className="flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
-          <p className="ml-3 text-sm text-gray-700">
+          <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_1")}
           </p>
         </motion.div>
@@ -43,7 +43,7 @@ const CODPayment = () => {
           className="flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
-          <p className="ml-3 text-sm text-gray-700">
+          <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_2")}
           </p>
         </motion.div>
@@ -55,13 +55,13 @@ const CODPayment = () => {
           className="flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
-          <p className="ml-3 text-sm text-gray-700">
+          <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_3")}
           </p>
         </motion.div>
       </div>
 
-      <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+      <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
@@ -78,39 +78,39 @@ const CODPayment = () => {
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
               {t("payment.cod_note")}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mt-6 border-t border-gray-200 pt-4">
-        <h4 className="text-sm font-medium text-gray-900">
+      <div className="mt-6 border-t border-gray-200 dark:border-slate-700 pt-4">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-slate-100">
           {t("payment.delivery_process")}
         </h4>
         <div className="mt-3 grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="bg-gray-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
-              <span className="text-gray-800 font-bold">1</span>
+            <div className="bg-gray-100 dark:bg-slate-700 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
+              <span className="text-gray-800 dark:text-slate-100 font-bold">1</span>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
               {t("payment.process_1")}
             </p>
           </div>
           <div className="text-center">
-            <div className="bg-gray-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
-              <span className="text-gray-800 font-bold">2</span>
+            <div className="bg-gray-100 dark:bg-slate-700 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
+              <span className="text-gray-800 dark:text-slate-100 font-bold">2</span>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
               {t("payment.process_2")}
             </p>
           </div>
           <div className="text-center">
-            <div className="bg-gray-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
-              <span className="text-gray-800 font-bold">3</span>
+            <div className="bg-gray-100 dark:bg-slate-700 rounded-full h-12 w-12 flex items-center justify-center mx-auto">
+              <span className="text-gray-800 dark:text-slate-100 font-bold">3</span>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">
               {t("payment.process_3")}
             </p>
           </div>

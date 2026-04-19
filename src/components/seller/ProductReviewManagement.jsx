@@ -98,7 +98,7 @@ const ProductReviewManagement = () => {
       <div className="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-6 mb-8 border border-gray-100 dark:border-slate-600">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex items-center mb-4 md:mb-0">
-            <div className="text-5xl font-bold text-gray-900 dark:text-slate-100 mr-4">
+            <div className="text-3xl sm:text-5xl font-bold text-gray-900 dark:text-slate-100 mr-4">
               {averageRating.toFixed(1)}
             </div>
             <div>

@@ -57,7 +57,7 @@ const Contact = () => {
       {SeoComponent}
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 text-center text-gray-900 dark:text-white">{t('contact.title')}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center text-gray-900 dark:text-white">{t('contact.title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 text-center mb-8">{t('contact.subtitle')}</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

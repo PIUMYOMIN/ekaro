@@ -39,7 +39,7 @@ const Legal = () => {
     <>
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8 text-center dark:text-slate-100">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-8 text-center dark:text-slate-100">
           {t("legal.title")}
         </h1>
         <p className="text-center text-gray-600 dark:text-slate-400 mb-8">{t("legal.subtitle")}</p>

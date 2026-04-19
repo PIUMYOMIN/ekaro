@@ -18,6 +18,7 @@ import useSEO from '../hooks/useSEO';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ui/ProductCard';
+import { SkeletonSellerProfile } from '../components/ui/Skeleton';
 import { DEFAULT_PLACEHOLDER } from '../config';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -206,14 +207,7 @@ const SellerProfile = () => {
 
   // ── States ─────────────────────────────────────────────────────────────
   // ── Guard: loading first, then error, then not-found ─────────────────────
-  if (loading) return (
-    <>
-      {SeoComponent}
-      <div className="min-h-screen theme-transition bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
-      </div>
-    </>
-  );
+  if (loading) return <SkeletonSellerProfile />;
 
   if (error) return (
     <>
@@ -415,7 +409,7 @@ const SellerProfile = () => {
                   {/* Rating summary */}
                   <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex items-center gap-8">
                     <div className="text-center flex-shrink-0">
-                      <div className="text-5xl font-bold text-gray-900 dark:text-slate-100">{rating.toFixed(1)}</div>
+                      <div className="text-3xl sm:text-5xl font-bold text-gray-900 dark:text-slate-100">{rating.toFixed(1)}</div>
                       <Stars rating={rating} size="h-5 w-5" />
                       <div className="text-xs text-gray-400 dark:text-slate-600 mt-1">{reviewCount} reviews</div>
                     </div>

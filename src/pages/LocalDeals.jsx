@@ -61,7 +61,7 @@ const LocalDeals = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 dark:text-slate-100">Local Deals</h1>
+      <h1 className="text-xl sm:text-3xl font-bold mb-8 dark:text-slate-100">Local Deals</h1>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
         <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">

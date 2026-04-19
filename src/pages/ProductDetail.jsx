@@ -16,6 +16,7 @@ import {
 } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER } from "../config";
+import { SkeletonProductDetail } from "../components/ui/Skeleton";
 
 const ProductDetail = () => {
   const { t, i18n } = useTranslation();
@@ -325,11 +326,7 @@ const ProductDetail = () => {
     return (
     <>
       {SeoComponent}
-      {loading && (
-        <div className="max-w-7xl mx-auto px-4 py-8 flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500" />
-        </div>
-      )}
+      {loading && <SkeletonProductDetail />}
 
       {successMessage && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

@@ -670,7 +670,7 @@ export default function Checkout() {
 
           {/* ── Page header ────────────────────────────────────────────────── */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">Checkout</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">Checkout</h1>
             <p className="text-gray-600 dark:text-slate-400 mt-2">Complete your purchase</p>
           </div>
 
@@ -1069,7 +1069,7 @@ export default function Checkout() {
                   onClick={handleConfirmOrder}
                   disabled={loading || feesLoading}
                   className={classNames(
-                    "w-full mt-6 py-4 px-6 rounded-lg font-semibold text-white transition-all",
+                    "w-full mt-6 py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-semibold text-white transition-all",
                     loading || feesLoading
                       ? "bg-gray-400 dark:bg-slate-600 cursor-not-allowed"
                       : "bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl"

@@ -96,16 +96,16 @@ const Notifications = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex border-b mb-6">
+      <div className="flex border-b border-gray-200 dark:border-slate-700 mb-6">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 font-medium ${filter === 'all' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+          className={`px-4 py-2 font-medium ${filter === 'all' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 dark:text-slate-400'}`}
         >
           အားလုံး
         </button>
         <button
           onClick={() => setFilter('unread')}
-          className={`px-4 py-2 font-medium ${filter === 'unread' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+          className={`px-4 py-2 font-medium ${filter === 'unread' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 dark:text-slate-400'}`}
         >
           မဖတ်ရသေး
           {notifications.filter(n => !n.read_at).length > 0 && (
@@ -117,16 +117,16 @@ const Notifications = () => {
       </div>
 
       {filteredNotifications.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <BellIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">အကြောင်းကြားချက်များ မရှိပါ။</p>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 text-center">
+          <BellIcon className="h-12 w-12 text-gray-400 dark:text-slate-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-slate-400">အကြောင်းကြားချက်များ မရှိပါ။</p>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredNotifications.map(notification => (
             <div
               key={notification.id}
-              className={`bg-white rounded-lg shadow-md p-4 flex items-start hover:shadow-lg transition-shadow ${
+              className={`bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 flex items-start hover:shadow-lg transition-shadow ${
                 !notification.read_at ? 'border-l-4 border-blue-500' : ''
               }`}
             >
@@ -136,17 +136,17 @@ const Notifications = () => {
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-medium">{notification.title}</h3>
-                    <p className="text-gray-600 mt-1">{notification.message}</p>
+                    <h3 className="font-medium dark:text-slate-100">{notification.title}</h3>
+                    <p className="text-gray-600 dark:text-slate-400 mt-1">{notification.message}</p>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 dark:text-slate-500">
                     {formatDate(notification.created_at)}
                   </div>
                 </div>
                 {notification.link && (
                   <a
                     href={notification.link}
-                    className="text-blue-600 text-sm hover:underline mt-2 inline-block"
+                    className="text-blue-600 dark:text-blue-400 text-sm hover:underline mt-2 inline-block"
                   >
                     ကြည့်ရှုရန်
                   </a>
@@ -155,7 +155,7 @@ const Notifications = () => {
               {!notification.read_at && (
                 <button
                   onClick={() => markAsRead(notification.id)}
-                  className="ml-4 text-green-600 hover:text-green-800"
+                  className="ml-4 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                   title="ဖတ်ပြီးမှတ်ရန်"
                 >
                   <CheckCircleIcon className="h-5 w-5" />
