@@ -66,6 +66,7 @@ import AddressInfo from "./pages/Seller/AddressInfo";
 
 // Common Components
 import PaymentMethod from "./components/ui/PaymentMethod";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
 import RFQManager from "./pages/RFQManager";
 
@@ -181,9 +182,6 @@ function App() {
                             </React.Suspense>
                           }
                         />
-                        {/* Catch-all route for 404 */}
-                        <Route path="*" element={<Error />} />
-
                         {/* Auth Routes */}
                         {/* Guest-only Routes */}
                         <Route path="/login" element={
@@ -292,12 +290,22 @@ function App() {
                         } />
 
                         {/* Shared Routes */}
-                        <Route path="/products/create" element={<ProtectedRoute roles={["seller", "admin"]}><ProductCreate /></ProtectedRoute>} />
-                        <Route path="/products/:id/edit" element={<ProtectedRoute roles={["seller", "admin"]}><ProductEdit /></ProtectedRoute>} />
+                        /* /products/create removed — use /seller/products/create (sellers)
+                           or /admin/products/create (future admin feature) */
+                        /* /products/:id/edit removed — use /seller/products/:id/edit */
                         <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
                         <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
                         <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
                         <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
+                        {/* ── PaymentSuccess ── */}
+                        <Route path="/payment-success" element={
+                          <ProtectedRoute>
+                            <PaymentSuccess />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* Catch-all 404 — must be LAST */}
+                        <Route path="*" element={<Error />} />
                       </Routes>
                     </main>
                     <Footer />
