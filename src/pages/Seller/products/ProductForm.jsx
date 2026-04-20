@@ -1520,20 +1520,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header with progress */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 mb-8">
-          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200">
+          <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-gray-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                   {product ? "Edit Product" : "New Listing"}
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-600 dark:text-slate-400 mt-1">
                   {product ? "Update your product details" : "Create a new product listing"}
-                  {!product && <span className="text-blue-600 text-sm ml-2">• Draft auto-saved</span>}
+                  {!product && <span className="text-blue-600 dark:text-blue-400 text-sm ml-2">• Draft auto-saved</span>}
                 </p>
               </div>
               <button
                 onClick={handleCancel}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+                className="p-2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -1546,10 +1546,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             {/* ── Mobile: segmented pill strip ─────────────────────────── */}
             <div className="sm:hidden">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
                   {steps[currentStep - 1]?.title}
                 </span>
-                <span className="text-xs font-bold text-green-700">
+                <span className="text-xs font-bold text-green-700 dark:text-green-400">
                   Step {currentStep} of {steps.length}
                 </span>
               </div>
@@ -1563,13 +1563,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                         ? 'bg-green-500'
                         : completedSteps.has(step.id)
                         ? 'bg-green-400'
-                        : 'bg-gray-200'
+                        : 'bg-gray-200 dark:bg-slate-600'
                     }`}
                     aria-label={step.title}
                   />
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1.5">
                 {steps[currentStep - 1]?.description}
               </p>
             </div>
@@ -1591,16 +1591,16 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                                        font-semibold text-sm transition-all duration-200
                                        ${current ? 'border-green-500 bg-green-500 text-white shadow shadow-green-200'
                                        : done    ? 'border-green-400 bg-green-400 text-white'
-                                       :           'border-gray-300 text-gray-400 group-hover:border-gray-400'}`}>
+                                       :           'border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500 group-hover:border-gray-400 dark:group-hover:border-slate-500'}`}>
                         {done
                           ? <CheckCircleIcon className="h-5 w-5" />
                           : step.id}
                       </div>
                       <span className={`mt-1.5 text-[11px] font-medium text-center leading-tight w-16 break-words
-                                        ${current ? 'text-green-700' : done ? 'text-gray-600' : 'text-gray-400'}`}>
+                                        ${current ? 'text-green-700 dark:text-green-400' : done ? 'text-gray-600 dark:text-slate-400' : 'text-gray-400 dark:text-slate-500'}`}>
                         {step.title}
                       </span>
-                      <span className="text-[10px] text-gray-400 text-center w-16 leading-tight">
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 text-center w-16 leading-tight">
                         {step.description}
                       </span>
                     </button>
@@ -1609,7 +1609,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                     {!last && (
                       <div className="flex-1 mt-4 mx-2">
                         <div className={`h-0.5 rounded-full transition-colors duration-300
-                                         ${done ? 'bg-green-400' : 'bg-gray-200'}`} />
+                                         ${done ? 'bg-green-400' : 'bg-gray-200 dark:bg-slate-700'}`} />
                       </div>
                     )}
                   </React.Fragment>

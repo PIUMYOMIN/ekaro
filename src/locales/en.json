@@ -703,7 +703,24 @@
     "cart_cleared": "Cart cleared",
     "order_placed": "Order placed successfully",
     "profile_updated": "Profile updated successfully",
-    "password_changed": "Password changed successfully"
+    "password_changed": "Password changed successfully",
+    "panel_title": "Notifications",
+    "mark_all_read": "Mark all read",
+    "clear_all": "Clear all",
+    "filter_all": "All",
+    "filter_unread": "Unread",
+    "no_unread": "No unread notifications",
+    "no_notifications": "No notifications yet",
+    "new_notification": "New notification",
+    "order_number": "Order #{{number}}",
+    "mark_as_read": "Mark as read",
+    "remove": "Remove",
+    "load_more": "Load more",
+    "loading": "Loading…",
+    "just_now": "Just now",
+    "minutes_ago": "{{count}}m ago",
+    "hours_ago": "{{count}}h ago",
+    "days_ago": "{{count}}d ago"
   },
   "seller_onboarding": {
     "storeBasicInfo": {

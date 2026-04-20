@@ -25,14 +25,14 @@ const typeIcon = (type) => {
   }
 };
 
-// Relative time — "2 minutes ago", "yesterday" etc.
-const relativeTime = (dateStr) => {
+// Relative time — accepts t() so it respects the active locale
+const relativeTime = (dateStr, t) => {
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60)         return 'Just now';
-  if (diff < 3600)       return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400)      return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800)     return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(dateStr).toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+  if (diff < 60)     return t('notifications.just_now');
+  if (diff < 3600)   return t('notifications.minutes_ago', { count: Math.floor(diff / 60) });
+  if (diff < 86400)  return t('notifications.hours_ago',   { count: Math.floor(diff / 3600) });
+  if (diff < 604800) return t('notifications.days_ago',    { count: Math.floor(diff / 86400) });
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ const NotificationsPanel = () => {
           {unread > 0
             ? <BellAlertIcon className="h-5 w-5 text-green-600" />
             : <BellIcon      className="h-5 w-5 text-gray-500 dark:text-slate-400" />}
-          Notifications
+          {t('notifications.panel_title')}
           {unread > 0 && (
             <span className="bg-green-600 text-white text-xs font-semibold
                              px-2 py-0.5 rounded-full">
@@ -116,7 +116,7 @@ const NotificationsPanel = () => {
               className="text-xs text-green-700 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 font-medium
                          border border-green-200 dark:border-green-700 hover:border-green-400
                          px-2.5 py-1 rounded-lg transition-colors">
-              Mark all read
+              {t('notifications.mark_all_read')}
             </button>
           )}
           {items.length > 0 && (
@@ -124,7 +124,7 @@ const NotificationsPanel = () => {
               className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium
                          border border-red-200 dark:border-red-700 hover:border-red-400
                          px-2.5 py-1 rounded-lg transition-colors">
-              Clear all
+              {t('notifications.clear_all')}
             </button>
           )}
         </div>
@@ -138,7 +138,9 @@ const NotificationsPanel = () => {
               ${filter === f
                 ? 'bg-white dark:bg-slate-600 text-green-700 dark:text-green-400 shadow-sm'
                 : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}>
-            {f === 'all' ? 'All' : `Unread${unread > 0 ? ` (${unread})` : ''}`}
+            {f === 'all'
+              ? t('notifications.filter_all')
+              : `${t('notifications.filter_unread')}${unread > 0 ? ` (${unread})` : ''}`}
           </button>
         ))}
       </div>
@@ -161,7 +163,7 @@ const NotificationsPanel = () => {
           <div className="text-center py-16 text-gray-400 dark:text-slate-500">
             <BellIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">
-              {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+              {filter === 'unread' ? t('notifications.no_unread') : t('notifications.no_notifications')}
             </p>
           </div>
         ) : (
@@ -184,15 +186,15 @@ const NotificationsPanel = () => {
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm leading-snug
                       ${isUnread ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-slate-400'}`}>
-                      {data?.message || 'New notification'}
+                      {data?.message || t('notifications.new_notification')}
                     </p>
                     {data?.order_number && (
                       <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                        Order #{data.order_number}
+                        {t('notifications.order_number', { number: data.order_number })}
                       </p>
                     )}
                     <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                      {relativeTime(n.created_at)}
+                      {relativeTime(n.created_at, t)}
                     </p>
                   </div>
 
@@ -200,14 +202,14 @@ const NotificationsPanel = () => {
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {isUnread && (
                       <button onClick={() => markRead(n.id)}
-                        title="Mark as read"
+                        title={t('notifications.mark_as_read')}
                         className="p-1.5 text-green-500 hover:text-green-700 dark:hover:text-green-400
                                    hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors">
                         <CheckCircleIcon className="h-4 w-4" />
                       </button>
                     )}
                     <button onClick={() => remove(n.id)}
-                      title="Remove"
+                      title={t('notifications.remove')}
                       className="p-1.5 text-gray-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400
                                  hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                       <TrashIcon className="h-4 w-4" />
@@ -230,7 +232,7 @@ const NotificationsPanel = () => {
                   disabled={loadingMore}
                   className="text-sm text-green-700 dark:text-green-400 font-medium hover:text-green-900 dark:hover:text-green-300
                              disabled:opacity-50">
-                  {loadingMore ? 'Loading…' : 'Load more'}
+                  {loadingMore ? t('notifications.loading') : t('notifications.load_more')}
                 </button>
               </div>
             )}

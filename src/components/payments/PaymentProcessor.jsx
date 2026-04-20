@@ -292,6 +292,7 @@ export default function PaymentProcessor({ order, onSuccess, onCancel }) {
   const startPolling = useCallback(() => {
     stopPolling();
     let count = 0;
+    let consecutiveFails = 0;
     pollRef.current = setInterval(async () => {
       count++;
       setPolls(count);
@@ -302,12 +303,26 @@ export default function PaymentProcessor({ order, onSuccess, onCancel }) {
       }
       try {
         const res = await api.post('/payments/verify', { order_id: order.id });
+        consecutiveFails = 0;  // reset on success
         if (res.data.paid) {
           stopPolling();
           setStage('success');
           onSuccess?.({ ...order, ...res.data });
         }
-      } catch { /* network hiccup — keep polling */ }
+      } catch (pollErr) {
+        consecutiveFails++;
+        // Stop after 5 consecutive failures — likely CORS, auth, or server down
+        if (consecutiveFails >= 5) {
+          stopPolling();
+          const isCors = pollErr?.message?.includes('Network Error');
+          setError(isCors
+            ? 'Cannot reach the payment server. Check your internet connection and try again.'
+            : 'Payment verification failed. Please check your orders page.'
+          );
+          setStage('failed');
+        }
+        // 1-4 failures: keep trying (transient network hiccup)
+      }
     }, POLL_INTERVAL_MS);
   }, [order, onSuccess, stopPolling]);
 
