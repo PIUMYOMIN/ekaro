@@ -246,14 +246,11 @@ const ProductCard = ({ product, className = "" }) => {
             onClick={toggleWishlist}
             disabled={wishLoading}
             className="absolute top-2 right-2
-                       w-9 h-9 rounded-full
-                       bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm shadow
                        flex items-center justify-center
                        hover:scale-110 active:scale-95
                        transition-all duration-150 focus:outline-none
-                       focus:ring-2 focus:ring-green-400 focus:ring-offset-1
+                       focus:ring-2 focus:ring-transparent focus:ring-offset-1
                        disabled:opacity-60"
-            aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
           >
             {isInWishlist
               ? <HeartSolid   className="h-4 w-4 text-red-500" />
