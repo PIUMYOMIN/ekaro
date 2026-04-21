@@ -59,24 +59,7 @@ const Stars = ({ rating, count }) => {
   );
 };
 
-// ── Mini toast ────────────────────────────────────────────────────────────────
-const MiniToast = ({ msg, type }) => (
-  <AnimatePresence>
-    {msg && (
-      <motion.div
-        className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 whitespace-nowrap
-                    text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg
-                    ${type === "success" ? "bg-green-600 text-white" : "bg-red-500 text-white"}`}
-        initial={{ opacity: 0, y: -8, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0,  scale: 1   }}
-        exit={{    opacity: 0, y: -8, scale: 0.9 }}
-        transition={{ duration: 0.2 }}
-      >
-        {msg}
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+
 
 // ── Main component ────────────────────────────────────────────────────────────
 const ProductCard = ({ product, className = "" }) => {
@@ -87,7 +70,7 @@ const ProductCard = ({ product, className = "" }) => {
   const { cartItems, addToCart } = useCart();
   const navigate = useNavigate();
 
-  const [toast, setToast]             = useState(null);
+// const [toast, setToast]             = useState(null);
   const [imageError, setImageError]   = useState(false);
   const [isInCart, setIsInCart]       = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
@@ -116,10 +99,10 @@ const ProductCard = ({ product, className = "" }) => {
     setIsInCart(!!cartItems?.some((c) => c.product_id === productId));
   }, [cartItems, productId]);
 
-  const flash = useCallback((msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 2200);
-  }, []);
+  // const flash = useCallback((msg, type = "success") => {
+  //   setToast({ msg, type });
+  //   setTimeout(() => setToast(null), 2200);
+  // }, []);
 
   const toggleWishlist = async (e) => {
     e.preventDefault();
@@ -133,13 +116,13 @@ const ProductCard = ({ product, className = "" }) => {
     try {
       if (isInWishlist) {
         await removeFromWishlist(productId);
-        flash("Removed from wishlist");
+        // flash("Removed from wishlist");
       } else {
         await addToWishlist(productId);
-        flash("Added to wishlist ♡");
+        // flash("Added to wishlist ♡");
       }
     } catch {
-      flash("Could not update wishlist", "error");
+      // flash("Could not update wishlist", "error");
     } finally {
       setWishLoading(false);
     }
@@ -154,9 +137,9 @@ const ProductCard = ({ product, className = "" }) => {
     setCartLoading(true);
     try {
       await addToCart(productId, 1);
-      flash("Added to cart ✓");
+      // flash("Added to cart ✓");
     } catch {
-      flash("Could not add to cart", "error");
+      // flash("Could not add to cart", "error");
     } finally {
       setCartLoading(false);
     }
@@ -209,8 +192,7 @@ const ProductCard = ({ product, className = "" }) => {
           )}
         </Link>
 
-        {/* Inline toast */}
-        <MiniToast msg={toast?.msg} type={toast?.type} />
+        {/* Toast removed */}
 
         {/* ── Badges ── */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
