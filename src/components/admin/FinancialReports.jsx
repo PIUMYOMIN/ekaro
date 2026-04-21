@@ -526,8 +526,12 @@ const FinancialReports = () => {
                         </td>
                         <td className="px-3 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            o.commission_status === "collected" || o.commission_status === "paid"
+                            o.commission_status === "collected"
                               ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : o.commission_status === "waived"
+                              ? "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400"
+                              : o.commission_status === "due"
+                              ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
                               : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                           }`}>
                             {o.commission_status}
@@ -575,7 +579,7 @@ const FinancialReports = () => {
                                 </tr>
                               </thead>
                               <tbody>
-{o.items.map((item, i) => (
+{(o.items ?? []).map((item, i) => (
                                   <tr key={item.id || item.product_id || item.sku || `item-${o.order_id}-${i}`} className="border-t border-green-100 dark:border-green-900/30">
                                     <td className="py-1 text-gray-700 dark:text-slate-300">{item.name}</td>
                                     <td className="py-1 text-right text-gray-600 dark:text-slate-400">{item.qty}</td>

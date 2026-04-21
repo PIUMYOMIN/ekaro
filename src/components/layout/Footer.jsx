@@ -109,6 +109,14 @@ const Footer = () => {
                   Track Your Order
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/report"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  {t("footer.report_issue")}
+                </Link>
+              </li>
             </ul>
           </div>
 

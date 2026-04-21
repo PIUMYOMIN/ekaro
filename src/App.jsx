@@ -88,6 +88,8 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
 const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
 const EmailVerification = React.lazy(() => import("./pages/Email/EmailVerification"));
+const MyReports   = React.lazy(() => import("./pages/MyReports"));
+const ReportPage  = React.lazy(() => import("./pages/ReportPage"));
 
 const NavigationWirer = () => {
   const navigate = useNavigate();
@@ -301,6 +303,29 @@ function App() {
                         <Route path="/payment-success" element={
                           <ProtectedRoute>
                             <PaymentSuccess />
+                          </ProtectedRoute>
+                        } />
+
+                        {/* ── Report Page (public) ── */}
+                        <Route path="/report" element={
+                          <React.Suspense fallback={null}>
+                            <ReportPage />
+                          </React.Suspense>
+                        } />
+
+                        {/* ── My Reports ── */}
+                        <Route path="/my-reports" element={
+                          <ProtectedRoute>
+                            <React.Suspense fallback={<div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" /></div>}>
+                              <MyReports />
+                            </React.Suspense>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/my-reports/:ticket_id" element={
+                          <ProtectedRoute>
+                            <React.Suspense fallback={null}>
+                              <MyReports />
+                            </React.Suspense>
                           </ProtectedRoute>
                         } />
 

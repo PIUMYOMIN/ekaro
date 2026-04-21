@@ -17,6 +17,7 @@ import {
   BriefcaseIcon,
   BellIcon,
   EnvelopeIcon,
+  TicketIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
@@ -35,6 +36,7 @@ import OrderManagement from "../../components/admin/OrderManagement";
 import AnalyticsManagement from "../../components/admin/AnalyticsManagement";
 import CommissionRulesManagement from "../../components/admin/CommissionRulesManagement";
 import EmailCampaigns from "../../components/admin/EmailCampaigns";
+import ReportManagement from "../../components/admin/ReportManagement";
 import CategoryManagement from "../../components/admin/CategoryManagement";        // self‑contained
 import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
@@ -438,6 +440,11 @@ const AdminDashboard = () => {
       name: t("settings"),
       icon: CogIcon,
       component: <Settings />
+    },
+    {
+      name: "Reports",
+      icon: TicketIcon,
+      component: <ReportManagement />,
     },
     {
       name: "My Profile",

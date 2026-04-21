@@ -234,7 +234,8 @@
     "linkedin": "LinkedIn",
     "instagram": "Instagram",
     "copyright": "Myanmar B2B Marketplace. All rights reserved.",
-    "rights_reserved": "All rights reserved."
+    "rights_reserved": "All rights reserved.",
+    "report_issue": "Report an Issue"
   },
   "product_page": {
     "reviews": "reviews",
@@ -713,14 +714,14 @@
     "no_notifications": "No notifications yet",
     "new_notification": "New notification",
     "order_number": "Order #{{number}}",
-    "mark_as_read": "Mark as read",
-    "remove": "Remove",
-    "load_more": "Load more",
-    "loading": "Loading…",
     "just_now": "Just now",
-    "minutes_ago": "{{count}}m ago",
-    "hours_ago": "{{count}}h ago",
-    "days_ago": "{{count}}d ago"
+    "minutes_ago": "{{count}} min ago",
+    "hours_ago": "{{count}} hr ago",
+    "days_ago": "{{count}} d ago",
+    "loading": "Loading...",
+    "load_more": "Load more",
+    "mark_as_read": "Mark as read",
+    "remove": "Remove"
   },
   "seller_onboarding": {
     "storeBasicInfo": {
@@ -1615,22 +1616,22 @@
       "contact_support": "Contact Support →"
     },
     "categories": {
-      "general":  "General",
-      "buying":   "Buying",
-      "selling":  "Selling",
+      "general": "General",
+      "buying": "Buying",
+      "selling": "Selling",
       "payments": "Payments",
       "shipping": "Shipping",
-      "account":  "My Account"
+      "account": "My Account"
     },
     "list": {
-      "no_results":      "No results found",
-      "results_for":     "result for",
-      "results_for_pl":  "results for",
-      "clear_search":    "Clear search",
-      "no_questions":    "No questions found",
-      "no_questions_sub":"Try a different search term or browse a category.",
-      "question":        "question",
-      "questions":       "questions"
+      "no_results": "No results found",
+      "results_for": "result for",
+      "results_for_pl": "results for",
+      "clear_search": "Clear search",
+      "no_questions": "No questions found",
+      "no_questions_sub": "Try a different search term or browse a category.",
+      "question": "question",
+      "questions": "questions"
     },
     "general": {
       "q_0": "What is Pyonea?",
@@ -1716,13 +1717,13 @@
     },
     "links": {
       "seller_guidelines_label": "Seller Guidelines",
-      "seller_guidelines_desc":  "Rules and standards for sellers",
-      "return_policy_label":     "Return Policy",
-      "return_policy_desc":      "How returns and refunds work",
-      "pricing_label":           "Pricing & Plans",
-      "pricing_desc":            "Compare seller subscription plans"
+      "seller_guidelines_desc": "Rules and standards for sellers",
+      "return_policy_label": "Return Policy",
+      "return_policy_desc": "How returns and refunds work",
+      "pricing_label": "Pricing & Plans",
+      "pricing_desc": "Compare seller subscription plans"
     },
-    "footer":         "Last updated: April 2026 · ",
+    "footer": "Last updated: April 2026 · ",
     "footer_suggest": "Suggest a question"
   },
   "shipping_page": {
