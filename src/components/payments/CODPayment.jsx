@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
 import { TruckIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 
 
@@ -24,41 +23,29 @@ const CODPayment = () => {
       </div>
 
       <div className="mt-6 space-y-4">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-start"
+        <div className="animate-fadeIn flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
           <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_1")}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-start"
+        <div className="animate-fadeIn flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
           <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_2")}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex items-start"
+        <div className="animate-fadeIn flex items-start"
         >
           <CheckCircleIcon className="flex-shrink-0 h-5 w-5 text-green-500 mt-0.5" />
           <p className="ml-3 text-sm text-gray-700 dark:text-slate-300">
             {t("payment.cod_benefit_3")}
           </p>
-        </motion.div>
+        </div>
       </div>
 
       <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4">

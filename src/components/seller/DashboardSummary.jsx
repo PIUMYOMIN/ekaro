@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ArrowUpIcon, ArrowDownIcon,
-  ShoppingBagIcon, CheckCircleIcon, ClockIcon, XCircleIcon,
-  CurrencyDollarIcon, UserGroupIcon, StarIcon, TruckIcon,
-  BanknotesIcon, LockClosedIcon, DocumentTextIcon, ExclamationTriangleIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ShoppingBagIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  CurrencyDollarIcon,
+  UserGroupIcon,
+  StarIcon,
+  TruckIcon,
+  BanknotesIcon,
+  LockClosedIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { Bar, Doughnut } from "react-chartjs-2";
 import {
@@ -19,26 +29,26 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 const fmtK = (n) => {
   const v = Number(n) || 0;
   if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
-  if (v >= 1_000_000)     return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (v >= 1_000) return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return v.toLocaleString();
 };
 const fmtMMK = (n) => `${fmtK(n)} MMK`;
 
 // ── Tier config ────────────────────────────────────────────────────────────────
 const TIER_CONFIG = {
-  bronze: { label: "Bronze", rate: "6%", next: "Silver", threshold: 50,  color: "from-amber-600 to-amber-500",   bg: "bg-amber-50 dark:bg-amber-900/20",  border: "border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-300", emoji: "🥉" },
-  silver: { label: "Silver", rate: "5%", next: "Gold",   threshold: 500, color: "from-slate-400 to-slate-500",   bg: "bg-slate-50 dark:bg-slate-700/30",  border: "border-slate-200 dark:border-slate-600", text: "text-slate-700 dark:text-slate-300", emoji: "🥈" },
-  gold:   { label: "Gold",   rate: "4%", next: null,     threshold: null, color: "from-yellow-500 to-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-200 dark:border-yellow-800", text: "text-yellow-700 dark:text-yellow-300", emoji: "🥇" },
+  bronze: { label: "Bronze", rate: "6%", next: "Silver", threshold: 50, color: "from-amber-600 to-amber-500", bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-300", emoji: "🥉" },
+  silver: { label: "Silver", rate: "5%", next: "Gold", threshold: 500, color: "from-slate-400 to-slate-500", bg: "bg-slate-50 dark:bg-slate-700/30", border: "border-slate-200 dark:border-slate-600", text: "text-slate-700 dark:text-slate-300", emoji: "🥈" },
+  gold: { label: "Gold", rate: "4%", next: null, threshold: null, color: "from-yellow-500 to-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20", border: "border-yellow-200 dark:border-yellow-800", text: "text-yellow-700 dark:text-yellow-300", emoji: "🥇" },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 const TierCard = ({ storeData }) => {
-  const tier      = storeData?.seller_tier || "bronze";
-  const cfg       = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
+  const tier = storeData?.seller_tier || "bronze";
+  const cfg = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
   const completed = storeData?.completed_orders_count || 0;
-  const promoted  = storeData?.tier_promoted_at
+  const promoted = storeData?.tier_promoted_at
     ? new Date(storeData.tier_promoted_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
     : null;
   const progress = cfg.threshold ? Math.min(100, Math.round((completed / cfg.threshold) * 100)) : 100;
@@ -88,13 +98,13 @@ const TierCard = ({ storeData }) => {
 
 const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent }) => {
   const accents = {
-    green:  "border-l-4 border-green-400 bg-green-50 dark:bg-green-900/20",
-    blue:   "border-l-4 border-blue-400 bg-blue-50 dark:bg-blue-900/20",
-    amber:  "border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-900/20",
-    red:    "border-l-4 border-red-400 bg-red-50 dark:bg-red-900/20",
+    green: "border-l-4 border-green-400 bg-green-50 dark:bg-green-900/20",
+    blue: "border-l-4 border-blue-400 bg-blue-50 dark:bg-blue-900/20",
+    amber: "border-l-4 border-amber-400 bg-amber-50 dark:bg-amber-900/20",
+    red: "border-l-4 border-red-400 bg-red-50 dark:bg-red-900/20",
     purple: "border-l-4 border-purple-400 bg-purple-50 dark:bg-purple-900/20",
-    teal:   "border-l-4 border-teal-400 bg-teal-50 dark:bg-teal-900/20",
-    gray:   "border-l-4 border-gray-300 bg-gray-50 dark:bg-slate-700/30",
+    teal: "border-l-4 border-teal-400 bg-teal-50 dark:bg-teal-900/20",
+    gray: "border-l-4 border-gray-300 bg-gray-50 dark:bg-slate-700/30",
   };
   return (
     <div className={`rounded-xl p-4 shadow-sm ${accents[accent] ?? accents.gray}`}>
@@ -104,14 +114,13 @@ const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent })
           <p className="text-xl font-bold text-gray-900 dark:text-slate-100 mt-1 break-all">{value}</p>
           {sub && <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5">{sub}</p>}
           {change !== undefined && (
-            <div className={`flex items-center gap-0.5 mt-1.5 text-xs font-semibold ${
-              changeType === "positive" ? "text-green-600" : changeType === "negative" ? "text-red-500" : "text-gray-400 dark:text-slate-500"
-            }`}>
+            <div className={`flex items-center gap-0.5 mt-1.5 text-xs font-semibold ${changeType === "positive" ? "text-green-600" : changeType === "negative" ? "text-red-500" : "text-gray-400 dark:text-slate-500"
+              }`}>
               {changeType === "positive"
                 ? <ArrowUpIcon className="h-3 w-3" />
                 : changeType === "negative"
-                ? <ArrowDownIcon className="h-3 w-3" />
-                : null}
+                  ? <ArrowDownIcon className="h-3 w-3" />
+                  : null}
               <span>{change}</span>
             </div>
           )}
@@ -124,13 +133,13 @@ const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent })
 
 const SetupChecklist = ({ storeData, onSetupClick }) => {
   const items = [
-    { id: 1, label: "Store Profile Complete",   done: !!(storeData?.store_name && storeData?.contact_email), action: "Complete profile",   step: "my-store" },
-    { id: 2, label: "Store Logo Uploaded",      done: !!storeData?.store_logo,                               action: "Upload logo",        step: "my-store" },
-    { id: 3, label: "Business Details",         done: !!(storeData?.business_registration_number || storeData?.business_type === "individual"), action: "Add details", step: "my-store" },
-    { id: 4, label: "Payment Method Set",       done: !!storeData?.account_number,                           action: "Set up payment",     step: "my-store" },
-    { id: 5, label: "Shipping Configured",      done: !!storeData?.shipping_enabled,                         action: "Configure shipping", step: "shipping" },
+    { id: 1, label: "Store Profile Complete", done: !!(storeData?.store_name && storeData?.contact_email), action: "Complete profile", step: "my-store" },
+    { id: 2, label: "Store Logo Uploaded", done: !!storeData?.store_logo, action: "Upload logo", step: "my-store" },
+    { id: 3, label: "Business Details", done: !!(storeData?.business_registration_number || storeData?.business_type === "individual"), action: "Add details", step: "my-store" },
+    { id: 4, label: "Payment Method Set", done: !!storeData?.account_number, action: "Set up payment", step: "my-store" },
+    { id: 5, label: "Shipping Configured", done: !!storeData?.shipping_enabled, action: "Configure shipping", step: "shipping" },
   ];
-  const done  = items.filter(i => i.done).length;
+  const done = items.filter(i => i.done).length;
   const total = items.length;
   if (done === total) return null;
 
@@ -181,7 +190,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const [deliveryFees, setDeliveryFees] = useState([]);
   const [commissionData, setCommissionData] = useState(null);
   const fetchCommissionData = async () => {
-    try { const res = await api.get('/seller/commission-summary'); if (res.data.success) setCommissionData(res.data.data); } catch {}
+    try { const res = await api.get('/seller/commission-summary'); if (res.data.success) setCommissionData(res.data.data); } catch { }
   };
   const [feeSubmitting, setFeeSubmitting] = useState(null);
   const [feeNote, setFeeNote] = useState("");
@@ -198,7 +207,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
       const res = await api.get("/deliveries", { params: { delivery_method: "platform", per_page: 50 } });
       const items = res.data?.data?.data ?? res.data?.data ?? [];
       setDeliveryFees(Array.isArray(items) ? items : []);
-    } catch {}
+    } catch { }
   }, []);
 
   const handleSubmitFee = async (deliveryId) => {
@@ -243,17 +252,17 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
           recent: recentOrders,
         },
         sales: {
-          totalRevenue:      salesData.sales?.total_revenue || 0,
-          monthlyTrend:      salesData.recent_trend || [],
+          totalRevenue: salesData.sales?.total_revenue || 0,
+          monthlyTrend: salesData.recent_trend || [],
           averageOrderValue: salesData.sales?.average_order_value || 0,
         },
         products: {
-          total:    salesData.products?.total || 0,
-          active:   salesData.products?.active || 0,
+          total: salesData.products?.total || 0,
+          active: salesData.products?.active || 0,
           lowStock: salesData.products?.low_stock || 0,
         },
         deliveries: {
-          total:    delivStats.total || 0,
+          total: delivStats.total || 0,
           byStatus: delivStats.by_status || {},
         },
       });
@@ -299,27 +308,27 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const ds = dash?.deliveries?.byStatus || {};
 
   const metrics = {
-    delivered:       os.delivered   || 0,
-    pending:         os.pending     || 0,
-    processing:      (os.confirmed  || 0) + (os.processing || 0),
-    cancelled:       os.cancelled   || 0,
-    shipped:         os.shipped     || 0,
-    totalRevenue:    dash?.sales.totalRevenue || 0,
-    avgOrderValue:   dash?.sales.averageOrderValue || 0,
-    activeProducts:  dash?.products.active    || 0,
-    totalProducts:   dash?.products.total     || 0,
-    lowStock:        dash?.products.lowStock  || 0,
-    deliveryTotal:   dash?.deliveries.total   || 0,
-    deliveryDone:    ds.delivered || 0,
-    deliveryActive:  (ds.in_transit || 0) + (ds.out_for_delivery || 0),
+    delivered: os.delivered || 0,
+    pending: os.pending || 0,
+    processing: (os.confirmed || 0) + (os.processing || 0),
+    cancelled: os.cancelled || 0,
+    shipped: os.shipped || 0,
+    totalRevenue: dash?.sales.totalRevenue || 0,
+    avgOrderValue: dash?.sales.averageOrderValue || 0,
+    activeProducts: dash?.products.active || 0,
+    totalProducts: dash?.products.total || 0,
+    lowStock: dash?.products.lowStock || 0,
+    deliveryTotal: dash?.deliveries.total || 0,
+    deliveryDone: ds.delivered || 0,
+    deliveryActive: (ds.in_transit || 0) + (ds.out_for_delivery || 0),
 
     // Wallet
-    escrowBalance:    wallet?.escrow_balance             || 0,
-    availableBalance: wallet?.available_balance          || 0,
-    totalEarned:      wallet?.total_earned               || 0,
-    commissionPaid:   wallet?.total_commission_paid      || 0,
-    codOutstanding:   wallet?.cod_commission_outstanding || 0,
-    netRevenue:       (wallet?.total_earned || 0) - 0, // total_earned is already after commission
+    escrowBalance: wallet?.escrow_balance || 0,
+    availableBalance: wallet?.available_balance || 0,
+    totalEarned: wallet?.total_earned || 0,
+    commissionPaid: wallet?.total_commission_paid || 0,
+    codOutstanding: wallet?.cod_commission_outstanding || 0,
+    netRevenue: (wallet?.total_earned || 0) - 0, // total_earned is already after commission
   };
 
   const completionRate = dash?.orders.total > 0
@@ -331,8 +340,8 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     labels: ["Delivered", "Pending", "Processing", "Shipped", "Cancelled"],
     datasets: [{
       data: [metrics.delivered, metrics.pending, metrics.processing, metrics.shipped, metrics.cancelled],
-      backgroundColor: ["rgba(34,197,94,.8)","rgba(251,191,36,.8)","rgba(59,130,246,.8)","rgba(168,85,247,.8)","rgba(239,68,68,.8)"],
-      borderColor:     ["rgb(34,197,94)","rgb(251,191,36)","rgb(59,130,246)","rgb(168,85,247)","rgb(239,68,68)"],
+      backgroundColor: ["rgba(34,197,94,.8)", "rgba(251,191,36,.8)", "rgba(59,130,246,.8)", "rgba(168,85,247,.8)", "rgba(239,68,68,.8)"],
+      borderColor: ["rgb(34,197,94)", "rgb(251,191,36)", "rgb(59,130,246)", "rgb(168,85,247)", "rgb(239,68,68)"],
       borderWidth: 2,
     }],
   };
@@ -344,7 +353,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
     }),
     datasets: [
       { label: "Revenue (MMK)", data: (dash?.sales.monthlyTrend || []).map(i => i?.revenue || 0), backgroundColor: "rgba(5,150,105,.8)", borderColor: "rgb(5,150,105)", borderWidth: 2, borderRadius: 4 },
-      { label: "Orders",        data: (dash?.sales.monthlyTrend || []).map(i => i?.orders_count || 0), backgroundColor: "rgba(16,185,129,.6)", borderColor: "rgb(16,185,129)", borderWidth: 2, borderRadius: 4 },
+      { label: "Orders", data: (dash?.sales.monthlyTrend || []).map(i => i?.orders_count || 0), backgroundColor: "rgba(16,185,129,.6)", borderColor: "rgb(16,185,129)", borderWidth: 2, borderRadius: 4 },
     ],
   };
 
@@ -367,25 +376,23 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
       {/* Store status banner */}
       {storeData && (
-        <div className={`p-4 rounded-lg ${
-          storeData.status === "approved" ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" :
-          storeData.status === "pending"  ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" :
-                                            "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-        }`}>
+        <div className={`p-4 rounded-lg ${storeData.status === "approved" ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" :
+          storeData.status === "pending" ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" :
+            "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          }`}>
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
-              storeData.status === "approved" ? "bg-green-500" :
-              storeData.status === "pending"  ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
-            }`} />
+            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${storeData.status === "approved" ? "bg-green-500" :
+              storeData.status === "pending" ? "bg-yellow-500 animate-pulse" : "bg-blue-500"
+              }`} />
             <div>
               <h3 className="font-semibold text-sm text-gray-800 dark:text-slate-100">
                 {storeData.status === "approved" ? "Store Active" :
-                 storeData.status === "pending"  ? "Pending Approval" : "Setup Required"}
+                  storeData.status === "pending" ? "Pending Approval" : "Setup Required"}
               </h3>
               <p className="text-xs opacity-75 text-gray-700 dark:text-slate-200">
                 {storeData.status === "approved" ? "Your store is live and accepting orders" :
-                 storeData.status === "pending"  ? "Your store is under review by our team" :
-                                                   "Please complete your store setup"}
+                  storeData.status === "pending" ? "Your store is under review by our team" :
+                    "Please complete your store setup"}
               </p>
             </div>
           </div>
@@ -569,17 +576,27 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         </div>
       </div>
 
-      {/* Telegram */}
-      <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm transition-colors w-full sm:w-fit">
-        <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-        </svg>
-        <div>
-          <p className="text-sm font-bold leading-none">Join Pyonea Community</p>
-          <p className="text-[11px] text-sky-100 mt-0.5">t.me/pyonea_community</p>
-        </div>
-      </a>
+      <div className="flex gap-2">
+        <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-12 h-12 bg-sky-500 hover:bg-sky-600 rounded-2xl shadow-sm dark:shadow-slate-900/50 transition-colors p-3 group">
+          <svg className="h-6 w-6 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+          </svg>
+          <div className="absolute hidden md:block opacity-0 group-hover:opacity-100 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap -top-10 left-1/2 -translate-x-1/2 transition-opacity pointer-events-none">
+            Telegram Community
+          </div>
+        </a>
+        <a href="https://web.facebook.com/groups/1936605890399715/?_rdc=1&_rdr#" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-12 h-12 bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-sm dark:shadow-slate-900/50 transition-colors p-3 group">
+          <svg className="h-6 w-6 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+          </svg>
+          <div className="absolute hidden md:block opacity-0 group-hover:opacity-100 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap -top-10 left-1/2 -translate-x-1/2 transition-opacity pointer-events-none">
+            Facebook Community
+          </div>
+        </a>
+
+      </div>
+
+
 
       {/* Delivery fee panel */}
       {deliveryFees.length > 0 && (
@@ -590,9 +607,8 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Submit fee confirmation once you have paid the delivery fee.</p>
             </div>
             {feeToast && (
-              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                feeToast.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
-              }`}>{feeToast.msg}</span>
+              <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${feeToast.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
+                }`}>{feeToast.msg}</span>
             )}
           </div>
           <div className="divide-y divide-gray-50 dark:divide-slate-700">
@@ -605,7 +621,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                     <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Order #{d.order?.order_number ?? d.order_id}</p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
                       Fee: <strong className="text-green-700">
-                        {new Intl.NumberFormat("my-MM",{style:"currency",currency:"MMK",minimumFractionDigits:0}).format(d.platform_delivery_fee ?? 0)}
+                        {new Intl.NumberFormat("my-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 }).format(d.platform_delivery_fee ?? 0)}
                       </strong>
                       {" · "}
                       <span className={`font-semibold capitalize ${confirmed ? "text-green-600" : submitted ? "text-blue-600" : "text-gray-500"}`}>
@@ -662,11 +678,10 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
             {(dash?.orders.recent.length ?? 0) > 0 ? dash.orders.recent.map(o => (
               <div key={o.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-slate-700 rounded-lg dark:bg-slate-800/50 hover:bg-gray-50 dark:hover:bg-slate-700/30">
                 <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                    o.status === "delivered" ? "bg-green-500" :
-                    o.status === "pending"   ? "bg-yellow-500" :
-                    o.status === "cancelled" ? "bg-red-500"    : "bg-blue-500"
-                  }`} />
+                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${o.status === "delivered" ? "bg-green-500" :
+                    o.status === "pending" ? "bg-yellow-500" :
+                      o.status === "cancelled" ? "bg-red-500" : "bg-blue-500"
+                    }`} />
                   <div>
                     <p className="font-medium text-sm text-gray-900 dark:text-slate-100">#{o.order_number}</p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">{o.buyer?.name || "Customer"}</p>
@@ -690,12 +705,12 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
         <div className="bg-white dark:bg-slate-800 shadow dark:shadow-slate-900/50 rounded-lg p-6 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-1">Quick Stats</h3>
           {[
-            { label: "Order Completion Rate",   value: `${completionRate}%`,            color: "text-green-600" },
-            { label: "Avg. Order Value",         value: fmtMMK(metrics.avgOrderValue),  color: "text-gray-900 dark:text-slate-100" },
-            { label: "Low Stock Products",       value: metrics.lowStock.toString(),     color: metrics.lowStock > 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-slate-100" },
-            { label: "Delivery Success Rate",    value: dash?.deliveries.total > 0 ? Math.round((metrics.deliveryDone / dash.deliveries.total) * 100) + "%" : "—", color: "text-green-600" },
-            { label: "Escrow (Locked)",          value: fmtMMK(metrics.escrowBalance),  color: "text-blue-600" },
-            { label: "Available Payout",         value: fmtMMK(metrics.availableBalance), color: "text-emerald-600" },
+            { label: "Order Completion Rate", value: `${completionRate}%`, color: "text-green-600" },
+            { label: "Avg. Order Value", value: fmtMMK(metrics.avgOrderValue), color: "text-gray-900 dark:text-slate-100" },
+            { label: "Low Stock Products", value: metrics.lowStock.toString(), color: metrics.lowStock > 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-slate-100" },
+            { label: "Delivery Success Rate", value: dash?.deliveries.total > 0 ? Math.round((metrics.deliveryDone / dash.deliveries.total) * 100) + "%" : "—", color: "text-green-600" },
+            { label: "Escrow (Locked)", value: fmtMMK(metrics.escrowBalance), color: "text-blue-600" },
+            { label: "Available Payout", value: fmtMMK(metrics.availableBalance), color: "text-emerald-600" },
             { label: "Commission Paid (All Time)", value: fmtMMK(metrics.commissionPaid), color: "text-gray-600 dark:text-slate-400" },
           ].map(r => (
             <div key={r.label} className="flex justify-between items-center">

@@ -547,17 +547,27 @@ const DashboardTab = ({ user, orders, onViewDetails, onCancel, navigate }) => {
       </div>
 
 
-      {/* ── Telegram Community ── */}
-      <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-3 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl px-5 py-3.5 shadow-sm dark:shadow-slate-900/50 transition-colors w-full sm:w-auto">
-        <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-        </svg>
-        <div>
-          <p className="text-sm font-bold leading-none">Join Pyonea Community</p>
-          <p className="text-[11px] text-sky-100 mt-0.5">t.me/pyonea_community</p>
-        </div>
-      </a>
+
+      <div className="flex gap-2">
+        <a href="https://t.me/pyonea_community" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-12 h-12 bg-sky-500 hover:bg-sky-600 rounded-2xl shadow-sm dark:shadow-slate-900/50 transition-colors p-3 group">
+          <svg className="h-6 w-6 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+          <div className="absolute hidden md:block opacity-0 group-hover:opacity-100 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap -top-10 left-1/2 -translate-x-1/2 transition-opacity pointer-events-none">
+            Telegram Community
+          </div>
+        </a>
+<a href="https://facebook.com/share/p/18GDuKtPjw" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-12 h-12 bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-sm dark:shadow-slate-900/50 transition-colors p-3 group">
+          <svg className="h-6 w-6 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+            <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+          </svg>
+          <div className="absolute hidden md:block opacity-0 group-hover:opacity-100 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap -top-10 left-1/2 -translate-x-1/2 transition-opacity pointer-events-none">
+            Facebook Community
+          </div>
+        </a>
+
+      </div>
+
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((s) => (

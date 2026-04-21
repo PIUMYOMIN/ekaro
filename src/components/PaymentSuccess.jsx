@@ -12,8 +12,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useReactToPrint } from 'react-to-print';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import api from '../utils/api';
 
 const PaymentSuccess = ({ order, paymentData, onClose }) => {
@@ -243,6 +241,9 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
   const handleDownloadPDF = async () => {
     setDownloading(true);
     try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { default: jsPDF } = await import('jspdf');
+      
       const element = document.getElementById('printable-content');
       if (!element) {
         throw new Error('Print content not found');

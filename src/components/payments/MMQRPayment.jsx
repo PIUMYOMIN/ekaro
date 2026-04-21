@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
 
 const MMQRPayment = () => {
   const { t } = useTranslation();
@@ -43,17 +42,13 @@ const MMQRPayment = () => {
 
       <div className="mt-6 flex flex-col items-center">
         {qrCode
-          ? <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
+          ? <div className="animate-fadeIn">
               <img
                 src={qrCode}
                 alt="MMQR Payment Code"
                 className="w-48 h-48 border-4 border-green-500 rounded-lg"
               />
-            </motion.div>
+            </div>
           : <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed rounded-xl w-48 h-48 animate-pulse" />}
 
         <div className="mt-4 flex items-center">

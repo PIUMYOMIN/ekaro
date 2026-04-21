@@ -30,10 +30,10 @@ const PRIORITY_CONFIG = {
 };
 
 const CATEGORY_LABELS = {
-  bug: '🐛 Bug', payment: '💳 Payment', order: '📦 Order',
-  seller: '🏪 Seller', product: '📋 Product', account: '👤 Account',
-  content: '⚠️ Content', billing: '🧾 Billing', delivery: '🚚 Delivery',
-  safety: '🚨 Safety', suggestion: '💡 Suggestion', other: '❓ Other',
+  bug: 'Bug', payment: 'Payment', order: 'Order',
+  seller: 'Seller', product: 'Product', account: 'Account',
+  content: 'Content', billing: 'Billing', delivery: 'Delivery',
+  safety: 'Safety', suggestion: 'Suggestion', other: 'Other',
 };
 
 const fmtDate = (d) => d

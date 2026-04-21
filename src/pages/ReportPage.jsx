@@ -120,11 +120,11 @@ export default function ReportPage() {
             <CheckCircleIcon className="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-2">
-            {isMM ? 'တင်ပြချက် လက်ခံပြီ' : 'Report Submitted!'}
+            {isMM ? 'ကျေးဇူးတင်ပါသည်။' : 'Report Submitted!'}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">
             {isMM
-              ? 'သင့်ကိစ္စရပ်ကို မှတ်တမ်းတင်ပြီးပါပြီ။ ID ကိုသိမ်းဆည်းထားပါ။'
+              ? 'လူကြီးမင်း၏ တိုင်ကြားစာသည် Pyonea အတွက် လွန်စွာအရေးပါပါသည်။ ID ကိုမှတ်တမ်းတင်ထားပါမည်။'
               : 'Your report has been logged. Save your ticket ID to track progress.'}
           </p>
 
