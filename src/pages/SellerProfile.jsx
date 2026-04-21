@@ -188,7 +188,7 @@ const SellerProfile = () => {
       description: seller.store_description,
       image: seller.store_logo,
       url: `https://pyonea.com/sellers/${slug}`,
-      telephone: seller.contact_phone || undefined,
+      // telephone: seller.contact_phone || undefined,
       email: seller.contact_email || undefined,
       address: seller.address ? {
         '@type': 'PostalAddress',
@@ -597,12 +597,7 @@ const SellerProfile = () => {
                             </span>
                           </div>
                         )}
-                        {seller.contact_phone && (
-                          <a href={`tel:${seller.contact_phone}`} className="flex gap-2.5 hover:text-green-600 group">
-                            <PhoneIcon className="h-4 w-4 text-gray-400 dark:text-slate-600 flex-shrink-0 group-hover:text-green-500" />
-                            <span className="text-gray-600 dark:text-slate-400 group-hover:text-green-600">{seller.contact_phone}</span>
-                          </a>
-                        )}
+
                         {seller.contact_email && (
                           <a href={`mailto:${seller.contact_email}`} className="flex gap-2.5 hover:text-green-600 group">
                             <EnvelopeIcon className="h-4 w-4 text-gray-400 dark:text-slate-600 flex-shrink-0 group-hover:text-green-500" />
