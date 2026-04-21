@@ -291,7 +291,7 @@ export default function ReportPage() {
                   <textarea value={form.description} onChange={set('description')} required
                     rows={5} maxLength={5000}
                     placeholder={isMM
-                      ? 'လူကြီးမင်း၏ ပြဿနာကိုပြောပါ?'
+                      ? 'လူကြီးမင်း၏ ပြဿနာကိုပြောပါ။'
                       : 'Describe the issue in detail — what happened, when it occurred, steps to reproduce, and what you expected to happen.'}
                     className={INPUT_CLS + ' resize-none'} />
                   <div className="flex justify-between mt-1">
