@@ -51,6 +51,14 @@ const fmtRelative = (d) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
+const attachmentHref = (attachment) =>
+  attachment?.url ||
+  attachment?.file_url ||
+  (attachment?.path ? `/storage/${attachment.path}` : '#');
+
+const attachmentLabel = (attachment, index) =>
+  attachment?.name || attachment?.filename || `Attachment ${index + 1}`;
+
 // ── StatusBadge ───────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
@@ -195,10 +203,10 @@ function TicketDetail({ ticketId, onBack }) {
         {report.attachments?.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {report.attachments.map((a, i) => (
-              <a key={i} href={`/storage/${a.path}`} target="_blank" rel="noopener noreferrer"
+              <a key={i} href={attachmentHref(a)} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 transition-colors">
                 <PaperClipIcon className="h-3.5 w-3.5" />
-                {a.name}
+                {attachmentLabel(a, i)}
               </a>
             ))}
           </div>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import { invalidateOnboardingCache } from '../StepGuard';
+import { resolveSellerOnboardingStep } from '../../utils/sellerOnboarding';
 
 const SellerDashboardRedirect = () => {
     const navigate  = useNavigate();
@@ -32,7 +33,7 @@ const SellerDashboardRedirect = () => {
                     const statusData = response.data.data;
 
                     if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-                        const step = statusData.current_step || 'store-basic';
+                        const step = await resolveSellerOnboardingStep(statusData);
                         navigate(`/seller/onboarding/${step}`, { replace: true });
                     } else {
                         navigate('/seller/dashboard', { replace: true });

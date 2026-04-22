@@ -201,7 +201,12 @@ const DaysInput = ({ min, max, onChange }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const DeliveryZones = () => {
+const DeliveryZones = ({
+  onSaveSuccess,
+  showHeader = true,
+  showFooter = true,
+  saveButtonLabel,
+}) => {
   const { t } = useTranslation();
   // selected: Set of zone keys the seller has checked
   const [selected, setSelected]     = useState(new Set());
@@ -453,6 +458,10 @@ const DeliveryZones = () => {
       if (res.data.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 4000);
+        if (onSaveSuccess) {
+          await onSaveSuccess();
+        }
+        return true;
       } else {
         setError(res.data.message || 'Failed to save zones');
       }
@@ -461,6 +470,8 @@ const DeliveryZones = () => {
     } finally {
       setSaving(false);
     }
+
+    return false;
   };
 
   // ── Summary counts ─────────────────────────────────────────────────────
@@ -483,28 +494,30 @@ const DeliveryZones = () => {
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <TruckIcon className="h-5 w-5 text-green-600" />
-            {t('seller.delivery_zones.title')}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-            {t('seller.delivery_zones.subtitle')}
-          </p>
+      {showHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <TruckIcon className="h-5 w-5 text-green-600" />
+              {t('seller.delivery_zones.title')}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+              {t('seller.delivery_zones.subtitle')}
+            </p>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving || selected.size === 0}
+            className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? (
+              <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{t('seller.delivery_zones.saving')}</>
+            ) : (
+              <>{saveButtonLabel || t('seller.delivery_zones.save_zones')}</>
+            )}
+          </button>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || selected.size === 0}
-          className="flex items-center gap-2 px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{t('seller.delivery_zones.saving')}</>
-          ) : (
-            <>{t('seller.delivery_zones.save_zones')}</>
-          )}
-        </button>
-      </div>
+      )}
 
       {/* Feedback banners */}
       {error && (
@@ -763,14 +776,16 @@ const DeliveryZones = () => {
       )}
 
       {/* Save footer */}
-      {selected.size > 0 && (
+      {showFooter && selected.size > 0 && (
         <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-slate-700">
           <button
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50"
           >
-            {saving ? t('seller.delivery_zones.saving') : t('seller.delivery_zones.save_n_zones', { count: selected.size })}
+            {saving
+              ? t('seller.delivery_zones.saving')
+              : (saveButtonLabel || t('seller.delivery_zones.save_n_zones', { count: selected.size }))}
           </button>
         </div>
       )}

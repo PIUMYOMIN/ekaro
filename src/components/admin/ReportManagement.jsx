@@ -48,6 +48,14 @@ const fmtRelative = (d) => {
   return `${Math.floor(s/86400)}d ago`;
 };
 
+const attachmentHref = (attachment) =>
+  attachment?.url ||
+  attachment?.file_url ||
+  (attachment?.path ? `/storage/${attachment.path}` : '#');
+
+const attachmentLabel = (attachment, index) =>
+  attachment?.name || attachment?.filename || `Attachment ${index + 1}`;
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
@@ -151,6 +159,24 @@ function TicketDetailPanel({ ticketId, onClose, onUpdated }) {
       <div className="bg-gray-50 dark:bg-slate-900/50 rounded-xl p-4 text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
         {report.description}
       </div>
+
+      {/* Attachments */}
+      {report.attachments?.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {report.attachments.map((attachment, index) => (
+            <a
+              key={attachment.id || `${attachment.path || attachment.url}-${index}`}
+              href={attachmentHref(attachment)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-600 dark:text-slate-300 transition-colors"
+            >
+              <EyeIcon className="h-3.5 w-3.5" />
+              {attachmentLabel(attachment, index)}
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Reporter IP / locale (admin only) */}
       <div className="flex gap-4 text-xs text-gray-400 dark:text-slate-500">

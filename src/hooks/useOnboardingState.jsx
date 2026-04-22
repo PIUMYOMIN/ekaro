@@ -17,6 +17,7 @@ export const useOnboardingState = () => {
         { id: 'store-basic',      title: 'Store Basic',      icon: '🏪' },
         { id: 'business-details', title: 'Business Details', icon: '📄' },
         { id: 'address',          title: 'Address',          icon: '📍' },
+        { id: 'delivery-zones',   title: 'Delivery Zones',   icon: '🚚' },
         { id: 'documents',        title: 'Documents',        icon: '📎' },
         { id: 'review',           title: 'Review',           icon: '✅' },
     ];

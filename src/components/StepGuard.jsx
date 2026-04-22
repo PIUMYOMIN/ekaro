@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { resolveSellerOnboardingStep } from '../utils/sellerOnboarding';
 
 let _statusCache = null;
 let _statusCacheTime = 0;
@@ -72,18 +73,20 @@ const StepGuard = ({ children, step }) => {
                     'store-basic',
                     'business-details',
                     'address',
+                    'delivery-zones',
                     'documents',
                     'review-submit',
                 ];
 
-                const currentIndex   = stepOrder.indexOf(statusData.current_step);
+                const resolvedStep = await resolveSellerOnboardingStep(statusData);
+                const currentIndex   = stepOrder.indexOf(resolvedStep);
                 const requestedIndex = stepOrder.indexOf(step);
 
                 if (requestedIndex < 0) {
                     navigate('/seller/onboarding/store-basic');
                 } else if (requestedIndex > currentIndex) {
                     // FIX: was silently redirecting — now preserves the current step
-                    navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+                    navigate(`/seller/onboarding/${resolvedStep || 'store-basic'}`);
                 } else {
                     setIsValid(true);
                 }

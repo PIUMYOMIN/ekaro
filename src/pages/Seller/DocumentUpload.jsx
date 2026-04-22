@@ -143,7 +143,7 @@ const DocumentUpload = () => {
         <OnboardingLayout
             title="Document Verification"
             description="Upload required documents for verification"
-            onBack={() => navigate('/seller/onboarding/address')}
+            onBack={() => navigate('/seller/onboarding/delivery-zones')}
             onNext={handleContinue}
             nextLabel="Continue to Review"
             nextDisabled={isLoading || !documentsComplete}

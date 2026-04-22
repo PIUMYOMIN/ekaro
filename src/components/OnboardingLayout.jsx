@@ -14,6 +14,7 @@ const OnboardingLayout = ({
     children,
     title,
     description,
+    currentStepOverride,
     onNext,
     onBack,
     showProgress = true,
@@ -28,7 +29,8 @@ const OnboardingLayout = ({
     const { t }  = useTranslation();
     const navigate = useNavigate();
 
-    const currentStepIndex = steps.findIndex(step => step.id === currentStep);
+    const activeStep = currentStepOverride || currentStep;
+    const currentStepIndex = steps.findIndex(step => step.id === activeStep);
 
     if (isLoading && currentStepIndex === -1) {
         return (

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import { resolveSellerOnboardingStep } from '../utils/sellerOnboarding';
 
 const SellerRouteGuard = ({ children }) => {
   const [isValid, setIsValid] = useState(false);
@@ -32,7 +33,8 @@ const SellerRouteGuard = ({ children }) => {
           // Check if onboarding is complete
           if (statusData.needs_onboarding || !statusData.onboarding_complete) {
             // Redirect to onboarding
-            navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+            const step = await resolveSellerOnboardingStep(statusData);
+            navigate(`/seller/onboarding/${step}`);
           } else {
             // Allow access to dashboard
             setIsValid(true);

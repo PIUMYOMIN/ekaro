@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { resolveSellerOnboardingStep } from '../utils/sellerOnboarding';
 
 export const useSellerOnboarding = () => {
   const [onboardingStatus, setOnboardingStatus] = useState(null);
@@ -18,7 +19,8 @@ export const useSellerOnboarding = () => {
         setOnboardingStatus(statusData);
         
         if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-          navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+          const step = await resolveSellerOnboardingStep(statusData);
+          navigate(`/seller/onboarding/${step}`);
           return false;
         }
         return true;

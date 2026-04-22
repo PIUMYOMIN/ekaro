@@ -57,6 +57,12 @@ const INPUT_CLS = [
   'focus:ring-2 focus:ring-green-500 focus:outline-none transition-shadow',
 ].join(' ');
 
+const extractTicketId = (response) =>
+  response?.data?.ticket_id ||
+  response?.data?.data?.ticket_id ||
+  response?.data?.data?.report?.ticket_id ||
+  null;
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ReportPage() {
@@ -98,7 +104,11 @@ export default function ReportPage() {
       const res = await api.post('/reports', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setSuccess({ ticket_id: res.data.ticket_id });
+      const ticketId = extractTicketId(res);
+      if (!ticketId) {
+        throw new Error('Report submitted but ticket ID was missing in response.');
+      }
+      setSuccess({ ticket_id: ticketId });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
       if (e.response?.data?.errors) {

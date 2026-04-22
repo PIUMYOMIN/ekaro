@@ -63,6 +63,7 @@ import ProductView from "./pages/Seller/products/ProductView";
 import StoreBasicInfo from "./pages/Seller/StoreBasicInfo";
 import BusinessDetails from "./pages/Seller/BusinessDetails";
 import AddressInfo from "./pages/Seller/AddressInfo";
+import DeliveryZonesOnboarding from "./pages/Seller/DeliveryZonesOnboarding";
 
 // Common Components
 import PaymentMethod from "./components/ui/PaymentMethod";
@@ -231,6 +232,14 @@ function App() {
                           <ProtectedRoute roles={["seller"]}>
                             <StepGuard step="address">
                               <AddressInfo />
+                            </StepGuard>
+                          </ProtectedRoute>
+                        } />
+
+                        <Route path="/seller/onboarding/delivery-zones" element={
+                          <ProtectedRoute roles={["seller"]}>
+                            <StepGuard step="delivery-zones">
+                              <DeliveryZonesOnboarding />
                             </StepGuard>
                           </ProtectedRoute>
                         } />

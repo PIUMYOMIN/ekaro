@@ -50,6 +50,12 @@ const INPUT_CLS = [
   'focus:ring-2 focus:ring-green-500 focus:outline-none',
 ].join(' ');
 
+const extractTicketId = (response) =>
+  response?.data?.ticket_id ||
+  response?.data?.data?.ticket_id ||
+  response?.data?.data?.report?.ticket_id ||
+  null;
+
 export default function ReportForm({ isOpen, onClose, context = {} }) {
   const { t, i18n } = useTranslation();
   const { user }          = useAuth();
@@ -100,7 +106,11 @@ export default function ReportForm({ isOpen, onClose, context = {} }) {
       const res = await api.post('/reports', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setSuccess({ ticket_id: res.data.ticket_id });
+      const ticketId = extractTicketId(res);
+      if (!ticketId) {
+        throw new Error('Report submitted but ticket ID was missing in response.');
+      }
+      setSuccess({ ticket_id: ticketId });
     } catch (e) {
       if (e.response?.data?.errors) {
         setErrors(e.response.data.errors);

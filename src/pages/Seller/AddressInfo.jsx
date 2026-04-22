@@ -73,7 +73,7 @@ const AddressInfo = () => {
             description={t("seller_onboarding.addressInfo.subtitle")}
             onBack={() => navigate('/seller/onboarding/business-details')}
             onNext={handleContinue}
-            nextLabel={t("seller_onboarding.addressInfo.continue_to_documents")}
+            nextLabel={t("seller_onboarding.addressInfo.continue_to_delivery_zones")}
             nextDisabled={isLoading}
             loading={isLoading}
         >
@@ -217,10 +217,10 @@ const AddressInfo = () => {
                         <InformationCircleIcon className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0" />
                         <div>
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                                <span className="font-medium">{t("seller_onboarding.addressInfo.info_next")}</span> {t("seller_onboarding.addressInfo.info_next_text")}
+                                <span className="font-medium">{t("seller_onboarding.addressInfo.info_next")}</span> {t("seller_onboarding.addressInfo.info_delivery_text")}
                             </p>
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                {t("seller_onboarding.addressInfo.info_doc_note")}
+                                {t("seller_onboarding.addressInfo.info_delivery_note")}
                             </p>
                         </div>
                     </div>

@@ -29,6 +29,7 @@ import SalesReports from "../../components/seller/SalesReports";
 import ProductReviewManagement from "../../components/seller/ProductReviewManagement";
 import Customers from "./Customers";
 import DeliveryZones from "../../components/seller/DeliveryZones";
+import { resolveSellerOnboardingStep } from "../../utils/sellerOnboarding";
 import StoreSettings from "../../components/seller/StoreSettings";
 import MyStore from "../../components/seller/MyStore";
 import { useAuth } from "../../context/AuthContext";
@@ -159,7 +160,8 @@ const SellerDashboard = () => {
     title: "",
     message: "",
     requiredActions: [],
-    nextStep: ""
+    nextStep: "",
+    ctaLabel: "Complete Setup"
   });
 
   // ---------- Fetch global store data (store info & summary stats) ----------
@@ -309,7 +311,8 @@ const SellerDashboard = () => {
           setOnboardingStatus(statusData);
 
           if (statusData.needs_onboarding || !statusData.onboarding_complete) {
-            navigate(`/seller/onboarding/${statusData.current_step || 'store-basic'}`);
+            const step = await resolveSellerOnboardingStep(statusData);
+            navigate(`/seller/onboarding/${step}`);
             return;
           }
         }
@@ -333,14 +336,13 @@ const SellerDashboard = () => {
   useEffect(() => {
     if (!storeData) return;
 
-    const requirements = [];
-
     if (storeData.status === "pending") {
       setSetupNotificationData({
         title: "Store Pending Approval",
         message: "Your store is under review. You can add products and set up your store while waiting for approval.",
         requiredActions: ["Complete store setup", "Add products", "Set up delivery zone"],
-        nextStep: "my-store"
+        nextStep: "my-store",
+        ctaLabel: "Review Setup"
       });
       setShowSetupNotification(true);
       return;
@@ -351,7 +353,8 @@ const SellerDashboard = () => {
         title: "Complete Store Setup",
         message: "Your store setup is incomplete. Complete the setup to start selling.",
         requiredActions: ["Add store logo", "Complete business details", "Set up payment methods"],
-        nextStep: "my-store"
+        nextStep: "my-store",
+        ctaLabel: "Complete Setup"
       });
       setShowSetupNotification(true);
       return;
@@ -362,7 +365,8 @@ const SellerDashboard = () => {
         title: "Verification Required",
         message: "Your account needs verification to access all seller features.",
         requiredActions: ["Upload required documents", "Complete identity verification"],
-        nextStep: "my-store"
+        nextStep: "my-store",
+        ctaLabel: "Continue Verification"
       });
       setShowSetupNotification(true);
       return;
@@ -379,9 +383,10 @@ const SellerDashboard = () => {
     if (missingInfo.length > 0) {
       setSetupNotificationData({
         title: "Missing Information",
-        message: `Your store profile is incomplete. Please add: ${missingInfo.join(", ")}`,
+        message: "Your store profile is incomplete. Please complete the items below.",
         requiredActions: missingInfo,
-        nextStep: "my-store"
+        nextStep: "my-store",
+        ctaLabel: "Update Profile"
       });
       setShowSetupNotification(true);
       return;
@@ -533,8 +538,20 @@ const SellerDashboard = () => {
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">{setupNotificationData.title}</h4>
                       <p className="text-xs text-amber-700 dark:text-amber-400 mb-2">{setupNotificationData.message}</p>
+
+                      {setupNotificationData.requiredActions?.length > 0 && (
+                        <ul className="mb-3 space-y-1.5">
+                          {setupNotificationData.requiredActions.slice(0, 4).map((action) => (
+                            <li key={action} className="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300">
+                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400 flex-shrink-0" />
+                              <span className="leading-4">{action}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
                       <button onClick={handleStartSetup} className="w-full text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1.5 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 flex items-center justify-center">
-                        Complete Setup <ArrowRightIcon className="h-3 w-3 ml-1" />
+                        {setupNotificationData.ctaLabel || "Complete Setup"} <ArrowRightIcon className="h-3 w-3 ml-1" />
                       </button>
                     </div>
                   </div>

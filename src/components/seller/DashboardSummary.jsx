@@ -132,12 +132,33 @@ const StatCard = ({ icon: Icon, label, value, sub, change, changeType, accent })
 };
 
 const SetupChecklist = ({ storeData, onSetupClick }) => {
+  const [hasDeliveryZones, setHasDeliveryZones] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDeliveryZones = async () => {
+      try {
+        const res = await api.get("/seller/delivery-areas");
+        if (!mounted) return;
+        const zones = res.data?.data || [];
+        setHasDeliveryZones(Array.isArray(zones) && zones.length > 0);
+      } catch {
+        if (!mounted) return;
+        setHasDeliveryZones(false);
+      }
+    };
+
+    loadDeliveryZones();
+    return () => { mounted = false; };
+  }, []);
+
   const items = [
     { id: 1, label: "Store Profile Complete", done: !!(storeData?.store_name && storeData?.contact_email), action: "Complete profile", step: "my-store" },
     { id: 2, label: "Store Logo Uploaded", done: !!storeData?.store_logo, action: "Upload logo", step: "my-store" },
     { id: 3, label: "Business Details", done: !!(storeData?.business_registration_number || storeData?.business_type === "individual"), action: "Add details", step: "my-store" },
     { id: 4, label: "Payment Method Set", done: !!storeData?.account_number, action: "Set up payment", step: "my-store" },
-    { id: 5, label: "Shipping Configured", done: !!storeData?.shipping_enabled, action: "Configure shipping", step: "shipping" },
+    { id: 5, label: "Delivery Zones Configured", done: hasDeliveryZones, action: "Set up zones", step: "delivery_zones" },
   ];
   const done = items.filter(i => i.done).length;
   const total = items.length;
@@ -158,7 +179,7 @@ const SetupChecklist = ({ storeData, onSetupClick }) => {
                 : <div className="w-5 h-5 rounded-full border-2 border-blue-300 mr-2" />}
               <span className={`text-sm ${item.done ? "text-gray-500 dark:text-slate-400" : "text-gray-900 dark:text-slate-100"}`}>{item.label}</span>
             </div>
-            {!item.done && item.id !== 5 && (
+            {!item.done && (
               <button onClick={() => onSetupClick?.(item.step)}
                 className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 px-3 py-1 rounded-lg">
                 {item.action}
