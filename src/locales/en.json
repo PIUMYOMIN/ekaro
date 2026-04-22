@@ -1903,5 +1903,155 @@
     },
     "footer": "Last updated: April 2026 · ",
     "footer_contact": "Contact us"
-  }
+  },
+  "rfq_page": {
+  "title": "Request for Quotation",
+  "description": "Create RFQs, collect quotes from sellers, place orders — all in one place",
+  "request_for_quotation": "Request for Quotation",
+  "rfqs": "RFQs",
+
+  "tabs": {
+    "sent": "My RFQs",
+    "received": "Received RFQs", 
+    "create": "Create RFQ"
+  },
+
+  "stats": {
+    "total_rfqs": "Total RFQs",
+    "open": "Open",
+    "quotes_in": "Quotes In",
+    "accepted": "Accepted",
+    "received": "Received",
+    "awaiting": "Awaiting",
+    "responded": "Responded"
+  },
+
+  "toolbar": {
+    "search": "Search RFQs…",
+    "all_statuses": "All Statuses",
+    "refresh": "Refresh",
+    "new_rfq": "New RFQ"
+  },
+
+  "status": {
+    "draft": "Draft",
+    "open": "Open",
+    "quoted": "Quoted",
+    "accepted": "Accepted",
+    "ordered": "Ordered",
+    "closed": "Closed",
+    "cancelled": "Cancelled"
+  },
+
+  "quote_status": {
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "ordered": "Ordered"
+  },
+
+  "form": {
+    "product_details": "Product Details",
+    "product_name": "Product / Service Name",
+    "product_name_placeholder": "e.g. Construction Cement Grade 42.5",
+    "category": "Category",
+    "category_placeholder": "e.g. Building Materials",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "specifications": "Technical Specifications",
+    "specifications_placeholder": "Grade, size, brand preference, certifications…",
+
+    "budget_timeline": "Budget & Timeline",
+    "min_budget": "Min Budget",
+    "max_budget": "Max Budget",
+    "response_deadline": "Response Deadline",
+    "additional_notes": "Additional Notes",
+    "notes_placeholder": "Delivery requirements, payment terms, packaging…",
+
+    "send_to": "Send To",
+    "broadcast_all": "Broadcast to all relevant sellers",
+    "broadcast_desc": "Your RFQ will be visible to all sellers in the matching category",
+    "search_sellers": "Search for specific sellers…",
+    "sellers_selected": "{{count}} seller(s) selected"
+  },
+
+  "units": {
+    "pcs": "pcs",
+    "kg": "kg",
+    "ton": "ton",
+    "g": "g",
+    "L": "L",
+    "ml": "ml",
+    "bags": "bags",
+    "boxes": "boxes",
+    "sets": "sets",
+    "m": "m",
+    "m2": "m²",
+    "m3": "m³",
+    "rolls": "rolls"
+  },
+
+  "card": {
+    "qty": "QTY",
+    "deadline": "DEADLINE",
+    "quotes": "QUOTES",
+    "my_quote": "MY QUOTE",
+    "created": "Created"
+  },
+
+  "actions": {
+    "cancel": "Cancel",
+    "submit_rfq": "Submit RFQ",
+    "decline": "Decline",
+    "accept_quote": "Accept Quote",
+    "submit_quotation": "Submit Quotation",
+    "cancel_rfq": "Cancel RFQ",
+    "close_bidding": "Close Bidding"
+  },
+
+  "quote": {
+    "seller": "Seller",
+    "unit_price": "Unit Price",
+    "total": "Total",
+    "delivery": "Delivery",
+    "notes": "Notes"
+  },
+
+  "modal": {
+    "submit_quotation": "Submit Quotation",
+    "quote_valid": "Quote Valid (days)",
+    "delivery_days": "Delivery (days)"
+  },
+
+  "empty": {
+    "sent": {
+      "title": "No RFQs found",
+      "sub": "Create your first RFQ to start collecting quotes from sellers"
+    },
+    "received": {
+      "title": "No RFQs received",
+      "sub": "RFQs from buyers will appear here when buyers select you as a seller"
+    },
+    "waiting": {
+      "title": "Waiting for quotations",
+      "sub": "Sellers are reviewing your RFQ"
+    }
+  },
+
+  "messages": {
+    "rfq_submitted": "RFQ submitted successfully! Sellers will be notified.",
+    "quotation_submitted": "Quotation submitted successfully!",
+    "quote_accepted": "Quote accepted — order will be created"
+  },
+
+  "errors": {
+    "required": "Please fill in: {{fields}}",
+    "unit_price_required": "Unit price and delivery days are required.",
+    "submit_failed": "Failed to submit"
+  },
+
+  "from": "From",
+  "submitted": "Submitted",
+  "waiting": "Waiting for quotations"
+}
 }

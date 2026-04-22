@@ -39,6 +39,7 @@
     "react-share": "^5.2.2",
     "react-to-print": "^3.2.0",
     "recharts": "^3.1.0",
+    "uuid": "^14.0.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

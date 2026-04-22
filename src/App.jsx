@@ -301,10 +301,7 @@ function App() {
                         } />
 
                         {/* Shared Routes */}
-                        /* /products/create removed — use /seller/products/create (sellers)
-                           or /admin/products/create (future admin feature) */
-                        /* /products/:id/edit removed — use /seller/products/:id/edit */
-                        <Route path="/rfqmanager" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
+                        <Route path="/rfq" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><RFQManager /></ProtectedRoute>} />
                         <Route path="/payment-method" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><PaymentMethod /></ProtectedRoute>} />
                         <Route path="/order-confirmation" element={<ProtectedRoute roles={["buyer", "seller", "admin"]}><OrderConfirmation /></ProtectedRoute>} />
                         <Route path="/order-tracking/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
