@@ -2053,5 +2053,149 @@
   "from": "From",
   "submitted": "Submitted",
   "waiting": "Waiting for quotations"
-}
+},
+  "rfq": {
+    "title": "Request for Quotation (RFQ)",
+    "description": "Send requests for quotes to multiple sellers and compare offers to get the best deal for your business needs.",
+    "tabs": {
+      "sent": "My RFQs",
+      "received": "Received",
+      "create": "Create RFQ"
+    },
+    "toolbar": {
+      "search": "Search RFQs..."
+    },
+    "form": {
+      "product_details": "Product Details",
+      "product_name": "Product Name",
+      "product_name_placeholder": "e.g., Steel Pipes, Rice, Electronics",
+      "category": "Category",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "specifications": "Specifications",
+      "budget_timeline": "Budget & Timeline",
+      "budget_min": "Minimum Budget",
+      "budget_max": "Maximum Budget",
+      "deadline": "Deadline",
+      "notes": "Additional Notes",
+      "broadcast_title": "Broadcast to All Sellers",
+      "broadcast_desc": "Send to all verified sellers on Pyonea",
+      "seller_search_placeholder": "Search sellers by name...",
+      "searching": "Searching sellers...",
+      "sellers_selected": "{{count}} seller(s) selected"
+    },
+    "status": {
+      "rfq": {
+        "draft": {
+          "label": "Draft",
+          "cls": "bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300"
+        },
+        "open": {
+          "label": "Open",
+          "cls": "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+        },
+        "quoted": {
+          "label": "Quoted",
+          "cls": "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+        },
+        "accepted": {
+          "label": "Accepted",
+          "cls": "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+        },
+        "closed": {
+          "label": "Closed",
+          "cls": "bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-slate-400"
+        },
+        "cancelled": {
+          "label": "Cancelled",
+          "cls": "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+        }
+      },
+      "quote": {
+        "pending": {
+          "label": "Pending",
+          "cls": "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+        },
+        "accepted": {
+          "label": "Accepted",
+          "cls": "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+        },
+        "rejected": {
+          "label": "Rejected",
+          "cls": "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+        }
+      }
+    }
+  },
+  "helpCenter": {
+    "title": "Help Center | Pyonea",
+    "description": "Find answers to common questions about buying, selling, payments, delivery, and account management on Pyonea — Myanmar's leading B2B marketplace.",
+    "page_title": "Help Center",
+    "categories": {
+      "buying": "Buying on Pyonea",
+      "selling": "Selling on Pyonea",
+      "payments": "Payments & Security"
+    },
+    "buying": {
+      "place_order": {
+        "question": "How do I place an order?",
+        "answer": "To place an order, browse our product catalog, add items to your cart, and proceed to checkout. You can choose from various payment methods including MMQR, mobile wallets, and bank transfer."
+      },
+      "minimum_order": {
+        "question": "What is the minimum order quantity?",
+        "answer": "Minimum order quantities vary by product and are set by individual sellers. You can find the MOQ listed on each product page."
+      },
+      "track_order": {
+        "question": "How can I track my order?",
+        "answer": "Once your order is shipped, you will receive a tracking number via email or SMS. You can track your order status in the \"My Orders\" section of your account."
+      }
+    },
+    "selling": {
+      "become_seller": {
+        "question": "How do I become a seller?",
+        "answer": "Register for a seller account, complete your profile, and submit your business documents for verification. Once approved, you can start listing your products."
+      },
+      "seller_fees": {
+        "question": "What are the seller fees?",
+        "answer": "We charge a commission fee ranging from 5-10% depending on your subscription plan. There are no upfront fees to join the platform."
+      },
+      "receive_payments": {
+        "question": "How do I receive payments?",
+        "answer": "Payments are processed through our secure payment system and transferred to your registered bank account every week, minus our commission fees."
+      }
+    },
+    "payments": {
+      "payment_methods": {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept MMQR payments, mobile wallets (KBZ Pay, Wave Money), bank transfers, and cash on delivery for certain products."
+      },
+      "payment_security": {
+        "question": "Is my payment information secure?",
+        "answer": "Yes, we use industry-standard encryption and never store your full payment details on our servers."
+      },
+      "refund_time": {
+        "question": "How long do refunds take to process?",
+        "answer": "Refunds are typically processed within 3-5 business days after approval, depending on your payment method."
+      }
+    },
+    "support": {
+      "title": "Still need help?",
+      "description": "Contact our customer support team for personalized assistance.",
+      "email": {
+        "title": "Email Support",
+        "email": "support@pyonea.com",
+        "response_time": "Typically responds within 24 hours"
+      },
+      "phone": {
+        "title": "Phone Support",
+        "phone": "09 792 115 547",
+        "hours": "Mon-Fri, 9AM-5PM"
+      },
+      "chat": {
+        "title": "Live Chat",
+        "status": "Not available on the website",
+        "alternative": "Please contact us via email or phone"
+      }
+    }
+  }
 }

@@ -27,14 +27,15 @@ import {
 import { StarIcon } from "@heroicons/react/24/solid";
 import api from "../utils/api";
 
-const RFQ_STATUS = {
-  draft:    { label: 'Draft' },
-  open:     { label: 'Open' },
-  quoted:   { label: 'Quoted' },
-  accepted: { label: 'Accepted' },
-  closed:   { label: 'Closed' },
-  cancelled:{ label: 'Cancelled' },
-};
+// Status labels are now handled via translations
+// const RFQ_STATUS = {
+//   draft:    { label: 'Draft' },
+//   open:     { label: 'Open' },
+//   quoted:   { label: 'Quoted' },
+//   accepted: { label: 'Accepted' },
+//   closed:   { label: 'Closed' },
+//   cancelled:{ label: 'Cancelled' },
+// };
 
 // ── Status Config Helpers ────────────────────────────────────────────────────
 
@@ -1016,10 +1017,10 @@ const RFQManager = () => {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                  <option value="all">All Statuses</option>
-                  {Object.entries(RFQ_STATUS).map(([v, { label }]) => (
-                    <option key={v} value={v}>{label}</option>
-                  ))}
+        <option value="all">{t('rfq.toolbar.all_statuses') || 'All Statuses'}</option>
+          {Object.entries(t('rfq.status', { returnObjects: true }) || {}).map(([v, label]) => (
+            <option key={v} value={v}>{label}</option>
+          ))}
                 </select>
                 <button
                   onClick={activeTab === "sent" ? fetchSent : fetchReceived}
@@ -1027,12 +1028,12 @@ const RFQManager = () => {
                 >
                   <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
                 </button>
-                <button
-                  onClick={() => setActiveTab("create")}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 ml-auto"
-                >
-                  <PlusIcon className="h-4 w-4" /> New RFQ
-                </button>
+          <button
+            onClick={() => setActiveTab("create")}
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 ml-auto"
+          >
+            <PlusIcon className="h-4 w-4" /> {t('rfq.toolbar.new_rfq') || 'New RFQ'}
+          </button>
               </div>
 
               {/* List */}
@@ -1047,14 +1048,14 @@ const RFQManager = () => {
                   displaySent.length === 0 ? (
                     <EmptyState
                       icon={DocumentTextIcon}
-                      title="No RFQs found"
-                      sub="Create your first RFQ to start collecting quotes from sellers"
+                      title={t('rfq.empty.sent.title') || "No RFQs found"}
+                      sub={t('rfq.empty.sent.sub') || "Create your first RFQ to start collecting quotes from sellers"}
                       action={
                         <button
                           onClick={() => setActiveTab("create")}
                           className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700"
                         >
-                          <PlusIcon className="h-4 w-4" /> Create RFQ
+                          <PlusIcon className="h-4 w-4" /> {t('rfq.tabs.create') || 'Create RFQ'}
                         </button>
                       }
                     />
@@ -1077,8 +1078,8 @@ const RFQManager = () => {
                   displayReceived.length === 0 ? (
                     <EmptyState
                       icon={InboxIcon}
-                      title="No RFQs received"
-                      sub="RFQs from buyers will appear here when buyers select you as a seller"
+                      title={t('rfq.empty.received.title') || "No RFQs received"}
+                      sub={t('rfq.empty.received.sub') || "RFQs from buyers will appear here when buyers select you as a seller"}
                     />
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -1091,18 +1092,18 @@ const RFQManager = () => {
                           />
                           {/* Quick respond button for open RFQs without a quote */}
                           {rfq.status === "open" && !rfq.my_quote && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setQuoteTarget(rfq); }}
-                              className="w-full py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors"
-                            >
-                              <PaperAirplaneIcon className="h-4 w-4" /> Submit Quotation
-                            </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setQuoteTarget(rfq); }}
+                                className="w-full py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors"
+                              >
+                                <PaperAirplaneIcon className="h-4 w-4" /> {t('rfq.actions.submit_quotation') || 'Submit Quotation'}
+                              </button>
                           )}
-                          {rfq.my_quote && (
-                            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-xs font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                              <CheckIcon className="h-4 w-4" /> Quotation submitted
-                            </div>
-                          )}
+                            {rfq.my_quote && (
+                              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-xs font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                                <CheckIcon className="h-4 w-4" /> {t('rfq_page.submitted') || 'Quotation submitted'}
+                              </div>
+                            )}
                         </div>
                       ))}
                     </div>

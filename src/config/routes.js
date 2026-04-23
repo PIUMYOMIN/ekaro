@@ -1,6 +1,6 @@
 const routes = {
   development: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'http://localhost:5173',
     apiBaseUrl: process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'
   },
   production: {
