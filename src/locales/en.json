@@ -55,7 +55,7 @@
     "sign_up": "Sign up",
     "new_user": "New user?",
     "logo_text": "Pyonea",
-    "burmese": "MM"
+    "burmese": "MY"
   },
   "home": {
     "hero_title": "Myanmar B2B Marketplace",
@@ -1395,6 +1395,12 @@
     "coupon_discount": "Coupon Discount",
     "total": "Total",
     "payment_method_label": "Payment Method",
+    "payment_status": {
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "refunded": "Refunded",
+      "failed": "Failed"
+    },
     "sold_by": "Sold by",
     "shipping_to": "Shipping To",
     "track_different": "Track a different order",
@@ -2063,26 +2069,70 @@
       "create": "Create RFQ"
     },
     "toolbar": {
-      "search": "Search RFQs..."
+      "search": "Search RFQs...",
+      "all_statuses": "All Statuses",
+      "refresh": "Refresh",
+      "new_rfq": "New RFQ"
+    },
+    "stats": {
+      "total_rfqs": "Total RFQs",
+      "open": "Open",
+      "quotes_in": "Quotes In",
+      "accepted": "Accepted",
+      "received": "Received",
+      "awaiting": "Awaiting",
+      "responded": "Responded"
     },
     "form": {
       "product_details": "Product Details",
       "product_name": "Product Name",
       "product_name_placeholder": "e.g., Steel Pipes, Rice, Electronics",
       "category": "Category",
+      "category_placeholder": "e.g. Building Materials",
       "quantity": "Quantity",
       "unit": "Unit",
       "specifications": "Specifications",
+      "specifications_placeholder": "Grade, size, brand preference, certifications...",
       "budget_timeline": "Budget & Timeline",
       "budget_min": "Minimum Budget",
       "budget_max": "Maximum Budget",
       "deadline": "Deadline",
       "notes": "Additional Notes",
+      "notes_placeholder": "Delivery requirements, payment terms, packaging...",
+      "send_to": "Send To",
       "broadcast_title": "Broadcast to All Sellers",
       "broadcast_desc": "Send to all verified sellers on Pyonea",
       "seller_search_placeholder": "Search sellers by name...",
       "searching": "Searching sellers...",
       "sellers_selected": "{{count}} seller(s) selected"
+    },
+    "fields": {
+      "product_name": "Product name",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "deadline": "Deadline"
+    },
+    "units": {
+      "pcs": "pcs",
+      "kg": "kg",
+      "ton": "ton",
+      "g": "g",
+      "L": "L",
+      "ml": "ml",
+      "bags": "bags",
+      "boxes": "boxes",
+      "sets": "sets",
+      "m": "m",
+      "m2": "m²",
+      "m3": "m³",
+      "rolls": "rolls"
+    },
+    "card": {
+      "qty": "QTY",
+      "deadline": "DEADLINE",
+      "quotes": "QUOTES",
+      "my_quote": "MY QUOTE",
+      "created": "Created"
     },
     "status": {
       "rfq": {
@@ -2126,6 +2176,69 @@
         }
       }
     }
+    ,
+    "quote": {
+      "seller": "Seller",
+      "unit_price": "Unit Price",
+      "total": "Total",
+      "total_value": "Total Value",
+      "delivery": "Delivery",
+      "notes": "Notes",
+      "days": "days"
+    },
+    "modal": {
+      "submit_quotation": "Submit Quotation",
+      "currency": "Currency",
+      "total_price": "Total Price",
+      "auto_calculated": "Auto-calculated",
+      "delivery_days": "Delivery (days)",
+      "quote_valid": "Quote Valid (days)",
+      "notes_placeholder": "Payment terms, stock availability, special conditions..."
+    },
+    "empty": {
+      "sent": {
+        "title": "No RFQs found",
+        "sub": "Create your first RFQ to start collecting quotes from sellers"
+      },
+      "received": {
+        "title": "No RFQs received",
+        "sub": "RFQs from buyers will appear here when buyers select you as a seller"
+      },
+      "waiting": {
+        "title": "Waiting for quotations",
+        "sub": "Sellers are reviewing your RFQ"
+      }
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submitting": "Submitting...",
+      "submit_rfq": "Submit RFQ",
+      "decline": "Decline",
+      "accept_quote": "Accept Quote",
+      "submit_quotation": "Submit Quotation",
+      "cancel_rfq": "Cancel RFQ",
+      "close_bidding": "Close Bidding"
+    },
+    "messages": {
+      "rfq_submitted": "RFQ submitted successfully! Sellers will be notified.",
+      "quotation_submitted": "Quotation submitted successfully!",
+      "quote_accepted": "Quote accepted - order will be created",
+      "accepted_quotation": "Accepted Quotation",
+      "received_quotations": "Received Quotations ({{count}})"
+    },
+    "errors": {
+      "required": "Please fill in: {{fields}}",
+      "create_failed": "Failed to create RFQ",
+      "load_failed": "Failed to load RFQs",
+      "load_received_failed": "Failed to load received RFQs",
+      "close_failed": "Failed to close RFQ",
+      "cancel_failed": "Failed to cancel RFQ",
+      "unit_price_required": "Unit price and delivery days are required.",
+      "submit_failed": "Failed to submit",
+      "submit_quotation_failed": "Failed to submit quotation"
+    },
+    "from": "From",
+    "submitted": "Quotation submitted"
   },
   "helpCenter": {
     "title": "Help Center | Pyonea",

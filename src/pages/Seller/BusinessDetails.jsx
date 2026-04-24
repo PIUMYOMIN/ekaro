@@ -88,8 +88,9 @@ const BusinessDetails = () => {
             hasError ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
         } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`;
 
-    const prefixClass = "inline-flex items-center px-3 rounded-l-xl border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm";
-    const suffixInputClass = "flex-1 rounded-none rounded-r-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none";
+    const addonWrapperClass = "mt-1 flex rounded-xl shadow-sm overflow-hidden border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500";
+    const prefixClass = "inline-flex items-center px-3 py-3 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm border-r border-gray-300 dark:border-gray-600 whitespace-nowrap flex-shrink-0";
+    const suffixInputClass = "flex-1 min-w-0 px-3 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none";
 
     return (
         <OnboardingLayout
@@ -198,13 +199,11 @@ const BusinessDetails = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {t("seller_onboarding.businessDetails.website.label")}
                                 </label>
-                                <div className="mt-1 flex rounded-xl shadow-sm">
-                                    <span className={prefixClass}>
-                                        https://
-                                    </span>
+                                <div className={addonWrapperClass}>
+                                    <span className={prefixClass}>https://</span>
                                     <input
                                         type="text"
-                                        className={`flex-1 min-w-0 block w-full px-3 py-3 rounded-none rounded-r-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                                        className={suffixInputClass}
                                         placeholder="yourstore.com"
                                         {...register("website")}
                                     />
@@ -216,19 +215,19 @@ const BusinessDetails = () => {
                                     {t("seller_onboarding.businessDetails.social_media")}
                                 </label>
                                 <div className="space-y-3">
-                                    <div className="flex items-center">
+                                    <div className={addonWrapperClass}>
                                         <span className={prefixClass}>facebook.com/</span>
                                         <input type="text" className={suffixInputClass} placeholder="yourpage" {...register("social_facebook")} />
                                     </div>
-                                    <div className="flex items-center">
+                                    <div className={addonWrapperClass}>
                                         <span className={prefixClass}>instagram.com/</span>
                                         <input type="text" className={suffixInputClass} placeholder="yourprofile" {...register("social_instagram")} />
                                     </div>
-                                    <div className="flex items-center">
+                                    <div className={addonWrapperClass}>
                                         <span className={prefixClass}>twitter.com/</span>
                                         <input type="text" className={suffixInputClass} placeholder="yourprofile" {...register("social_twitter")} />
                                     </div>
-                                    <div className="flex items-center">
+                                    <div className={addonWrapperClass}>
                                         <span className={prefixClass}>linkedin.com/in/</span>
                                         <input type="text" className={suffixInputClass} placeholder="yourprofile" {...register("social_linkedin")} />
                                     </div>

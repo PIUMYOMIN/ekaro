@@ -16,7 +16,6 @@ export const getRoutesConfig = () => {
 
 // Common route paths
 export const ROUTE_PATHS = {
-  ...ROUTE_PATHS,
   RFQ: '/rfq',
   HOME: '/',
   LOGIN: '/login',

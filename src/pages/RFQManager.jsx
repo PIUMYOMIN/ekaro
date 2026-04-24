@@ -40,11 +40,11 @@ import api from "../utils/api";
 // ── Status Config Helpers ────────────────────────────────────────────────────
 
 const getStatusConfig = (t, status, type = 'rfq') => {
-  const base = `${type}.status.${status}`;
+  const base = `rfq.status.${type}.${status}`;
   return {
-    label: t(`${base}.label`),
-    cls: t(`${base}.cls`),
-    dot: t(`${base}.dot`) || null,
+    label: t(`${base}.label`, status),
+    cls: t(`${base}.cls`, ""),
+    dot: t(`${base}.dot`, ""),
   };
 };
 
@@ -52,7 +52,8 @@ const getStatusConfig = (t, status, type = 'rfq') => {
 // ── Helper components ─────────────────────────────────────────────────────────
 
 const StatusBadge = ({ t, status, type = 'rfq' }) => {
-  const cfg = getStatusConfig(t, status, type);
+  const { t: translate } = useTranslation();
+  const cfg = getStatusConfig(t ?? translate, status, type);
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.cls}`}>
       {cfg.dot && <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />}
@@ -119,6 +120,7 @@ const rfqApi = {
 
 // ── Create RFQ Form ────────────────────────────────────────────────────────────
 const CreateRFQForm = ({ onSuccess, onCancel }) => {
+  const { t: ct } = useTranslation();
   const [form, setForm] = useState({
     product_name: "", category: "", quantity: "", unit: "pcs",
     specifications: "", budget_min: "", budget_max: "",
@@ -165,23 +167,26 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
   const handleSubmit = async () => {
     const required = ["product_name", "quantity", "unit", "deadline"];
     const missing  = required.filter((f) => !form[f]);
-    if (missing.length) { setError(`Please fill in: ${missing.join(", ")}`); return; }
+    if (missing.length) {
+      const fieldLabels = missing.map((field) => ct(`rfq.fields.${field}`, field));
+      setError(ct("rfq.errors.required", { fields: fieldLabels.join(", ") }));
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
     try {
       await rfqApi.create(form);
-      setSuccess("RFQ submitted successfully! Sellers will be notified.");
+      setSuccess(ct("rfq.messages.rfq_submitted"));
       setTimeout(() => onSuccess?.(), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create RFQ");
+      setError(err.response?.data?.message || ct("rfq.errors.create_failed"));
     } finally {
       setSubmitting(false);
     }
   };
 
   const inputCls = "w-full border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
-  const { t: ct } = useTranslation(); // for CreateRFQForm
   const labelCls = "block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide";
 
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -206,7 +211,7 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
 
             <label className={labelCls}>{ct('rfq.form.category')}</label>
 
-            <input className={inputCls} placeholder="e.g. Building Materials" value={form.category} onChange={set("category")} />
+            <input className={inputCls} placeholder={ct("rfq.form.category_placeholder")} value={form.category} onChange={set("category")} />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
@@ -230,7 +235,7 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
 
             <label className={labelCls}>{ct('rfq.form.specifications')}</label>
 
-            <textarea className={inputCls + " resize-none"} rows={3} placeholder="Grade, size, brand preference, certifications…" value={form.specifications} onChange={set("specifications")} />
+            <textarea className={inputCls + " resize-none"} rows={3} placeholder={ct("rfq.form.specifications_placeholder")} value={form.specifications} onChange={set("specifications")} />
           </div>
         </div>
       </section>
@@ -272,14 +277,14 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
 
           <label className={labelCls}>{ct('rfq.form.notes')}</label>
 
-          <textarea className={inputCls + " resize-none"} rows={2} placeholder="Delivery requirements, payment terms, packaging…" value={form.notes} onChange={set("notes")} />
+          <textarea className={inputCls + " resize-none"} rows={2} placeholder={ct("rfq.form.notes_placeholder")} value={form.notes} onChange={set("notes")} />
         </div>
       </section>
 
       {/* Seller Targeting */}
       <section>
         <h3 className="text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <UserGroupIcon className="h-4 w-4 text-purple-500" /> Send To
+          <UserGroupIcon className="h-4 w-4 text-purple-500" /> {ct("rfq.form.send_to")}
         </h3>
         <div className="space-y-3">
           <label className="flex items-center gap-3 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 cursor-pointer">
@@ -352,7 +357,7 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
         {onCancel && (
           <button onClick={onCancel} className="px-5 py-2.5 text-sm border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-            Cancel
+            {ct("rfq.actions.cancel")}
           </button>
         )}
         <button
@@ -361,7 +366,7 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
           className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
           {submitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-          {submitting ? "Submitting…" : "Submit RFQ"}
+          {submitting ? ct("rfq.actions.submitting") : ct("rfq.actions.submit_rfq")}
         </button>
       </div>
     </div>
@@ -370,6 +375,7 @@ const CreateRFQForm = ({ onSuccess, onCancel }) => {
 
 // ── Quotation card (buyer view) ────────────────────────────────────────────────
 const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
 
@@ -381,7 +387,7 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
         : await rfqApi.rejectQuote(rfqId, quote.id);
       action === "accept" ? onAccepted?.() : onRejected?.();
     } catch (e) {
-      setError(e.response?.data?.message || `Failed to ${action} quote`);
+      setError(e.response?.data?.message || t("rfq.errors.submit_failed"));
     } finally {
       setLoading(false);
     }
@@ -412,23 +418,23 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
             )}
           </div>
         </div>
-        <StatusBadge t={useTranslation()} status={quote.status} type="quote" />
+        <StatusBadge status={quote.status} type="quote" />
 
       </div>
 
       {/* Price breakdown */}
       <div className="grid grid-cols-3 gap-3 mb-3 bg-gray-50 dark:bg-slate-900/40 rounded-xl p-3">
         <div>
-          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Unit Price</p>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t("rfq.quote.unit_price")}</p>
           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{fmtPrice(quote.unit_price)} <span className="text-xs font-normal">{quote.currency}</span></p>
         </div>
         <div>
-          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Total</p>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t("rfq.quote.total")}</p>
           <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">{fmtPrice(quote.total_price)} <span className="text-xs font-normal">{quote.currency}</span></p>
         </div>
         <div>
-          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Delivery</p>
-          <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{quote.delivery_days} day{quote.delivery_days !== 1 ? "s" : ""}</p>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t("rfq.quote.delivery")}</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{quote.delivery_days} {t("rfq.quote.days")}</p>
         </div>
       </div>
 
@@ -448,7 +454,7 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
             disabled={loading}
             className="flex-1 py-2 text-xs font-bold border border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-50 transition-colors"
           >
-            <XCircleIcon className="h-4 w-4 inline mr-1" /> Decline
+            <XCircleIcon className="h-4 w-4 inline mr-1" /> {t("rfq.actions.decline")}
           </button>
           <button
             onClick={() => act("accept")}
@@ -456,7 +462,7 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
             className="flex-1 py-2 text-xs font-bold bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors"
           >
             {loading ? <ArrowPathIcon className="h-4 w-4 inline animate-spin" /> : <CheckCircleIcon className="h-4 w-4 inline mr-1" />}
-            Accept Quote
+            {t("rfq.actions.accept_quote")}
           </button>
         </div>
       )}
@@ -471,6 +477,7 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected }) => {
 
 // ── RFQ Detail Modal (sent RFQs) ───────────────────────────────────────────────
 const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
+  const { t } = useTranslation();
   const [data, setData]       = useState(rfq);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
@@ -492,7 +499,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
       await rfqApi.close(rfq.id);
       onRefresh?.();
       onClose();
-    } catch (e) { setError(e.response?.data?.message || "Failed to close RFQ"); }
+    } catch (e) { setError(e.response?.data?.message || t("rfq.errors.close_failed")); }
     finally { setClosing(false); }
   };
 
@@ -502,7 +509,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
       await rfqApi.cancel(rfq.id);
       onRefresh?.();
       onClose();
-    } catch (e) { setError(e.response?.data?.message || "Failed to cancel RFQ"); }
+    } catch (e) { setError(e.response?.data?.message || t("rfq.errors.cancel_failed")); }
     finally { setClosing(false); }
   };
 
@@ -532,10 +539,10 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
             {/* RFQ Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Quantity",   value: `${data.quantity} ${data.unit}` },
-                { label: "Deadline",   value: new Date(data.deadline).toLocaleDateString() },
-                { label: "Quotes",     value: data.quotes_count ?? data.quotes?.length ?? 0 },
-                { label: "Created",    value: new Date(data.created_at).toLocaleDateString() },
+                { label: t("rfq.card.qty"),      value: `${data.quantity} ${data.unit}` },
+                { label: t("rfq.card.deadline"), value: new Date(data.deadline).toLocaleDateString() },
+                { label: t("rfq.card.quotes"),   value: data.quotes_count ?? data.quotes?.length ?? 0 },
+                { label: t("rfq.card.created"),  value: new Date(data.created_at).toLocaleDateString() },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-gray-50 dark:bg-slate-900/40 rounded-xl p-3">
                   <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{label}</p>
@@ -546,7 +553,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
 
             {data.specifications && (
               <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 border border-indigo-100 dark:border-indigo-800">
-                <p className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-1">Specifications</p>
+                <p className="text-xs font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-1">{t("rfq.form.specifications")}</p>
                 <p className="text-sm text-indigo-900 dark:text-indigo-200">{data.specifications}</p>
               </div>
             )}
@@ -556,19 +563,19 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
               <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl border-2 border-green-400 dark:border-green-600 p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <h3 className="font-bold text-green-800 dark:text-green-300">Accepted Quotation</h3>
+                  <h3 className="font-bold text-green-800 dark:text-green-300">{t("rfq.messages.accepted_quotation")}</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">Seller</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">{t("rfq.quote.seller")}</p>
                     <p className="text-sm font-bold text-green-900 dark:text-green-200">{data.accepted_quote.seller?.store_name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">Unit Price</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">{t("rfq.quote.unit_price")}</p>
                     <p className="text-sm font-bold text-green-900 dark:text-green-200">{fmtPrice(data.accepted_quote.unit_price)} {data.accepted_quote.currency}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">Total Value</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 font-semibold">{t("rfq.quote.total_value")}</p>
                     <p className="text-sm font-bold text-green-900 dark:text-green-200">{fmtPrice(data.accepted_quote.total_price)} {data.accepted_quote.currency}</p>
                   </div>
                 </div>
@@ -581,7 +588,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-slate-100 mb-3 flex items-center gap-2">
                   <DocumentDuplicateIcon className="h-5 w-5 text-indigo-500" />
-                  Received Quotations ({data.quotes.length})
+                  {t("rfq.messages.received_quotations", { count: data.quotes.length })}
                 </h3>
                 <div className="space-y-3">
                   {data.quotes.map((q) => (
@@ -600,8 +607,8 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
             {!loading && (!data.quotes || data.quotes.length === 0) && data.status === "open" && (
               <div className="text-center py-8 bg-gray-50 dark:bg-slate-900/40 rounded-2xl">
                 <ClockIcon className="h-10 w-10 mx-auto text-gray-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Waiting for quotations</p>
-                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Sellers are reviewing your RFQ</p>
+                <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">{t("rfq.empty.waiting.title")}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t("rfq.empty.waiting.sub")}</p>
               </div>
             )}
           </div>
@@ -615,7 +622,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
                   disabled={closing}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                 >
-                  <XCircleIcon className="h-4 w-4" /> Cancel RFQ
+                  <XCircleIcon className="h-4 w-4" /> {t("rfq.actions.cancel_rfq")}
                 </button>
               )}
               {data.status === "quoted" && (
@@ -624,7 +631,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
                   disabled={closing}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-50"
                 >
-                  Close Bidding
+                  {t("rfq.actions.close_bidding")}
                 </button>
               )}
             </div>
@@ -633,7 +640,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100"
             >
-              <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+              <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> {t("rfq.toolbar.refresh")}
             </button>
           </div>
         </div>
@@ -644,6 +651,7 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh }) => {
 
 // ── Submit Quote Modal (seller view) ──────────────────────────────────────────
 const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     unit_price: "", total_price: "", currency: "MMK",
     delivery_days: "", validity_days: "7", notes: "",
@@ -661,7 +669,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
 
   const handleSubmit = async () => {
     if (!form.unit_price || !form.delivery_days) {
-      setError("Unit price and delivery days are required.");
+      setError(t("rfq.errors.unit_price_required"));
       return;
     }
     setSubmitting(true); setError(null);
@@ -669,7 +677,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
       await rfqApi.submitQuote(rfq.id, form);
       onSuccess?.();
     } catch (e) {
-      setError(e.response?.data?.message || "Failed to submit quotation");
+      setError(e.response?.data?.message || t("rfq.errors.submit_quotation_failed"));
     } finally {
       setSubmitting(false);
     }
@@ -682,7 +690,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
           <div>
-            <h2 className="font-bold text-gray-900 dark:text-slate-100">Submit Quotation</h2>
+            <h2 className="font-bold text-gray-900 dark:text-slate-100">{t("rfq.modal.submit_quotation")}</h2>
             <p className="text-xs text-gray-400 dark:text-slate-500">{rfq.rfq_number} — {rfq.product_name}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300">
@@ -703,13 +711,13 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">
-                Unit Price <span className="text-red-500">*</span>
+                {t("rfq.quote.unit_price")} <span className="text-red-500">*</span>
               </label>
               <input type="number" min="0" step="0.01" className={inputCls} placeholder="0" value={form.unit_price} onChange={set("unit_price")} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">
-                Currency
+                {t("rfq.modal.currency")}
               </label>
               <select className={inputCls} value={form.currency} onChange={set("currency")}>
                 {["MMK", "USD", "THB", "CNY"].map((c) => <option key={c} value={c}>{c}</option>)}
@@ -719,7 +727,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
 
           <div>
             <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">
-              Total Price
+              {t("rfq.modal.total_price")}
             </label>
             <div className="relative">
               <input type="number" min="0" className={inputCls} placeholder="Auto-calculated" value={form.total_price} onChange={set("total_price")} />
@@ -734,27 +742,27 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">
-                Delivery (days) <span className="text-red-500">*</span>
+                {t("rfq.modal.delivery_days")} <span className="text-red-500">*</span>
               </label>
               <input type="number" min="1" className={inputCls} placeholder="7" value={form.delivery_days} onChange={set("delivery_days")} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">
-                Quote Valid (days)
+                {t("rfq.modal.quote_valid")}
               </label>
               <input type="number" min="1" className={inputCls} placeholder="7" value={form.validity_days} onChange={set("validity_days")} />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">Notes</label>
-            <textarea className={inputCls + " resize-none"} rows={3} placeholder="Payment terms, stock availability, special conditions…" value={form.notes} onChange={set("notes")} />
+            <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1 uppercase tracking-wide">{t("rfq.quote.notes")}</label>
+            <textarea className={inputCls + " resize-none"} rows={3} placeholder={t("rfq.modal.notes_placeholder")} value={form.notes} onChange={set("notes")} />
           </div>
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-xl text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-            Cancel
+            {t("rfq.actions.cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -762,7 +770,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
             className="flex items-center gap-2 px-5 py-2 text-sm font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50"
           >
             {submitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-            {submitting ? "Submitting…" : "Submit Quote"}
+            {submitting ? t("rfq.actions.submitting") : t("rfq.actions.submit_quotation")}
           </button>
         </div>
       </div>
@@ -772,6 +780,7 @@ const SubmitQuoteModal = ({ rfq, onClose, onSuccess }) => {
 
 // ── RFQ Card (list item) ───────────────────────────────────────────────────────
 const RFQCard = ({ rfq, onClick, role = "buyer" }) => {
+  const { t } = useTranslation();
   const hasNewQuotes = rfq.quotes_count > 0 && rfq.status === "quoted";
   return (
     <div
@@ -798,31 +807,31 @@ const RFQCard = ({ rfq, onClick, role = "buyer" }) => {
 
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="bg-gray-50 dark:bg-slate-900/40 rounded-lg p-2 text-center">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">QTY</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">{t("rfq.card.qty")}</p>
           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{rfq.quantity} {rfq.unit}</p>
         </div>
         <div className="bg-gray-50 dark:bg-slate-900/40 rounded-lg p-2 text-center">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">DEADLINE</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">{t("rfq.card.deadline")}</p>
           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{new Date(rfq.deadline).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</p>
         </div>
         <div className="bg-gray-50 dark:bg-slate-900/40 rounded-lg p-2 text-center">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">{role === "buyer" ? "QUOTES" : "MY QUOTE"}</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">{role === "buyer" ? t("rfq.card.quotes") : t("rfq.card.my_quote")}</p>
           <p className="text-sm font-bold text-gray-900 dark:text-slate-100">
             {role === "buyer"
               ? rfq.quotes_count ?? rfq.quotes?.length ?? 0
-              : rfq.my_quote ? "Submitted" : "Pending"}
+              : rfq.my_quote ? t("rfq.submitted") : t("rfq.status.quote.pending.label")}
           </p>
         </div>
       </div>
 
       {role === "seller" && rfq.buyer && (
         <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
-          <UserGroupIcon className="h-3.5 w-3.5" /> From: {rfq.buyer.name}
+          <UserGroupIcon className="h-3.5 w-3.5" /> {t("rfq.from")}: {rfq.buyer.name}
         </div>
       )}
 
       <div className="flex items-center justify-between mt-2 text-xs text-gray-400 dark:text-slate-500">
-        <span>Created {new Date(rfq.created_at).toLocaleDateString()}</span>
+        <span>{t("rfq.card.created")} {new Date(rfq.created_at).toLocaleDateString()}</span>
         <ChevronRightIcon className="h-4 w-4 group-hover:text-indigo-500 transition-colors" />
       </div>
     </div>
@@ -858,7 +867,7 @@ const RFQManager = () => {
         setSentRFQs([]);
 
       } else {
-        setError(e.response?.data?.message || "Failed to load RFQs");
+        setError(e.response?.data?.message || t("rfq.errors.load_failed"));
       }
     } finally {
       setLoading(false);
@@ -875,7 +884,7 @@ const RFQManager = () => {
         setReceivedRFQs([]);
 
       } else {
-        setError(e.response?.data?.message || "Failed to load received RFQs");
+        setError(e.response?.data?.message || t("rfq.errors.load_received_failed"));
       }
     } finally {
       setLoading(false);
@@ -943,14 +952,14 @@ const RFQManager = () => {
         {activeTab !== "create" && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {(activeTab === "sent" ? [
-              { label: "Total RFQs",    value: sentStats.total.toString(),    color: "text-gray-700 dark:text-slate-300"   },
-              { label: "Open",          value: sentStats.open.toString(),     color: "text-blue-600 dark:text-blue-400"    },
-              { label: "Quotes In",     value: sentStats.quoted.toString(),   color: "text-purple-600 dark:text-purple-400"},
-              { label: "Accepted",      value: sentStats.accepted.toString(), color: "text-green-600 dark:text-green-400"  },
+              { label: t("rfq.stats.total_rfqs"), value: sentStats.total.toString(),    color: "text-gray-700 dark:text-slate-300"   },
+              { label: t("rfq.stats.open"),       value: sentStats.open.toString(),     color: "text-blue-600 dark:text-blue-400"    },
+              { label: t("rfq.stats.quotes_in"),  value: sentStats.quoted.toString(),   color: "text-purple-600 dark:text-purple-400"},
+              { label: t("rfq.stats.accepted"),   value: sentStats.accepted.toString(), color: "text-green-600 dark:text-green-400"  },
             ] : [
-              { label: "Received",      value: receivedStats.total.toString(), color: "text-gray-700 dark:text-slate-300"  },
-              { label: "Awaiting",      value: receivedStats.open.toString(),  color: "text-blue-600 dark:text-blue-400"   },
-              { label: "Responded",     value: receivedStats.responded.toString(), color: "text-green-600 dark:text-green-400" },
+              { label: t("rfq.stats.received"),  value: receivedStats.total.toString(), color: "text-gray-700 dark:text-slate-300"  },
+              { label: t("rfq.stats.awaiting"),  value: receivedStats.open.toString(),  color: "text-blue-600 dark:text-blue-400"   },
+              { label: t("rfq.stats.responded"), value: receivedStats.responded.toString(), color: "text-green-600 dark:text-green-400" },
               { label: "",              value: "", color: "" },
             ]).map(({ label, value, color }, i) => (
               <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 border border-gray-100 dark:border-slate-700">
@@ -990,7 +999,7 @@ const RFQManager = () => {
             <div className="p-6">
               <CreateRFQForm
                 onSuccess={() => {
-                  setSuccess("RFQ created and sent to sellers!");
+                  setSuccess(t("rfq.messages.rfq_submitted"));
                   setActiveTab("sent");
                   fetchSent();
                 }}
@@ -1017,22 +1026,22 @@ const RFQManager = () => {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
-        <option value="all">{t('rfq.toolbar.all_statuses') || 'All Statuses'}</option>
-          {Object.entries(t('rfq.status', { returnObjects: true }) || {}).map(([v, label]) => (
-            <option key={v} value={v}>{label}</option>
+        <option value="all">{t('rfq.toolbar.all_statuses')}</option>
+          {Object.entries(t('rfq.status.rfq', { returnObjects: true }) || {}).map(([v, config]) => (
+            <option key={v} value={v}>{config?.label || v}</option>
           ))}
                 </select>
                 <button
                   onClick={activeTab === "sent" ? fetchSent : fetchReceived}
                   className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-xl text-sm text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                 >
-                  <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+                  <ArrowPathIcon className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> {t("rfq.toolbar.refresh")}
                 </button>
           <button
             onClick={() => setActiveTab("create")}
             className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 ml-auto"
           >
-            <PlusIcon className="h-4 w-4" /> {t('rfq.toolbar.new_rfq') || 'New RFQ'}
+            <PlusIcon className="h-4 w-4" /> {t('rfq.toolbar.new_rfq')}
           </button>
               </div>
 
@@ -1096,12 +1105,12 @@ const RFQManager = () => {
                                 onClick={(e) => { e.stopPropagation(); setQuoteTarget(rfq); }}
                                 className="w-full py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors"
                               >
-                                <PaperAirplaneIcon className="h-4 w-4" /> {t('rfq.actions.submit_quotation') || 'Submit Quotation'}
+                                <PaperAirplaneIcon className="h-4 w-4" /> {t('rfq.actions.submit_quotation')}
                               </button>
                           )}
                             {rfq.my_quote && (
                               <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-xs font-bold text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                                <CheckIcon className="h-4 w-4" /> {t('rfq_page.submitted') || 'Quotation submitted'}
+                                <CheckIcon className="h-4 w-4" /> {t('rfq.submitted')}
                               </div>
                             )}
                         </div>
@@ -1131,7 +1140,7 @@ const RFQManager = () => {
           onClose={() => setQuoteTarget(null)}
           onSuccess={() => {
             setQuoteTarget(null);
-            setSuccess("Quotation submitted successfully!");
+            setSuccess(t("rfq.messages.quotation_submitted"));
             fetchReceived();
           }}
         />

@@ -66,6 +66,30 @@ const statusLabel = (s) =>
   s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "—";
 
 // ─── Step Progress Bar (fixed: removed useSEO) ────────────────────────────────
+const FALLBACK_STATUS_LABELS = {
+  paid: "Paid",
+  unpaid: "Unpaid",
+  refunded: "Refunded",
+  failed: "Failed",
+};
+
+const translatedStatusLabel = (t, status, type = "order") => {
+  if (!status) return "—";
+
+  const keyMap = {
+    order: `buyer_dashboard.order_status.${status}`,
+    delivery: `buyer_dashboard.delivery_status.${status}`,
+    payment_method: `buyer_dashboard.payment_methods.${status}`,
+    payment_status: `order_tracking.payment_status.${status}`,
+  };
+
+  const fallback =
+    FALLBACK_STATUS_LABELS[status] ||
+    statusLabel(status);
+
+  return t(keyMap[type], fallback);
+};
+
 const StepBar = ({ steps, current, t }) => {
   const cancelled = current === "cancelled" || current === "refunded" || current === "failed";
   const activeIdx = cancelled ? -1 : steps.findIndex((s) => s.key === current);
@@ -102,9 +126,9 @@ const StepBar = ({ steps, current, t }) => {
                 cancelled
                   ? "bg-red-50 border-red-200 opacity-40"
                   : done
-                  ? "bg-green-500 border-green-500 shadow-md shadow-green-200"
+                  ? "bg-green-500 border-green-500"
                   : active
-                  ? "bg-white border-green-500 shadow-lg shadow-green-100 scale-110"
+                  ? "bg-white border-green-500 scale-110"
                   : "bg-gray-50 border-gray-200 opacity-50"
               }`}
             >
@@ -237,7 +261,7 @@ const OrderTracking = () => {
                     disabled={loading}
                     className="px-6 py-3 bg-green-600 dark:bg-green-700 text-white rounded-xl text-sm font-semibold
                       hover:bg-green-700 dark:hover:bg-green-800 disabled:opacity-60 disabled:cursor-not-allowed
-                      transition-all duration-200 shadow-sm hover:shadow-green-200 hover:shadow-md flex items-center gap-2 whitespace-nowrap"
+                      transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
                   >
                     {loading ? (
                       <>
@@ -298,10 +322,10 @@ const OrderTracking = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                    {statusLabel(order.status)}
+                    {translatedStatusLabel(t, order.status, "order")}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.payment_status] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                    {statusLabel(order.payment_status)}
+                    {translatedStatusLabel(t, order.payment_status, "payment_status")}
                   </span>
                 </div>
               </div>
@@ -337,8 +361,8 @@ const OrderTracking = () => {
                 <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded-xl">
                   <span className="text-2xl">❌</span>
                   <div>
-                    <p className="font-semibold text-red-700 dark:text-red-300">{statusLabel(order.status)}</p>
-                    <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{t("order_tracking.order_cancelled_msg", { status: statusLabel(order.status) })}</p>
+                    <p className="font-semibold text-red-700 dark:text-red-300">{translatedStatusLabel(t, order.status, "order")}</p>
+                    <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{t("order_tracking.order_cancelled_msg", { status: translatedStatusLabel(t, order.status, "order") })}</p>
                   </div>
                 </div>
               ) : (
@@ -369,7 +393,7 @@ const OrderTracking = () => {
                   <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded-xl">
                     <span className="text-2xl">❌</span>
                     <div>
-                      <p className="font-semibold text-red-700 dark:text-red-300">{statusLabel(order.delivery.status)}</p>
+                      <p className="font-semibold text-red-700 dark:text-red-300">{translatedStatusLabel(t, order.delivery.status, "delivery")}</p>
                       {order.delivery.failure_reason && (
                         <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{order.delivery.failure_reason}</p>
                       )}
@@ -415,7 +439,7 @@ const OrderTracking = () => {
                             <div className="w-2 h-2 rounded-full bg-green-500" />
                           </div>
                           <div className="pb-5">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-white">{statusLabel(upd.status)}</p>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-white">{translatedStatusLabel(t, upd.status, "delivery")}</p>
                             {upd.location && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {upd.location}</p>}
                             {upd.notes && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{upd.notes}</p>}
                             <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">{fmtDate(upd.created_at)}</p>
@@ -487,7 +511,7 @@ const OrderTracking = () => {
                   </div>
                   <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 pt-1">
                     <span>{t("order_tracking.payment_method_label")}</span>
-                    <span className="capitalize font-medium text-gray-600 dark:text-gray-400">{statusLabel(order.payment_method)}</span>
+                    <span className="capitalize font-medium text-gray-600 dark:text-gray-400">{translatedStatusLabel(t, order.payment_method, "payment_method")}</span>
                   </div>
                 </div>
               </div>

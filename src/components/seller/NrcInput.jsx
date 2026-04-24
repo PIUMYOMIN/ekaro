@@ -130,8 +130,17 @@ export default function NrcInput({ value = {}, onChange, error = {} }) {
             {isMM ? 'အမျိုးအစား' : 'ID Type'}
             <span className="text-red-500 ml-0.5">*</span>
           </label>
-          <select value={value.nrc_type || ''} onChange={set('nrc_type')} className={SELECT_CLS}>
-            <option value="">{isMM ? 'ရွေးချယ်ပါ' : 'Select'}</option>
+          <select
+            value={value.nrc_type || ''}
+            onChange={set('nrc_type')}
+            disabled={!value.nrc_division}
+            className={SELECT_CLS + (!value.nrc_division ? ' opacity-50 cursor-not-allowed' : '')}
+          >
+            <option value="">
+              {!value.nrc_division
+                ? (isMM ? 'တိုင်းဒေသကြီးအရင်ရွေးပါ' : 'Select division first')
+                : (isMM ? 'ရွေးချယ်ပါ' : 'Select')}
+            </option>
             {NRC_TYPES.map(t => (
               <option key={t.value} value={t.value}>
                 {t.en} ({t.mm}) — {t.label}

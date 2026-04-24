@@ -260,6 +260,7 @@ const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [orders, setOrders] = useState([]);
   const [mainSearchTerm, setMainSearchTerm] = useState("");
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   // Loading states
   const [isDashboardLoading, setIsDashboardLoading] = useState(false);
@@ -277,41 +278,41 @@ const AdminDashboard = () => {
     if (user && user.type !== "admin") { navigate("/"); }
   }, [navigate, user]);
 
-  // Dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsDashboardLoading(true);
-      setDashboardError(null);
-      try {
-        const response = await api.get("/admin/stats");
-        setDashboardData(response.data.data || response.data);
-      } catch (error) {
-        const isNetworkError = !error.response;
-        const friendlyError = isNetworkError
-          ? new Error("Cannot reach the server. Check your internet connection and that VITE_API_URL points to the live API, not localhost.")
-          : error;
-        setDashboardError(friendlyError);
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsDashboardLoading(false);
-      }
-    };
-    fetchDashboardData();
+  // Dashboard data fetch (silent = background refresh, no loading spinner)
+  const fetchDashboardData = React.useCallback(async (silent = false) => {
+    if (!silent) setIsDashboardLoading(true);
+    setDashboardError(null);
+    try {
+      const response = await api.get("/admin/stats");
+      setDashboardData(response.data.data || response.data);
+      setLastUpdated(new Date());
+    } catch (error) {
+      const isNetworkError = !error.response;
+      const friendlyError = isNetworkError
+        ? new Error("Cannot reach the server. Check your internet connection and that VITE_API_URL points to the live API, not localhost.")
+        : error;
+      setDashboardError(friendlyError);
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      if (!silent) setIsDashboardLoading(false);
+    }
   }, []);
+
+  // Initial load
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+
+  // Background polling — every 30 s, only while dashboard tab is visible
+  useEffect(() => {
+    if (activeTab !== 0) return;
+    const id = setInterval(() => fetchDashboardData(true), 30_000);
+    return () => clearInterval(id);
+  }, [activeTab, fetchDashboardData]);
 
   // Refresh handler (only for components that still need it)
   const handleRefresh = async () => {
     switch (activeTab) {
       case 0:
-        setIsDashboardLoading(true);
-        try {
-          const response = await api.get("/admin");
-          setDashboardData(response.data);
-        } catch (error) {
-          setDashboardError(error);
-        } finally {
-          setIsDashboardLoading(false);
-        }
+        fetchDashboardData();
         break;
       case 6:
         setIsOrdersLoading(true);
@@ -553,13 +554,20 @@ const AdminDashboard = () => {
                   onChange={(e) => setMainSearchTerm(e.target.value)}
                 />
               </div>
-              <button
-                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm dark:shadow-slate-900/50 text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                onClick={handleRefresh}
-              >
-                <ArrowPathIcon className="h-4 w-4 mr-2" />
-                {t("refresh")}
-              </button>
+              <div className="ml-3 flex items-center gap-2 flex-shrink-0">
+                {activeTab === 0 && lastUpdated && (
+                  <span className="hidden sm:block text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">
+                    Updated {lastUpdated.toLocaleTimeString()}
+                  </span>
+                )}
+                <button
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm dark:shadow-slate-900/50 text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  onClick={handleRefresh}
+                >
+                  <ArrowPathIcon className="h-4 w-4 mr-2" />
+                  {t("refresh")}
+                </button>
+              </div>
             </div>
           </div>
 

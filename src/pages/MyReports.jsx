@@ -292,16 +292,23 @@ export default function MyReports() {
   const [loading,  setLoading]  = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [filter,   setFilter]   = useState('all');
+  const [meta,     setMeta]     = useState({ current_page: 1, last_page: 1 });
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page = 1) => {
+    setLoading(true);
     try {
-      const res = await api.get('/reports');
-      setReports(res.data.data?.data || res.data.data || []);
+      const res = await api.get('/reports', { params: { page } });
+      const paginated = res.data.data;
+      setReports(paginated?.data || paginated || []);
+      setMeta({
+        current_page: paginated?.current_page || 1,
+        last_page:    paginated?.last_page    || 1,
+      });
     } catch { /* handled by 401 interceptor */ }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(1); }, [load]);
 
   const filtered = filter === 'all'
     ? reports
@@ -313,6 +320,7 @@ export default function MyReports() {
     in_review:reports.filter(r => r.status === 'in_review').length,
     waiting:  reports.filter(r => r.status === 'waiting').length,
     resolved: reports.filter(r => ['resolved','closed'].includes(r.status)).length,
+    rejected: reports.filter(r => r.status === 'rejected').length,
   };
 
   // ── Detail view ──
@@ -356,6 +364,7 @@ export default function MyReports() {
             { key: 'in_review', label: 'In Review' },
             { key: 'waiting',   label: 'Waiting' },
             { key: 'resolved',  label: 'Resolved' },
+            { key: 'rejected',  label: 'Rejected' },
           ].map(f => (
             <button key={f.key}
               onClick={() => setFilter(f.key)}
@@ -399,6 +408,29 @@ export default function MyReports() {
               <TicketCard key={r.id} report={r}
                 onClick={() => navigate(`/my-reports/${r.ticket_id}`)} />
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {meta.last_page > 1 && (
+          <div className="flex justify-center gap-2 pt-3">
+            <button
+              onClick={() => load(meta.current_page - 1)}
+              disabled={meta.current_page <= 1 || loading}
+              className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            >
+              ← Prev
+            </button>
+            <span className="px-3 py-1.5 text-sm text-gray-500 dark:text-slate-400">
+              Page {meta.current_page} of {meta.last_page}
+            </span>
+            <button
+              onClick={() => load(meta.current_page + 1)}
+              disabled={meta.current_page >= meta.last_page || loading}
+              className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            >
+              Next →
+            </button>
           </div>
         )}
 

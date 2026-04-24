@@ -93,7 +93,7 @@ function TicketDetailPanel({ ticketId, onClose, onUpdated }) {
       const res = await api.get(`/admin/reports/${ticketId}`);
       const r = res.data.data;
       setReport(r);
-      setFields({ status: r.status, priority: r.priority, resolution: r.resolution || '' });
+      setFields({ status: r.status, priority: r.priority, resolution: r.resolution || '', admin_notes: r.admin_notes || '' });
     } catch { } finally { setLoad(false); }
   }, [ticketId]);
 
@@ -123,6 +123,7 @@ function TicketDetailPanel({ ticketId, onClose, onUpdated }) {
 
   const handleAssignSelf = async () => {
     await api.patch(`/admin/reports/${ticketId}`, { assigned_to: user.id, status: 'in_review' });
+    setFields(f => ({ ...f, status: 'in_review' }));
     load(); onUpdated?.();
   };
 
@@ -149,7 +150,11 @@ function TicketDetailPanel({ ticketId, onClose, onUpdated }) {
           <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mt-1">{report.subject}</h2>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
             {CATEGORY_LABELS[report.category]} · {fmtDate(report.created_at)}
-            {report.reporter && ` · ${report.reporter.name} (${report.reporter.email})`}
+            {report.reporter
+              ? ` · ${report.reporter.name} (${report.reporter.email})`
+              : report.guest_name
+                ? ` · ${report.guest_name} (${report.guest_email || 'no email'}) [guest]`
+                : ''}
           </p>
         </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 text-xl font-bold px-2">✕</button>
@@ -217,6 +222,13 @@ function TicketDetailPanel({ ticketId, onClose, onUpdated }) {
           <input value={fields.resolution} onChange={e => setFields(f => ({ ...f, resolution: e.target.value }))}
             placeholder="Brief resolution summary…"
             className="w-full text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 focus:outline-none" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Admin Notes (internal only)</label>
+          <textarea value={fields.admin_notes} onChange={e => setFields(f => ({ ...f, admin_notes: e.target.value }))}
+            rows={2} placeholder="Internal notes for admin team…"
+            className="w-full text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 focus:outline-none resize-none" />
         </div>
 
         <div className="flex gap-2">
@@ -429,7 +441,11 @@ export default function ReportManagement() {
                         <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 truncate">{r.subject}</p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-slate-400">
                           <span>{CATEGORY_LABELS[r.category]}</span>
-                          {r.reporter && <><span>·</span><span>{r.reporter.name}</span></>}
+                          {r.reporter
+                            ? <><span>·</span><span>{r.reporter.name}</span></>
+                            : r.guest_name
+                              ? <><span>·</span><span>{r.guest_name} [guest]</span></>
+                              : null}
                           <span>·</span>
                           <span>{fmtRelative(r.created_at)}</span>
                           {r.comments?.length > 0 && (

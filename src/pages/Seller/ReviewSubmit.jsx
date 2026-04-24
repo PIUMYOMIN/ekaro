@@ -1,6 +1,7 @@
 // pages/Seller/ReviewSubmit.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     CheckCircleIcon,
     BuildingStorefrontIcon,
@@ -14,22 +15,8 @@ import {
 import OnboardingLayout from '../../components/OnboardingLayout';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
-const TERMS = [
-    {
-        id: 'terms-accuracy',
-        label: 'I confirm that all information provided is accurate and truthful.',
-    },
-    {
-        id: 'terms-tos',
-        label: "I agree to comply with Pyonea's terms of service and seller policies.",
-    },
-    {
-        id: 'terms-suspension',
-        label: 'I understand that providing false information may result in account suspension.',
-    },
-];
-
 const ReviewSubmit = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { formData, saveStep, isLoading } = useOnboardingState();
 
@@ -37,30 +24,45 @@ const ReviewSubmit = () => {
     const [success, setSuccess] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
+    const TERMS = [
+        { id: 'terms-accuracy',   label: t('seller_onboarding.reviewSubmit.term_0') },
+        { id: 'terms-tos',        label: t('seller_onboarding.reviewSubmit.term_1') },
+        { id: 'terms-suspension', label: t('seller_onboarding.reviewSubmit.term_2') },
+    ];
+
+    const NEXT_STEPS = [
+        t('seller_onboarding.reviewSubmit.next_0'),
+        t('seller_onboarding.reviewSubmit.next_1'),
+        t('seller_onboarding.reviewSubmit.next_2'),
+        t('seller_onboarding.reviewSubmit.next_3'),
+    ];
+
     const [termsChecked, setTermsChecked] = useState(
-        () => Object.fromEntries(TERMS.map(t => [t.id, false]))
+        () => Object.fromEntries(TERMS.map(term => [term.id, false]))
     );
     const allTermsAccepted = Object.values(termsChecked).every(Boolean);
 
     const toggleTerm = (id) =>
         setTermsChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
-    const getSafeValue = (obj, path, defaultValue = 'Not provided') => {
-        if (!obj) return defaultValue;
+    const notProvided = t('seller_onboarding.reviewSubmit.not_provided');
+
+    const getSafeValue = (obj, path) => {
+        if (!obj) return notProvided;
         const keys = path.split('.');
         let result = obj;
         for (const key of keys) {
-            if (result === undefined || result === null) return defaultValue;
+            if (result === undefined || result === null) return notProvided;
             result = result[key];
         }
         return result === '' || result === null || result === undefined
-            ? defaultValue
+            ? notProvided
             : result;
     };
 
-    const addressData         = formData.address          || {};
-    const storeBasicData      = formData.store_basic       || {};
-    const businessDetailsData = formData.business_details  || {};
+    const addressData         = formData.address         || {};
+    const storeBasicData      = formData.store_basic      || {};
+    const businessDetailsData = formData.business_details || {};
 
     const docsSubmitted =
         formData.documents?.documents_submitted ?? formData.documents_submitted;
@@ -69,16 +71,12 @@ const ReviewSubmit = () => {
         setError('');
 
         if (!allTermsAccepted) {
-            setError('Please read and accept all Terms & Conditions before submitting.');
+            setError(t('seller_onboarding.reviewSubmit.error_terms'));
             return;
         }
 
         if (docsSubmitted === false) {
-            setError(
-                'Your documents have not been submitted yet. ' +
-                'Please go back to the Documents step, upload all required documents, ' +
-                'and click "Continue" to mark them as complete.'
-            );
+            setError(t('seller_onboarding.reviewSubmit.error_docs'));
             return;
         }
 
@@ -98,9 +96,9 @@ const ReviewSubmit = () => {
             }, 3000);
         } else {
             if (Array.isArray(result.errors) && result.errors.length > 0) {
-                setError('Please complete the following before submitting: ' + result.errors.join(', '));
+                setError(t('seller_onboarding.reviewSubmit.error_complete') + ' ' + result.errors.join(', '));
             } else {
-                setError(result.message || 'Failed to submit onboarding. Please check all steps are complete.');
+                setError(result.message || t('seller_onboarding.reviewSubmit.error_save'));
             }
         }
 
@@ -117,12 +115,16 @@ const ReviewSubmit = () => {
                     <div className="mx-auto h-20 w-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
                         <CheckCircleIcon className="h-10 w-10 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Congratulations!</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        {t('seller_onboarding.reviewSubmit.success_title')}
+                    </h2>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
-                        Your seller profile has been submitted successfully and is now under review.
+                        {t('seller_onboarding.reviewSubmit.success_desc')}
                     </p>
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">Redirecting to seller dashboard...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        {t('seller_onboarding.reviewSubmit.redirecting')}
+                    </p>
                 </div>
             </div>
         );
@@ -136,11 +138,13 @@ const ReviewSubmit = () => {
     // ── Main render ──────────────────────────────────────────────────────────
     return (
         <OnboardingLayout
-            title="Review & Submit"
-            description="Review your information before submitting for verification"
+            title={t('seller_onboarding.reviewSubmit.title')}
+            description={t('seller_onboarding.reviewSubmit.description')}
             onBack={() => navigate('/seller/onboarding/documents')}
             onNext={handleSubmit}
-            nextLabel="Submit Application"
+            nextLabel={submitting
+                ? t('seller_onboarding.reviewSubmit.saving')
+                : t('seller_onboarding.reviewSubmit.submit')}
             nextDisabled={submitting || isLoading || !allTermsAccepted}
             loading={submitting}
             showFooter={true}
@@ -164,32 +168,36 @@ const ReviewSubmit = () => {
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center space-x-3">
                                 <BuildingStorefrontIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Store Information</h3>
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">
+                                    {t('seller_onboarding.reviewSubmit.store_info')}
+                                </h3>
                             </div>
-                            <button onClick={() => handleEditSection('store-basic')} className={editBtnClass}>Edit</button>
+                            <button onClick={() => handleEditSection('store-basic')} className={editBtnClass}>
+                                {t('seller_onboarding.reviewSubmit.edit')}
+                            </button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div>
-                                <p className={labelClass}>Store Name</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.store_name')}</p>
                                 <p className={`${valueClass} truncate`}>{getSafeValue(storeBasicData, 'store_name')}</p>
                             </div>
                             <div>
-                                <p className={labelClass}>Business Type</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.business_type')}</p>
                                 <p className={`${valueClass} truncate`}>{getSafeValue(storeBasicData, 'business_type_slug')}</p>
                             </div>
                             <div className="min-w-0">
-                                <p className={labelClass}>Contact Email</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.contact_email')}</p>
                                 <p className={`${valueClass} truncate`} title={getSafeValue(storeBasicData, 'contact_email')}>
                                     {getSafeValue(storeBasicData, 'contact_email')}
                                 </p>
                             </div>
                             <div>
-                                <p className={labelClass}>Contact Phone</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.contact_phone')}</p>
                                 <p className={`${valueClass} truncate`}>{getSafeValue(storeBasicData, 'contact_phone')}</p>
                             </div>
-                            {getSafeValue(storeBasicData, 'description', '') !== 'Not provided' && (
+                            {getSafeValue(storeBasicData, 'description') !== notProvided && (
                                 <div className="sm:col-span-2">
-                                    <p className={labelClass}>Description</p>
+                                    <p className={labelClass}>{t('seller_onboarding.reviewSubmit.field_description')}</p>
                                     <p className={valueClass}>{getSafeValue(storeBasicData, 'description')}</p>
                                 </div>
                             )}
@@ -205,32 +213,36 @@ const ReviewSubmit = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center space-x-3">
                                     <DocumentTextIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                                    <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Business Details</h3>
+                                    <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">
+                                        {t('seller_onboarding.reviewSubmit.business_details')}
+                                    </h3>
                                 </div>
-                                <button onClick={() => handleEditSection('business-details')} className={editBtnClass}>Edit</button>
+                                <button onClick={() => handleEditSection('business-details')} className={editBtnClass}>
+                                    {t('seller_onboarding.reviewSubmit.edit')}
+                                </button>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 {businessDetailsData.business_registration_number && (
                                     <div>
-                                        <p className={labelClass}>Registration Number</p>
+                                        <p className={labelClass}>{t('seller_onboarding.reviewSubmit.reg_number')}</p>
                                         <p className={`${valueClass} truncate`}>{businessDetailsData.business_registration_number}</p>
                                     </div>
                                 )}
                                 {businessDetailsData.tax_id && (
                                     <div>
-                                        <p className={labelClass}>Tax ID</p>
+                                        <p className={labelClass}>{t('seller_onboarding.reviewSubmit.tax_id')}</p>
                                         <p className={`${valueClass} truncate`}>{businessDetailsData.tax_id}</p>
                                     </div>
                                 )}
                                 {businessDetailsData.website && (
                                     <div>
-                                        <p className={labelClass}>Website</p>
+                                        <p className={labelClass}>{t('seller_onboarding.reviewSubmit.website')}</p>
                                         <p className={`${valueClass} truncate`}>{businessDetailsData.website}</p>
                                     </div>
                                 )}
                                 {businessDetailsData.account_number && (
                                     <div>
-                                        <p className={labelClass}>Account Number</p>
+                                        <p className={labelClass}>{t('seller_onboarding.reviewSubmit.account_number')}</p>
                                         <p className={`${valueClass} truncate`}>{businessDetailsData.account_number}</p>
                                     </div>
                                 )}
@@ -243,36 +255,40 @@ const ReviewSubmit = () => {
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center space-x-3">
                                 <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400 flex-shrink-0" />
-                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Address Information</h3>
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">
+                                    {t('seller_onboarding.reviewSubmit.address_info')}
+                                </h3>
                             </div>
-                            <button onClick={() => handleEditSection('address')} className={editBtnClass}>Edit</button>
+                            <button onClick={() => handleEditSection('address')} className={editBtnClass}>
+                                {t('seller_onboarding.reviewSubmit.edit')}
+                            </button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                             <div className="sm:col-span-2">
-                                <p className={labelClass}>Address</p>
-                                <p className={valueClass}>{addressData.address || 'Not provided'}</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.address')}</p>
+                                <p className={valueClass}>{addressData.address || notProvided}</p>
                             </div>
                             <div>
-                                <p className={labelClass}>City</p>
-                                <p className={`${valueClass} truncate`}>{addressData.city || 'Not provided'}</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.city')}</p>
+                                <p className={`${valueClass} truncate`}>{addressData.city || notProvided}</p>
                             </div>
                             <div>
-                                <p className={labelClass}>State / Region</p>
-                                <p className={`${valueClass} truncate`}>{addressData.state || 'Not provided'}</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.state_region')}</p>
+                                <p className={`${valueClass} truncate`}>{addressData.state || notProvided}</p>
                             </div>
                             <div>
-                                <p className={labelClass}>Country</p>
-                                <p className={`${valueClass} truncate`}>{addressData.country || 'Not provided'}</p>
+                                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.country')}</p>
+                                <p className={`${valueClass} truncate`}>{addressData.country || notProvided}</p>
                             </div>
                             {addressData.postal_code && (
                                 <div>
-                                    <p className={labelClass}>Postal Code</p>
+                                    <p className={labelClass}>{t('seller_onboarding.reviewSubmit.postal_code')}</p>
                                     <p className={valueClass}>{addressData.postal_code}</p>
                                 </div>
                             )}
                             {addressData.location && (
                                 <div>
-                                    <p className={labelClass}>Location</p>
+                                    <p className={labelClass}>{t('seller_onboarding.reviewSubmit.location')}</p>
                                     <p className={valueClass}>{addressData.location}</p>
                                 </div>
                             )}
@@ -284,38 +300,46 @@ const ReviewSubmit = () => {
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center space-x-3">
                                 <DocumentIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Documents</h3>
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">
+                                    {t('seller_onboarding.reviewSubmit.documents')}
+                                </h3>
                             </div>
-                            <button onClick={() => handleEditSection('documents')} className={editBtnClass}>Edit</button>
+                            <button onClick={() => handleEditSection('documents')} className={editBtnClass}>
+                                {t('seller_onboarding.reviewSubmit.edit')}
+                            </button>
                         </div>
 
                         {docsSubmitted ? (
                             <div className="flex flex-wrap items-center gap-3">
                                 <ShieldCheckIcon className="h-8 w-8 text-green-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">Documents submitted for review</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        {t('seller_onboarding.reviewSubmit.docs_submitted')}
+                                    </p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                        Your documents have been uploaded and are ready for verification
+                                        {t('seller_onboarding.reviewSubmit.docs_uploaded_desc')}
                                     </p>
                                 </div>
                                 <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm font-medium whitespace-nowrap">
-                                    ✓ Submitted
+                                    {t('seller_onboarding.reviewSubmit.docs_submitted_badge')}
                                 </span>
                             </div>
                         ) : (
                             <div className="flex flex-wrap items-center gap-3">
                                 <ExclamationCircleIcon className="h-8 w-8 text-amber-500 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-700 dark:text-gray-300">Documents not yet submitted</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        {t('seller_onboarding.reviewSubmit.docs_not_submitted')}
+                                    </p>
                                     <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
-                                        Please go back and complete the Documents step before submitting.
+                                        {t('seller_onboarding.reviewSubmit.docs_go_back')}
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => handleEditSection('documents')}
                                     className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 rounded-full text-sm font-medium hover:bg-amber-200 dark:hover:bg-amber-900/50 whitespace-nowrap"
                                 >
-                                    Complete →
+                                    {t('seller_onboarding.reviewSubmit.docs_complete')}
                                 </button>
                             </div>
                         )}
@@ -326,7 +350,7 @@ const ReviewSubmit = () => {
                 <div className="mt-4 sm:mt-6 p-4 sm:p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
                     <h4 className="font-medium text-yellow-900 dark:text-yellow-200 mb-3 flex items-center text-sm sm:text-base">
                         <DocumentIcon className="h-5 w-5 mr-2 flex-shrink-0" />
-                        Terms &amp; Conditions
+                        {t('seller_onboarding.reviewSubmit.terms_title')}
                     </h4>
                     <ul className="space-y-3">
                         {TERMS.map(term => (
@@ -353,7 +377,7 @@ const ReviewSubmit = () => {
                     {!allTermsAccepted && (
                         <p className="mt-3 text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-1.5">
                             <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-                            You must accept all three items to submit your application.
+                            {t('seller_onboarding.reviewSubmit.terms_warning')}
                         </p>
                     )}
                 </div>
@@ -362,15 +386,10 @@ const ReviewSubmit = () => {
                 <div className="mt-4 sm:mt-6 p-4 sm:p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                     <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-3 flex items-center text-sm sm:text-base">
                         <ClockIcon className="h-5 w-5 mr-2 flex-shrink-0" />
-                        What Happens Next?
+                        {t('seller_onboarding.reviewSubmit.next_steps_title')}
                     </h4>
                     <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-                        {[
-                            'Your store profile will be submitted for review.',
-                            'Verification typically takes 1–3 business days.',
-                            'You will receive an email notification when your store is approved.',
-                            'Once approved, you can start listing and selling products.',
-                        ].map(text => (
+                        {NEXT_STEPS.map((text) => (
                             <li key={text} className="flex items-start gap-3">
                                 <div className="h-2 w-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
                                 <span>{text}</span>
