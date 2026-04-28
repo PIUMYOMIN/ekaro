@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PhotoIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, ShoppingCartIcon, AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid, StarIcon } from "@heroicons/react/24/solid";
 import { HeartIcon as HeartOutline } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
@@ -137,18 +137,25 @@ const ProductCard = ({ product, className = "" }) => {
     }
   };
 
+  const hasVariants = !!product.has_variants;
+
   const handleAddToCart = async () => {
     if (!user) {
       navigate("/login", { state: { returnTo: window.location.pathname } });
+      return;
+    }
+    // Products with variants can't be added directly from a card — send the
+    // user to the detail page so they can pick their options first.
+    if (hasVariants) {
+      navigate(`/products/${slug}`);
       return;
     }
     if (isUnavailable || isOutOfStock || isInCart || cartLoading) return;
     setCartLoading(true);
     try {
       await addToCart(productId, 1);
-      // flash("Added to cart ✓");
-    } catch {
-      // flash("Could not add to cart", "error");
+    } catch (err) {
+      console.warn("Add to cart failed:", err.message);
     } finally {
       setCartLoading(false);
     }
@@ -163,6 +170,7 @@ const ProductCard = ({ product, className = "" }) => {
     : isOutOfStock                 ? "Out of Stock"
     : isInCart                     ? "In Cart"
     : cartLoading                  ? "Adding…"
+    : hasVariants                  ? "Select Options"
     :                                "Add to Cart";
 
   return (
@@ -321,7 +329,7 @@ const ProductCard = ({ product, className = "" }) => {
           </div>
         </div>
 
-        {/* ── Add to Cart button ─────────────────────────────────────────────── */}
+        {/* ── Add to Cart / Select Options button ───────────────────────────── */}
         {isBuyer && (
           <button
             onClick={handleAddToCart}
@@ -329,18 +337,22 @@ const ProductCard = ({ product, className = "" }) => {
             className={`mt-2 w-full rounded-xl py-2 text-xs font-semibold
                         flex items-center justify-center gap-1.5
                         transition-all duration-150 focus:outline-none
-                        focus:ring-2 focus:ring-green-500 focus:ring-offset-1
+                        focus:ring-2 focus:ring-offset-1
                         dark:focus:ring-offset-gray-800
                         ${isUnavailable || isOutOfStock
-                          ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                          ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed focus:ring-gray-300"
                           : isInCart
-                          ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 cursor-default"
-                          : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm"
+                          ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 cursor-default focus:ring-green-500"
+                          : hasVariants
+                          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 focus:ring-blue-500"
+                          : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm focus:ring-green-500"
                         }`}
             aria-label={cartLabel}
           >
             {!isUnavailable && !isOutOfStock && (
-              <ShoppingCartIcon className="h-3.5 w-3.5 flex-shrink-0" />
+              hasVariants
+                ? <AdjustmentsHorizontalIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                : <ShoppingCartIcon className="h-3.5 w-3.5 flex-shrink-0" />
             )}
             {cartLabel}
           </button>

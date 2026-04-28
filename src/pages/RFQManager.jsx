@@ -1,6 +1,7 @@
 // src/pages/RFQManager.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from 'react-i18next';
+import { useAuth } from "../context/AuthContext";
 import {
   PlusIcon,
   PaperAirplaneIcon,
@@ -843,7 +844,16 @@ const RFQCard = ({ rfq, onClick, role = "buyer" }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 const RFQManager = () => {
   const { t } = useTranslation();
-  const [activeTab,     setActiveTab]     = useState("sent");
+  const { user, isBuyer, isSeller, isAdmin } = useAuth();
+
+  // Derive a stable role string for this session.
+  // Admins can see everything (both sent and received).
+  const userRole = isAdmin() ? "admin" : isSeller() ? "seller" : "buyer";
+
+  // Sellers land on "received" by default; buyers land on "sent".
+  const defaultTab = userRole === "seller" ? "received" : "sent";
+
+  const [activeTab,     setActiveTab]     = useState(defaultTab);
   const [sentRFQs,      setSentRFQs]      = useState([]);
   const [receivedRFQs,  setReceivedRFQs]  = useState([]);
   const [loading,       setLoading]       = useState(false);
@@ -923,11 +933,14 @@ const RFQManager = () => {
     total:     receivedRFQs.length,
   };
 
-  const TAB_CFG = [
-    { id: "sent",     label: t('rfq.tabs.sent'),     icon: DocumentTextIcon,   badge: sentStats.quoted > 0 ? sentStats.quoted : null },
-    { id: "received", label: t('rfq.tabs.received'), icon: InboxIcon,           badge: receivedStats.open > 0 ? receivedStats.open : null },
-    { id: "create",   label: t('rfq.tabs.create'),   icon: PlusIcon,            badge: null },
+  const ALL_TABS = [
+    { id: "sent",     roles: ["buyer", "admin"],          label: t('rfq.tabs.sent'),     icon: DocumentTextIcon,   badge: sentStats.quoted > 0 ? sentStats.quoted : null },
+    { id: "received", roles: ["seller", "admin"],         label: t('rfq.tabs.received'), icon: InboxIcon,           badge: receivedStats.open > 0 ? receivedStats.open : null },
+    { id: "create",   roles: ["buyer", "admin"],          label: t('rfq.tabs.create'),   icon: PlusIcon,            badge: null },
   ];
+
+  // Filter tabs down to those the current user is allowed to see
+  const TAB_CFG = ALL_TABS.filter(tab => tab.roles.includes(userRole));
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -1074,7 +1087,7 @@ const RFQManager = () => {
                         <RFQCard
                           key={rfq.id}
                           rfq={rfq}
-                          role="buyer"
+                          role={userRole}
                           onClick={() => setSelectedRFQ(rfq)}
                         />
                       ))}
@@ -1096,7 +1109,7 @@ const RFQManager = () => {
                         <div key={rfq.id} className="space-y-2">
                           <RFQCard
                             rfq={rfq}
-                            role="seller"
+                            role={userRole}
                             onClick={() => setSelectedRFQ(rfq)}
                           />
                           {/* Quick respond button for open RFQs without a quote */}
