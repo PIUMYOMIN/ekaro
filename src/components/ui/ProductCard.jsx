@@ -78,7 +78,11 @@ const ProductCard = ({ product, className = "" }) => {
 
   const slug      = product.slug_en || product.slug || product.id;
   const productId = product.id || product.product_id;
-  const imageUrl  = product.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
+  const imageUrl  = product.images?.[0]
+    ? getImageUrl(product.images[0])
+    : product.image
+    ? getImageUrl(product.image)
+    : DEFAULT_PLACEHOLDER;
   const isInWishlist = !!wishlist?.some((w) => w.id === productId);
 
   const isOnSale = product.is_currently_on_sale
@@ -93,7 +97,12 @@ const ProductCard = ({ product, className = "" }) => {
 
   const isBuyer       = !user || user.type === "buyer";
   const isUnavailable = !product.is_active;
-  const isOutOfStock  = product.is_active && product.quantity <= 0;
+  // `in_stock` is provided by ProductListResource (calls Model::isInStock()).
+  // It returns true for digital/service products (no stock limit) and for
+  // physical products that have at least one active variant with quantity > 0,
+  // OR have no variants at all. Fall back to true when the field is absent
+  // (e.g. on a detail page that doesn't use ProductListResource).
+  const isOutOfStock  = product.is_active && product.in_stock === false;
 
   useEffect(() => {
     setIsInCart(!!cartItems?.some((c) => c.product_id === productId));

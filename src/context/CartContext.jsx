@@ -28,15 +28,14 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart from server
   const fetchCartItems = useCallback(async () => {
-    // Cart is only for buyers — sellers/admins get 403
     if (!user || (user.type && user.type !== 'buyer')) {
       resetCart();
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.get('/buyer/cart');
       const cartData = response.data.data || {};
@@ -62,27 +61,37 @@ export const CartProvider = ({ children }) => {
     setCartSummary({ subtotal: 0, shipping_fee: 0, tax_rate: 0.05, tax: 0, total: 0 });
   };
 
-  // Add to cart
-  const addToCart = async (productId, quantity = 1) => {
+  /**
+   * Add a product to cart.
+   *
+   * @param {number}  productId       — required
+   * @param {number}  quantity        — defaults to 1
+   * @param {number|null} variantId   — required when the product has variants
+   * @param {object}  selectedOptions — snapshot e.g. { "Color": "Red", "Size": "M" }
+   */
+  const addToCart = async (productId, quantity = 1, variantId = null, selectedOptions = null) => {
     if (!user) throw new Error('Please login');
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.post('/buyer/cart', {
-        product_id: productId,
-        quantity
-      });
+      const payload = { product_id: productId, quantity };
+
+      if (variantId) payload.variant_id = variantId;
+      if (selectedOptions && Object.keys(selectedOptions).length > 0) {
+        payload.selected_options = selectedOptions;
+      }
+
+      const response = await api.post('/buyer/cart', payload);
 
       // Refresh cart to get accurate data
       await fetchCartItems();
 
       return {
         success: true,
-        message: response.data.message || 'Added to cart'
+        message: response.data.message || 'Added to cart',
       };
-
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to add to cart';
       setError(msg);
@@ -95,25 +104,23 @@ export const CartProvider = ({ children }) => {
   // Update quantity
   const updateQuantity = async (cartItemId, newQuantity) => {
     if (!user) throw new Error('Please login');
-    
-    // Find current item
+
     const currentItem = cartItems.find(item => item.id === cartItemId);
     if (!currentItem) return;
 
-    // Optimistic update
     const oldCartItems = [...cartItems];
     const oldTotalItems = totalItems;
     const oldSubtotal = subtotal;
-    
-    const updatedItems = cartItems.map(item => 
-      item.id === cartItemId 
+
+    const updatedItems = cartItems.map(item =>
+      item.id === cartItemId
         ? { ...item, quantity: newQuantity, subtotal: (item.selling_price ?? item.price) * newQuantity }
         : item
     );
-    
+
     const newSubtotal = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
     const newTotalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-    
+
     setCartItems(updatedItems);
     setSubtotal(newSubtotal);
     setTotalItems(newTotalItems);
@@ -126,15 +133,13 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.put(`/buyer/cart/${cartItemId}`, { quantity: newQuantity });
-      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setSubtotal(oldSubtotal);
       setTotalItems(oldTotalItems);
       await fetchCartItems();
-      
+
       const msg = err.response?.data?.message || 'Failed to update quantity';
       setError(msg);
       throw new Error(msg);
@@ -144,20 +149,18 @@ export const CartProvider = ({ children }) => {
   // Remove from cart
   const removeFromCart = async (cartItemId) => {
     if (!user) throw new Error('Please login');
-    
-    // Find current item
+
     const currentItem = cartItems.find(item => item.id === cartItemId);
     if (!currentItem) return;
 
-    // Optimistic update
     const oldCartItems = [...cartItems];
     const oldTotalItems = totalItems;
     const oldSubtotal = subtotal;
-    
+
     const updatedItems = cartItems.filter(item => item.id !== cartItemId);
     const newSubtotal = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
     const newTotalItems = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
-    
+
     setCartItems(updatedItems);
     setSubtotal(newSubtotal);
     setTotalItems(newTotalItems);
@@ -170,15 +173,13 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.delete(`/buyer/cart/${cartItemId}`);
-      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setSubtotal(oldSubtotal);
       setTotalItems(oldTotalItems);
       await fetchCartItems();
-      
+
       const msg = err.response?.data?.message || 'Failed to remove item';
       setError(msg);
       throw new Error(msg);
@@ -189,12 +190,11 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (!user) throw new Error('Please login');
 
-    // Optimistic clear
     const oldCartItems = [...cartItems];
     const oldTotalItems = totalItems;
     const oldSubtotal = subtotal;
     const oldCartSummary = { ...cartSummary };
-    
+
     setCartItems([]);
     setTotalItems(0);
     setSubtotal(0);
@@ -202,16 +202,14 @@ export const CartProvider = ({ children }) => {
 
     try {
       const response = await api.post('/buyer/cart/clear');
-      // Optimistic state is already applied above; no need to refetch on success.
       return response.data;
     } catch (err) {
-      // Revert optimistic update and resync from server on error
       setCartItems(oldCartItems);
       setTotalItems(oldTotalItems);
       setSubtotal(oldSubtotal);
       setCartSummary(oldCartSummary);
       await fetchCartItems();
-      
+
       const msg = err.response?.data?.message || 'Failed to clear cart';
       setError(msg);
       throw new Error(msg);
@@ -233,10 +231,10 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     removeFromCart,
     clearCart,
-    refetchCart: fetchCartItems
+    refetchCart: fetchCartItems,
   }), [
     cartItems, cartSummary, subtotal, totalItems, loading, error,
-    addToCart, updateQuantity, removeFromCart, clearCart, fetchCartItems
+    addToCart, updateQuantity, removeFromCart, clearCart, fetchCartItems,
   ]);
 
   return (

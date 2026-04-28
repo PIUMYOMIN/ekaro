@@ -350,9 +350,14 @@ const ProductManagement = () => {
     return product.price;
   };
 
-  const getStockStatus = (quantity) => {
-    if (quantity <= 0) return { text: "Out of Stock", color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300" };
-    if (quantity <= 10) return { text: "Low Stock", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300" };
+  // Stock status is now determined by the API-provided `in_stock` boolean
+  // (from ProductListResource → Model::isInStock()), because stock is tracked
+  // per-variant rather than at the product level. `total_stock` is the sum
+  // across all active variants and is only non-null for physical products.
+  const getStockStatus = (product) => {
+    if (!product.in_stock) return { text: "Out of Stock", color: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300" };
+    const total = product.total_stock;
+    if (total != null && total <= 10) return { text: "Low Stock", color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300" };
     return { text: "In Stock", color: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" };
   };
 
@@ -552,7 +557,7 @@ const ProductManagement = () => {
             <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg mr-4"><CubeIcon className="h-6 w-6 text-red-600 dark:text-red-400" /></div>
             <div>
               <p className="text-sm text-gray-500 dark:text-slate-400">Out of Stock</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.filter(p => p.quantity <= 0).length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">{products.filter(p => !p.in_stock).length}</p>
             </div>
           </div>
         </div>
@@ -571,7 +576,7 @@ const ProductManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("price")}>
                   <div className="flex items-center">Price <ChevronUpDownIcon className="ml-1 h-4 w-4" /></div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("quantity")}>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer" onClick={() => requestSort("total_stock")}>
                   <div className="flex items-center">Stock <ChevronUpDownIcon className="ml-1 h-4 w-4" /></div>
                 </th>
                 {/* NEW Discount Column */}
@@ -604,7 +609,7 @@ const ProductManagement = () => {
                 </tr>
               ) : (
                 sortedProducts.map((product) => {
-                  const stockStatus = getStockStatus(product.quantity);
+                  const stockStatus = getStockStatus(product);
                   const discountInfo = getDiscountInfo(product);
                   return (
                     <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -656,7 +661,7 @@ const ProductManagement = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
-                          {stockStatus.text} ({product.quantity})
+                          {stockStatus.text}{product.total_stock != null ? ` (${product.total_stock})` : ""}
                         </span>
                       </td>
                       {/* NEW Discount Column Data */}

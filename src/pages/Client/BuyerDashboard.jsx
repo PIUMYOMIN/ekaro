@@ -13,6 +13,7 @@ import {
   ReceiptRefundIcon, PrinterIcon, Bars3Icon, XMarkIcon, BellIcon, GiftIcon
 } from "@heroicons/react/24/outline";
 import api from "../../utils/api";
+import { getImageUrl } from "../../utils/imageHelpers";
 import NotificationPreferences from "../../components/Shared/NotificationPreferences";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
@@ -262,7 +263,7 @@ const downloadPaySlip = (order, delivery = null) => {
 const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
   const firstItem  = order.items?.[0] || {};
   const images     = firstItem.product_data?.images || [];
-  const thumb      = images.find((i) => i.is_primary)?.url || images[0]?.url || "/placeholder-product.jpg";
+  const thumb      = getImageUrl(images.find((i) => i.is_primary) || images[0]);
   const canCancel  = ["pending", "confirmed"].includes(order.status);
 
   return (
@@ -451,7 +452,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               <div className="space-y-2">
                 {order.items?.map((item, i) => {
                   const imgs = item.product_data?.images || [];
-                  const img  = imgs.find((x) => x.is_primary)?.url || imgs[0]?.url || "/placeholder-product.jpg";
+                  const img  = getImageUrl(imgs.find((x) => x.is_primary) || imgs[0]);
                   return (
                     <div key={i} className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900 p-3 rounded-lg">
                       <img src={img} alt={item.product_name} className="w-12 h-12 object-cover rounded flex-shrink-0"
@@ -839,7 +840,7 @@ const WishlistTab = ({ navigate }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {wishlist.map((item) => (
             <div key={item.id} className="border border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:shadow-md transition flex gap-3">
-              <img src={item.images?.[0] || "/placeholder-product.jpg"} alt={item.name}
+              <img src={getImageUrl(item.images?.[0])} alt={item.name}
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                 onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
               <div className="flex-1 min-w-0">
@@ -973,7 +974,7 @@ const CartTab = ({ navigate }) => {
               {cartItems.map((item) => (
                 <li key={item.id} className={`py-4 flex gap-3 ${removingId === item.id ? "opacity-40" : ""}`}>
                   <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
-                    <img src={item.image || "/placeholder-product.jpg"} alt={item.name}
+                    <img src={getImageUrl(item.image)} alt={item.name}
                       className="w-full h-full object-contain"
                       onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
                   </div>

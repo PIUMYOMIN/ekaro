@@ -83,7 +83,7 @@ export const SkeletonProductDetail = () => (
     <Skeleton className="h-5 w-16 mb-6" />
 
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-      {/* Left: image + thumbnails */}
+      {/* Left: main image + thumbnails */}
       <div className="space-y-4">
         <Skeleton className="w-full h-80 lg:h-96 rounded-lg" />
         <div className="flex gap-2">
@@ -95,36 +95,75 @@ export const SkeletonProductDetail = () => (
 
       {/* Right: product info */}
       <div className="space-y-4">
-        {/* Category + badges */}
+        {/* Category + condition badges */}
         <div className="flex gap-2">
           <Skeleton className="h-5 w-20 rounded-full" />
           <Skeleton className="h-5 w-16 rounded-full" />
         </div>
-        {/* Name */}
+        {/* Product name */}
         <Skeleton className="h-8 w-4/5" />
         <Skeleton className="h-6 w-1/2" />
-        {/* Price */}
-        <Skeleton className="h-10 w-1/3" />
-        {/* Description lines */}
+        {/* Price block */}
+        <div className="flex items-end gap-3">
+          <Skeleton className="h-10 w-36" />
+          <Skeleton className="h-6 w-24" />
+        </div>
+        {/* Short description */}
         <div className="space-y-2 pt-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
         </div>
-        {/* Quantity + buttons */}
+        {/* Variant option groups (e.g. Color / Size swatches) */}
+        <div className="space-y-3 pt-2">
+          <Skeleton className="h-4 w-16" />
+          <div className="flex gap-2">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-9 w-9 rounded-full" />
+            ))}
+          </div>
+          <Skeleton className="h-4 w-12" />
+          <div className="flex gap-2">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-8 w-16 rounded-md" />
+            ))}
+          </div>
+        </div>
+        {/* Quantity stepper + CTA buttons */}
         <div className="flex gap-3 pt-4">
           <Skeleton className="h-11 w-28 rounded-md" />
           <Skeleton className="h-11 flex-1 rounded-md" />
           <Skeleton className="h-11 w-11 rounded-md" />
         </div>
-        {/* Seller info */}
-        <div className="flex items-center gap-3 mt-4 p-4 rounded-lg bg-gray-50 dark:bg-slate-800">
+        {/* B2B / MOQ info row */}
+        <div className="flex gap-4 pt-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        {/* Seller info card */}
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-50 dark:bg-slate-800">
           <SkeletonAvatar className="w-10 h-10" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/3" />
             <Skeleton className="h-3 w-1/4" />
           </div>
+          <Skeleton className="h-8 w-20 rounded-md" />
         </div>
+      </div>
+    </div>
+
+    {/* Tabs section below the grid (Description / Specs / Reviews) */}
+    <div className="mt-12 space-y-4">
+      <div className="flex gap-6 border-b border-gray-200 dark:border-slate-700 pb-0">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-8 w-24 rounded-t-md" />
+        ))}
+      </div>
+      <div className="space-y-3 pt-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-4/6" />
       </div>
     </div>
   </div>
