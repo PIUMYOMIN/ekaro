@@ -148,12 +148,23 @@ const EmailVerification = () => {
     }
   };
 
+  // Reset error state when the user edits the code so the error banner clears
+  // and auto-submit can re-fire on a fresh 6-digit entry.
+  const handleCodeChange = (newCode) => {
+    setCode(newCode);
+    if (codeStatus === 'error') {
+      setCodeStatus('idle');
+      setCodeMessage('');
+    }
+  };
+
   // Auto-submit when all 6 digits entered
   useEffect(() => {
     if (code.replace(/\s/g, '').length === 6 && codeStatus === 'idle') {
       submitCode();
     }
-  }, [code]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, codeStatus]);
 
   // ── Resend with 60s cooldown ────────────────────────────────────────────
   const handleResend = async () => {
@@ -287,7 +298,7 @@ const EmailVerification = () => {
                   </p>
                   <CodeInput
                     value={code}
-                    onChange={setCode}
+                    onChange={handleCodeChange}
                     disabled={codeStatus === 'loading' || codeStatus === 'success'}
                   />
 

@@ -59,7 +59,11 @@ api.interceptors.response.use(
       localStorage.removeItem("user");
 
       const currentPath = window.location.pathname;
-      if (!currentPath.includes("/login") && !currentPath.includes("/register")) {
+      if (
+        !currentPath.includes("/login") &&
+        !currentPath.includes("/register") &&
+        !currentPath.includes("/verify-email")
+      ) {
         if (_navigate) {
           // Preferred: React Router navigation (no full page reload)
           _navigate("/login", { replace: true });
