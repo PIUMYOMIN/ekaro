@@ -213,8 +213,8 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
   const fetchCommissionData = async () => {
     try { const res = await api.get('/seller/commission-summary'); if (res.data.success) setCommissionData(res.data.data); } catch { }
   };
-  const [feeSubmitting, setFeeSubmitting] = useState(null);
-  const [feeNote, setFeeNote] = useState("");
+const [feeSubmitting, setFeeSubmitting] = useState(null);
+  const [feeNotes, setFeeNotes] = useState({});
   const [feeToast, setFeeToast] = useState(null);
   const initialFetchDone = useRef(false);
 
@@ -233,10 +233,15 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
 
   const handleSubmitFee = async (deliveryId) => {
     setFeeSubmitting(deliveryId);
+    const note = feeNotes[deliveryId] || "Delivery fee paid.";
     try {
-      await api.patch(`/deliveries/${deliveryId}/submit-fee`, { note: feeNote || "Delivery fee paid." });
+      await api.patch(`/deliveries/${deliveryId}/submit-fee`, { note });
       flashFee("Fee submission sent to admin!");
-      setFeeNote("");
+      setFeeNotes(prev => {
+        const newNotes = { ...prev };
+        delete newNotes[deliveryId];
+        return newNotes;
+      });
       fetchDeliveryFees();
     } catch (err) {
       flashFee(err.response?.data?.message || "Failed to submit fee.", "error");
@@ -637,7 +642,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
               const submitted = !!d.fee_submitted_at;
               const confirmed = !!d.fee_confirmed_at;
               return (
-                <div key={d.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div key={d.id} className="px-5 py-4 flex flex-col sm:flex-row items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Order #{d.order?.order_number ?? d.order_id}</p>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
@@ -652,7 +657,7 @@ const DashboardSummary = ({ storeData, stats, refreshData, onSetupClick }) => {
                   </div>
                   {!submitted && !confirmed && (
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <input type="text" value={feeNote} onChange={e => setFeeNote(e.target.value)}
+                      <input type="text" value={feeNotes[d.id] || ''} onChange={e => setFeeNotes(prev => ({ ...prev, [d.id]: e.target.value }))}
                         placeholder="Optional note…"
                         className="text-xs border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-1.5 w-36 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-green-500" />
                       <button onClick={() => handleSubmitFee(d.id)} disabled={feeSubmitting === d.id}

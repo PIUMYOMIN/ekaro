@@ -280,6 +280,7 @@
     "no_products_found": "No products found",
     "try_adjusting_search": "Try adjusting your search or filters",
     "fetch_error": "Failed to load products. Please try again.",
+    "categories": "Categories",
     "category_id": "Category {{id}}",
     "sort_by": "Sort by",
     "sort": {

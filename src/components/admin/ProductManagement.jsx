@@ -393,11 +393,11 @@ const ProductManagement = () => {
     {
       header: (
         <button
-          onClick={() => handleSort("quantity")}
+          onClick={() => handleSort("total_stock")}
           className="flex items-center hover:text-gray-900 dark:hover:text-slate-100"
         >
           Stock
-          {sortField === "quantity" && (
+          {sortField === "total_stock" && (
             <ArrowsUpDownIcon className="h-4 w-4 ml-1" />
           )}
         </button>
@@ -500,16 +500,28 @@ const ProductManagement = () => {
         </span>
       ),
       price: formatMMK(product.price),
-      stock: (
-        <div className="flex items-center">
-          <span className={`font-medium ${product.quantity <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-slate-100'}`}>
-            {product.quantity || 0}
-          </span>
-          {product.quantity <= 0 && (
-            <span className="ml-2 text-xs text-red-500 dark:text-red-400">Out of stock</span>
-          )}
-        </div>
-      ),
+      stock: (() => {
+        // total_stock is null for digital/service products (no stock tracking)
+        if (product.total_stock === null || product.total_stock === undefined) {
+          if (product.product_type && product.product_type !== 'physical') {
+            return <span className="text-gray-400 dark:text-slate-500 text-xs">—</span>;
+          }
+        }
+        const qty = product.total_stock ?? 0;
+        return (
+          <div className="flex items-center gap-2">
+            <span className={`font-medium tabular-nums ${qty <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-slate-100'}`}>
+              {qty.toLocaleString()}
+            </span>
+            {qty <= 0 && (
+              <span className="text-xs text-red-500 dark:text-red-400 whitespace-nowrap">Out of stock</span>
+            )}
+            {qty > 0 && qty <= 5 && (
+              <span className="text-xs text-amber-500 dark:text-amber-400 whitespace-nowrap">Low stock</span>
+            )}
+          </div>
+        );
+      })(),
       discount: discountInfo.display,
       min_order: (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-300">

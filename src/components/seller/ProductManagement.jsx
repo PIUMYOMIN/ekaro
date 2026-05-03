@@ -294,7 +294,12 @@ const ProductManagement = () => {
       );
     }
     if (categoryFilter !== "all") {
-      filtered = filtered.filter(product => product.category_id == categoryFilter);
+      // BUG FIX: category_id was missing from the API response so this always returned false.
+      // Now checks both top-level category_id (fixed in ProductListResource) and
+      // category.id as a defensive fallback.
+      filtered = filtered.filter(product =>
+        (product.category_id ?? product.category?.id) == categoryFilter
+      );
     }
     return filtered;
   };
