@@ -20,6 +20,7 @@ import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import { useTheme } from "../../context/ThemeContext";
+import RFQPanel from "../../components/client/RFQPanel";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -732,9 +733,28 @@ const PurchaseHistoryTab = ({ orders }) => {
                     <td className="px-4 py-3 text-gray-600 dark:text-slate-400">{o.items?.length || 0}</td>
                     <td className="px-4 py-3 font-semibold text-green-600 whitespace-nowrap">{formatMMK(o.total_amount)}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${o.payment_status === "paid" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}>
-                        {o.payment_status || "pending"}
-                      </span>
+                      {(() => {
+                        const isCodDelivered = o.payment_method === "cash_on_delivery" && o.status === "delivered";
+                        const isPaid = o.payment_status === "paid";
+                        const isCod = o.payment_method === "cash_on_delivery";
+                        const badgeClass = (isPaid || isCodDelivered)
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : isCod
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
+                        const label = isCodDelivered
+                          ? "Confirmed on Delivery"
+                          : isPaid
+                            ? "Paid"
+                            : isCod
+                              ? "Payable on Delivery"
+                              : (o.payment_status || "pending");
+                        return (
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3">
@@ -1355,6 +1375,7 @@ const BuyerDashboard = () => {
       case "history":   return <PurchaseHistoryTab orders={orders} />;
       case "cart":      return <CartTab navigate={navigate} />;
       case "wishlist":  return <WishlistTab navigate={navigate} />;
+      case "rfq":       return <RFQPanel />;
       case "profile":   return <ProfileTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
       case "settings":      return <SettingsTab user={user} />;
       case "notifications": return <NotificationsPanel />;
@@ -1413,11 +1434,6 @@ const BuyerDashboard = () => {
               </div>
               {TABS.map((tab, idx) => (
                 <button key={tab.id} onClick={() => {
-                    if (tab.id === "rfq") {
-                      navigate("/rfq");
-                      setSidebarOpen(false);
-                      return;
-                    }
                     setActiveTab(idx);
                     setSidebarOpen(false);
                   }}
@@ -1465,10 +1481,6 @@ const BuyerDashboard = () => {
             <nav className="flex-1 px-4 space-y-1">
               {TABS.map((tab, idx) => (
                 <button key={tab.id} onClick={() => {
-                    if (tab.id === "rfq") {
-                      navigate("/rfq");
-                      return;
-                    }
                     setActiveTab(idx);
                   }}
                   className={classNames("group flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-left text-sm font-medium transition-all",
@@ -1542,13 +1554,7 @@ const BuyerDashboard = () => {
             <div className="md:hidden mb-5">
               <div className="flex gap-1.5 rounded-2xl bg-white/80 dark:bg-slate-800/90 backdrop-blur-lg p-1.5 shadow-lg overflow-x-auto no-scrollbar">
                 {TABS.map((tab, idx) => (
-                  <button key={tab.id} onClick={() => {
-                      if (tab.id === "rfq") {
-                        navigate("/rfq");
-                        return;
-                      }
-                      setActiveTab(idx);
-                    }}
+                  <button key={tab.id} onClick={() => { setActiveTab(idx); }}
                     className={classNames("flex-shrink-0 rounded-xl py-2.5 px-3 text-xs font-medium transition-all focus:outline-none",
                       activeTab === idx
                         ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md"

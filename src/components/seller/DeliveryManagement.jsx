@@ -322,6 +322,16 @@ const DeliveryManagement = ({ refreshData }) => {
                         </button>
                       )}
 
+                      {delivery.status === "in_transit" && delivery.delivery_method === "supplier" && (
+                        <button
+                          disabled={actionLoading === delivery.id}
+                          onClick={() => updateDeliveryStatus(delivery.id, "out_for_delivery", "Out for delivery to customer")}
+                          className="text-xs bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {actionLoading === delivery.id ? "..." : "Out for Delivery"}
+                        </button>
+                      )}
+
                       {selectedDelivery && (
                       <DeliveryDetailsModal
                       delivery={selectedDelivery}
@@ -329,6 +339,7 @@ const DeliveryManagement = ({ refreshData }) => {
                       actionLoading={actionLoading}
                       onClose={() => { setIsModalOpen(false); setSelectedDelivery(null); }}
                       onProofUpload={uploadDeliveryProof}
+                      onUpdateStatus={updateDeliveryStatus}
         />
       )}
       {proofModalDelivery && (
@@ -669,7 +680,7 @@ const ProofUploadModal = ({ delivery, actionLoading, onUpload, onClose }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Delivery Details Modal
 // ─────────────────────────────────────────────────────────────────────────────
-const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onProofUpload }) => {
+const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onProofUpload, onUpdateStatus }) => {
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [proofFile, setProofFile]             = useState(null);
   const [recipientName, setRecipientName]     = useState("");
@@ -792,6 +803,19 @@ const DeliveryDetailsModal = ({ delivery, isOpen, actionLoading, onClose, onProo
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Out for Delivery action — self-delivery only, in_transit step */}
+            {delivery.status === "in_transit" && delivery.delivery_method === "supplier" && (
+              <div className="mt-6">
+                <button
+                  onClick={() => onUpdateStatus(delivery.id, "out_for_delivery", "Out for delivery to customer")}
+                  disabled={actionLoading === delivery.id}
+                  className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {actionLoading === delivery.id ? "Updating..." : "Mark as Out for Delivery"}
+                </button>
               </div>
             )}
 
