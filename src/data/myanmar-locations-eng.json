@@ -11,22 +11,43 @@
         {
           "city": "Yangon",
           "townships": [
-            "Sanchaung", "Kamaryut", "Hlaing", "Insein", "Mayangon",
-            "North Okkalapa", "South Okkalapa", "Thaketa", "Thingangyun",
-            "Tamwe", "Yankin", "Pazundaung", "Botahtaung", "Kyauktada",
-            "Pabedan", "Lanmadaw", "Latha", "Mingalar Taung Nyunt",
-            "Bahan", "Dagon", "South Dagon", "East Dagon", "North Dagon",
-            "Dagon Seikkan", "Dawbon", "Shwe Pyi Thar", "Hlaing Thar Yar",
-            "Hmawbi", "Htantabin", "Mingaladon", "Seik Gyee Kya", "Twantay"
+            "Sanchaung", 
+            "Kamaryut", 
+            "Hlaing", 
+            "Insein", 
+            "Mayangon",
+            "North Okkalapa", 
+            "South Okkalapa", 
+            "Thaketa", 
+            "Thingangyun",
+            "Tamwe", 
+            "Yankin", 
+            "Pazundaung", 
+            "Botahtaung", 
+            "Kyauktada",
+            "Pabedan", 
+            "Lanmadaw", 
+            "Latha", 
+            "Mingalar Taung Nyunt",
+            "Bahan", 
+            "Dagon", 
+            "South Dagon", 
+            "East Dagon", 
+            "North Dagon",
+            "Dagon Seikkan", 
+            "Dawbon", 
+            "Shwe Pyi Thar", 
+            "Hlaing Thar Yar",
+            "Hmawbi", 
+            "Htantabin", 
+            "Mingaladon", 
+            "Seik Gyi Khanaung", 
+            "Twantay"
           ]
         },
         {
           "city": "Thanlyin",
           "townships": ["Thanlyin", "Kyauktan", "Hline"]
-        },
-        {
-          "city": "Pathein",
-          "townships": ["Pathein", "Bogale", "Maubin"]
         }
       ]
     },
@@ -36,14 +57,19 @@
         {
           "city": "Mandalay",
           "townships": [
-            "Chanayethazan", "Chan Aye Tharzan", "Mahar Aung Myay",
-            "Amarapura", "Patheingyi", "Pyigyidagun", "Mahaaungmyay",
-            "Aungmyaythazan", "Pyigyitagon"
+            "Aungmyaytharsan", 
+            "Chanayetharzan", 
+            "Pyigyitagon",
+            "Chanmyatharsi", 
+            "Maharaungmyay",
+            "Amarapura",
+            "Patheingyi",
+            "Madaya"
           ]
         },
         {
           "city": "Pyin Oo Lwin",
-          "townships": ["Pyin Oo Lwin", "Madaya", "Singu"]
+          "townships": ["Pyin Oo Lwin"]
         },
         {
           "city": "Meikhtila",
@@ -51,7 +77,27 @@
         },
         {
           "city": "Nyaung-U",
-          "townships": ["Nyaung-U", "Bagan"]
+          "townships": ["Nyaung-U", "Kyaukpadaung"]
+        },
+        {
+          "city": "Thabeikkyin",
+          "townships": ["Thabeikkyin", "Singu", "Moekok"]
+        },
+        {
+          "city": "Kyaukse",
+          "townships": ["Kyaukse", "Myittha", "Sinkaing"]
+        },
+        {
+          "city": "Tada-U",
+          "townships": ["Tada-U", "Nganzun"]
+        },
+        {
+          "city": "Myingyan",
+          "townships": ["Myingyan", "Natogyi", "Taungtha"]
+        },
+        {
+          "city": "Yamethin",
+          "townships": ["Yamethin", "Pyawbwe"]
         }
       ]
     },
@@ -61,8 +107,13 @@
         {
           "city": "Naypyidaw",
           "townships": [
-            "Ottarathiri", "Dekkhinathiri", "Pobbathiri", "Zabuthiri",
-            "Tatkon", "Pyinmana", "Lewe"
+            "Ottarathiri", 
+            "Dekkhinathiri", 
+            "Pobbathiri", 
+            "Zabuthiri",
+            "Tatkon", 
+            "Pyinmana", 
+            "Lewe"
           ]
         }
       ]
