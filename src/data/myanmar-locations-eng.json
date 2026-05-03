@@ -123,20 +123,60 @@
       "cities": [
         {
           "city": "Sagaing",
-          "townships": ["Sagaing", "Myinmu", "Pale"]
+          "townships": ["Sagaing", "Myinmu", "Pale", "Myaung"]
         },
         {
           "city": "Monywa",
-          "townships": ["Monywa", "Budalin", "Ayadaw"]
+          "townships": ["Monywa", "Budalin", "Ayadaw", "Chaung-U"]
         },
         {
           "city": "Shwebo",
-          "townships": ["Shwebo", "Kanbalu", "Tabayin"]
+          "townships": ["Shwebo", "Kanbalu", "Tabayin", "Khin-U", "Wetlet"]
         },
-        {
-          "city": "Katha",
-          "townships": ["Katha", "Indaw", "Tigyaing"]
-        }
+      {
+        "Ye-U": "Ye-U",
+        "townships": ["Ye-U", "Taze", "Tabayin"]
+      },
+      {
+        "city": "Katha",
+        "townships": ["Katha", "Banmauk", "Indaw", "Htigyaing"]
+      },
+      {
+        "city": "Kangbalu",
+        "townships": ["Kangbalu", "Kyunhla"]
+      },
+      {
+        "city": "Kawlin",
+        "townships": ["Kawlin", "Pinlebu", "Wuntho"]
+      },
+      {
+        "city": "Kale",
+        "townships": ["Kale", "Kalewa", "Minhla"]
+      },
+      {
+        "city": "Tamu",
+        "townships": ["Tamu"]
+      },
+      {
+        "city": "Mawlaik",
+        "townships": ["Mawlaik", "Paungte"]
+      },
+      {
+        "city": "Hkamti",
+        "townships": ["Hkamti"]
+      },
+      {
+        "city": "Homalin",
+        "townships": ["Homalin"]
+      },
+      {
+        "city": "Yinmabin",
+        "townships": ["Yinmabin", "Kani", "Pale", "Salingyi"]
+      },
+      {
+        "city": "Naga Zone",
+        "townships": ["Naga Zone", "Leshi", "Nanyun"]
+      }
       ]
     },
     {

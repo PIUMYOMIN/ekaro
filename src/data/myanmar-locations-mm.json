@@ -140,22 +140,72 @@
         {
           "city": "Sagaing",
           "mmName": "စစ်ကိုင်း",
-          "townships": ["စစ်ကိုင်း", "မြင်းမူ", "ပုလဲ"]
+          "townships": ["စစ်ကိုင်း", "မြင်းမူ", "ပုလဲ", "မြင်းမူ"]
         },
         {
           "city": "Monywa",
           "mmName": "မုံရွာ",
-          "townships": ["မုံရွာ", "ဘုတလင်", "အရာတော်"]
+          "townships": ["မုံရွာ", "ဘုတလင်", "အရာတော်", "ချောင်ဦး"]
         },
         {
-          "city": "ရွှေဘု",
-          "mmName": "Shwebo",
-          "townships": ["ရွှေဘု", "ကန်ဘလူ", "တာပြီ"]
+          "city": "Shwebo",
+          "mmName": "ရွှေဘို",
+          "townships": ["ရွှေဘို", "ခင်ဦး", "ဝက်လက်"]
         },
         {
-          "city": "ကသာ",
-          "mmName": "Katha",
-          "townships": ["ကသာ", "အင်းတော", "တီချယင်း"]
+          "city": "Ye-U",
+          "mmName": "ရေဦး",
+          "townships": ["ရေဦး", "တစ်ဆယ့်", "ဒီပဲယင်း"]
+        },
+        {
+          "city": "Katha",
+          "mmName": "ကသာ",
+          "townships": ["ကသာ", "ဗန်းမောက်", "အင်းတော်", "ထီးချိုင့်"]
+        },
+        {
+          "city": "Kangbalu",
+          "mmName": "ကန့်ဘလူ",
+          "townships": ["ကန့်ဘလူ", "ကျွန်းလှ"]
+        },
+        {
+          "city": "Kawlin",
+          "mmName": "ကောလင်း",
+          "townships": ["ကောလင်း", "ပင်လယ်ဘူး", "ဝန်းသို"]
+        },
+        {
+          "city": "Kale",
+          "mmName": "ကလေး",
+          "townships": ["ကလေး", "ကလေးဝ", "မင်းလှ"]
+        },
+        {
+          "city": "Tamu",
+          "mmName": "တမူး",
+          "townships": ["တမူး"]
+        },
+        {
+          "city": "Mawlaik",
+          "mmName": "မော်လိုက်",
+          "townships": ["မော်လိုက်", "ပေါင်းတည်"]
+        },
+        {
+          "city": "Hkamti",
+          "mmName": "ခမ္မတီး",
+          "townships": ["ခမ္မတီး"]
+        },
+        {
+          "city": "Homalin",
+          "mmName": "ဟုမ္မလင်း",
+          "townships": ["ဟုမ္မလင်း"]
+        },
+        {
+          "city": "Yinmabin",
+          "mmName": "ယင်းမာပင်",
+          "townships": ["ယင်းမာပင်", "ကနီ", "ပလဲ", "စလင်ဂျီ"]
+        },
+        {
+          "city": "Naga Zone",
+          "mmName": "နာဂဇုန်",
+          "townships": ["နာဂဇုန်", "လေချီး", "နန်းယွန်း"]
         }
       ]
     },
