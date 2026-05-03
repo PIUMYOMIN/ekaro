@@ -26,7 +26,7 @@ const ProductDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
 
   const [product, setProduct]             = useState(null);
   const [loading, setLoading]             = useState(true);
@@ -110,7 +110,7 @@ const ProductDetail = () => {
         } catch { setReviews([]); }
 
         // Wishlist check (buyers only)
-        if (user && user.role === "buyer") {
+        if (user && hasRole('buyer')) {
           try {
             const wishlistResponse = await api.get("/wishlist");
             const wishlist = wishlistResponse.data.data || [];
@@ -309,13 +309,14 @@ const ProductDetail = () => {
   // ── SEO ──────────────────────────────────────────────────────────────────────
   const pageTitle       = product ? (loc(product.name_en, product.name_mm) || "Product") : fallbackTitle;
   const pageDescription = product
-    ? (loc(product.description_en, product.description_mm) || "").slice(0, 150)
+    ? ((loc(product.description_en, product.description_mm) || "").slice(0, 155) || "View product details on Pyonea — Myanmar's trusted B2B marketplace.")
     : fallbackDescription;
-  const pageImage = product?.images?.[0] ? getImageUrl(product.images[0]) : DEFAULT_PLACEHOLDER;
-  const pageUrl   = product ? `/products/${product.slug || slug}` : `/products/${slug}`;
+  const pageUrl   = product ? `/products/${product.slug_en || product.slug || slug}` : `/products/${slug}`;
 
   const productSchema = useMemo(() => {
     if (!product) return null;
+    const safePrice = parseFloat(displayPrice);
+    const sellerName = product.seller?.store_name || product.seller?.name || null;
     return {
       "@context": "https://schema.org",
       "@type":    "Product",
@@ -323,27 +324,29 @@ const ProductDetail = () => {
       description: product.description_en || product.description_mm,
       image: product.images?.map((img) => getImageUrl(img)),
       sku: product.sku,
-      brand: product.seller ? { "@type": "Brand", name: product.seller.store_name || product.seller.name } : undefined,
+      ...(sellerName && { brand: { "@type": "Brand", name: sellerName } }),
       offers: {
         "@type":       "Offer",
-        price:          displayPrice,
+        price:          Number.isFinite(safePrice) ? safePrice : 0,
         priceCurrency: "MMK",
         availability:  availableStock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-        url: `https://pyonea.com/products/${product.slug || product.id}`,
+        url: `https://pyonea.com/products/${product.slug_en || product.slug || product.id}`,
       },
-      aggregateRating: product.review_count > 0 ? {
-        "@type":      "AggregateRating",
-        ratingValue:  product.average_rating,
-        reviewCount:  product.review_count,
-      } : undefined,
+      ...(product.review_count > 0 && {
+        aggregateRating: {
+          "@type":      "AggregateRating",
+          ratingValue:  product.average_rating,
+          reviewCount:  product.review_count,
+        },
+      }),
     };
   }, [product, displayPrice, availableStock]);
 
   const SeoComponent = useSEO({
     title:       pageTitle,
-    description: pageDescription.slice(0, 155) || "View product details on Pyonea — Myanmar's trusted B2B marketplace.",
+    description: pageDescription,
     image:       product?.images?.[0] ? getImageUrl(product.images[0]) : undefined,
     url:         pageUrl,
     schema:      productSchema,

@@ -12,7 +12,7 @@ const routeConfig = {
   "/forgot-password": { type: "website", key: "auth" },
 };
 
-const useSEO = ({ title, description, image, schema, data = {}, noindex = false } = {}) => {
+const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, noindex = false } = {}) => {
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
@@ -36,13 +36,21 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
 
   // Construct alternate URLs (assuming no language prefix in URL – adjust if needed)
   const baseUrl = "https://pyonea.com";
+
+  // Canonical URL — use caller-supplied override when available, else derive from location
   const currentPath = location.pathname + location.search;
+  const resolvedUrl = customUrl
+    ? (customUrl.startsWith('http') ? customUrl : `${baseUrl}${customUrl}`)
+    : `${baseUrl}${currentPath}`;
+
+  // Alternate hreflang URLs
   const alternateUrls = {};
   ['en', 'my'].forEach(lang => {
-    // If your site uses language subdirectories (e.g., /en/products), add here
-    // For now, we assume the same URL serves both languages (content negotiation)
-    alternateUrls[lang] = `${baseUrl}${currentPath}`;
+    alternateUrls[lang] = resolvedUrl;
   });
+
+  // OG type: product pages get "product" (extended), everything else "website"
+  const ogType = pageKey === 'product' ? 'website' : (routeConfig[location.pathname]?.type || 'website');
 
   let schemaData = schema;
 
@@ -63,8 +71,8 @@ const useSEO = ({ title, description, image, schema, data = {}, noindex = false 
       title={finalTitle}
       description={finalDescription}
       image={image}
-      url={`${baseUrl}${currentPath}`}
-      type={routeConfig[location.pathname]?.type || "website"}
+      url={resolvedUrl}
+      type={ogType}
       schema={schemaData}
       alternateUrls={alternateUrls}
       noindex={noindex}

@@ -63,17 +63,15 @@ const CategoryBrowser = () => {
     return () => { isMounted = false; };
   }, [t]);
 
-  // Filter categories by search
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
     const query = searchQuery.toLowerCase();
     return categories.filter(cat => {
-      const n = i18n.language === 'my'
-        ? (cat.name_mm || cat.name_en || '')
-        : (cat.name_en || '');
-      return n.toLowerCase().includes(query);
+      const nameEn = (cat.name_en || '').toLowerCase();
+      const nameMm = (cat.name_mm || '').toLowerCase();
+      return nameEn.includes(query) || nameMm.includes(query);
     });
-  }, [categories, searchQuery, i18n.language]);
+  }, [categories, searchQuery]);
 
   const SeoComponent = useSEO({
     title: t("categories.title"),
