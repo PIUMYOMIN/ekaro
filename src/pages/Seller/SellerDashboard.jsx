@@ -228,7 +228,6 @@ const SellerDashboard = () => {
 
   // ---------- Handle setup click (only for navigation) ----------
   const handleSetupClick = useCallback((step) => {
-    console.log("Setup click:", step);
     if (step === 'my-store') {
       navigate('/seller/dashboard?tab=my-store&setup=true');
     } else if (step === 'delivery_zones') {

@@ -7,15 +7,15 @@ export default defineConfig(({ mode }) => ({
 
   server: {
     // ── Dev proxy ────────────────────────────────────────────────────────────
-    // Proxies /api/v1/* → local Laravel (http://127.0.0.1:8000)
-    // This eliminates CORS entirely during local development.
+    // Only used when VITE_API_URL is relative, e.g. /api/v1
+    // Proxies /api/* → local Laravel (http://127.0.0.1:8000) — no CORS.
     //
-    // To use:
-    //   Set VITE_API_URL=/api/v1  in .env.local  (relative, uses proxy)
-    //   Set VITE_API_URL=https://api.pyonea.com/api/v1  in .env  (production)
+    // Local UI + local API:  VITE_API_URL=/api/v1  (and VITE_IMAGE_BASE_URL=http://127.0.0.1:8000/storage)
+    // Local UI + live API:    VITE_API_URL=https://api.pyonea.com/api/v1  (see .env.example)
+    // Production build:       values from .env.production (no proxy)
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://api.pyonea.com',
         changeOrigin: true,
         secure: false,
       },

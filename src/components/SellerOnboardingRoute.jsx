@@ -3,10 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../utils/api";
-import { useTranslation } from "react-i18next";
-
 const SellerOnboardingRoute = ({ children }) => {
-  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +60,9 @@ const SellerOnboardingRoute = ({ children }) => {
         }
 
       } catch (error) {
-        console.log("Onboarding status endpoint not available:", error);
+        if (import.meta.env.DEV) {
+          console.warn("Seller onboarding status check failed:", error);
+        }
       } finally {
         setLoading(false);
       }

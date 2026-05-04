@@ -295,8 +295,8 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
           text: `Payment confirmation for order ${getOrderNumber()}`,
           url: window.location.href,
         });
-      } catch (error) {
-        console.log('Sharing cancelled or failed');
+      } catch {
+        /* user dismissed share sheet or share failed — ignore */
       }
     } else {
       navigator.clipboard.writeText(window.location.href).then(() => {

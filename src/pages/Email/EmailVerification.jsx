@@ -23,9 +23,9 @@ const CodeInput = ({ value, onChange, disabled }) => {
 
   const handleChange = (i, e) => {
     const digit = e.target.value.replace(/\D/g, '').slice(-1);
-    const arr = value.split('');
+    const arr = (value || '').split('');
     arr[i] = digit;
-    const next = arr.join('').padEnd(6, '').slice(0, 6);
+    const next = arr.join('').replace(/\D/g, '').slice(0, 6);
     onChange(next);
     if (digit && i < 5) inputs.current[i + 1]?.focus();
   };
@@ -33,7 +33,7 @@ const CodeInput = ({ value, onChange, disabled }) => {
   const handlePaste = (e) => {
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (pasted.length) {
-      onChange(pasted.padEnd(6, '').slice(0, 6));
+      onChange(pasted);
       inputs.current[Math.min(pasted.length, 5)]?.focus();
     }
     e.preventDefault();
@@ -66,12 +66,14 @@ const EmailVerification = () => {
   const { id, hash }   = useParams();
   const location       = useLocation();
   const navigate       = useNavigate();
-  const { refreshUser, isAuthenticated, isSeller, isAdmin, user } = useAuth();
+  const { refreshUser, isSeller, isAdmin, user, logout, updateUser } = useAuth();
 
   // Link-based verification state
   const [linkStatus, setLinkStatus]   = useState(id && hash ? 'verifying' : 'idle');
   const [linkMessage, setLinkMessage] = useState('');
-  const verifiedRef = useRef(false);
+  /** Same signed link verified successfully — skip duplicate GET (e.g. React Strict Mode). */
+  const linkSuccessParamsKeyRef = useRef(null);
+  const resendCooldownIntervalRef = useRef(null);
 
   // Code-based verification state
   const [code,        setCode]        = useState('');
@@ -85,10 +87,23 @@ const EmailVerification = () => {
 
   // ── Initial resend cooldown — email just sent on registration ───────────────
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCooldown(prev => { if (prev <= 1) { clearInterval(timer); return 0; } return prev - 1; });
+    const id = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(id);
+          resendCooldownIntervalRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
-    return () => clearInterval(timer);
+    resendCooldownIntervalRef.current = id;
+    return () => {
+      clearInterval(id);
+      if (resendCooldownIntervalRef.current === id) {
+        resendCooldownIntervalRef.current = null;
+      }
+    };
   }, []);
 
   // ── Link verification (runs if URL has id + hash) ───────────────────────
@@ -99,7 +114,7 @@ const EmailVerification = () => {
 
   useEffect(() => {
     if (!id || !hash) return;
-    if (verifiedRef.current === paramsKey) return;
+    if (linkSuccessParamsKeyRef.current === paramsKey) return;
 
     const params = new URLSearchParams(location.search);
     const expires   = params.get('expires');
@@ -116,19 +131,32 @@ const EmailVerification = () => {
 
     api.get(`/email/verify/${id}/${hash}?expires=${expires}&signature=${signature}`, { signal: ctrl.signal })
       .then(async r => {
-        verifiedRef.current = paramsKey;
-        await refreshUser();
+        const verifiedAt = r.data?.data?.email_verified_at;
+        try {
+          await refreshUser();
+        } catch {
+          // e.g. opened the link on a device without a session — still merge if we have a local user.
+          if (verifiedAt && user) {
+            try {
+              updateUser({ email_verified_at: verifiedAt });
+            } catch {
+              /* ignore */
+            }
+          }
+        }
+        linkSuccessParamsKeyRef.current = paramsKey;
         setLinkStatus('success');
         setLinkMessage(r.data.message || 'Email verified successfully!');
       })
       .catch(err => {
-        if (err.name === 'CanceledError') return;
-        verifiedRef.current = paramsKey;
+        if (err.name === 'CanceledError' || err.name === 'AbortError') return;
         setLinkStatus('error');
         setLinkMessage(err.response?.data?.message || 'Verification failed. The link may be invalid or expired.');
       });
 
     return () => ctrl.abort();
+  // paramsKey drives re-runs; refreshUser/updateUser/user are stable enough for this flow.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsKey]);
 
   // ── Code submission ─────────────────────────────────────────────────────
@@ -138,7 +166,14 @@ const EmailVerification = () => {
     setCodeMessage('');
     try {
       const r = await api.post('/email/verify-code', { code: code.trim() });
-      await refreshUser();
+      const verifiedAt = r.data?.data?.email_verified_at;
+      try {
+        await refreshUser();
+      } catch {
+        if (verifiedAt && user) {
+          updateUser({ email_verified_at: verifiedAt });
+        }
+      }
       setCodeStatus('success');
       setCodeMessage(r.data.message || 'Email verified!');
       setLinkStatus('success'); // unify success state
@@ -177,11 +212,21 @@ const EmailVerification = () => {
       setCode('');
       setCodeStatus('idle');
       setCodeMessage('');
-      // 60-second cooldown
+      if (resendCooldownIntervalRef.current != null) {
+        clearInterval(resendCooldownIntervalRef.current);
+      }
       setCooldown(60);
-      const timer = setInterval(() => {
-        setCooldown(prev => { if (prev <= 1) { clearInterval(timer); return 0; } return prev - 1; });
+      const id = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(id);
+            resendCooldownIntervalRef.current = null;
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
+      resendCooldownIntervalRef.current = id;
     } catch (err) {
       setResendMsg(err.response?.data?.message || 'Failed to resend. Please try again shortly.');
     } finally {
@@ -358,7 +403,17 @@ const EmailVerification = () => {
           </div>
 
           <p className="text-center text-xs text-gray-400">
-            Wrong account? <Link to="/logout" className="text-green-600 hover:underline">Sign out</Link>
+            Wrong account?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/login', { replace: true });
+              }}
+              className="text-green-600 hover:underline bg-transparent border-0 p-0 cursor-pointer text-xs"
+            >
+              Sign out
+            </button>
           </p>
         </div>
       </div>

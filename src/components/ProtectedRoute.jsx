@@ -20,6 +20,17 @@ const ProtectedRoute = ({ children, roles = [] }) => {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
+  // Accounts with an email must verify it before any protected area (dashboards, cart, etc.)
+  if (user?.email && !user?.email_verified_at) {
+    return (
+      <Navigate
+        to="/verify-email"
+        replace
+        state={{ returnTo: `${location.pathname}${location.search}` }}
+      />
+    );
+  }
+
   // Check if user has required roles
   if (roles.length > 0) {
     const hasRequiredRole = roles.some(role => 

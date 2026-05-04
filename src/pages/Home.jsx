@@ -350,7 +350,6 @@ const Home = () => {
     const fetchAnnouncements = async () => {
       try {
         const res = await api.get('/announcements');
-        console.log(res);
         const list = res.data.data ?? [];
 
         const isEligible = (a) => {

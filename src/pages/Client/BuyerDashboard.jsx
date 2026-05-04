@@ -1290,7 +1290,7 @@ const BuyerDashboard = () => {
   const [rfqBadgeCount, setRfqBadgeCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isEmailVerified, updateUser } = useAuth();
+  const { updateUser } = useAuth();
 
   const TABS = useMemo(() => [
     { id: "dashboard",  label: t("sidebar.dashboard"),             Icon: HomeIcon          },
@@ -1536,16 +1536,6 @@ const BuyerDashboard = () => {
             }} />
           </div>
         </div>
-
-        {/* Email verification banner */}
-        {!isEmailVerified?.() && (
-          <div className="flex-shrink-0 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 sm:px-6 py-3">
-            <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 flex items-center gap-2">
-              <EnvelopeIcon className="h-4 w-4 flex-shrink-0" />
-              Your email is not verified. Check your inbox for the verification link.
-            </p>
-          </div>
-        )}
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6">

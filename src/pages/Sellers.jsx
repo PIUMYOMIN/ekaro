@@ -56,7 +56,6 @@ const Sellers = () => {
           setSellers(transformedSellers);
           setFilteredSellers(transformedSellers);
         } else {
-          console.log('No sellers data found');
           setSellers([]);
           setFilteredSellers([]);
         }

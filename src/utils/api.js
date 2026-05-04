@@ -1,9 +1,12 @@
 // src/utils/api.js
 import axios from "axios";
 
+// Bearer Sanctum auth — cookies not required. withCredentials on cross-origin
+// requests forces credentialed CORS and often surfaces as ERR_NETWORK when the
+// API response headers do not match (common for localhost → api.pyonea.com).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
+  withCredentials: import.meta.env.VITE_API_WITH_CREDENTIALS === "true",
   headers: {
     "Content-Type": "application/json",
   },
@@ -44,13 +47,22 @@ api.interceptors.response.use(
     }
 
     if (import.meta.env.DEV) {
+      const base = error.config?.baseURL ?? "";
+      const path = error.config?.url ?? "";
+      const fullUrl = base && path ? `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}` : path || "unknown";
+      const payload = {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        url: fullUrl,
+      };
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        payload.hint =
+          "No HTTP response (offline, wrong host, TLS, or CORS). If baseURL is localhost:8000, run Laravel or set VITE_API_URL to https://api.pyonea.com/api/v1 and restart Vite. Check for .env.local overriding .env.";
+      }
       console.error(
-        `API Error [${error.config?.method?.toUpperCase() ?? "GET"}] ${error.config?.url ?? "unknown"}:`,
-        {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message,
-        }
+        `API Error [${error.config?.method?.toUpperCase() ?? "GET"}] ${path || "unknown"}:`,
+        payload
       );
     }
 
