@@ -42,6 +42,7 @@ import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import SellerWallet from "../../components/seller/SellerWallet";
 import SellerFinancialReports from "../../components/seller/SellerFinancialReports";
+import DashboardRFQSection, { fetchRfqDashboardTabBadgeForRole } from "../../components/Shared/DashboardRFQSection";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -146,14 +147,8 @@ const SellerDashboard = () => {
   }, [navigate]);
 
   const fetchRfqBadgeCount = useCallback(async () => {
-    try {
-      const res = await api.get("/rfq/received");
-      const list = res.data?.data?.data ?? res.data?.data ?? [];
-      const pending = list.filter((rfq) => rfq.status === "open" && !rfq.my_quote).length;
-      setRfqBadgeCount(pending);
-    } catch {
-      setRfqBadgeCount(0);
-    }
+    const n = await fetchRfqDashboardTabBadgeForRole("seller");
+    setRfqBadgeCount(n);
   }, []);
 
   const navigation = useMemo(() => [
@@ -196,6 +191,7 @@ const SellerDashboard = () => {
       case "referrals": return <ReferralPanel />;
       case "wallet": return <SellerWallet />;
       case "financial_reports": return <SellerFinancialReports storeName={storeData?.store_name} />;
+      case "rfq": return <DashboardRFQSection role="seller" />;
       default:               return null;
     }
   };
@@ -451,11 +447,6 @@ const SellerDashboard = () => {
                 <button
                   key={item.name}
                   onClick={() => {
-                    if (item.key === "rfq") {
-                      navigate("/rfq");
-                      setSidebarOpen(false);
-                      return;
-                    }
                     setSelectedTab(idx);
                     setSidebarOpen(false);
                   }}
@@ -540,10 +531,6 @@ const SellerDashboard = () => {
                 <button
                   key={item.name}
                   onClick={() => {
-                    if (item.key === "rfq") {
-                      navigate("/rfq");
-                      return;
-                    }
                     setSelectedTab(idx);
                   }}
                   className={classNames(
@@ -626,10 +613,6 @@ const SellerDashboard = () => {
                   <button
                     key={item.name}
                     onClick={() => {
-                      if (item.key === "rfq") {
-                        navigate("/rfq");
-                        return;
-                      }
                       setSelectedTab(idx);
                     }}
                     className={classNames(

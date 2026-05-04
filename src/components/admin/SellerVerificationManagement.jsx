@@ -617,8 +617,8 @@ const SellerVerificationManagement = () => {
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 flex flex-wrap gap-3 items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">Seller Verification Queue</h3>
-            <p className="mt-0.5 text-sm text-gray-500 dark:text-slate-400">Review seller documents and national ID</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">Pending applications</h3>
+            <p className="mt-0.5 text-sm text-gray-500 dark:text-slate-400">Review documents and national ID, then approve or reject</p>
           </div>
           <div className="flex gap-3">
             <div className="relative">

@@ -13,13 +13,13 @@ import {
   MagnifyingGlassIcon,
   StarIcon,
   TruckIcon,
-  ShieldCheckIcon,
-  CheckBadgeIcon,
   BriefcaseIcon,
   BellIcon,
   EnvelopeIcon,
   TicketIcon,
   UserCircleIcon,
+  DocumentTextIcon,
+  BuildingStorefrontIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -29,7 +29,7 @@ import Sidebar from "../../components/layout/Sidebar";
 import PlatformLogistics from "../../components/admin/PlatformLogistics";
 import BusinessTypeManagement from "../../components/admin/BusinessTypeManagement";
 import UserManagement from "../../components/admin/UserManagement";
-import SellersManagement from "../../components/admin/SellersManagement";
+import AdminSellerCenter from "../../components/admin/AdminSellerCenter";
 import DashboardOverview from "../../components/admin/DashboardOverview";
 import ProductManagement from "../../components/admin/ProductManagement";          // self‑contained
 import ReviewManagement from "../../components/admin/ReviewManagement";
@@ -39,8 +39,6 @@ import CommissionRulesManagement from "../../components/admin/CommissionRulesMan
 import EmailCampaigns from "../../components/admin/EmailCampaigns";
 import ReportManagement from "../../components/admin/ReportManagement";
 import CategoryManagement from "../../components/admin/CategoryManagement";        // self‑contained
-import SellerVerificationManagement from "../../components/admin/SellerVerificationManagement";
-import VerifiedSellerList from "../../components/admin/VerifiedSellerList";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import AnnouncementManagement from "../../components/admin/AnnouncementManagement";
@@ -51,6 +49,7 @@ import DeliveryFeeManagement from "../../components/admin/DeliveryFeeManagement"
 import CodInvoiceManagement from "../../components/admin/CodInvoiceManagement";
 import FinancialReports from "../../components/admin/FinancialReports";
 import SEO from "../../components/SEO/SEO";
+import DashboardRFQSection from "../../components/Shared/DashboardRFQSection";
 
 // ── Admin personal profile tab ────────────────────────────────────────────────
 const inputCls =
@@ -312,31 +311,6 @@ const AdminDashboard = () => {
     return () => clearInterval(id);
   }, [activeTab, fetchDashboardData]);
 
-  // Refresh handler (only for components that still need it)
-  const handleRefresh = async () => {
-    switch (activeTab) {
-      case 0:
-        fetchDashboardData();
-        break;
-      case 6:
-        setIsOrdersLoading(true);
-        try {
-          const response = await api.get("/orders");
-          const ordersData = response.data.data || response.data;
-          setOrders(Array.isArray(ordersData) ? ordersData : []);
-        } catch (error) {
-          setOrdersError(error);
-        } finally {
-          setIsOrdersLoading(false);
-        }
-        break;
-      default:
-        break;
-    }
-  };
-
-
-
   const navigation = [
     {
       name: t("dashboard"),
@@ -347,6 +321,11 @@ const AdminDashboard = () => {
       name: "Notifications",
       icon: BellIcon,
       component: <NotificationsPanel />
+    },
+    {
+      name: "RFQ",
+      icon: DocumentTextIcon,
+      component: <DashboardRFQSection role="admin" />,
     },
     {
       name: "Financial Reports",
@@ -365,18 +344,8 @@ const AdminDashboard = () => {
     },
     {
       name: "Sellers",
-      icon: UserGroupIcon,
-      component: <SellersManagement />
-    },
-    {
-      name: "Seller Verification",
-      icon: ShieldCheckIcon,
-      component: <SellerVerificationManagement />
-    },
-    {
-      name: "Verified Sellers",
-      icon: CheckBadgeIcon,
-      component: <VerifiedSellerList />
+      icon: BuildingStorefrontIcon,
+      component: <AdminSellerCenter />
     },
     {
       name: t("seller.product.title"),
@@ -462,17 +431,57 @@ const AdminDashboard = () => {
       component: <AdminProfileTab />,
     }
   ];
+
+  const ordersTabIndex = React.useMemo(
+    () => navigation.findIndex((item) => item.name === t("orders")),
+    [navigation, t]
+  );
+
+  const handleRefresh = async () => {
+    if (activeTab === 0) {
+      fetchDashboardData();
+      return;
+    }
+    if (ordersTabIndex !== -1 && activeTab === ordersTabIndex) {
+      setIsOrdersLoading(true);
+      try {
+        const response = await api.get("/orders");
+        const ordersData = response.data.data || response.data;
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+      } catch (error) {
+        setOrdersError(error);
+      } finally {
+        setIsOrdersLoading(false);
+      }
+    }
+  };
+
   const notificationsTabIndex = React.useMemo(
     () => navigation.findIndex((item) => item.name === "Notifications"),
+    [navigation]
+  );
+  const rfqTabIndex = React.useMemo(
+    () => navigation.findIndex((item) => item.name === "RFQ"),
+    [navigation]
+  );
+  const sellersTabIndex = React.useMemo(
+    () => navigation.findIndex((item) => item.name === "Sellers"),
     [navigation]
   );
 
   useEffect(() => {
     const tab = new URLSearchParams(location.search).get("tab");
-    if (tab?.toLowerCase() === "notifications" && notificationsTabIndex !== -1) {
+    const key = tab?.toLowerCase();
+    if (key === "notifications" && notificationsTabIndex !== -1) {
       setActiveTab(notificationsTabIndex);
     }
-  }, [location.search, notificationsTabIndex]);
+    if (key === "rfq" && rfqTabIndex !== -1) {
+      setActiveTab(rfqTabIndex);
+    }
+    if (key === "sellers" && sellersTabIndex !== -1) {
+      setActiveTab(sellersTabIndex);
+    }
+  }, [location.search, notificationsTabIndex, rfqTabIndex, sellersTabIndex]);
 
   return (
     <>

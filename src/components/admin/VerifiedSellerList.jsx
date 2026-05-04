@@ -293,7 +293,7 @@ export default function VerifiedSellerList() {
             <ShieldCheckIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Verified Seller List</h1>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Verified seller directory</h2>
             <p className="text-sm text-gray-500 dark:text-slate-400">{total.toLocaleString()} verified seller{total !== 1 ? "s" : ""}</p>
           </div>
         </div>

@@ -233,8 +233,8 @@ const SellersManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Seller Management</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-slate-400">Manage all sellers in your marketplace</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Seller directory</h2>
+          <p className="mt-0.5 text-sm text-gray-600 dark:text-slate-400">Manage all sellers in your marketplace</p>
         </div>
       </div>
 

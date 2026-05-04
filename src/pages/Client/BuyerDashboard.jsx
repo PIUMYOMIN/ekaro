@@ -20,7 +20,7 @@ import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import { useTheme } from "../../context/ThemeContext";
-import RFQPanel from "../../components/client/RFQPanel";
+import DashboardRFQSection, { fetchRfqDashboardTabBadgeForRole } from "../../components/Shared/DashboardRFQSection";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -1311,14 +1311,8 @@ const BuyerDashboard = () => {
   }, []);
 
   const fetchRfqBadgeCount = useCallback(async () => {
-    try {
-      const res = await api.get("/rfq/sent");
-      const list = res.data?.data?.data ?? res.data?.data ?? [];
-      const pending = list.filter((rfq) => rfq.status === "quoted").length;
-      setRfqBadgeCount(pending);
-    } catch {
-      setRfqBadgeCount(0);
-    }
+    const n = await fetchRfqDashboardTabBadgeForRole("buyer");
+    setRfqBadgeCount(n);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -1375,7 +1369,7 @@ const BuyerDashboard = () => {
       case "history":   return <PurchaseHistoryTab orders={orders} />;
       case "cart":      return <CartTab navigate={navigate} />;
       case "wishlist":  return <WishlistTab navigate={navigate} />;
-      case "rfq":       return <RFQPanel />;
+      case "rfq":       return <DashboardRFQSection role="buyer" />;
       case "profile":   return <ProfileTab user={user} onUpdate={(u) => { setUser(u); updateUser(u); }} />;
       case "settings":      return <SettingsTab user={user} />;
       case "notifications": return <NotificationsPanel />;
