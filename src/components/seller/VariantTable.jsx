@@ -97,15 +97,34 @@ const VariantTable = ({ productId, onUpdated }) => {
     const row = edits[variant.id];
     if (!row) return;
 
+    const price = parseFloat(row.price);
+    const quantity = parseFloat(row.quantity);
+    if (row.price === "" || Number.isNaN(price)) {
+      setErrors((prev) => ({ ...prev, [variant.id]: "Enter a valid price." }));
+      return;
+    }
+    if (row.quantity === "" || Number.isNaN(quantity)) {
+      setErrors((prev) => ({ ...prev, [variant.id]: "Enter a valid quantity." }));
+      return;
+    }
+    let moqVal = null;
+    if (row.moq !== "" && row.moq != null) {
+      moqVal = parseInt(row.moq, 10);
+      if (Number.isNaN(moqVal)) {
+        setErrors((prev) => ({ ...prev, [variant.id]: "MOQ must be a whole number or empty." }));
+        return;
+      }
+    }
+
     setSaving((prev) => ({ ...prev, [variant.id]: true }));
     setErrors((prev) => ({ ...prev, [variant.id]: "" }));
 
     try {
       await api.put(`/seller/products/${productId}/variants/${variant.id}`, {
-        price:         parseFloat(row.price),
-        quantity:      parseFloat(row.quantity),
+        price,
+        quantity,
         quantity_unit: row.quantity_unit || null,
-        moq:           row.moq ? parseInt(row.moq) : null,
+        moq:           moqVal,
         sku:           row.sku || null,
         is_active:     row.is_active,
       });
@@ -157,13 +176,27 @@ const VariantTable = ({ productId, onUpdated }) => {
       setGlobalError("Please enter a default price before generating.");
       return;
     }
+    const genPrice = parseFloat(genDefaults.price);
+    const genQty = parseFloat(genDefaults.quantity || "0");
+    if (Number.isNaN(genPrice)) {
+      setGlobalError("Please enter a valid default price.");
+      return;
+    }
+    if (Number.isNaN(genQty) || genQty < 0) {
+      setGlobalError("Please enter a valid default quantity (0 or more).");
+      return;
+    }
     setGenerating(true);
     setGlobalError("");
     try {
       await api.post(`/seller/products/${productId}/variants/generate`, {
-        price:    parseFloat(genDefaults.price),
-        quantity: parseFloat(genDefaults.quantity || "0"),
-        moq:      genDefaults.moq ? parseInt(genDefaults.moq) : null,
+        price:    genPrice,
+        quantity: genQty,
+        moq:      (() => {
+          if (!genDefaults.moq) return null;
+          const m = parseInt(genDefaults.moq, 10);
+          return Number.isNaN(m) ? null : m;
+        })(),
       });
       await fetchVariants();
       setShowGenForm(false);

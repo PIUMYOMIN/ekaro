@@ -339,12 +339,35 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
+      const priceNum = parseFloat(formData.price);
+      const moqNum = parseInt(formData.moq, 10);
+      const categoryNum = parseInt(formData.category_id, 10);
+      if (Number.isNaN(priceNum) || formData.price === "") {
+        setError("Please enter a valid price.");
+        setLoading(false);
+        return;
+      }
+      if (Number.isNaN(moqNum) || moqNum < 1) {
+        setError("Please enter a valid minimum order quantity (MOQ).");
+        setLoading(false);
+        return;
+      }
+      if (Number.isNaN(categoryNum)) {
+        setError("Please select a category.");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         ...formData,
-        price:         parseFloat(formData.price),
-        moq:           parseInt(formData.moq, 10),
-        category_id:   parseInt(formData.category_id, 10),
-        discount_price: formData.discount_price ? parseFloat(formData.discount_price) : null,
+        price:         priceNum,
+        moq:           moqNum,
+        category_id:   categoryNum,
+        discount_price: (() => {
+          if (!formData.discount_price) return null;
+          const d = parseFloat(formData.discount_price);
+          return Number.isNaN(d) ? null : d;
+        })(),
         weight_kg:     formData.weight_kg     ? parseFloat(formData.weight_kg)     : null,
         shipping_cost: formData.shipping_cost ? parseFloat(formData.shipping_cost) : null,
         is_featured:   formData.is_featured  || false,
@@ -374,7 +397,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       } else {
         response = await api.post("/seller/products", payload);
         setSuccessMessage("Product created! Now define your options and variants in Step 5.");
-        setCreatedProductId(response.data.data?.id);
+        const created = response.data?.data;
+        const newId = created?.id ?? created?.data?.id;
+        setCreatedProductId(newId ?? null);
+        if (!newId) {
+          setError("Product was created but the response did not include an id. Refresh and open the product to add variants.");
+        }
       }
 
       localStorage.removeItem(STORAGE_KEYS.PRODUCT_DRAFT);
@@ -900,17 +928,21 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 placeholder="Any additional notes..." />
             </div>
             <div className="space-y-3">
-              {[
-                ["is_featured", "is_featured", "Feature this product on homepage", "blue"],
-                ["is_active",   "is_active",   "Make this product active and visible", "green"],
-                ["is_new",      "is_new",       "Mark as new product", "yellow"],
-              ].map(([id, name, label, color]) => (
-                <div key={id} className={`flex items-center space-x-3 p-4 bg-${color}-50 dark:bg-${color}-900/20 rounded-lg border border-${color}-200 dark:border-${color}-800`}>
-                  <input id={id} name={name} type="checkbox" checked={formData[name]} onChange={handleChange}
-                    className={`h-5 w-5 text-${color}-600 focus:ring-${color}-500 border-gray-300 rounded`} />
-                  <label htmlFor={id} className="text-sm font-medium text-gray-900 dark:text-slate-100">{label}</label>
-                </div>
-              ))}
+              <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <input id="is_featured" name="is_featured" type="checkbox" checked={formData.is_featured} onChange={handleChange}
+                  className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                <label htmlFor="is_featured" className="text-sm font-medium text-gray-900 dark:text-slate-100">Feature this product on homepage</label>
+              </div>
+              <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
+                  className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-slate-100">Make this product active and visible</label>
+              </div>
+              <div className="flex items-center space-x-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <input id="is_new" name="is_new" type="checkbox" checked={formData.is_new} onChange={handleChange}
+                  className="h-5 w-5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded" />
+                <label htmlFor="is_new" className="text-sm font-medium text-gray-900 dark:text-slate-100">Mark as new product</label>
+              </div>
             </div>
           </div>
         );

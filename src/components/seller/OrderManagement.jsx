@@ -338,6 +338,12 @@ const OrderDetailsModal = ({
   const [refreshing, setRefreshing]     = useState(false);
   const [error, setError]               = useState(null);
 
+  // Keep delivery UI in sync when parent refreshes `order` (e.g. after setting delivery method).
+  useEffect(() => {
+    if (!isOpen) return;
+    setDelivery(order.delivery ?? null);
+  }, [isOpen, order]);
+
   if (!isOpen) return null;
 
   const shippingAddress = parseShippingAddress(order.shipping_address);
@@ -536,7 +542,11 @@ const OrderDetailsModal = ({
             {/* Confirm order */}
             {order.status === "pending" && (
               <button
-                onClick={() => { onStatusUpdate(order.id, "confirmed"); onClose(); }}
+                type="button"
+                onClick={async () => {
+                  const ok = await onStatusUpdate(order.id, "confirmed");
+                  if (ok) onClose();
+                }}
                 disabled={actionLoading === order.id}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
               >
@@ -547,7 +557,11 @@ const OrderDetailsModal = ({
             {/* Mark as shipped — only for self delivery after method is chosen */}
             {order.status === "confirmed" && isSelfDelivery && (
               <button
-                onClick={() => { onStatusUpdate(order.id, "shipped"); onClose(); }}
+                type="button"
+                onClick={async () => {
+                  const ok = await onStatusUpdate(order.id, "shipped");
+                  if (ok) onClose();
+                }}
                 disabled={actionLoading === order.id}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
               >
@@ -620,20 +634,31 @@ const OrderManagement = () => {
       setError(null);
       const endpoints = { confirmed: "confirm", processing: "process", shipped: "ship" };
       const endpoint  = endpoints[status];
-      if (!endpoint) return;
+      if (!endpoint) return false;
 
       const data = status === "shipped"
         ? { tracking_number: `TRK-${Date.now()}`, shipping_carrier: "Self Delivery" }
         : {};
 
       const res = await api.post(`/orders/${orderId}/${endpoint}`, data);
-      if (res.data.success) {
+      if (res.data?.success) {
         await fetchOrders();
-      } else {
-        setError(res.data.message || "Failed to update order");
+        try {
+          const freshRes = await api.get(`/orders/${orderId}`);
+          const fresh = freshRes.data?.data;
+          if (fresh) {
+            setSelectedOrder((prev) => (prev && prev.id === orderId ? fresh : prev));
+          }
+        } catch {
+          /* list refresh is enough */
+        }
+        return true;
       }
+      setError(res.data?.message || "Failed to update order");
+      return false;
     } catch (err) {
       setError(err.response?.data?.message || `Failed to update order status`);
+      return false;
     } finally {
       setActionLoading(null);
     }
@@ -656,9 +681,13 @@ const OrderManagement = () => {
 
       if (res.data.success) {
         await fetchOrders();
-        // Also refresh the selectedOrder so the modal shows the updated delivery
-        const updated = (await api.get("/orders")).data.data?.find((o) => o.id === orderId);
-        if (updated) setSelectedOrder(updated);
+        try {
+          const freshRes = await api.get(`/orders/${orderId}`);
+          const updated = freshRes.data?.data;
+          if (updated) setSelectedOrder((prev) => (prev && prev.id === orderId ? updated : prev));
+        } catch {
+          /* fetchOrders already ran */
+        }
         return true;
       } else {
         setError(res.data.message || "Failed to set delivery method");

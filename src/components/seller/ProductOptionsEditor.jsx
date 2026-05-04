@@ -253,9 +253,12 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
           _id: String(opt.id),
           values: (opt.values ?? []).map((v) => ({ ...v, _id: String(v.id) })),
         }));
-        if (loaded.length > 0) setOptions(loaded);
+        // Always set (including []) so switching products does not leave stale options.
+        setOptions(loaded);
       })
-      .catch(() => {}); // Silently ignore — new product has no options yet
+      .catch(() => {
+        setOptions([]);
+      });
   }, [productId]);
 
   const addOption = () =>
