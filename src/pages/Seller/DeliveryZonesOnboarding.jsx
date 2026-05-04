@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import DeliveryZones from '../../components/seller/DeliveryZones';
+import { invalidateOnboardingCache } from '../../components/StepGuard';
 
 const DeliveryZonesOnboarding = () => {
   const navigate = useNavigate();
@@ -27,7 +28,10 @@ const DeliveryZonesOnboarding = () => {
         <DeliveryZones
           showHeader={false}
           saveButtonLabel="Save Delivery Zones & Continue"
-          onSaveSuccess={() => navigate('/seller/onboarding/documents')}
+          onSaveSuccess={() => {
+            invalidateOnboardingCache();
+            navigate('/seller/onboarding/documents');
+          }}
         />
       </div>
     </OnboardingLayout>

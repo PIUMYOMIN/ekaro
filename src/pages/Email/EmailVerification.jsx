@@ -272,13 +272,6 @@ const EmailVerification = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full space-y-4">
 
-          {/* Branding */}
-          <div className="text-center mb-2">
-            <Link to="/" className="text-2xl font-extrabold text-green-600 tracking-tight">
-              Pyonea<span className="text-gray-400">.com</span>
-            </Link>
-          </div>
-
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 
             {/* ── Verifying link spinner ── */}

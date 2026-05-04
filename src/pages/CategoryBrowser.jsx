@@ -6,6 +6,8 @@ import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 import CategoryCard from "../components/ui/CategoryCard";
 import useSEO from "../hooks/useSEO";
+import { SITE_PUBLIC_URL } from "../config";
+import { getImageUrl } from "../utils/imageHelpers";
 
 // Skeleton loader matching the CategoryCard shape
 const CategoryCardSkeleton = () => (
@@ -73,9 +75,51 @@ const CategoryBrowser = () => {
     });
   }, [categories, searchQuery]);
 
+  const categoryListingSchema = useMemo(() => {
+    const pageUrl = `${SITE_PUBLIC_URL}/categories`;
+    const itemListElement = filteredCategories.slice(0, 48).map((cat, i) => {
+      const name =
+        i18n.language === "my" && cat.name_mm
+          ? cat.name_mm
+          : (cat.name_en || cat.name_mm || "Category");
+      let img;
+      if (cat.image) {
+        const resolved = getImageUrl(cat.image);
+        if (resolved && !resolved.includes("placeholder")) {
+          img = resolved;
+        }
+      }
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Thing",
+          name,
+          url: `${SITE_PUBLIC_URL}/products?category=${cat.id}`,
+          ...(img ? { image: img } : {}),
+        },
+      };
+    });
+    return {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: t("categories.title"),
+      description: t("categories.subtitle"),
+      url: pageUrl,
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: filteredCategories.length,
+        itemListElement,
+      },
+    };
+  }, [filteredCategories, t, i18n.language]);
+
   const SeoComponent = useSEO({
     title: t("categories.title"),
-    description: t("categories.subtitle")
+    description: t("categories.subtitle"),
+    url: "/categories",
+    type: "website",
+    schema: categoryListingSchema,
   });
 
   if (error) {

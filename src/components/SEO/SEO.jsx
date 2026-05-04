@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { SITE_PUBLIC_URL } from "../../config";
 
 const SEO = ({
   title,
@@ -6,14 +7,14 @@ const SEO = ({
   image,
   url = "",
   type = "website",
+  imageAlt = "",
   schema = null,
   alternateUrls = {},
   noindex = false,
   locale = "en_US",
 }) => {
 
-  const siteUrl =
-    import.meta.env.VITE_APP_URL || "https://pyonea.com";
+  const siteUrl = SITE_PUBLIC_URL;
 
   const safeImage = (image != null && image !== "") ? image : "/og-image.png";
   const safeUrl   = url ?? "";
@@ -61,6 +62,7 @@ const SEO = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description || ""} />
       <meta property="og:image" content={absoluteImage} />
+      {imageAlt ? <meta property="og:image:alt" content={imageAlt} /> : null}
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
       <meta property="og:url" content={absoluteUrl} />

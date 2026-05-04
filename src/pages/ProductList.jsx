@@ -8,6 +8,8 @@ import SearchFilters from "../components/marketplace/SearchFilters";
 import CategorySelector from "../components/marketplace/CategorySelector";
 import useSEO from "../hooks/useSEO";
 import { useCart } from "../context/CartContext";
+import { SITE_PUBLIC_URL } from "../config";
+import { getImageUrl } from "../utils/imageHelpers";
 
 const ProductCardSkeleton = () => (
   <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700
@@ -234,10 +236,51 @@ const ProductList = () => {
     return "Discover thousands of wholesale products on Pyonea, Myanmar's leading B2B marketplace.";
   }, [searchQuery, selectedCategory, products.length, getCategoryName]);
 
+  const productListingSchema = useMemo(() => {
+    const pageUrl = `${SITE_PUBLIC_URL}${location.pathname}${location.search}`;
+    const itemListElement = products.slice(0, 24).map((p, i) => {
+      const path = p.slug_en || p.slug || p.id;
+      const name = p.name_en || p.name_mm || "Product";
+      let img;
+      if (p.images?.[0]) {
+        const raw =
+          typeof p.images[0] === "string" ? p.images[0] : p.images[0].url || p.images[0];
+        const resolved = getImageUrl(raw);
+        if (resolved && !resolved.includes("placeholder")) {
+          img = resolved;
+        }
+      }
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "Thing",
+          name,
+          url: `${SITE_PUBLIC_URL}/products/${path}`,
+          ...(img ? { image: img } : {}),
+        },
+      };
+    });
+    return {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: getPageTitle,
+      description: metaDescription,
+      url: pageUrl,
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: products.length,
+        itemListElement,
+      },
+    };
+  }, [products, location.pathname, location.search, getPageTitle, metaDescription]);
+
   const SeoComponent = useSEO({
     title: getPageTitle,
     description: metaDescription,
     url: location.pathname + location.search,
+    type: "website",
+    schema: productListingSchema,
   });
 
   const hasActiveFilters = searchQuery || selectedCategory || filters.minPrice || filters.maxPrice;

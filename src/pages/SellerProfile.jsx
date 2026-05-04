@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/solid';
 import useSEO from '../hooks/useSEO';
 import api from '../utils/api';
+import { SITE_PUBLIC_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ui/ProductCard';
 import { SkeletonSellerProfile } from '../components/ui/Skeleton';
@@ -195,14 +196,16 @@ const SellerProfile = () => {
     title: seller ? `${seller.store_name} | Pyonea Marketplace` : 'Seller Profile | Pyonea',
     description: seller?.store_description?.slice(0, 155) || 'View products and information from this verified seller on Pyonea.',
     image: seller?.store_logo || undefined,
+    imageAlt: seller?.store_name || undefined,
     url: `/sellers/${slug}`,
+    type: 'profile',
     schema: seller ? {
       '@context': 'https://schema.org',
       '@type': 'LocalBusiness',
       name: seller.store_name,
       description: seller.store_description,
       image: seller.store_logo,
-      url: `https://pyonea.com/sellers/${slug}`,
+      url: `${SITE_PUBLIC_URL}/sellers/${slug}`,
       // telephone: seller.contact_phone || undefined,
       email: seller.contact_email || undefined,
       address: seller.address ? {

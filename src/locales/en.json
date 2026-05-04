@@ -686,7 +686,11 @@
     "creatingAccount": "Creating account...",
     "hasAccount": "Already have an account?",
     "signIn": "Sign in",
-    "error": "An error occurred during registration"
+    "error": "An error occurred during registration",
+    "referral_og_title": "Join Pyonea — invited by {{name}}",
+    "referral_og_description": "Create your free account on Myanmar's B2B wholesale marketplace.",
+    "referral_og_title_generic": "Join Pyonea with a friend's referral",
+    "referral_og_description_generic": "Sign up for Pyonea — Myanmar's trusted B2B marketplace."
   },
   "validation": {
     "required": "This field is required",

@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SEO from "../components/SEO/SEO";
+import { SITE_PUBLIC_URL } from "../config";
 
 const routeConfig = {
   "/": { type: "website", key: "home" },
@@ -12,7 +13,18 @@ const routeConfig = {
   "/forgot-password": { type: "website", key: "auth" },
 };
 
-const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, noindex = false } = {}) => {
+const useSEO = ({
+  title,
+  description,
+  image,
+  schema,
+  url: customUrl,
+  data = {},
+  noindex = false,
+  /** Open Graph type: website | product | profile | article */
+  type: typeOverride,
+  imageAlt,
+} = {}) => {
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
@@ -34,14 +46,11 @@ const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, 
   const defaultDescription = t(`seo.${pageKey}.description`, data);
   const finalDescription = description || defaultDescription;
 
-  // Construct alternate URLs (assuming no language prefix in URL – adjust if needed)
-  const baseUrl = "https://pyonea.com";
-
   // Canonical URL — use caller-supplied override when available, else derive from location
   const currentPath = location.pathname + location.search;
   const resolvedUrl = customUrl
-    ? (customUrl.startsWith('http') ? customUrl : `${baseUrl}${customUrl}`)
-    : `${baseUrl}${currentPath}`;
+    ? (customUrl.startsWith('http') ? customUrl : `${SITE_PUBLIC_URL}${customUrl.startsWith('/') ? '' : '/'}${customUrl}`)
+    : `${SITE_PUBLIC_URL}${currentPath}`;
 
   // Alternate hreflang URLs
   const alternateUrls = {};
@@ -49,7 +58,13 @@ const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, 
     alternateUrls[lang] = resolvedUrl;
   });
   
-  const ogType = routeConfig[location.pathname]?.type || 'website';
+  const inferredOgType =
+    typeOverride ||
+    (pageKey === 'product'
+      ? 'product'
+      : pageKey === 'seller'
+        ? 'profile'
+        : routeConfig[location.pathname]?.type || 'website');
 
   let schemaData = schema;
 
@@ -70,8 +85,9 @@ const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, 
       title={finalTitle}
       description={finalDescription}
       image={image}
+      imageAlt={imageAlt ?? (finalTitle ? String(finalTitle).replace(/\s*\|\s*Pyonea\s*$/, '').trim() : '')}
       url={resolvedUrl}
-      type={ogType}
+      type={inferredOgType}
       schema={schemaData}
       alternateUrls={alternateUrls}
       noindex={noindex}

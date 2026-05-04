@@ -17,7 +17,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
-import { DEFAULT_PLACEHOLDER } from "../config";
+import { DEFAULT_PLACEHOLDER, SITE_PUBLIC_URL } from "../config";
 import { SkeletonProductDetail } from "../components/ui/Skeleton";
 import VariantPicker from "../components/ui/VariantPicker";
 
@@ -296,7 +296,7 @@ const ProductDetail = () => {
   // ── Share ────────────────────────────────────────────────────────────────────
   const shareData = useMemo(() => {
     if (!product) return null;
-    const url   = `${window.location.origin}/products/${product.slug_en || product.slug || slug}`;
+    const url   = `${SITE_PUBLIC_URL}/products/${product.slug_en || product.slug || slug}`;
     const title = loc(product.name_en, product.name_mm) || "Product";
     const text  = `Check out ${title} on Pyonea`;
     const image = product.images?.[0] ? getImageUrl(product.images[0]) : null;
@@ -365,7 +365,7 @@ const ProductDetail = () => {
         availability:  availableStock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-        url: `https://pyonea.com/products/${product.slug_en || product.slug || product.id}`,
+        url: `${SITE_PUBLIC_URL}/products/${product.slug_en || product.slug || product.id}`,
       },
       ...(product.review_count > 0 && {
         aggregateRating: {
@@ -381,7 +381,9 @@ const ProductDetail = () => {
     title:       pageTitle,
     description: pageDescription,
     image:       product?.images?.[0] ? getImageUrl(product.images[0]) : undefined,
+    imageAlt:    product ? (loc(product.name_en, product.name_mm) || "Product") : undefined,
     url:         pageUrl,
+    type:        "product",
     schema:      productSchema,
   });
 

@@ -1,6 +1,7 @@
 // hooks/useOnboardingState.js
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../utils/api';
+import { invalidateOnboardingCache } from '../components/StepGuard';
 
 export const useOnboardingState = () => {
     const [currentStep, setCurrentStep]       = useState('store-basic');
@@ -99,14 +100,25 @@ export const useOnboardingState = () => {
             const response = await api.post(endpoint, data);
 
             if (response.data.success) {
-                setFormData(prev => ({ ...prev, ...data }));
+                if (step === 'documents') {
+                    setFormData(prev => ({
+                        ...prev,
+                        ...data,
+                        documents: { ...prev.documents, documents_submitted: true },
+                        documents_submitted: true,
+                    }));
+                } else {
+                    setFormData(prev => ({ ...prev, ...data }));
+                }
+
+                invalidateOnboardingCache();
 
                 // FIX: prefer nextStep from backend response; fall back to hardcoded map
                 const backendNextStep = response.data.data?.next_step ?? response.data.next_step;
                 const fallbackMap = {
                     'store-basic':      'business-details',
                     'business-details': 'address',
-                    'address':          'documents',
+                    'address':          'delivery-zones',
                     'documents':        'review-submit',
                     'review-submit':     'complete',
                 };

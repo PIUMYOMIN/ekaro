@@ -82,7 +82,7 @@ const ReviewSubmit = () => {
 
         setSubmitting(true);
 
-        const result = await saveStep('review', { terms_accepted: true });
+        const result = await saveStep('review-submit', { terms_accepted: true });
 
         if (result.success) {
             setSuccess(true);

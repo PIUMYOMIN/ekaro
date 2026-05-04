@@ -138,9 +138,21 @@ const Register = () => {
 
 
   const SeoComponent = useSEO({
-    title: t('register.title'),
-    description: t('register.subtitle'),
+    title:
+      refCode && referrerName
+        ? t('register.referral_og_title', { name: referrerName })
+        : refCode
+          ? t('register.referral_og_title_generic')
+          : t('register.title'),
+    description:
+      refCode && referrerName
+        ? t('register.referral_og_description')
+        : refCode
+          ? t('register.referral_og_description_generic')
+          : t('register.subtitle'),
     noindex: true,
+    url: `/register${refCode ? `?ref=${encodeURIComponent(refCode)}` : ''}`,
+    type: 'website',
   });
 
   return (

@@ -1,5 +1,5 @@
 // components/StepGuard.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -18,10 +18,10 @@ const StepGuard = ({ children, step }) => {
     const [loading, setLoading]   = useState(true);
     const navigate                = useNavigate();
     const { user }                = useAuth();
-    const inflight                = useRef(false);
     useEffect(() => {
-        if (inflight.current) return;
-        inflight.current = true;
+        let cancelled = false;
+        setLoading(true);
+        setIsValid(false);
 
         const validateStep = async () => {
             if (!user) {
@@ -34,8 +34,8 @@ const StepGuard = ({ children, step }) => {
                 return;
             }
 
-            // ── Email must be verified before any onboarding step ──────────
-            if (!user.email_verified_at) {
+            // Accounts with an email must verify it (phone-only users have no email)
+            if (user.email && !user.email_verified_at) {
                 navigate('/verify-email', {
                     state: { returnTo: `/seller/onboarding/${step}` }
                 });
@@ -51,12 +51,15 @@ const StepGuard = ({ children, step }) => {
                     statusData = _statusCache;
                 } else {
                     const response = await api.get('/seller/onboarding/status');
+                    if (cancelled) return;
                     if (response.data.success) {
                         _statusCache = response.data.data;
                         _statusCacheTime = now;
                         statusData = _statusCache;
                     }
                 }
+
+                if (cancelled) return;
 
                 if (!statusData) {
                     navigate('/seller/onboarding/store-basic');
@@ -79,6 +82,7 @@ const StepGuard = ({ children, step }) => {
                 ];
 
                 const resolvedStep = await resolveSellerOnboardingStep(statusData);
+                if (cancelled) return;
                 const currentIndex   = stepOrder.indexOf(resolvedStep);
                 const requestedIndex = stepOrder.indexOf(step);
 
@@ -95,11 +99,14 @@ const StepGuard = ({ children, step }) => {
                 console.error('Step validation failed:', error);
                 navigate('/seller/onboarding/store-basic');
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
         validateStep();
+        return () => {
+            cancelled = true;
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, step]); // navigate is stable; step + user are the only meaningful deps
 
