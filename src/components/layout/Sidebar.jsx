@@ -35,7 +35,7 @@ const Sidebar = () => {
     },
     {
       name: t("sidebar.settings"),
-      href: "/seller/settings",
+      href: "/seller/dashboard?tab=settings",
       icon: "⚙️"
     }
   ];

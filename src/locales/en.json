@@ -1713,7 +1713,7 @@
     },
     "account": {
       "q_0": "How do I change my password?",
-      "a_0": "Go to your dashboard, then navigate to 'My Profile' or 'Settings'. You'll find a Change Password section where you can update your password. You'll need your current password to make the change.",
+      "a_0": "Open Seller Center, go to Settings, then open the Security section. Use Change Password there (your current password is required). Personal details are saved under the Personal section at the top of the same page.",
       "q_1": "How do I update my email address?",
       "a_1": "Email changes require identity verification. Contact our support team at contact@pyonea.com with your account details and proof of identity to request an email update.",
       "q_2": "Can I have both a buyer and seller account?",

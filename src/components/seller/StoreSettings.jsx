@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import {
@@ -17,6 +18,7 @@ import {
 
 const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
   const { t } = useTranslation();
+  const location = useLocation();
   const { user, updateUser } = useAuth();
   const [profileData, setProfileData] = useState({
     name: user?.name || '', email: user?.email || '', phone: user?.phone || '',
@@ -31,9 +33,32 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
     try {
       const res = await api.put('/users/profile', profileData);
       if (res.data.success) { updateUser(res.data.data); setProfileMsg({ type:'success', text:'Profile updated!' }); }
+      if (refreshData) await refreshData();
     } catch (err) { setProfileMsg({ type:'error', text: err.response?.data?.message || 'Update failed.' }); }
     finally { setProfileSaving(false); }
   };
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileData({
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      address: user.address || '',
+      city: user.city || '',
+      state: user.state || '',
+      country: user.country || 'Myanmar',
+      postal_code: user.postal_code || '',
+      date_of_birth: user.date_of_birth ? user.date_of_birth.split('T')[0] : '',
+    });
+  }, [user]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('section') !== 'personal') return;
+    const el = document.getElementById('personal');
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [location.search]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -344,6 +369,83 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
         </div>
 
         <div className="p-6">
+          {/* Personal account (merged from former “My Profile” tab) */}
+          <section id="personal" className="mb-10 scroll-mt-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+              <UserCircleIcon className="h-5 w-5 mr-2 text-green-600" />
+              Personal account
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
+              Your login identity and contact details for this seller account.
+            </p>
+            {profileMsg && (
+              <div className={`mb-4 p-3 rounded-xl text-sm border ${
+                profileMsg.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
+              }`}>
+                {profileMsg.text}
+              </div>
+            )}
+            <form onSubmit={handleProfileSave} className="space-y-4 max-w-3xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Full name *</label>
+                  <input name="name" value={profileData.name} onChange={(e) => setProfileData((p) => ({ ...p, name: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Phone *</label>
+                  <input name="phone" type="tel" value={profileData.phone} onChange={(e) => setProfileData((p) => ({ ...p, phone: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email</label>
+                  <input name="email" type="email" value={profileData.email} onChange={(e) => setProfileData((p) => ({ ...p, email: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date of birth</label>
+                  <input name="date_of_birth" type="date" value={profileData.date_of_birth} onChange={(e) => setProfileData((p) => ({ ...p, date_of_birth: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Address</label>
+                <input name="address" value={profileData.address} onChange={(e) => setProfileData((p) => ({ ...p, address: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">City</label>
+                  <input name="city" value={profileData.city} onChange={(e) => setProfileData((p) => ({ ...p, city: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">State / region</label>
+                  <input name="state" value={profileData.state} onChange={(e) => setProfileData((p) => ({ ...p, state: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Country</label>
+                  <input name="country" value={profileData.country} onChange={(e) => setProfileData((p) => ({ ...p, country: e.target.value }))}
+                    placeholder="Myanmar" className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Postal code</label>
+                  <input name="postal_code" value={profileData.postal_code} onChange={(e) => setProfileData((p) => ({ ...p, postal_code: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500" />
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button type="submit" disabled={profileSaving}
+                  className="px-6 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                  {profileSaving ? t("seller.delivery_zones.saving") : t("buyer_dashboard.save_changes")}
+                </button>
+              </div>
+            </form>
+          </section>
+
           {/* General Settings */}
           <section id="general" className="mb-10">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">

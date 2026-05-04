@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
@@ -82,7 +82,6 @@ import ReviewSubmit from "./pages/Seller/ReviewSubmit";
 import StepGuard from "./components/StepGuard";
 import Error from "./pages/Errors/404";
 import SellerRouteGuard from "./components/SellerRouteGuard";
-import MyStore from "./components/seller/MyStore";
 import FinancialReports from "./components/admin/FinancialReports";
 import VerifiedSellerList from "./components/admin/VerifiedSellerList";
 
@@ -266,7 +265,7 @@ function App() {
                         <Route path="/seller/my-store" element={
                           <ProtectedRoute roles={["seller"]}>
                             <SellerRouteGuard>
-                              <MyStore />
+                              <Navigate to="/seller/dashboard?tab=my-store" replace />
                             </SellerRouteGuard>
                           </ProtectedRoute>
                         } />

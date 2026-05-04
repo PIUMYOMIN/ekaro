@@ -15,15 +15,12 @@ import {
   BuildingStorefrontIcon,
   ExclamationTriangleIcon,
   ArrowRightIcon,
-  PencilIcon,
   TicketIcon,
-  UserCircleIcon,
   GiftIcon,
   WalletIcon,
   TagIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
-import Sidebar from "../../components/layout/Sidebar";
 import DashboardSummary from "../../components/seller/DashboardSummary";
 import OrderManagement from "../../components/seller/OrderManagement";
 import ProductManagement from "../../components/seller/ProductManagement";
@@ -33,111 +30,22 @@ import Customers from "./Customers";
 import DeliveryZones from "../../components/seller/DeliveryZones";
 import { resolveSellerOnboardingStep } from "../../utils/sellerOnboarding";
 import StoreSettings from "../../components/seller/StoreSettings";
-import MyStore from "../../components/seller/MyStore";
+import SellerMyStoreSection from "../../components/seller/SellerMyStoreSection";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../utils/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import DeliveryManagement from "../../components/seller/DeliveryManagement";
 import DiscountManagement from "../../components/seller/DiscountManagement";
 import CouponManagement from "../../components/seller/CouponManagement";
-import StoreProfileEditor from "../../components/seller/StoreProfileEditor";
 import NotificationsPanel from "../../components/Shared/NotificationsPanel";
 import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
-import ChangePasswordForm from "../../components/Shared/ChangePasswordForm";
 import SellerWallet from "../../components/seller/SellerWallet";
 import SellerFinancialReports from "../../components/seller/SellerFinancialReports";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
-
-// ── Personal profile update tab for sellers ──────────────────────────────────
-const SellerProfileTab = () => {
-  const { user, updateUser } = useAuth();
-  const [formData, setFormData] = React.useState({
-    name:          user?.name          || "",
-    email:         user?.email         || "",
-    phone:         user?.phone         || "",
-    address:       user?.address       || "",
-    city:          user?.city          || "",
-    state:         user?.state         || "",
-    country:       user?.country       || "",
-    postal_code:   user?.postal_code   || "",
-    date_of_birth: user?.date_of_birth ? user.date_of_birth.split("T")[0] : "",
-  });
-  const [loading, setLoading]     = React.useState(false);
-  const [profileMsg, setProfileMsg] = React.useState(null);
-
-  const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setProfileMsg(null);
-    try {
-      const { default: api } = await import("../../utils/api");
-      const res = await api.put("/users/profile", formData);
-      if (res.data.success) {
-        updateUser(res.data.data);
-        setProfileMsg({ type: "success", text: "Profile updated successfully" });
-      }
-    } catch (err) {
-      setProfileMsg({ type: "error", text: err.response?.data?.message || "Update failed" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const msgCls = (m) => m?.type === "success"
-    ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
-    : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800";
-
-  const inputCls = "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 text-sm transition-all";
-
-  const field = (label, name, type = "text", placeholder = "") => (
-    <div key={name}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
-      <input type={type} name={name} value={formData[name]} onChange={handleChange}
-        placeholder={placeholder} className={inputCls} />
-    </div>
-  );
-
-  return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Profile info */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-6">Personal Profile</h3>
-        {profileMsg && (
-          <div className={`mb-4 p-3 rounded-lg text-sm ${msgCls(profileMsg)}`}>{profileMsg.text}</div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {field("Full Name *", "name")}
-            {field("Phone *", "phone", "tel")}
-            {field("Email", "email", "email")}
-            {field("Date of Birth", "date_of_birth", "date")}
-          </div>
-          {field("Address", "address")}
-          <div className="grid grid-cols-2 gap-4">
-            {field("City", "city")}
-            {field("State", "state")}
-            {field("Country", "country", "text", "Myanmar")}
-            {field("Postal Code", "postal_code")}
-          </div>
-          <div className="flex justify-end pt-2">
-            <button type="submit" disabled={loading}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-              {loading ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <ChangePasswordForm />
-    </div>
-  );
-};
 
 const SellerDashboard = () => {
   const location = useLocation();
@@ -252,7 +160,6 @@ const SellerDashboard = () => {
     { name: t("seller.dashboard"), icon: ChartBarIcon, key: "dashboard" },
     { name: "Notifications",              icon: BellIcon,               key: "notifications" },
     { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
-    { name: "Store Profile",            icon: PencilIcon,             key: "store_profile" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
     { name: "RFQ",                      icon: DocumentTextIcon,       key: "rfq" },
     { name: t("seller.delivery_zones.title"), icon: TruckIcon,        key: "delivery_zones" },
@@ -265,7 +172,6 @@ const SellerDashboard = () => {
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"), icon: CogIcon, key: "settings" },
     { name: "Referrals", icon: GiftIcon, key: "referrals" },
-    { name: "My Profile", icon: UserCircleIcon,         key: "profile" },
     { name: "Seller Wallet", icon: WalletIcon,         key: "wallet" },
     { name: "Financial Reports", icon: ChartBarIcon,      key: "financial_reports" },
   ], [t]);
@@ -276,8 +182,7 @@ const SellerDashboard = () => {
     switch (key) {
       case "dashboard": return <DashboardSummary storeData={storeData} stats={stats} onSetupClick={handleSetupClick} />;
       case "notifications":  return <NotificationsPanel />;
-      case "my_store":    return <MyStore storeData={storeData} stats={stats} refreshData={refreshGlobalData} />;
-      case "store_profile": return <StoreProfileEditor storeData={storeData} refreshData={refreshGlobalData} />;
+      case "my_store":    return <SellerMyStoreSection storeData={storeData} stats={stats} refreshData={refreshGlobalData} />;
       case "orders":      return <OrderManagement />;
       case "delivery":    return <DeliveryManagement />;
       case "products":    return <ProductManagement />;
@@ -287,9 +192,8 @@ const SellerDashboard = () => {
       case "reviews":     return <ProductReviewManagement />;
       case "customers":   return <Customers />;
       case "delivery_zones":    return <DeliveryZones storeData={storeData} />;
-      case "settings": return <StoreSettings storeData={storeData} setStoreData={setStoreData} />;
+      case "settings": return <StoreSettings storeData={storeData} setStoreData={setStoreData} refreshData={refreshGlobalData} />;
       case "referrals": return <ReferralPanel />;
-      case "profile": return <SellerProfileTab />;
       case "wallet": return <SellerWallet />;
       case "financial_reports": return <SellerFinancialReports storeName={storeData?.store_name} />;
       default:               return null;
@@ -315,11 +219,25 @@ const SellerDashboard = () => {
       return;
     }
 
+    if (initialTab === "store_profile") {
+      const myStoreIndex = navigation.findIndex((item) => item.key === "my_store");
+      if (myStoreIndex !== -1) setSelectedTab(myStoreIndex);
+      navigate("/seller/dashboard?tab=my-store&view=edit", { replace: true });
+      return;
+    }
+
+    if (initialTab === "profile") {
+      const settingsIndex = navigation.findIndex((item) => item.key === "settings");
+      if (settingsIndex !== -1) setSelectedTab(settingsIndex);
+      navigate("/seller/dashboard?tab=settings&section=personal", { replace: true });
+      return;
+    }
+
     if (initialTab) {
       const tabIndex = navigation.findIndex((item) => item.key === initialTab.replaceAll("-", "_"));
       if (tabIndex !== -1) setSelectedTab(tabIndex);
     }
-  }, [location.search, navigation]);
+  }, [location.search, navigation, navigate]);
 
   useEffect(() => {
     if (!user) return;
