@@ -13,6 +13,7 @@ import {
   XMarkIcon,
   ShareIcon,
   CheckIcon,
+  LinkIcon,
 } from "@heroicons/react/24/solid";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
@@ -53,6 +54,7 @@ const ProductDetail = () => {
   const [wishlistLoading, setWishlistLoading]   = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [copied, setCopied]                     = useState(false);
+  const [shareOpen, setShareOpen]               = useState(false);
   const [successMessage, setSuccessMessage]     = useState(null);
 
   const flashReview = (msg, type = "success") => {
@@ -292,21 +294,52 @@ const ProductDetail = () => {
   };
 
   // ── Share ────────────────────────────────────────────────────────────────────
-  const handleShare = async () => {
-    const url   = `${window.location.origin}/products/${product?.slug_en || product?.slug || slug}`;
-    const title = loc(product?.name_en, product?.name_mm) || "Product";
+  const shareData = useMemo(() => {
+    if (!product) return null;
+    const url   = `${window.location.origin}/products/${product.slug_en || product.slug || slug}`;
+    const title = loc(product.name_en, product.name_mm) || "Product";
     const text  = `Check out ${title} on Pyonea`;
+    const image = product.images?.[0] ? getImageUrl(product.images[0]) : null;
+    const enc   = encodeURIComponent;
+    return {
+      url, title, text, image,
+      facebook:  `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`,
+      whatsapp:  `https://wa.me/?text=${enc(text + ' ' + url)}`,
+      viber:     `viber://forward?text=${enc(text + ' ' + url)}`,
+      telegram:  `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`,
+      twitter:   `https://twitter.com/intent/tweet?url=${enc(url)}&text=${enc(text)}`,
+    };
+  }, [product, slug]);
+
+  const handleShare = async () => {
+    if (!shareData) return;
     if (navigator.share) {
-      try { await navigator.share({ title, text, url }); return; } catch {}
+      try {
+        await navigator.share({ title: shareData.title, text: shareData.text, url: shareData.url });
+        return;
+      } catch {}
     }
+    setShareOpen(prev => !prev);
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareData) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareData.url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {}
   };
 
-  // ── SEO ──────────────────────────────────────────────────────────────────────
+  // Close share panel when clicking outside
+  useEffect(() => {
+    if (!shareOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest('[data-share-panel]')) setShareOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [shareOpen]);
   const pageTitle       = product ? (loc(product.name_en, product.name_mm) || "Product") : fallbackTitle;
   const pageDescription = product
     ? ((loc(product.description_en, product.description_mm) || "").slice(0, 155) || "View product details on Pyonea — Myanmar's trusted B2B marketplace.")
@@ -669,16 +702,76 @@ const ProductDetail = () => {
                   }
                 </button>
 
-                <button
-                  onClick={handleShare}
-                  title={copied ? "Link copied" : "Share product"}
-                  className={`p-3 rounded-md border transition flex items-center justify-center
-                    ${copied
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600"
-                      : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"}`}
-                >
-                  {copied ? <CheckIcon className="h-6 w-6" /> : <ShareIcon className="h-6 w-6" />}
-                </button>
+                {/* ── Share button + dropdown ──────────────────────────── */}
+                <div className="relative" data-share-panel>
+                  <button
+                    onClick={handleShare}
+                    title="Share product"
+                    className={`p-3 rounded-md border transition flex items-center justify-center
+                      ${shareOpen
+                        ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600"
+                        : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                  >
+                    <ShareIcon className="h-6 w-6" />
+                  </button>
+
+                  {shareOpen && shareData && (
+                    <div className="absolute right-0 top-full mt-2 z-50 w-56
+                                    bg-white dark:bg-slate-800 border border-gray-200
+                                    dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+
+                      {/* Product image + title preview */}
+                      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                        {shareData.image && (
+                          <img
+                            src={shareData.image}
+                            alt={shareData.title}
+                            className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                          />
+                        )}
+                        <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-2 leading-snug">
+                          {shareData.title}
+                        </p>
+                      </div>
+
+                      {/* Platform links */}
+                      {[
+                        { label: "Facebook",  href: shareData.facebook,  icon: "🇫", color: "hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600" },
+                        { label: "WhatsApp",  href: shareData.whatsapp,  icon: "💬", color: "hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600" },
+                        { label: "Viber",     href: shareData.viber,     icon: "📲", color: "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600" },
+                        { label: "Telegram",  href: shareData.telegram,  icon: "✈️", color: "hover:bg-sky-50 dark:hover:bg-sky-900/20 text-sky-600" },
+                        { label: "Twitter/X", href: shareData.twitter,   icon: "𝕏",  color: "hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200" },
+                      ].map(({ label, href, icon, color }) => (
+                        <a
+                          key={label}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setShareOpen(false)}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium
+                                      transition-colors ${color}`}
+                        >
+                          <span className="text-base leading-none">{icon}</span>
+                          {label}
+                        </a>
+                      ))}
+
+                      {/* Copy link */}
+                      <button
+                        onClick={() => { handleCopyLink(); setShareOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium
+                                   border-t border-gray-100 dark:border-slate-700
+                                   hover:bg-gray-50 dark:hover:bg-slate-700
+                                   text-gray-700 dark:text-slate-300 transition-colors"
+                      >
+                        {copied
+                          ? <><CheckIcon className="h-4 w-4 text-green-500" /> Copied!</>
+                          : <><LinkIcon className="h-4 w-4" /> Copy link</>
+                        }
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Out of stock */}

@@ -48,9 +48,8 @@ const useSEO = ({ title, description, image, schema, url: customUrl, data = {}, 
   ['en', 'my'].forEach(lang => {
     alternateUrls[lang] = resolvedUrl;
   });
-
-  // OG type: product pages get "product" (extended), everything else "website"
-  const ogType = pageKey === 'product' ? 'website' : (routeConfig[location.pathname]?.type || 'website');
+  
+  const ogType = routeConfig[location.pathname]?.type || 'website';
 
   let schemaData = schema;
 

@@ -33,7 +33,7 @@ const CategoryBrowser = () => {
       try {
         setLoading(true);
         // Fetch categories with necessary fields
-        const response = await api.get("/categories?fields=id,name_en,image,products_count,children&with_products_only=true");
+        const response = await api.get("/categories?fields=id,name_en,name_mm,image,products_count,children&with_products_only=true");
 
         if (!isMounted) return;
 

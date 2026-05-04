@@ -116,8 +116,15 @@ const Register = () => {
       });
 
       if (result.success) {
-        // Navigate to the dedicated verification page — user must verify before continuing
-        navigate('/verify-email');
+        // Only send to email verification if the user provided an email address.
+        // Phone-only registrations have nothing to verify — go straight to the app.
+        if (result.user?.email) {
+          navigate('/verify-email');
+        } else if (result.user?.type === 'seller') {
+          navigate('/seller');
+        } else {
+          navigate('/');
+        }
       } else {
         setError(result.message || t('register.error'));
       }
