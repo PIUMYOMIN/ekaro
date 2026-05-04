@@ -65,12 +65,6 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
 
   // Main settings form
   const [formData, setFormData] = useState({
-    // Store Policies
-    return_policy: "",
-    shipping_policy: "",
-    warranty_policy: "",
-    privacy_policy: "",
-    terms_of_service: "",
     
     // Notification Settings
     email_notifications: true,
@@ -311,7 +305,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Store Settings</h1>
             <p className="text-gray-600 dark:text-slate-400 mt-1">
-              Manage your store preferences, policies, and account settings
+              Manage your store preferences and account settings
             </p>
           </div>
           <div className="flex items-center space-x-2 text-sm">
@@ -356,7 +350,7 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
         <div className="border-b border-gray-200 dark:border-slate-700">
           <nav className="flex -mb-px">
-            {['Personal', 'General', 'Policies', 'Payment', 'Notifications', 'Security', 'Account'].map((tab) => (
+            {['Personal', 'General', 'Payment', 'Notifications', 'Security', 'Account'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => document.getElementById(tab.toLowerCase())?.scrollIntoView({ behavior: 'smooth' })}
@@ -507,58 +501,6 @@ const StoreSettings = ({ storeData, setStoreData, refreshData }) => {
                     <span className="ml-2 text-sm text-gray-700 dark:text-slate-300">Show inventory count</span>
                   </label>
                 </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Store Policies */}
-          <section id="policies" className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <ShieldCheckIcon className="h-5 w-5 mr-2 text-green-600" />
-              Store Policies
-            </h2>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  Return Policy
-                </label>
-                <textarea
-                  name="return_policy"
-                  value={formData.return_policy}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
-                  placeholder="Describe your return policy and conditions..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  Shipping Policy
-                </label>
-                <textarea
-                  name="shipping_policy"
-                  value={formData.shipping_policy}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
-                  placeholder="Describe your shipping methods, timelines, and costs..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  Warranty Policy
-                </label>
-                <textarea
-                  name="warranty_policy"
-                  value={formData.warranty_policy}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:border-green-500 dark:focus:border-green-400"
-                  placeholder="Describe your product warranty terms and conditions..."
-                />
               </div>
             </div>
           </section>
