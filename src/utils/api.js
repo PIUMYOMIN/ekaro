@@ -1,12 +1,11 @@
 // src/utils/api.js
 import axios from "axios";
 
-// Bearer Sanctum auth — cookies not required. withCredentials on cross-origin
-// requests forces credentialed CORS and often surfaces as ERR_NETWORK when the
-// API response headers do not match (common for localhost → api.pyonea.com).
+// Sanctum cookie sessions: send cookies to the API cross-origin (default on).
+// Set VITE_API_WITH_CREDENTIALS=false for Bearer-token-only (no cookies to API).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: import.meta.env.VITE_API_WITH_CREDENTIALS === "true",
+  withCredentials: import.meta.env.VITE_API_WITH_CREDENTIALS !== "false",
   headers: {
     "Content-Type": "application/json",
   },
