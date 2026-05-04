@@ -7,6 +7,7 @@ import {
   ArrowPathIcon,
   MagnifyingGlassIcon,
   BanknotesIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 
@@ -80,6 +81,78 @@ function CollectModal({ delivery, onClose, onConfirm, loading }) {
   );
 }
 
+// ── Adjust fee modal (admin final quote / correction before collection) ────
+
+function AdjustFeeModal({ delivery, onClose, onSave, loading }) {
+  const initial = Number(delivery.platform_delivery_fee) || 0;
+  const [amount, setAmount] = useState(String(Math.round(initial)));
+  const [note, setNote] = useState('');
+
+  const sellerSubmitted = Boolean(delivery.fee_submitted_at);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md">
+        <div className="p-6 border-b border-gray-100 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Adjust platform delivery fee</h3>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Order: {delivery.order?.order_number}</p>
+        </div>
+        <div className="p-6 space-y-4">
+          {sellerSubmitted && (
+            <div className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              The seller already submitted a payment proof for this fee. If you change the amount, confirm the actual transfer matches the new total.
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Fee (MMK) *</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Previous quote: {fmtMMK(delivery.platform_delivery_fee)}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Note (optional)</label>
+            <textarea
+              rows={2}
+              placeholder="e.g. actual weight 12 kg, remote area surcharge"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+          </div>
+        </div>
+        <div className="p-6 border-t border-gray-100 dark:border-slate-700 flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const n = Number(amount);
+              if (Number.isNaN(n) || n < 0) return;
+              onSave(delivery.id, { platform_delivery_fee: n, adjustment_note: note.trim() || undefined });
+            }}
+            disabled={loading || amount === '' || Number(amount) < 0}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          >
+            {loading && <ArrowPathIcon className="h-4 w-4 animate-spin" />}
+            Save fee
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────
 
 export default function DeliveryFeeManagement() {
@@ -88,6 +161,7 @@ export default function DeliveryFeeManagement() {
   const [filter, setFilter]   = useState('');
   const [search, setSearch]   = useState('');
   const [modal, setModal]     = useState(null);
+  const [adjustModal, setAdjustModal] = useState(null);
   const [acting, setActing]   = useState(false);
   const [toast, setToast]     = useState(null);
 
@@ -124,6 +198,20 @@ export default function DeliveryFeeManagement() {
       load();
     } catch (err) {
       showToast('error', err?.response?.data?.message || 'Action failed.');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleAdjustFee = async (deliveryId, body) => {
+    setActing(true);
+    try {
+      await api.patch(`/admin/deliveries/${deliveryId}/platform-fee`, body);
+      showToast('success', 'Platform delivery fee updated.');
+      setAdjustModal(null);
+      load();
+    } catch (err) {
+      showToast('error', err?.response?.data?.message || 'Could not update fee.');
     } finally {
       setActing(false);
     }
@@ -293,19 +381,32 @@ export default function DeliveryFeeManagement() {
                         {d.delivery_fee_collection_ref || '—'}
                       </td>
                       <td className="px-5 py-4 text-right">
-                        {isOutstanding && (
-                          <button
-                            onClick={() => setModal(d)}
-                            className="text-xs font-medium bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
-                          >
-                            Mark Collected
-                          </button>
-                        )}
-                        {isCollected && (
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium flex items-center gap-1 justify-end">
-                            <CheckCircleIcon className="h-3.5 w-3.5" /> Done
-                          </span>
-                        )}
+                        <div className="flex flex-col items-end gap-1.5">
+                          {isOutstanding && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setAdjustModal(d)}
+                                className="text-xs font-medium bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 inline-flex items-center gap-1"
+                              >
+                                <PencilSquareIcon className="h-3.5 w-3.5" />
+                                Adjust fee
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setModal(d)}
+                                className="text-xs font-medium bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700"
+                              >
+                                Mark Collected
+                              </button>
+                            </>
+                          )}
+                          {isCollected && (
+                            <span className="text-xs text-green-600 dark:text-green-400 font-medium inline-flex items-center gap-1 justify-end">
+                              <CheckCircleIcon className="h-3.5 w-3.5" /> Done
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -321,6 +422,15 @@ export default function DeliveryFeeManagement() {
           delivery={modal}
           onClose={() => setModal(null)}
           onConfirm={handleCollect}
+          loading={acting}
+        />
+      )}
+
+      {adjustModal && (
+        <AdjustFeeModal
+          delivery={adjustModal}
+          onClose={() => setAdjustModal(null)}
+          onSave={handleAdjustFee}
           loading={acting}
         />
       )}

@@ -46,7 +46,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function Checkout() {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const { cartItems, subtotal, totalItems, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -110,23 +110,20 @@ export default function Checkout() {
   const [couponError, setCouponError] = useState("");
 
   // ── Fees — fetched live from /orders/checkout-fees ───────────────────────────
-  // Replaces the previous hardcoded `SHIPPING_FEE = 5000` and `TAX_RATE = 0.05`.
-  // The platform fee rate comes from the commission_rules table via
-  // CommissionRateResolver (tier → business_type → category → default).
-  // Tax (5%) shown to buyer. Commission is collected from the seller separately — not visible here.
+  // Shipping is zone-based; `taxRate` / `taxFee` are buyer-side surcharges resolved
+  // server-side (not labeled as commission to the buyer). Checkout shows one combined
+  // "Shipping & handling" line; order payload still sends `shipping_fee` + `tax_amount`.
   const [feesLoading, setFeesLoading] = useState(true);
   const [idempotencyKey] = useState(() => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now());
   const [shippingFee, setShippingFee] = useState(5000);
   const [sellerShipping, setSellerShipping] = useState([]);
   const [taxRate, setTaxRate] = useState(0.05);
-  const [taxPct, setTaxPct] = useState(5.0);
 
 // ── Location data — loaded from server (aggregated from seller delivery zones) ─
   const [locationStates, setLocationStates] = useState([]);
   const [locationLoading, setLocationLoading] = useState(true);
 
   // Load Myanmar locations with i18n support
-  const { i18n } = useTranslation();
   useEffect(() => {
     // Try API first (seller zones)
     api.get('/checkout-locations')
@@ -184,9 +181,7 @@ export default function Checkout() {
             const d = res.data.data;
             setShippingFee(d.shipping_fee ?? 5000);
             setSellerShipping(d.sellers ?? []);
-            // Backend returns tax_rate / tax_pct (they represent platform commission)
             setTaxRate(d.tax_rate ?? 0.05);
-            setTaxPct(d.tax_pct ?? 5.0);
           }
         })
         .catch(() => {
@@ -199,6 +194,7 @@ export default function Checkout() {
 
   // Derived totals — recalculate whenever fees or cart change
   const taxFee = subtotal * taxRate;
+  const shippingAndHandlingDisplay = shippingFee + taxFee;
   const total = Math.max(0, subtotal + shippingFee + taxFee - couponDiscount);
 
   // ── Fetch seller policies ────────────────────────────────────────────────────
@@ -1012,27 +1008,19 @@ export default function Checkout() {
 
                   <div className="flex justify-between text-sm">
                     <div>
-                      <span className="text-gray-600 dark:text-slate-400">Shipping</span>
+                      <span className="text-gray-600 dark:text-slate-400">Shipping &amp; handling</span>
                       {(shippingAddress.city || shippingAddress.state) && (
                         <p className="text-[10px] text-gray-400 dark:text-slate-600 mt-0.5">
                           To {[shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ')}
                         </p>
                       )}
+                      <p className="text-[10px] text-gray-400 dark:text-slate-600 mt-0.5 max-w-[220px]">
+                        Includes delivery to your address and order handling.
+                      </p>
                     </div>
                     {feesLoading
                       ? <span className="text-gray-400 dark:text-slate-600 animate-pulse text-xs">Updating…</span>
-                      : <span className="text-gray-900 dark:text-slate-100">{formatMMK(shippingFee)}</span>
-                    }
-                  </div>
-
-                  {/* Tax (5%) — part of buyer total; seller commission is separate and not shown to buyer */}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-slate-400">
-                      Tax ({feesLoading ? '…' : `${taxPct}%`})
-                    </span>
-                    {feesLoading
-                      ? <span className="text-gray-400 dark:text-slate-600 animate-pulse">Calculating…</span>
-                      : <span className="text-gray-900 dark:text-slate-100">{formatMMK(taxFee)}</span>
+                      : <span className="text-gray-900 dark:text-slate-100">{formatMMK(shippingAndHandlingDisplay)}</span>
                     }
                   </div>
 

@@ -95,6 +95,14 @@ const Footer = () => {
               </li>
               <li>
                 <Link
+                  to="/bulk-order-tool"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  {t("footer.bulk_order_tool")}
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/return-policy"
                   className="text-gray-300 hover:text-white transition-colors"
                 >

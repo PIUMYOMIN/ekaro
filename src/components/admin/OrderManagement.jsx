@@ -54,6 +54,55 @@ const deliveryMethodLabel = (m) =>
 
 const formatDeliveryStatus = (s) => (s || "").replaceAll("_", " ") || "—";
 
+/** Row cell: method + delivery pipeline status (list payload includes `delivery` from API). */
+const AdminDeliveryCell = ({ order }) => {
+  const delivery = order.delivery;
+  if (!delivery) {
+    return <span className="text-xs text-gray-400 dark:text-gray-500">—</span>;
+  }
+  const method = delivery.delivery_method;
+  const dStatus = delivery.status;
+  const needsMethod =
+    order.status === "confirmed" && (!method || method === "pending");
+
+  return (
+    <div className="space-y-1 text-xs max-w-[168px]">
+      {needsMethod ? (
+        <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200 font-medium">
+          Awaiting seller method
+        </span>
+      ) : method ? (
+        <span
+          className={`inline-flex px-2 py-0.5 rounded-full font-medium ${
+            method === "platform"
+              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+              : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+          }`}
+        >
+          {method === "platform" ? "Platform" : "Self"}
+        </span>
+      ) : (
+        <span className="text-gray-400 dark:text-gray-500">—</span>
+      )}
+      {dStatus && (
+        <div>
+          <span
+            className="inline-flex px-1.5 py-0.5 rounded text-[10px] capitalize bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+            title={deliveryMethodLabel(method) + (dStatus ? ` · ${dStatus}` : "")}
+          >
+            {formatDeliveryStatus(dStatus)}
+          </span>
+        </div>
+      )}
+      {delivery.tracking_number && (
+        <p className="font-mono text-[10px] text-gray-500 dark:text-gray-400 truncate" title={delivery.tracking_number}>
+          #{delivery.tracking_number}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const assertOrderResponseOk = (res, fallbackMessage) => {
   if (res.data && res.data.success === false) {
     throw new Error(res.data.message || fallbackMessage);
@@ -478,7 +527,7 @@ const OrderManagement = () => {
             <table className="min-w-full text-sm divide-y divide-gray-100 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  {["Order #", "Date", "Buyer", "Amount", "Status", "Actions"].map((h) => (
+                  {["Order #", "Date", "Buyer", "Amount", "Status", "Delivery", "Actions"].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"
@@ -515,6 +564,9 @@ const OrderManagement = () => {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <AdminDeliveryCell order={order} />
                     </td>
                     <td className="px-4 py-3">
                       <button
