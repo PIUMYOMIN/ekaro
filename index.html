@@ -62,7 +62,7 @@
   <link rel="icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <!-- Manifest -->
+  <!-- Use http(s) dev/prod URL, not file:// — opening index.html from disk yields origin "null" and /manifest.json can fail CORS. -->
   <link rel="manifest" href="/manifest.json" />
 
   <!-- Robots -->

@@ -1,6 +1,7 @@
 // components/admin/VerifiedSellerList.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
+import JSZip from "jszip";
 import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
@@ -20,6 +21,7 @@ import {
   XMarkIcon,
   CheckBadgeIcon,
   DocumentArrowDownIcon,
+  ArchiveBoxArrowDownIcon,
 } from "@heroicons/react/24/outline";
 import { CheckBadgeIcon as CheckBadgeSolid } from "@heroicons/react/24/solid";
 import api from "../../utils/api";
@@ -100,9 +102,41 @@ const SellerLogo = ({ url, name }) => {
   );
 };
 
-// ── Per-row Excel export ───────────────────────────────────────────────────────
+// ── Per-row Excel + ZIP bundle ───────────────────────────────────────────────
 
-const downloadSellerExcel = (seller) => {
+function suggestZipAssetFilename(label, url, mimeType) {
+  const pathPart = (url.split("?")[0].split("/").pop() || "").trim();
+  if (pathPart && /\.[a-z0-9]{2,5}$/i.test(pathPart)) {
+    try {
+      return decodeURIComponent(pathPart);
+    } catch {
+      return pathPart;
+    }
+  }
+  const ext =
+    mimeType?.includes("pdf") ? "pdf"
+      : mimeType?.includes("png") ? "png"
+      : mimeType?.includes("webp") ? "webp"
+      : mimeType?.includes("gif") ? "gif"
+      : mimeType?.includes("jpeg") || mimeType?.includes("jpg") ? "jpg"
+      : "bin";
+  const base = (label || "document").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "document";
+  return `${base}.${ext}`;
+}
+
+async function fetchWithAuthBlob(absUrl) {
+  const token = localStorage.getItem("token");
+  const useCreds = import.meta.env.VITE_API_WITH_CREDENTIALS !== "false";
+  const res = await fetch(absUrl, {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: useCreds ? "include" : "omit",
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.blob();
+}
+
+const buildSellerProfileWorkbook = (seller) => {
   const rows = [
     ["Field", "Value"],
     ["Store ID", seller.store_id ?? ""],
@@ -143,9 +177,8 @@ const downloadSellerExcel = (seller) => {
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws["!cols"] = [{ wch: 28 }, { wch: 44 }];
 
-  // Apply basic cell styles where supported
-  const headerFill  = { fgColor: { rgb: "16A34A" } }; // green-600
-  const sectionFill = { fgColor: { rgb: "DCFCE7" } }; // green-100
+  const headerFill  = { fgColor: { rgb: "16A34A" } };
+  const sectionFill = { fgColor: { rgb: "DCFCE7" } };
   const white       = { rgb: "FFFFFF" };
   const darkGreen   = { rgb: "166534" };
 
@@ -155,27 +188,114 @@ const downloadSellerExcel = (seller) => {
     if (!ws[A]) return;
 
     if (r === 0) {
-      // Header row
       [A, B].forEach(ref => {
         if (ws[ref]) ws[ref].s = { font: { bold: true, color: white }, fill: headerFill, alignment: { horizontal: "left" } };
       });
     } else if (row[0] && row[1] === "" && row[0].trim() !== "" && row[0] === row[0].toUpperCase()) {
-      // Section label
       [A, B].forEach(ref => {
         if (ws[ref]) ws[ref].s = { font: { bold: true, color: darkGreen }, fill: sectionFill };
       });
     } else if (row[0] !== "") {
-      // Field label
       if (ws[A]) ws[A].s = { font: { bold: true } };
     }
   });
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Seller Profile");
+  return wb;
+};
 
+const downloadSellerExcel = (seller) => {
+  const wb = buildSellerProfileWorkbook(seller);
   const safe = (seller.store_name ?? "seller").replace(/[^a-z0-9]/gi, "_").toLowerCase();
   XLSX.writeFile(wb, `verified_seller_${safe}_${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
+
+const sellerExportBasenames = (seller) => {
+  const safe = (seller.store_name ?? "seller").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  const dateStr = new Date().toISOString().slice(0, 10);
+  return {
+    safe,
+    dateStr,
+    xlsx: `verified_seller_${safe}_${dateStr}.xlsx`,
+    zip: `verified_seller_${safe}_bundle_${dateStr}.zip`,
+  };
+};
+
+async function downloadSellerProfileZip(seller) {
+  const { xlsx: xlsxName, zip: zipName } = sellerExportBasenames(seller);
+  const zip = new JSZip();
+  const docsFolder = zip.folder("documents");
+  if (!docsFolder) throw new Error("Could not create documents folder in ZIP.");
+
+  const wb = buildSellerProfileWorkbook(seller);
+  const xlsxBuf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  zip.file(xlsxName, xlsxBuf);
+
+  const usedNames = new Set();
+  const uniqueEntryName = (desired) => {
+    let name = desired;
+    let i = 2;
+    while (usedNames.has(name)) {
+      const dot = desired.lastIndexOf(".");
+      if (dot > 0) {
+        name = `${desired.slice(0, dot)}_${i}${desired.slice(dot)}`;
+      } else {
+        name = `${desired}_${i}`;
+      }
+      i++;
+    }
+    usedNames.add(name);
+    return name;
+  };
+
+  const appendBlob = async (url, label) => {
+    if (!url) return;
+    const blob = await fetchWithAuthBlob(url);
+    const raw = suggestZipAssetFilename(label, url, blob.type);
+    const entry = uniqueEntryName(raw);
+    docsFolder.file(entry, await blob.arrayBuffer());
+  };
+
+  const docPairs = [
+    [seller.store_logo_url, "store_logo"],
+    [seller.identity_document_front_url, "identity_document_front"],
+    [seller.identity_document_back_url, "identity_document_back"],
+    [seller.business_registration_document_url, "business_registration"],
+    [seller.tax_registration_document_url, "tax_registration"],
+    [seller.business_certificate_url, "business_certificate"],
+    [seller.certificate_url, "certificate"],
+  ];
+
+  for (const [url, label] of docPairs) {
+    try {
+      await appendBlob(url, label);
+    } catch (err) {
+      console.warn("[VerifiedSellerList] ZIP skipped:", label, err);
+    }
+  }
+
+  if (Array.isArray(seller.additional_documents)) {
+    for (let i = 0; i < seller.additional_documents.length; i++) {
+      const ad = seller.additional_documents[i];
+      if (!ad?.url) continue;
+      const label = (ad.name || `additional_${i + 1}`).replace(/[/\\?%*:|"<>]/g, "_");
+      try {
+        await appendBlob(ad.url, label);
+      } catch (err) {
+        console.warn("[VerifiedSellerList] ZIP skipped additional:", label, err);
+      }
+    }
+  }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const href = URL.createObjectURL(zipBlob);
+  const a = Object.assign(document.createElement("a"), { href, download: zipName, rel: "noopener" });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 60_000);
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
@@ -186,6 +306,7 @@ export default function VerifiedSellerList() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError]             = useState(null);
   const [rowDownloading, setRowDownloading] = useState({});
+  const [rowZipLoading, setRowZipLoading] = useState({});
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,6 +384,22 @@ export default function VerifiedSellerList() {
     setRowDownloading(prev => ({ ...prev, [seller.id]: true }));
     try { downloadSellerExcel(seller); }
     finally { setTimeout(() => setRowDownloading(prev => { const n = {...prev}; delete n[seller.id]; return n; }), 800); }
+  };
+
+  const handleRowZip = async (seller) => {
+    setRowZipLoading(prev => ({ ...prev, [seller.id]: true }));
+    try {
+      await downloadSellerProfileZip(seller);
+    } catch (e) {
+      console.error(e);
+      alert("ZIP export failed. Ensure the API returns document URLs and storage is reachable with your admin session.");
+    } finally {
+      setRowZipLoading(prev => {
+        const next = { ...prev };
+        delete next[seller.id];
+        return next;
+      });
+    }
   };
 
   const clearFilters = () => {
@@ -406,7 +543,7 @@ export default function VerifiedSellerList() {
                     <Th>NRC</Th>
                     <SortableTh col="verified_at" label="Verified At" />
                     <Th>Verified By</Th>
-                    <Th center>Excel</Th>
+                    <Th center>Export</Th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-700/50">
@@ -470,19 +607,34 @@ export default function VerifiedSellerList() {
 
                       <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{seller.verified_by ?? "—"}</td>
 
-                      {/* Per-row Excel download */}
+                      {/* Per-row Excel + ZIP bundle */}
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handleRowExcel(seller)}
-                          disabled={!!rowDownloading[seller.id]}
-                          title={`Download ${seller.store_name} as Excel`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap"
-                        >
-                          {rowDownloading[seller.id]
-                            ? <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
-                            : <DocumentArrowDownIcon className="h-3.5 w-3.5" />}
-                          .xlsx
-                        </button>
+                        <div className="inline-flex flex-col sm:flex-row gap-1.5 justify-center items-stretch sm:items-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRowExcel(seller)}
+                            disabled={!!rowDownloading[seller.id] || !!rowZipLoading[seller.id]}
+                            title={`Download ${seller.store_name} as Excel`}
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {rowDownloading[seller.id]
+                              ? <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
+                              : <DocumentArrowDownIcon className="h-3.5 w-3.5" />}
+                            .xlsx
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRowZip(seller)}
+                            disabled={!!rowDownloading[seller.id] || !!rowZipLoading[seller.id]}
+                            title={`Download ${seller.store_name} profile (.xlsx) and documents as .zip`}
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 text-xs font-semibold hover:bg-violet-100 dark:hover:bg-violet-900/40 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {rowZipLoading[seller.id]
+                              ? <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
+                              : <ArchiveBoxArrowDownIcon className="h-3.5 w-3.5" />}
+                            .zip
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -529,9 +681,11 @@ export default function VerifiedSellerList() {
         )}
       </div>
 
-      <p className="text-xs text-gray-400 dark:text-slate-500 text-center">
-        Click <strong>.xlsx</strong> on any row to download that seller's full profile as an Excel file.
-        Use <strong>Export All (CSV)</strong> to bulk-download all matching sellers.
+      <p className="text-xs text-gray-400 dark:text-slate-500 text-center max-w-2xl mx-auto">
+        <strong>.xlsx</strong> downloads the profile spreadsheet only. The{" "}
+        <strong>.zip</strong> bundle includes the same spreadsheet plus uploaded files (store logo, ID/NRC images, registration documents, extras) under{" "}
+        <code className="text-[11px]">documents/</code>.
+        Files that cannot be fetched are skipped. Use <strong>Export All (CSV)</strong> for a bulk list of all matching sellers.
       </p>
     </div>
   );

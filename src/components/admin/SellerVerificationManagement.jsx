@@ -31,11 +31,104 @@ import { NRC_TYPES } from "../seller/NrcInput";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Resolve a storage path or absolute URL into a usable href */
+const STORAGE_BASE = (import.meta.env.VITE_IMAGE_BASE_URL ?? "").replace(/\/$/, "");
+
+/**
+ * Public storage URL for viewing (same host as uploaded files — avoids broken /storage on Vite-only origin).
+ */
 const docUrl = (path) => {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  return `/storage/${path}`;
+  const clean = String(path).replace(/^\/?storage\/?/, "");
+  if (STORAGE_BASE) return `${STORAGE_BASE}/${clean}`;
+  return `/storage/${clean}`;
+};
+
+function suggestDownloadFilename(label, url, mimeType) {
+  const pathPart = (url.split("?")[0].split("/").pop() || "").trim();
+  if (pathPart && /\.[a-z0-9]{2,5}$/i.test(pathPart)) {
+    try {
+      return decodeURIComponent(pathPart);
+    } catch {
+      return pathPart;
+    }
+  }
+  const ext =
+    mimeType?.includes("pdf") ? "pdf"
+      : mimeType?.includes("png") ? "png"
+      : mimeType?.includes("webp") ? "webp"
+      : mimeType?.includes("gif") ? "gif"
+      : mimeType?.includes("jpeg") || mimeType?.includes("jpg") ? "jpg"
+      : "bin";
+  const base = (label || "document").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "document";
+  return `${base}.${ext}`;
+}
+
+/** Fetch file with admin auth, save as download (avoids cross-origin <a download> quirks). */
+async function downloadDocumentWithAuth(absUrl, label) {
+  const token = localStorage.getItem("token");
+  const useCreds = import.meta.env.VITE_API_WITH_CREDENTIALS !== "false";
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(absUrl, {
+    method: "GET",
+    headers,
+    credentials: useCreds ? "include" : "omit",
+  });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const blob = await res.blob();
+  const name = suggestDownloadFilename(label, absUrl, blob.type);
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = name;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+}
+
+const ImageLightbox = ({ url, title, onClose }) => {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/90 p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="mx-auto flex h-full max-w-6xl flex-col items-center justify-center gap-3"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || "Document preview"}
+      >
+        <div className="flex w-full flex-shrink-0 items-center justify-between gap-3">
+          <p className="truncate text-sm font-medium text-white/90">{title}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+          >
+            Close (Esc)
+          </button>
+        </div>
+        <img
+          src={url}
+          alt={title || "ID document"}
+          className="max-h-[min(88vh,900px)] max-w-full object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+    </div>
+  );
 };
 
 /** Determine if a URL points to a PDF */
@@ -79,8 +172,12 @@ const STORE_STATUS_OPTS = [
   { v: "setup_pending", label: "🔧 Setup Pending"   },
 ];
 
-// ── Document Download Button ───────────────────────────────────────────────────
+// ── Document card: preview + open in tab + authenticated download ────────────
 const DocButton = ({ url, label, colour = "blue" }) => {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadErr, setDownloadErr] = useState(null);
+  const [lightbox, setLightbox] = useState(false);
+
   if (!url) {
     return (
       <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-slate-700/60 text-gray-400 dark:text-slate-500 rounded-xl text-sm border border-dashed border-gray-200 dark:border-slate-600">
@@ -92,28 +189,83 @@ const DocButton = ({ url, label, colour = "blue" }) => {
   }
 
   const colourMap = {
-    blue:   "bg-blue-50  dark:bg-blue-900/20  text-blue-700  dark:text-blue-300  hover:bg-blue-100  dark:hover:bg-blue-900/40  border-blue-200  dark:border-blue-800",
-    green:  "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800",
-    purple: "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 border-purple-200 dark:border-purple-800",
-    amber:  "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 border-amber-200 dark:border-amber-800",
+    blue:   "border-blue-200  dark:border-blue-800  bg-blue-50/50  dark:bg-blue-900/15",
+    green:  "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/15",
+    purple: "border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/15",
+    amber:  "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/15",
   };
 
   const FileIcon = isPdf(url) ? DocumentTextIcon : isImage(url) ? PhotoIcon : DocumentArrowDownIcon;
   const fileType = isPdf(url) ? "PDF" : isImage(url) ? "Image" : "File";
+  const image = isImage(url);
+
+  const onDownload = async () => {
+    setDownloadErr(null);
+    setDownloading(true);
+    try {
+      await downloadDocumentWithAuth(url, label);
+    } catch (e) {
+      console.error(e);
+      setDownloadErr(e?.message || "Download failed — try Open in new tab.");
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      download
-      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm border transition-colors ${colourMap[colour] ?? colourMap.blue}`}
-    >
-      <FileIcon className="h-4 w-4 flex-shrink-0" />
-      <span className="flex-1 truncate font-medium">{label}</span>
-      <span className="text-[10px] font-semibold opacity-70 uppercase tracking-wide shrink-0">{fileType}</span>
-      <DocumentArrowDownIcon className="h-3.5 w-3.5 opacity-60 shrink-0" />
-    </a>
+    <div className={`overflow-hidden rounded-xl border ${colourMap[colour] ?? colourMap.blue}`}>
+      {image && (
+        <button
+          type="button"
+          onClick={() => setLightbox(true)}
+          className="group relative block w-full border-b border-gray-200/80 dark:border-slate-600/80 bg-gray-900/[0.03] dark:bg-black/20"
+        >
+          <img
+            src={url}
+            alt=""
+            className="mx-auto max-h-56 w-full object-contain p-2 transition-transform duration-200 group-hover:scale-[1.02]"
+          />
+          <span className="absolute bottom-2 right-2 rounded bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            Preview · click to enlarge
+          </span>
+        </button>
+      )}
+
+      <div className={`flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm ${image ? "" : "pt-3"}`}>
+        <FileIcon className="h-4 w-4 flex-shrink-0 text-gray-500 dark:text-slate-400" />
+        <span className="min-w-0 flex-1 truncate font-medium text-gray-800 dark:text-slate-200">{label}</span>
+        <span className="shrink-0 rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+          {fileType}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-t border-gray-200/80 px-3 py-2 dark:border-slate-600/80">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:flex-none"
+        >
+          <EyeIcon className="h-3.5 w-3.5" /> Open
+        </a>
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={onDownload}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 sm:flex-none"
+        >
+          <DocumentArrowDownIcon className={`h-3.5 w-3.5 ${downloading ? "animate-pulse" : ""}`} />
+          {downloading ? "Saving…" : "Download"}
+        </button>
+      </div>
+      {downloadErr && (
+        <p className="border-t border-amber-200/80 bg-amber-50/90 px-3 py-1.5 text-[11px] text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+          {downloadErr}
+        </p>
+      )}
+      {lightbox && <ImageLightbox url={url} title={label} onClose={() => setLightbox(false)} />}
+    </div>
   );
 };
 
@@ -180,28 +332,78 @@ const NrcCard = ({ seller }) => {
   );
 };
 
-// ── Document Preview Thumbnail ─────────────────────────────────────────────────
+// ── NRC tab: larger preview + open + download (no whole-card <a> wrapper) ─────
 const DocPreview = ({ url, alt, label }) => {
+  const [lightbox, setLightbox] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadErr, setDownloadErr] = useState(null);
+
   if (!url) return null;
+  const image = isImage(url);
+
+  const onDownload = async () => {
+    setDownloadErr(null);
+    setDownloading(true);
+    try {
+      await downloadDocumentWithAuth(url, label || alt || "nrc_document");
+    } catch (e) {
+      console.error(e);
+      setDownloadErr("Download failed — opened in a new tab instead.");
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block group overflow-hidden rounded-xl border-2 border-indigo-200 dark:border-indigo-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all shadow-sm"
-    >
-      {isImage(url) ? (
-        <img src={url} alt={alt} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300" />
+    <div className="overflow-hidden rounded-xl border-2 border-indigo-200 shadow-sm transition-all dark:border-indigo-800">
+      {image ? (
+        <button
+          type="button"
+          onClick={() => setLightbox(true)}
+          className="group relative block w-full bg-gray-900/[0.04] dark:bg-black/25"
+        >
+          <img
+            src={url}
+            alt={alt}
+            className="mx-auto max-h-[min(420px,55vh)] w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.01]"
+          />
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-2 pt-8 text-left">
+            <span className="text-[11px] font-semibold text-white drop-shadow">{label} — tap to enlarge</span>
+          </div>
+        </button>
       ) : (
-        <div className="w-full h-32 bg-indigo-50 dark:bg-indigo-900/20 flex flex-col items-center justify-center gap-2">
-          <DocumentTextIcon className="h-10 w-10 text-indigo-400" />
-          <span className="text-xs text-indigo-500 font-medium uppercase tracking-wide">PDF Document</span>
+        <div className="flex min-h-[140px] flex-col items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-6">
+          <DocumentTextIcon className="h-12 w-12 text-indigo-400" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">PDF / file</span>
+          <p className="text-center text-[11px] text-indigo-500/90 dark:text-indigo-400/90">{label}</p>
         </div>
       )}
-      <div className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold text-center group-hover:bg-indigo-700 transition-colors">
-        {label} — click to view / download
+
+      <div className="flex flex-wrap gap-2 border-t border-indigo-200/80 bg-indigo-600/95 px-3 py-2 dark:border-indigo-700/80">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/25 sm:flex-none"
+        >
+          <EyeIcon className="h-3.5 w-3.5" /> Open
+        </a>
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={onDownload}
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-60 sm:flex-none"
+        >
+          <DocumentArrowDownIcon className={`h-3.5 w-3.5 ${downloading ? "animate-pulse" : ""}`} />
+          {downloading ? "…" : "Download"}
+        </button>
       </div>
-    </a>
+      {downloadErr && (
+        <p className="bg-amber-50 px-3 py-1 text-[11px] text-amber-900 dark:bg-amber-900/25 dark:text-amber-100">{downloadErr}</p>
+      )}
+      {lightbox && <ImageLightbox url={url} title={label} onClose={() => setLightbox(false)} />}
+    </div>
   );
 };
 
