@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     // Production build:       values from .env.production (no proxy)
     proxy: {
       '/api': {
-        target: 'https://api.pyonea.com',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       },

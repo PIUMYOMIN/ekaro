@@ -10,137 +10,38 @@ import {
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useTranslation } from 'react-i18next';
+import getMyanmarStates from '../../data/myanmar-locations';
 
-// ─── Myanmar Location Tree ────────────────────────────────────────────────────
-// 14 States/Regions + 1 Union Territory
-// Includes major cities and key townships for Yangon & Mandalay.
-// Other states include top-level cities only; expand as needed.
-const MYANMAR_LOCATIONS = [
-  {
-    state: 'Yangon Region',
-    cities: [
-      {
-        city: 'Yangon', townships: [
-          'Sanchaung', 'Kamaryut', 'Hlaing', 'Insein', 'Mayangon',
-          'North Okkalapa', 'South Okkalapa', 'Thaketa', 'Thingangyun',
-          'Tamwe', 'Yankin', 'Pazundaung', 'Botahtaung', 'Kyauktada',
-          'Pabedan', 'Lanmadaw', 'Latha', 'Mingalar Taung Nyunt',
-          'Bahan', 'Dagon', 'South Dagon', 'East Dagon', 'North Dagon',
-          'Dagon Seikkan', 'Dawbon', 'Shwe Pyi Thar', 'Hlaing Thar Yar',
-          'Hmawbi', 'Htantabin', 'Mingaladon', 'Seik Gyee Kya', 'Twantay',
-        ],
-      },
-      { city: 'Thanlyin',  townships: ['Thanlyin', 'Kyauktan', 'Hline'] },
-      { city: 'Pathein',   townships: ['Pathein', 'Bogale', 'Maubin'] },
-    ],
-  },
-  {
-    state: 'Mandalay Region',
-    cities: [
-      {
-        city: 'Mandalay', townships: [
-          'Chanayethazan', 'Chan Aye Tharzan', 'Mahar Aung Myay',
-          'Amarapura', 'Patheingyi', 'Pyigyidagun', 'Mahaaungmyay',
-          'Aungmyaythazan', 'Pyigyitagon',
-        ],
-      },
-      { city: 'Pyin Oo Lwin', townships: ['Pyin Oo Lwin', 'Madaya', 'Singu'] },
-      { city: 'Meikhtila',    townships: ['Meikhtila', 'Mahlaing', 'Thazi'] },
-      { city: 'Nyaung-U',     townships: ['Nyaung-U', 'Bagan'] },
-    ],
-  },
-  {
-    state: 'Naypyidaw Union Territory',
-    cities: [
-      {
-        city: 'Naypyidaw', townships: [
-          'Ottarathiri', 'Dekkhinathiri', 'Pobbathiri', 'Zabuthiri',
-          'Tatkon', 'Pyinmana', 'Lewe',
-        ],
-      },
-    ],
-  },
-  {
-    state: 'Sagaing Region',
-    cities: [
-      { city: 'Sagaing',   townships: ['Sagaing', 'Myinmu', 'Pale'] },
-      { city: 'Monywa',    townships: ['Monywa', 'Budalin', 'Ayadaw'] },
-      { city: 'Shwebo',    townships: ['Shwebo', 'Kanbalu', 'Tabayin'] },
-      { city: 'Katha',     townships: ['Katha', 'Indaw', 'Tigyaing'] },
-    ],
-  },
-  {
-    state: 'Bago Region',
-    cities: [
-      { city: 'Bago',      townships: ['Bago', 'Taungoo', 'Pyay'] },
-      { city: 'Pyay',      townships: ['Pyay', 'Paungde', 'Nattalin'] },
-    ],
-  },
-  {
-    state: 'Magway Region',
-    cities: [
-      { city: 'Magway',    townships: ['Magway', 'Yenangyaung', 'Pakokku'] },
-      { city: 'Pakokku',   townships: ['Pakokku', 'Myaing', 'Yesagyo'] },
-    ],
-  },
-  {
-    state: 'Ayeyarwady Region',
-    cities: [
-      { city: 'Hinthada',  townships: ['Hinthada', 'Myanaung', 'Kyangin'] },
-      { city: 'Maubin',    townships: ['Maubin', 'Wakema', 'Nyaungdon'] },
-    ],
-  },
-  {
-    state: 'Shan State',
-    cities: [
-      { city: 'Taunggyi',  townships: ['Taunggyi', 'Hopong', 'Lawksawk'] },
-      { city: 'Lashio',    townships: ['Lashio', 'Hsipaw', 'Kyaukme'] },
-    ],
-  },
-  {
-    state: 'Kachin State',
-    cities: [
-      { city: 'Myitkyina', townships: ['Myitkyina', 'Waingmaw', 'Momauk'] },
-      { city: 'Bhamo',     townships: ['Bhamo', 'Shwegu', 'Mogaung'] },
-    ],
-  },
-  {
-    state: 'Kayah State',
-    cities: [
-      { city: 'Loikaw',    townships: ['Loikaw', 'Hpasaung', 'Mese'] },
-    ],
-  },
-  {
-    state: 'Kayin State',
-    cities: [
-      { city: 'Hpa-an',    townships: ['Hpa-an', 'Kawkareik', 'Myawaddy'] },
-    ],
-  },
-  {
-    state: 'Mon State',
-    cities: [
-      { city: 'Mawlamyine', townships: ['Mawlamyine', 'Thaton', 'Kyaikto'] },
-    ],
-  },
-  {
-    state: 'Rakhine State',
-    cities: [
-      { city: 'Sittwe',    townships: ['Sittwe', 'Kyaukpyu', 'Thandwe'] },
-    ],
-  },
-  {
-    state: 'Chin State',
-    cities: [
-      { city: 'Hakha',     townships: ['Hakha', 'Falam', 'Tedim'] },
-    ],
-  },
-  {
-    state: 'Tanintharyi Region',
-    cities: [
-      { city: 'Dawei',     townships: ['Dawei', 'Myeik', 'Kawthaung'] },
-    ],
-  },
-];
+// ─── Myanmar Location Tree (from src/data) ────────────────────────────────────
+// We keep the canonical dataset in the frontend and drive the delivery-zone UI
+// from it so sellers can only pick valid Region/State → City → Township combos.
+const toLocationTree = (db) => {
+  const locations = Array.isArray(db?.locations) ? db.locations : [];
+
+  const pickCityName = (cityObj) => {
+    if (!cityObj || typeof cityObj !== 'object') return null;
+    if (typeof cityObj.city === 'string' && cityObj.city.trim()) return cityObj.city.trim();
+    // Defensive: if data has a malformed city entry (e.g. { "Ye-U": "Ye-U", townships: [...] })
+    const fallbackKey = Object.keys(cityObj).find((k) => k !== 'townships' && typeof cityObj[k] === 'string');
+    return fallbackKey ? String(cityObj[fallbackKey]).trim() : null;
+  };
+
+  return locations
+    .map((rs) => {
+      const state = typeof rs.region_state === 'string' ? rs.region_state.trim() : null;
+      const cities = Array.isArray(rs.cities) ? rs.cities : [];
+      return {
+        state,
+        cities: cities
+          .map((c) => ({
+            city: pickCityName(c),
+            townships: Array.isArray(c?.townships) ? c.townships.filter(Boolean) : [],
+          }))
+          .filter((c) => !!c.city),
+      };
+    })
+    .filter((x) => !!x.state);
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -207,7 +108,12 @@ const DeliveryZones = ({
   showFooter = true,
   saveButtonLabel,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const MYANMAR_LOCATIONS = useMemo(() => {
+    const db = getMyanmarStates(i18n.language);
+    return toLocationTree(db);
+  }, [i18n.language]);
   // selected: Set of zone keys the seller has checked
   const [selected, setSelected]     = useState(new Set());
   // fees: Map<key, { fee, freeThreshold, daysMin, daysMax }>

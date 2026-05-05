@@ -48,6 +48,10 @@ const ProductDetail = () => {
   const [reviewPopup, setReviewPopup]           = useState(null);
   const [rating, setRating]                     = useState(0);
   const [reviews, setReviews]                   = useState([]);
+  const [deliveryAreas, setDeliveryAreas]       = useState([]);
+  const [deliveryLoading, setDeliveryLoading]   = useState(false);
+  const [deliveryTickerIdx, setDeliveryTickerIdx] = useState(0);
+  const [deliveryTickerFlip, setDeliveryTickerFlip] = useState(false);
   const [showReviewForm, setShowReviewForm]     = useState(false);
   const [isInWishlist, setIsInWishlist]         = useState(false);
   const [addingToCart, setAddingToCart]         = useState(false);
@@ -97,19 +101,48 @@ const ProductDetail = () => {
           }
         }
 
-        setProduct({
+        const normalizedProduct = {
           ...productData,
           images:         formattedImages,
           specifications: formattedSpecifications,
           review_count:   productData.review_count   || 0,
           average_rating: parseFloat(productData.average_rating) || 0,
-        });
+        };
+        setProduct(normalizedProduct);
 
         // Reviews
-        try {
-          const revRes = await api.get(`/reviews/products/${productData.id}`);
-          setReviews(revRes.data.data || []);
-        } catch { setReviews([]); }
+        // Prefer product detail payload if it includes reviews; fall back to reviews endpoint.
+        if (Array.isArray(productData?.reviews)) {
+          setReviews(productData.reviews);
+        } else {
+          try {
+            const revRes = await api.get(`/reviews/products/${productData.id}`);
+            // Some endpoints return a Laravel ResourceCollection nested as { data: { data: [...] } }
+            const payload = revRes?.data?.data;
+            const list = Array.isArray(payload)
+              ? payload
+              : (payload?.data && Array.isArray(payload.data) ? payload.data : []);
+            setReviews(list);
+          } catch {
+            setReviews([]);
+          }
+        }
+
+        // Delivery zones (buyer-visible)
+        const sellerKey = productData?.seller?.store_slug || productData?.seller?.id;
+        if (sellerKey) {
+          setDeliveryLoading(true);
+          try {
+            const dzRes = await api.get(`/sellers/${sellerKey}/delivery-areas`);
+            setDeliveryAreas(dzRes.data.data || []);
+          } catch {
+            setDeliveryAreas([]);
+          } finally {
+            setDeliveryLoading(false);
+          }
+        } else {
+          setDeliveryAreas([]);
+        }
 
         // Wishlist check (buyers only)
         if (user && hasRole('buyer')) {
@@ -234,6 +267,16 @@ const ProductDetail = () => {
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
+
+  // Delivery zones ticker (rotate every 2s)
+  useEffect(() => {
+    if (!deliveryAreas || deliveryAreas.length <= 1) return;
+    const id = setInterval(() => {
+      setDeliveryTickerFlip((v) => !v);
+      setDeliveryTickerIdx((i) => (i + 1) % deliveryAreas.length);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [deliveryAreas]);
 
   const handleBuyNow = async () => {
     await handleAddToCart();
@@ -808,6 +851,52 @@ const ProductDetail = () => {
                   </Link>
                 </div>
               )}
+
+              {/* Delivery zones */}
+              {product.seller && (
+                <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
+                  <h3 className="text-lg font-semibold mb-3">Delivery availability</h3>
+
+                  {deliveryLoading ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
+                  ) : deliveryAreas.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
+                      Delivery zones not provided by this seller yet.
+                    </p>
+                  ) : (
+                    (() => {
+                      // Show only the full Region/State name (fallback: country).
+                      const labels = deliveryAreas
+                        .map((a) => a.state || a.region || a.country)
+                        .filter(Boolean);
+                      const safeIdx = Math.min(deliveryTickerIdx, Math.max(labels.length - 1, 0));
+                      const activeLabel = labels[safeIdx] || "—";
+
+                      return (
+                        <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+                          <p className="text-xs text-gray-500 dark:text-slate-500 mb-1">Delivering to</p>
+
+                          {/* Swipe-up ticker */}
+                          <div className="relative h-7 overflow-hidden">
+                            <div
+                              className={`absolute left-0 top-0 w-full transition-transform duration-500 ease-out ${
+                                deliveryTickerFlip ? "-translate-y-7" : "translate-y-0"
+                              }`}
+                            >
+                              <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
+                                {activeLabel}
+                              </p>
+                              <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
+                                {labels[(safeIdx + 1) % labels.length] || activeLabel}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -886,6 +975,11 @@ const ProductDetail = () => {
                         <h4 className="font-medium">
                           {review.buyer?.name || review.user?.name || review.user || "Anonymous"}
                         </h4>
+                        {(review.buyer?.company || review.user?.company_name) && (
+                          <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5">
+                            {review.buyer?.company || review.user?.company_name}
+                          </p>
+                        )}
                         <div className="flex items-center mt-1">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -893,7 +987,8 @@ const ProductDetail = () => {
                             ))}
                           </div>
                           <span className="ml-2 text-sm text-gray-500 dark:text-slate-500">
-                            {review.created_at ? new Date(review.created_at).toLocaleDateString("en-GB") : "—"}
+                            {/* Backend already formats created_at for reviews (e.g. "May 05, 2026"). */}
+                            {review.created_at || "—"}
                           </span>
                         </div>
                         <p className="mt-3 text-gray-700 dark:text-slate-300 leading-relaxed">{review.comment}</p>

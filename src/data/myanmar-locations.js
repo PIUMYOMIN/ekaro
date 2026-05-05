@@ -2,12 +2,15 @@
  * Myanmar Locations - Export for easy import in React components
  * Use: import { getMyanmarStates } from './myanmar-locations'
  */
- 
+
+import myanmarLocationsEng from './myanmar-locations-eng.json';
+import myanmarLocationsMm from './myanmar-locations-mm.json';
+
 export const getMyanmarStates = (language = 'en') => {
   if (language === 'mm' || language.startsWith('my')) {
-    return require('./myanmar-locations-mm.json');
+    return myanmarLocationsMm;
   }
-  return require('./myanmar-locations-eng.json');
+  return myanmarLocationsEng;
 };
 
 export const getStatesFromDB = (db) => {
@@ -21,8 +24,8 @@ export const getStatesFromDB = (db) => {
   return Object.entries(stateMap).map(([state, cities]) => ({ state, cities }));
 };
 
-export const FALLBACK_STATES_EN = getStatesFromDB(require('./myanmar-locations-eng.json'));
-export const FALLBACK_STATES_MM = getStatesFromDB(require('./myanmar-locations-mm.json'));
+export const FALLBACK_STATES_EN = getStatesFromDB(myanmarLocationsEng);
+export const FALLBACK_STATES_MM = getStatesFromDB(myanmarLocationsMm);
 
 // Default export for backward compatibility
 export default getMyanmarStates;

@@ -47,7 +47,7 @@
         },
         {
           "city": "Thanlyin",
-          "townships": ["Thanlyin", "Kyauktan", "Hline"]
+          "townships": ["Thanlyin", "Kyauktada", "Hline"]
         }
       ]
     },
@@ -73,7 +73,7 @@
         },
         {
           "city": "Meikhtila",
-          "townships": ["Meikhtila", "Mahlaing", "Thazi"]
+          "townships": ["Meikhtila", "Mahlaing", "Thazi", "Wundwin"]
         },
         {
           "city": "Nyaung-U",
@@ -123,7 +123,7 @@
       "cities": [
         {
           "city": "Sagaing",
-          "townships": ["Sagaing", "Myinmu", "Pale", "Myaung"]
+          "townships": ["Sagaing", "Myinmu", "Pale", "MyinMuu"]
         },
         {
           "city": "Monywa",
@@ -184,7 +184,7 @@
       "cities": [
         {
           "city": "Bago",
-          "townships": ["Bago", "Taungoo", "Pyay"]
+          "townships": ["Bago", "Taungoo"]
         },
         {
           "city": "Pyay",
@@ -301,9 +301,21 @@
   ],
   "flats": {
     "regions_states": [
-      "Yangon Region", "Mandalay Region", "Naypyidaw Union Territory", "Sagaing Region",
-      "Bago Region", "Magway Region", "Ayeyarwady Region", "Shan State", "Kachin State",
-      "Kayah State", "Kayin State", "Mon State", "Rakhine State", "Chin State", "Tanintharyi Region"
+      "Yangon Region", 
+      "Mandalay Region", 
+      "Naypyidaw Union Territory", 
+      "Sagaing Region",
+      "Bago Region", 
+      "Magway Region", 
+      "Ayeyarwady Region", 
+      "Shan State", 
+      "Kachin State",
+      "Kayah State", 
+      "Kayin State", 
+      "Mon State", 
+      "Rakhine State", 
+      "Chin State", 
+      "Tanintharyi Region"
     ],
     "cities": [
       {"region_state": "Yangon Region", "city": "Yangon"},
@@ -366,10 +378,10 @@
       {"region_state": "Yangon Region", "city": "Yangon", "township": "Hmawbi"},
       {"region_state": "Yangon Region", "city": "Yangon", "township": "Htantabin"},
       {"region_state": "Yangon Region", "city": "Yangon", "township": "Mingaladon"},
-      {"region_state": "Yangon Region", "city": "Yangon", "township": "Seik Gyee Kya"},
+      {"region_state": "Yangon Region", "city": "Yangon", "township": "Seik Gyee Kya Naung"},
       {"region_state": "Yangon Region", "city": "Yangon", "township": "Twantay"},
       {"region_state": "Yangon Region", "city": "Thanlyin", "township": "Thanlyin"},
-      {"region_state": "Yangon Region", "city": "Thanlyin", "township": "Kyauktan"},
+      {"region_state": "Yangon Region", "city": "Thanlyin", "township": "Kyauktada"},
       {"region_state": "Yangon Region", "city": "Thanlyin", "township": "Hline"},
       {"region_state": "Yangon Region", "city": "Pathein", "township": "Pathein"},
       {"region_state": "Yangon Region", "city": "Pathein", "township": "Bogale"},

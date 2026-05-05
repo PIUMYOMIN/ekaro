@@ -23,6 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 import PaymentProcessor from "../components/payments/PaymentProcessor";
 import PaymentSuccess from "./PaymentSuccess";
+import myanmarLocationsEng from "../data/myanmar-locations-eng.json";
+import myanmarLocationsMm from "../data/myanmar-locations-mm.json";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -133,9 +135,9 @@ export default function Checkout() {
           setLocationStates(states);
         } else {
           // Fallback to local DB
-          const db = i18n.language.startsWith('my') 
-            ? require('../data/myanmar-locations-mm.json')
-            : require('../data/myanmar-locations-eng.json');
+          const db = i18n.language.startsWith('my')
+            ? myanmarLocationsMm
+            : myanmarLocationsEng;
           const stateMap = {};
           db.flats.regions_states.forEach(region => {
             const loc = db.locations.find(l => l.region_state === region);
@@ -148,9 +150,9 @@ export default function Checkout() {
       })
       .catch(() => {
         // Network error - direct DB fallback
-        const db = i18n.language.startsWith('my') 
-          ? require('../data/myanmar-locations-mm.json')
-          : require('../data/myanmar-locations-eng.json');
+        const db = i18n.language.startsWith('my')
+          ? myanmarLocationsMm
+          : myanmarLocationsEng;
         const stateMap = {};
         db.flats.regions_states.forEach(region => {
           const loc = db.locations.find(l => l.region_state === region);
