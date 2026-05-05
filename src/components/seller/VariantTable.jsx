@@ -46,14 +46,29 @@ const VariantTable = ({ productId, onUpdated }) => {
   const [globalError, setGlobalError] = useState("");
   const [showGenForm, setShowGenForm] = useState(false);
 
+  // Reset all per-product state when switching products so we never show
+  // stale variants from the previously opened product (important if a fetch
+  // fails due to auth/network issues).
+  useEffect(() => {
+    setVariants([]);
+    setEdits({});
+    setErrors({});
+    setSaving({});
+    setGlobalError("");
+    setShowGenForm(false);
+  }, [productId]);
+
   const fetchVariants = useCallback(async () => {
     if (!productId) return;
     setLoading(true);
+    setGlobalError("");
     try {
       const res = await api.get(`/seller/products/${productId}/variants`);
       setVariants(res.data.data ?? []);
-    } catch {
-      setGlobalError("Failed to load variants.");
+    } catch (err) {
+      // Clear variants on failure so user can't act on mismatched IDs.
+      setVariants([]);
+      setGlobalError(err.response?.data?.message ?? "Failed to load variants.");
     } finally {
       setLoading(false);
     }
@@ -164,8 +179,13 @@ const VariantTable = ({ productId, onUpdated }) => {
       await api.delete(`/seller/products/${productId}/variants/${variant.id}`);
       setVariants((prev) => prev.filter((v) => v.id !== variant.id));
       onUpdated?.();
-    } catch {
-      setErrors((prev) => ({ ...prev, [variant.id]: "Delete failed." }));
+    } catch (err) {
+      const msg = err.response?.data?.message ?? "Delete failed.";
+      setErrors((prev) => ({ ...prev, [variant.id]: msg }));
+      // If backend says variant doesn't belong / not found, refresh to sync UI.
+      if (err.response?.status === 404) {
+        fetchVariants();
+      }
     }
   };
 

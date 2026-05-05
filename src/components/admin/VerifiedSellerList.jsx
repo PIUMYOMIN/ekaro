@@ -125,15 +125,35 @@ function suggestZipAssetFilename(label, url, mimeType) {
 }
 
 async function fetchWithAuthBlob(absUrl) {
-  const token = localStorage.getItem("token");
-  const useCreds = import.meta.env.VITE_API_WITH_CREDENTIALS !== "false";
-  const res = await fetch(absUrl, {
-    method: "GET",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    credentials: useCreds ? "include" : "omit",
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.blob();
+  // Many storage/CDN endpoints serve files publicly but do NOT allow CORS
+  // requests with Authorization headers (preflight fails). <img> tags still
+  // work, but fetch() with auth headers can be blocked and would cause ZIP
+  // assets (NRC/ID photos) to be skipped.
+  //
+  // Strategy:
+  // 1) Try a plain public GET first (no auth headers, no credentials).
+  // 2) If that fails (private endpoint), retry with Bearer + credentials mode.
+
+  const tryPlain = async () => {
+    const r = await fetch(absUrl, { method: "GET", credentials: "omit" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.blob();
+  };
+
+  try {
+    return await tryPlain();
+  } catch {
+    // fallback to authenticated fetch (for protected endpoints)
+    const token = localStorage.getItem("token");
+    const useCreds = import.meta.env.VITE_API_WITH_CREDENTIALS !== "false";
+    const res = await fetch(absUrl, {
+      method: "GET",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: useCreds ? "include" : "omit",
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.blob();
+  }
 }
 
 const buildSellerProfileWorkbook = (seller) => {

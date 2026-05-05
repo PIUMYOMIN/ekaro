@@ -487,8 +487,7 @@ const FinancialReports = () => {
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50 dark:bg-slate-700/50 text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                   <tr>
-                    {["Order #","Date","Buyer","Seller","Items","Subtotal","Shipping","Tax","Total",
-                      "Commission","Comm. Status","Delivery Fee","Fee Status","Status"].map(h => (
+                    {["Order #","Date","Buyer","Seller","Items","Subtotal","Shipping","Tax","Commission","Total","Comm. Status","Delivery Fee","Fee Status","Status"].map(h => (
                       <th key={h} className="px-3 py-3 text-left font-semibold whitespace-nowrap">{h}</th>
                     ))}
                     <th className="px-3 py-3"></th>
@@ -516,11 +515,11 @@ const FinancialReports = () => {
                         <td className="px-3 py-3 text-right font-medium text-gray-900 dark:text-slate-100">{fmtMMK(o.subtotal)}</td>
                         <td className="px-3 py-3 text-right text-gray-500 dark:text-slate-400">{fmtMMK(o.shipping_fee)}</td>
                         <td className="px-3 py-3 text-right text-gray-500 dark:text-slate-400">{fmtMMK(o.tax_amount)}</td>
-                        <td className="px-3 py-3 text-right font-bold text-gray-900 dark:text-slate-100">{fmtMMK(o.total_amount)}</td>
                         <td className="px-3 py-3 text-right">
                           <p className="font-medium text-teal-700 dark:text-teal-400">{fmtMMK(o.commission_amount)}</p>
                           <p className="text-gray-400 dark:text-slate-500 text-[10px]">{(o.commission_rate * 100).toFixed(1)}%</p>
                         </td>
+                        <td className="px-3 py-3 text-right font-bold text-gray-900 dark:text-slate-100">{fmtMMK(o.total_amount)}</td>
                         <td className="px-3 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                             o.commission_status === "collected"
