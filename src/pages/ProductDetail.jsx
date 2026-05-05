@@ -48,10 +48,12 @@ const ProductDetail = () => {
   const [reviewPopup, setReviewPopup]           = useState(null);
   const [rating, setRating]                     = useState(0);
   const [reviews, setReviews]                   = useState([]);
-  const [deliveryAreas, setDeliveryAreas]       = useState([]);
-  const [deliveryLoading, setDeliveryLoading]   = useState(false);
-  const [deliveryTickerIdx, setDeliveryTickerIdx] = useState(0);
-  const [deliveryTickerFlip, setDeliveryTickerFlip] = useState(false);
+  const [deliveryAreas, setDeliveryAreas]           = useState([]);
+  const [deliveryLoading, setDeliveryLoading]       = useState(false);
+  const [deliveryTickerIdx, setDeliveryTickerIdx]   = useState(0);
+  // true  → slide the current+next pair upward (CSS transition fires)
+  // false → instant-reset back to top with the new "current" item already in place
+  const [deliveryTickerSliding, setDeliveryTickerSliding] = useState(false);
   const [showReviewForm, setShowReviewForm]     = useState(false);
   const [isInWishlist, setIsInWishlist]         = useState(false);
   const [addingToCart, setAddingToCart]         = useState(false);
@@ -268,14 +270,25 @@ const ProductDetail = () => {
     }
   }, [successMessage]);
 
-  // Delivery zones ticker (rotate every 2s)
+  // Delivery zones ticker — proper two-phase swipe-up animation:
+  //   Phase 1 (every 3 s): set sliding=true  → CSS transition slides the pair upward (500 ms)
+  //   Phase 2 (after 500 ms): advance the index and set sliding=false instantly
+  //             (no transition fires because we remove the class first, then swap content)
   useEffect(() => {
     if (!deliveryAreas || deliveryAreas.length <= 1) return;
-    const id = setInterval(() => {
-      setDeliveryTickerFlip((v) => !v);
-      setDeliveryTickerIdx((i) => (i + 1) % deliveryAreas.length);
-    }, 2000);
-    return () => clearInterval(id);
+
+    const interval = setInterval(() => {
+      // Phase 1 – start the upward slide
+      setDeliveryTickerSliding(true);
+
+      // Phase 2 – after the 500ms transition completes, snap-reset and advance
+      setTimeout(() => {
+        setDeliveryTickerSliding(false);            // instant reset (no transition class)
+        setDeliveryTickerIdx((i) => (i + 1) % deliveryAreas.length);
+      }, 520); // slightly longer than the 500ms transition
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [deliveryAreas]);
 
   const handleBuyNow = async () => {
@@ -855,7 +868,6 @@ const ProductDetail = () => {
               {/* Delivery zones */}
               {product.seller && (
                 <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
-                  <h3 className="text-lg font-semibold mb-3">Delivery availability</h3>
 
                   {deliveryLoading ? (
                     <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
@@ -876,16 +888,22 @@ const ProductDetail = () => {
                         <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
                           <p className="text-xs text-gray-500 dark:text-slate-500 mb-1">Delivering to</p>
 
-                          {/* Swipe-up ticker */}
+                          {/*
+                          */}
                           <div className="relative h-7 overflow-hidden">
                             <div
-                              className={`absolute left-0 top-0 w-full transition-transform duration-500 ease-out ${
-                                deliveryTickerFlip ? "-translate-y-7" : "translate-y-0"
+                              style={{ willChange: 'transform' }}
+                              className={`absolute left-0 top-0 w-full ${
+                                deliveryTickerSliding
+                                  ? 'transition-transform duration-500 ease-out -translate-y-7'
+                                  : 'translate-y-0'
                               }`}
                             >
+                              {/* Row 0 — current label (visible at rest) */}
                               <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
                                 {activeLabel}
                               </p>
+                              {/* Row 1 — next label (slides into view during animation) */}
                               <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
                                 {labels[(safeIdx + 1) % labels.length] || activeLabel}
                               </p>
