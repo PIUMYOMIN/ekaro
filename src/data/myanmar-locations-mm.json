@@ -10,8 +10,8 @@
       "mmName": "Yangon Region",
       "cities": [
         {
-          "city": "ရန်ကုန်",
-          "mmName": "Yangon",
+          "city": "ရန်ကုန်မြို့",
+          "mmName": "Yangon City",
           "townships": [
             "စမ်းချောင်း",
             "ကမာရွတ်",
@@ -50,7 +50,7 @@
         {
           "city": "သန်လျင်",
           "mmName": "Thanlyin",
-          "townships": ["သန်လျင်", "ကျောက်တံတား", "ဟလွန်"]
+          "townships": ["သန်လျင်", "ကျောက်တံတား"]
         }
       ]
     },
@@ -59,8 +59,8 @@
       "mmName": "Mandalay Region",
       "cities": [
         {
-          "city": "မန္တလေး",
-          "mmName": "Mandalay",
+          "city": "မန္တလေးမြို့",
+          "mmName": "Mandalay City",
           "townships": [
             "အောင်မြေသာစံ", 
             "ချမ်းအေးသာစံ", 

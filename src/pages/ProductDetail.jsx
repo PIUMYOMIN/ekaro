@@ -675,7 +675,73 @@ const ProductDetail = () => {
                     {loc(product.name_mm, product.name_en)}
                   </p>
                 )}
-              </div>
+            </div>
+            
+            {product.seller && (
+                <div className="pt-2 border-t border-gray-200 dark:border-slate-700">
+
+                  {deliveryLoading ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
+                  ) : deliveryLabels.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
+                      Delivery zones not provided by this seller yet.
+                    </p>
+                  ) : (() => {
+                    const safeIdx    = deliveryTickerIdx % deliveryLabels.length;
+                    const activeLabel = deliveryLabels[safeIdx];
+
+                    return (
+                      <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                        <style>{`
+                          @keyframes dzSlideUp {
+                            0%   { opacity: 0; transform: translateY(20px) rotateX(45deg); filter: blur(2px); }
+                            100% { opacity: 1; transform: translateY(0)   rotateX(0deg);   filter: blur(0);   }
+                          }
+                          .dz-word {
+                            display: inline-block;
+                            transform-origin: center bottom;
+                            animation: dzSlideUp 420ms ease-out both;
+                            perspective: 800px;
+                          }
+                        `}</style>
+
+                        <p className="text-xs text-gray-500 dark:text-slate-500 mb-2">Delivering to</p>
+
+                        <div
+                          aria-live="polite"
+                          aria-label={[activeLabel.region, activeLabel.city, activeLabel.township].filter(Boolean).join(" → ")}
+                          className="flex items-center gap-1 h-5 text-gray-100 dark:text-slate-100 text-xs overflow-hidden"
+                        >
+                          {/* Region — changes slowest, like the hour hand */}
+                          <span key={deliveryAnimKeys.region} className="dz-word truncate max-w-[130px]">
+                            {activeLabel.region}
+                          </span>
+
+                          {activeLabel.city && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              {/* City — changes at mid-frequency, like the minute hand */}
+                              <span key={`c-${deliveryAnimKeys.city}`} className="dz-word truncate max-w-[110px]">
+                                {activeLabel.city}
+                              </span>
+                            </>
+                          )}
+
+                          {activeLabel.township && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              {/* Township — changes every tick, like the second hand */}
+                              <span key={`t-${deliveryAnimKeys.township}`} className="dz-word truncate max-w-[100px]">
+                                {activeLabel.township}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* Rating */}
               <div className="flex items-center">
@@ -953,88 +1019,6 @@ const ProductDetail = () => {
                       </p>
                     </div>
                   </Link>
-                </div>
-              )}
-
-              {/* Delivery zones */}
-              {product.seller && (
-                <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
-                  <h3 className="text-lg font-semibold mb-3">Delivery availability</h3>
-
-                  {deliveryLoading ? (
-                    <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
-                  ) : deliveryLabels.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-slate-400">
-                      Delivery zones not provided by this seller yet.
-                    </p>
-                  ) : (() => {
-                    const safeIdx    = deliveryTickerIdx % deliveryLabels.length;
-                    const activeLabel = deliveryLabels[safeIdx];
-
-                    return (
-                      <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-                        {/*
-                          Clock-style animation — identical to the digit trick in a digital clock:
-                          each word has its own `key`. When a key increments, React unmounts
-                          and remounts just that <span>, which replays the CSS @keyframes from
-                          frame 0. Words that didn't change keep their key → no remount → no flicker.
-
-                          region   changes slowest  (≈ hours)
-                          city     changes midway   (≈ minutes)
-                          township changes every tick (≈ seconds)
-                        */}
-                        <style>{`
-                          @keyframes dzSlideUp {
-                            0%   { opacity: 0; transform: translateY(20px) rotateX(45deg); filter: blur(2px); }
-                            100% { opacity: 1; transform: translateY(0)   rotateX(0deg);   filter: blur(0);   }
-                          }
-                          .dz-word {
-                            display: inline-block;
-                            transform-origin: center bottom;
-                            animation: dzSlideUp 420ms ease-out both;
-                            perspective: 800px;
-                          }
-                        `}</style>
-
-                        <p className="text-xs text-gray-500 dark:text-slate-500 mb-2">Delivering to</p>
-
-                        <div
-                          aria-live="polite"
-                          aria-label={[activeLabel.region, activeLabel.city, activeLabel.township].filter(Boolean).join(" → ")}
-                          className="flex items-center gap-1 h-7 font-semibold text-gray-900 dark:text-slate-100 overflow-hidden"
-                        >
-                          {/* Region — changes slowest, like the hour hand */}
-                          <span key={deliveryAnimKeys.region} className="dz-word truncate max-w-[130px]">
-                            {activeLabel.region}
-                          </span>
-
-                          {activeLabel.city && (
-                            <>
-                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
-                              {/* City — changes at mid-frequency, like the minute hand */}
-                              <span key={`c-${deliveryAnimKeys.city}`} className="dz-word truncate max-w-[110px]">
-                                {activeLabel.city}
-                              </span>
-                            </>
-                          )}
-
-                          {activeLabel.township && (
-                            <>
-                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
-                              {/* Township — changes every tick, like the second hand */}
-                              <span key={`t-${deliveryAnimKeys.township}`} className="dz-word truncate max-w-[100px]">
-                                {activeLabel.township}
-                              </span>
-                            </>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-                          {deliveryLabels.length} {deliveryLabels.length === 1 ? "zone" : "zones"} covered
-                        </p>
-                      </div>
-                    );
-                  })()}
                 </div>
               )}
             </div>
