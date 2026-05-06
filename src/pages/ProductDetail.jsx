@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext";
@@ -20,9 +20,51 @@ import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER, SITE_PUBLIC_URL } from "../config";
 import { SkeletonProductDetail } from "../components/ui/Skeleton";
 import VariantPicker from "../components/ui/VariantPicker";
+import myanmarLocationsEng from "../data/myanmar-locations-eng.json";
+import myanmarLocationsMm from "../data/myanmar-locations-mm.json";
+
+const buildDeliveryNameLookup = () => {
+  const state = {};
+  const city = {};
+  const township = {};
+
+  const engLocs = myanmarLocationsEng.locations || [];
+  const mmLocs = myanmarLocationsMm.locations || [];
+
+  engLocs.forEach((engRegion, rIdx) => {
+    const mmRegion = mmLocs[rIdx];
+    if (!mmRegion) return;
+
+    const engStateName = engRegion.region_state;
+    const mmStateName = mmRegion.region_state;
+    if (engStateName && mmStateName) state[engStateName] = mmStateName;
+
+    (engRegion.cities || []).forEach((engCity, cIdx) => {
+      const mmCity = mmRegion?.cities?.[cIdx];
+      if (!mmCity) return;
+
+      const engCityName = engCity.city;
+      const mmCityName = mmCity.city;
+      if (engCityName && mmCityName) city[engCityName] = mmCityName;
+
+      (engCity.townships || []).forEach((engTownship, tIdx) => {
+        const mmTownship = mmCity?.townships?.[tIdx];
+        if (!mmTownship) return;
+
+        if (engTownship && mmTownship) township[engTownship] = mmTownship;
+      });
+    });
+  });
+
+  return { state, city, township };
+};
+
+const DELIVERY_NAME_LOOKUP = buildDeliveryNameLookup();
+
 
 const ProductDetail = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
+
   const loc = (en, mm) => i18n.language === "my" ? (mm || en) : (en || mm);
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -51,10 +93,17 @@ const ProductDetail = () => {
   const [deliveryAreas, setDeliveryAreas]           = useState([]);
   const [deliveryLoading, setDeliveryLoading]       = useState(false);
   const [deliveryTickerIdx, setDeliveryTickerIdx]   = useState(0);
-  // true  → slide the current+next pair upward (CSS transition fires)
-  // false → instant-reset back to top with the new "current" item already in place
-  const [deliveryTickerSliding, setDeliveryTickerSliding] = useState(false);
+  // Per-word animation keys — only the key for the word that changed increments,
+  // causing React to remount just that <span> and replay the slide-up animation.
+  // (region = hours, city = minutes, township = seconds)
+  const [deliveryAnimKeys, setDeliveryAnimKeys]     = useState({ region: 0, city: 0, township: 0 });
+  // Refs let the interval read/write current values without stale closures
+  const deliveryIdxRef       = useRef(0);
+  const deliveryPrevLabelRef = useRef(null);
+
   const [showReviewForm, setShowReviewForm]     = useState(false);
+
+
   const [isInWishlist, setIsInWishlist]         = useState(false);
   const [addingToCart, setAddingToCart]         = useState(false);
   const [wishlistLoading, setWishlistLoading]   = useState(false);
@@ -167,7 +216,8 @@ const ProductDetail = () => {
     };
 
     fetchProductData();
-  }, [slug, user]);
+  }, [slug, user, hasRole]);
+
 
   // ── VariantPicker callback ───────────────────────────────────────────────────
   // Called every time the buyer changes their option selection.
@@ -256,10 +306,11 @@ const ProductDetail = () => {
       );
       setSuccessMessage(result.message || "Product added to cart successfully!");
     } catch (error) {
-      setSuccessMessage({ type: "error", message: error.message || "Failed to add product to cart" });
+      setSuccessMessage({ type: "error", message: error?.message || "Failed to add product to cart" });
     } finally {
       setAddingToCart(false);
     }
+
   };
 
   // Auto-hide success message
@@ -270,26 +321,59 @@ const ProductDetail = () => {
     }
   }, [successMessage]);
 
-  // Delivery zones ticker — proper two-phase swipe-up animation:
-  //   Phase 1 (every 3 s): set sliding=true  → CSS transition slides the pair upward (500 ms)
-  //   Phase 2 (after 500 ms): advance the index and set sliding=false instantly
-  //             (no transition fires because we remove the class first, then swap content)
+  // ── Delivery labels (memoised so the ticker interval can compare prev vs next) ─
+  // Must be declared BEFORE the useEffect that depends on it.
+  const deliveryLabels = useMemo(() => {
+    const isMM = i18n.language === "my" || i18n.language?.startsWith("my");
+    const localName = (type, value) =>
+      isMM ? (DELIVERY_NAME_LOOKUP[type]?.[value] || value) : value;
+
+    return deliveryAreas.map((area) => {
+      if (area.area_type === "country") {
+        return { region: isMM ? "မြန်မာနိုင်ငံတစ်ဝှမ်း" : "Whole Myanmar", city: null, township: null };
+      }
+      const region = area.state || area.region || null;
+      if (!region) return null;
+      return {
+        region:   localName("state",    region),
+        city:     area.city     ? localName("city",     area.city)     : null,
+        township: area.township ? localName("township", area.township) : null,
+      };
+    }).filter(Boolean);
+  }, [deliveryAreas, i18n.language]);
+
+  // Delivery zones ticker — clock-style per-word slide-up animation.
+  // Region changes slowest (like hours), city next (like minutes), township most often (seconds).
+  // Only the key for a word that actually changed increments, so only that <span> remounts
+  // and replays the slide-up animation — identical to the digit trick in a digital clock.
   useEffect(() => {
-    if (!deliveryAreas || deliveryAreas.length <= 1) return;
+    // Reset refs whenever the labels array changes (e.g. language switch or zone reload)
+    deliveryIdxRef.current = 0;
+    deliveryPrevLabelRef.current = null;
+    setDeliveryTickerIdx(0);
+    setDeliveryAnimKeys({ region: 0, city: 0, township: 0 });
+
+    if (!deliveryLabels || deliveryLabels.length <= 1) return;
 
     const interval = setInterval(() => {
-      // Phase 1 – start the upward slide
-      setDeliveryTickerSliding(true);
+      const nextIdx   = (deliveryIdxRef.current + 1) % deliveryLabels.length;
+      const prevLabel = deliveryPrevLabelRef.current;
+      const nextLabel = deliveryLabels[nextIdx];
 
-      // Phase 2 – after the 500ms transition completes, snap-reset and advance
-      setTimeout(() => {
-        setDeliveryTickerSliding(false);            // instant reset (no transition class)
-        setDeliveryTickerIdx((i) => (i + 1) % deliveryAreas.length);
-      }, 520); // slightly longer than the 500ms transition
+      deliveryIdxRef.current       = nextIdx;
+      deliveryPrevLabelRef.current = nextLabel;
+
+      setDeliveryTickerIdx(nextIdx);
+      setDeliveryAnimKeys((k) => ({
+        region:   (!prevLabel || nextLabel.region   !== prevLabel.region)   ? k.region   + 1 : k.region,
+        city:     (!prevLabel || nextLabel.city     !== prevLabel.city)     ? k.city     + 1 : k.city,
+        township: (!prevLabel || nextLabel.township !== prevLabel.township) ? k.township + 1 : k.township,
+      }));
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [deliveryAreas]);
+  }, [deliveryLabels]);
+
 
   const handleBuyNow = async () => {
     await handleAddToCart();
@@ -373,10 +457,13 @@ const ProductDetail = () => {
       try {
         await navigator.share({ title: shareData.title, text: shareData.text, url: shareData.url });
         return;
-      } catch {}
+      } catch {
+        // ignore user-cancelled share errors
+      }
     }
     setShareOpen(prev => !prev);
   };
+
 
   const handleCopyLink = async () => {
     if (!shareData) return;
@@ -384,7 +471,10 @@ const ProductDetail = () => {
       await navigator.clipboard.writeText(shareData.url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {}
+    } catch {
+      // ignore clipboard failures
+    }
+
   };
 
   // Close share panel when clicking outside
@@ -404,6 +494,7 @@ const ProductDetail = () => {
 
   const productSchema = useMemo(() => {
     if (!product) return null;
+
     const safePrice = parseFloat(displayPrice);
     const sellerName = product.seller?.store_name || product.seller?.name || null;
     return {
@@ -868,51 +959,82 @@ const ProductDetail = () => {
               {/* Delivery zones */}
               {product.seller && (
                 <div className="pt-6 border-t border-gray-200 dark:border-slate-700">
+                  <h3 className="text-lg font-semibold mb-3">Delivery availability</h3>
 
                   {deliveryLoading ? (
                     <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
-                  ) : deliveryAreas.length === 0 ? (
+                  ) : deliveryLabels.length === 0 ? (
                     <p className="text-sm text-gray-500 dark:text-slate-400">
                       Delivery zones not provided by this seller yet.
                     </p>
-                  ) : (
-                    (() => {
-                      // Show only the full Region/State name (fallback: country).
-                      const labels = deliveryAreas
-                        .map((a) => a.state || a.region || a.country)
-                        .filter(Boolean);
-                      const safeIdx = Math.min(deliveryTickerIdx, Math.max(labels.length - 1, 0));
-                      const activeLabel = labels[safeIdx] || "—";
+                  ) : (() => {
+                    const safeIdx    = deliveryTickerIdx % deliveryLabels.length;
+                    const activeLabel = deliveryLabels[safeIdx];
 
-                      return (
-                        <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-                          <p className="text-xs text-gray-500 dark:text-slate-500 mb-1">Delivering to</p>
+                    return (
+                      <div className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+                        {/*
+                          Clock-style animation — identical to the digit trick in a digital clock:
+                          each word has its own `key`. When a key increments, React unmounts
+                          and remounts just that <span>, which replays the CSS @keyframes from
+                          frame 0. Words that didn't change keep their key → no remount → no flicker.
 
-                          {/*
-                          */}
-                          <div className="relative h-7 overflow-hidden">
-                            <div
-                              style={{ willChange: 'transform' }}
-                              className={`absolute left-0 top-0 w-full ${
-                                deliveryTickerSliding
-                                  ? 'transition-transform duration-500 ease-out -translate-y-7'
-                                  : 'translate-y-0'
-                              }`}
-                            >
-                              {/* Row 0 — current label (visible at rest) */}
-                              <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                {activeLabel}
-                              </p>
-                              {/* Row 1 — next label (slides into view during animation) */}
-                              <p className="h-7 leading-7 font-semibold text-gray-900 dark:text-slate-100 truncate">
-                                {labels[(safeIdx + 1) % labels.length] || activeLabel}
-                              </p>
-                            </div>
-                          </div>
+                          region   changes slowest  (≈ hours)
+                          city     changes midway   (≈ minutes)
+                          township changes every tick (≈ seconds)
+                        */}
+                        <style>{`
+                          @keyframes dzSlideUp {
+                            0%   { opacity: 0; transform: translateY(20px) rotateX(45deg); filter: blur(2px); }
+                            100% { opacity: 1; transform: translateY(0)   rotateX(0deg);   filter: blur(0);   }
+                          }
+                          .dz-word {
+                            display: inline-block;
+                            transform-origin: center bottom;
+                            animation: dzSlideUp 420ms ease-out both;
+                            perspective: 800px;
+                          }
+                        `}</style>
+
+                        <p className="text-xs text-gray-500 dark:text-slate-500 mb-2">Delivering to</p>
+
+                        <div
+                          aria-live="polite"
+                          aria-label={[activeLabel.region, activeLabel.city, activeLabel.township].filter(Boolean).join(" → ")}
+                          className="flex items-center gap-1 h-7 font-semibold text-gray-900 dark:text-slate-100 overflow-hidden"
+                        >
+                          {/* Region — changes slowest, like the hour hand */}
+                          <span key={deliveryAnimKeys.region} className="dz-word truncate max-w-[130px]">
+                            {activeLabel.region}
+                          </span>
+
+                          {activeLabel.city && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              {/* City — changes at mid-frequency, like the minute hand */}
+                              <span key={`c-${deliveryAnimKeys.city}`} className="dz-word truncate max-w-[110px]">
+                                {activeLabel.city}
+                              </span>
+                            </>
+                          )}
+
+                          {activeLabel.township && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              {/* Township — changes every tick, like the second hand */}
+                              <span key={`t-${deliveryAnimKeys.township}`} className="dz-word truncate max-w-[100px]">
+                                {activeLabel.township}
+                              </span>
+                            </>
+                          )}
                         </div>
-                      );
-                    })()
-                  )}
+
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+                          {deliveryLabels.length} {deliveryLabels.length === 1 ? "zone" : "zones"} covered
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

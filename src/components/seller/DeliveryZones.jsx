@@ -11,32 +11,54 @@ import {
 import api from '../../utils/api';
 import { useTranslation } from 'react-i18next';
 import getMyanmarStates from '../../data/myanmar-locations';
+// ─── FIX: always import the English JSON directly so we have canonical key names ───
+import myanmarLocationsEng from '../../data/myanmar-locations-eng.json';
 
-// ─── Myanmar Location Tree (from src/data) ────────────────────────────────────
-// We keep the canonical dataset in the frontend and drive the delivery-zone UI
-// from it so sellers can only pick valid Region/State → City → Township combos.
-const toLocationTree = (db) => {
-  const locations = Array.isArray(db?.locations) ? db.locations : [];
+// ─── Myanmar Location Tree ────────────────────────────────────────────────────
+// BUG FIX: toLocationTree now accepts a second argument (engDb — always the
+// English JSON). Each tree node carries BOTH a display name (language-aware)
+// AND a canonical English name (engState / engCity / engTownships).
+// All zone keys are built from the English names so that switching the UI
+// language never invalidates previously-saved or in-memory selections.
+const toLocationTree = (db, engDb) => {
+  const locations    = Array.isArray(db?.locations)    ? db.locations    : [];
+  const engLocations = Array.isArray(engDb?.locations) ? engDb.locations : [];
 
   const pickCityName = (cityObj) => {
     if (!cityObj || typeof cityObj !== 'object') return null;
     if (typeof cityObj.city === 'string' && cityObj.city.trim()) return cityObj.city.trim();
-    // Defensive: if data has a malformed city entry (e.g. { "Ye-U": "Ye-U", townships: [...] })
-    const fallbackKey = Object.keys(cityObj).find((k) => k !== 'townships' && typeof cityObj[k] === 'string');
+    const fallbackKey = Object.keys(cityObj).find(
+      (k) => k !== 'townships' && k !== 'mmName' && typeof cityObj[k] === 'string',
+    );
     return fallbackKey ? String(cityObj[fallbackKey]).trim() : null;
   };
 
   return locations
-    .map((rs) => {
-      const state = typeof rs.region_state === 'string' ? rs.region_state.trim() : null;
-      const cities = Array.isArray(rs.cities) ? rs.cities : [];
+    .map((rs, rIdx) => {
+      const state    = typeof rs.region_state === 'string' ? rs.region_state.trim() : null;
+      const engRs    = engLocations[rIdx];
+      // Canonical key name — always English (falls back to display name if missing)
+      const engState = typeof engRs?.region_state === 'string' ? engRs.region_state.trim() : state;
+      const cities   = Array.isArray(rs.cities) ? rs.cities : [];
+
       return {
-        state,
+        state,    // localised display name
+        engState, // canonical English key (used for all zone keys & DB storage)
         cities: cities
-          .map((c) => ({
-            city: pickCityName(c),
-            townships: Array.isArray(c?.townships) ? c.townships.filter(Boolean) : [],
-          }))
+          .map((c, cIdx) => {
+            const engCityObj   = engRs?.cities?.[cIdx];
+            const engCity      = typeof engCityObj?.city === 'string'
+              ? engCityObj.city.trim()
+              : (pickCityName(c) ?? '');
+            const townships    = Array.isArray(c?.townships)          ? c.townships.filter(Boolean)          : [];
+            const engTownships = Array.isArray(engCityObj?.townships) ? engCityObj.townships.filter(Boolean) : townships;
+            return {
+              city:        pickCityName(c), // localised display name
+              engCity,                      // canonical English key
+              townships,                    // localised display names
+              engTownships,                 // canonical English keys (same indices as townships)
+            };
+          })
           .filter((c) => !!c.city),
       };
     })
@@ -47,16 +69,9 @@ const toLocationTree = (db) => {
 const formatMMK = (n) =>
   new Intl.NumberFormat('my-MM', { style: 'currency', currency: 'MMK', minimumFractionDigits: 0 }).format(n || 0);
 
-// Build a flat lookup key from area fields
+// Build a flat lookup key from area fields (always uses English names from DB)
 const zoneKey = (z) => [z.area_type, z.country, z.state, z.city, z.township]
   .filter(Boolean).join('|');
-
-// Convert saved DB zones array → Map<key, zone>
-const buildZoneMap = (zones) => {
-  const map = {};
-  zones.forEach((z) => { map[zoneKey(z)] = z; });
-  return map;
-};
 
 // ─── FeeInput ────────────────────────────────────────────────────────────────
 const FeeInput = ({ value, onChange, placeholder }) => (
@@ -110,21 +125,23 @@ const DeliveryZones = ({
 }) => {
   const { t, i18n } = useTranslation();
 
+  // BUG FIX: pass myanmarLocationsEng as second arg so each node knows its
+  // canonical English name regardless of the active display language.
   const MYANMAR_LOCATIONS = useMemo(() => {
     const db = getMyanmarStates(i18n.language);
-    return toLocationTree(db);
+    return toLocationTree(db, myanmarLocationsEng);
   }, [i18n.language]);
-  // selected: Set of zone keys the seller has checked
+
+  // selected: Set of zone keys (always English canonical names)
   const [selected, setSelected]     = useState(new Set());
   // fees: Map<key, { fee, freeThreshold, daysMin, daysMax }>
   const [fees, setFees]             = useState({});
-  // expanded: Set of state names that have their city list open
+  // expanded: Set of engState / engCity strings that have their list open
   const [expanded, setExpanded]     = useState(new Set());
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
   const [error, setError]           = useState(null);
   const [success, setSuccess]       = useState(false);
-  // Whole Myanmar shortcut
   const [wholeMyanmar, setWholeMyanmar] = useState(false);
 
   // ── Load existing zones from backend ──────────────────────────────────
@@ -133,22 +150,22 @@ const DeliveryZones = ({
       try {
         const res = await api.get('/seller/delivery-areas');
         if (res.data.success) {
-          const zones = res.data.data || [];
+          const zones      = res.data.data || [];
           const newSelected = new Set();
-          const newFees = {};
+          const newFees    = {};
 
           zones.forEach((z) => {
+            // zoneKey uses the English field values stored in the DB — always consistent
             const k = zoneKey(z);
             newSelected.add(k);
             newFees[k] = {
-              fee:          Number(z.shipping_fee) || 0,
+              fee:           Number(z.shipping_fee) || 0,
               freeThreshold: Number(z.free_shipping_threshold) || 0,
-              daysMin:      z.estimated_delivery_days_min || 3,
-              daysMax:      z.estimated_delivery_days_max || 5,
+              daysMin:       z.estimated_delivery_days_min || 3,
+              daysMax:       z.estimated_delivery_days_max || 5,
             };
           });
 
-          // Check if whole Myanmar is selected (single country-level zone)
           const wmKey = 'country|Myanmar';
           if (newSelected.has(wmKey)) setWholeMyanmar(true);
 
@@ -179,36 +196,34 @@ const DeliveryZones = ({
     }));
   }, []);
 
-  // ── Build keys for a state and all its children ────────────────────────
-  const stateKeys = useCallback((stateName) => {
+  // ── Build keys for a state and all its children (all English) ──────────
+  const stateKeys = useCallback((engState) => {
     const keys = [];
-    const loc = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
+    const loc  = MYANMAR_LOCATIONS.find((l) => l.engState === engState);
     if (!loc) return keys;
-    keys.push(`state|Myanmar|${stateName}`);
+    keys.push(`state|Myanmar|${engState}`);
     loc.cities.forEach((c) => {
-      keys.push(`city|Myanmar|${stateName}|${c.city}`);
-      c.townships.forEach((t) => keys.push(`township|Myanmar|${stateName}|${c.city}|${t}`));
+      keys.push(`city|Myanmar|${engState}|${c.engCity}`);
+      c.engTownships.forEach((t) => keys.push(`township|Myanmar|${engState}|${c.engCity}|${t}`));
     });
     return keys;
-  }, []);
+  }, [MYANMAR_LOCATIONS]);
 
-  const cityKeys = useCallback((stateName, cityName) => {
-    const loc   = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
-    const city  = loc?.cities.find((c) => c.city === cityName);
+  const cityKeys = useCallback((engState, engCity) => {
+    const loc  = MYANMAR_LOCATIONS.find((l) => l.engState === engState);
+    const city = loc?.cities.find((c) => c.engCity === engCity);
     if (!city) return [];
     return [
-      `city|Myanmar|${stateName}|${cityName}`,
-      ...city.townships.map((t) => `township|Myanmar|${stateName}|${cityName}|${t}`),
+      `city|Myanmar|${engState}|${engCity}`,
+      ...city.engTownships.map((t) => `township|Myanmar|${engState}|${engCity}|${t}`),
     ];
-  }, []);
+  }, [MYANMAR_LOCATIONS]);
 
   // ── Checkbox logic ─────────────────────────────────────────────────────
   const toggleWhole = () => {
     setWholeMyanmar((prev) => {
       const next = !prev;
       if (next) {
-        // Store only the country-level key — the backend stores a single country zone.
-        // Individual state/city/township selections are cleared.
         setSelected(new Set(['country|Myanmar']));
         if (!fees['country|Myanmar']) setFees((f) => ({ ...f, 'country|Myanmar': defaultFee() }));
       } else {
@@ -218,12 +233,12 @@ const DeliveryZones = ({
     });
   };
 
-  const toggleState = (stateName) => {
-    const keys     = stateKeys(stateName);
-    const stateKey = `state|Myanmar|${stateName}`;
+  // All toggle functions now receive canonical English names
+  const toggleState = (engState) => {
+    const keys     = stateKeys(engState);
+    const stateKey = `state|Myanmar|${engState}`;
     const isOn     = selected.has(stateKey);
     if (!isOn) {
-      // Initialise fees for new keys outside the state updater
       const toInit = keys.filter((k) => !fees[k]);
       if (toInit.length) setFees((f) => Object.assign({}, f, Object.fromEntries(toInit.map((k) => [k, defaultFee()]))));
     }
@@ -239,9 +254,9 @@ const DeliveryZones = ({
     setWholeMyanmar(false);
   };
 
-  const toggleCity = (stateName, cityName) => {
-    const keys    = cityKeys(stateName, cityName);
-    const cityKey = `city|Myanmar|${stateName}|${cityName}`;
+  const toggleCity = (engState, engCity) => {
+    const keys    = cityKeys(engState, engCity);
+    const cityKey = `city|Myanmar|${engState}|${engCity}`;
     const isOn    = selected.has(cityKey);
     if (!isOn) {
       const toInit = keys.filter((k) => !fees[k]);
@@ -253,20 +268,19 @@ const DeliveryZones = ({
         keys.forEach((k) => next.delete(k));
       } else {
         keys.forEach((k) => next.add(k));
-        // Auto-check state if all cities in it are now selected
-        const loc = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
+        const loc = MYANMAR_LOCATIONS.find((l) => l.engState === engState);
         const allCitiesSelected = loc?.cities.every((c) =>
-          next.has(`city|Myanmar|${stateName}|${c.city}`)
+          next.has(`city|Myanmar|${engState}|${c.engCity}`)
         );
-        if (allCitiesSelected) next.add(`state|Myanmar|${stateName}`);
+        if (allCitiesSelected) next.add(`state|Myanmar|${engState}`);
       }
       return next;
     });
     setWholeMyanmar(false);
   };
 
-  const toggleTownship = (stateName, cityName, township) => {
-    const tKey = `township|Myanmar|${stateName}|${cityName}|${township}`;
+  const toggleTownship = (engState, engCity, engTownship) => {
+    const tKey = `township|Myanmar|${engState}|${engCity}|${engTownship}`;
     if (!selected.has(tKey) && !fees[tKey]) {
       setFees((f) => ({ ...f, [tKey]: defaultFee() }));
     }
@@ -274,24 +288,21 @@ const DeliveryZones = ({
       const next = new Set(prev);
       if (next.has(tKey)) {
         next.delete(tKey);
-        // Uncheck parent city if any township is now unchecked
-        next.delete(`city|Myanmar|${stateName}|${cityName}`);
-        next.delete(`state|Myanmar|${stateName}`);
+        next.delete(`city|Myanmar|${engState}|${engCity}`);
+        next.delete(`state|Myanmar|${engState}`);
       } else {
         next.add(tKey);
-        // Auto-check city if all its townships are selected
-        const loc  = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
-        const city = loc?.cities.find((c) => c.city === cityName);
-        const allT = city?.townships.every((t) =>
-          next.has(`township|Myanmar|${stateName}|${cityName}|${t}`)
+        const loc  = MYANMAR_LOCATIONS.find((l) => l.engState === engState);
+        const city = loc?.cities.find((c) => c.engCity === engCity);
+        const allT = city?.engTownships.every((t) =>
+          next.has(`township|Myanmar|${engState}|${engCity}|${t}`)
         );
         if (allT) {
-          next.add(`city|Myanmar|${stateName}|${cityName}`);
-          // Auto-check state if all cities are now selected
+          next.add(`city|Myanmar|${engState}|${engCity}`);
           const allC = loc?.cities.every((c) =>
-            next.has(`city|Myanmar|${stateName}|${c.city}`)
+            next.has(`city|Myanmar|${engState}|${c.engCity}`)
           );
-          if (allC) next.add(`state|Myanmar|${stateName}`);
+          if (allC) next.add(`state|Myanmar|${engState}`);
         }
       }
       return next;
@@ -299,25 +310,25 @@ const DeliveryZones = ({
     setWholeMyanmar(false);
   };
 
-  // Indeterminate state helpers
-  const stateIndeterminate = (stateName) => {
-    const loc    = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
-    const allKeys = stateKeys(stateName).slice(1); // exclude state key itself
+  // Indeterminate helpers — use engState / engCity
+  const stateIndeterminate = (engState) => {
+    const allKeys = stateKeys(engState).slice(1); // exclude state key itself
     const someOn  = allKeys.some((k) => selected.has(k));
     const allOn   = allKeys.every((k) => selected.has(k));
     return someOn && !allOn;
   };
 
-  const cityIndeterminate = (stateName, cityName) => {
-    const loc  = MYANMAR_LOCATIONS.find((l) => l.state === stateName);
-    const city = loc?.cities.find((c) => c.city === cityName);
-    const tKeys = city?.townships.map((t) => `township|Myanmar|${stateName}|${cityName}|${t}`) || [];
+  const cityIndeterminate = (engState, engCity) => {
+    const loc   = MYANMAR_LOCATIONS.find((l) => l.engState === engState);
+    const city  = loc?.cities.find((c) => c.engCity === engCity);
+    const tKeys = city?.engTownships.map((t) => `township|Myanmar|${engState}|${engCity}|${t}`) || [];
     const someOn = tKeys.some((k) => selected.has(k));
     const allOn  = tKeys.every((k) => selected.has(k));
     return someOn && !allOn;
   };
 
   // ── Save ───────────────────────────────────────────────────────────────
+  // Keys already contain canonical English names → DB receives English values
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -325,7 +336,6 @@ const DeliveryZones = ({
 
     let zones;
     if (wholeMyanmar) {
-      // One country-level zone rather than hundreds of individual rows.
       const f = fees['country|Myanmar'] || defaultFee();
       zones = [{
         area_type:                   'country',
@@ -347,9 +357,9 @@ const DeliveryZones = ({
         return {
           area_type:                   areaType,
           country:                     'Myanmar',
-          state:                       parts[2] || null,
-          city:                        parts[3] || null,
-          township:                    parts[4] || null,
+          state:                       parts[2] || null,  // always English
+          city:                        parts[3] || null,  // always English
+          township:                    parts[4] || null,  // always English
           shipping_fee:                f.fee,
           free_shipping_threshold:     f.freeThreshold || null,
           estimated_delivery_days_min: f.daysMin,
@@ -364,9 +374,7 @@ const DeliveryZones = ({
       if (res.data.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 4000);
-        if (onSaveSuccess) {
-          await onSaveSuccess();
-        }
+        if (onSaveSuccess) await onSaveSuccess();
         return true;
       } else {
         setError(res.data.message || 'Failed to save zones');
@@ -501,13 +509,14 @@ const DeliveryZones = ({
       {!wholeMyanmar && (
         <div className="space-y-3">
           {MYANMAR_LOCATIONS.map((loc) => {
-            const stKey      = `state|Myanmar|${loc.state}`;
+            // Keys always use engState — display shows loc.state (localised)
+            const stKey      = `state|Myanmar|${loc.engState}`;
             const isStateOn  = selected.has(stKey);
-            const isStateInd = stateIndeterminate(loc.state);
-            const isExpanded = expanded.has(loc.state);
+            const isStateInd = stateIndeterminate(loc.engState);
+            const isExpanded = expanded.has(loc.engState);
 
             return (
-              <div key={loc.state} className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+              <div key={loc.engState} className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
 
                 {/* State row */}
                 <div
@@ -516,7 +525,7 @@ const DeliveryZones = ({
                   }`}
                   onClick={() => setExpanded((prev) => {
                     const n = new Set(prev);
-                    n.has(loc.state) ? n.delete(loc.state) : n.add(loc.state);
+                    n.has(loc.engState) ? n.delete(loc.engState) : n.add(loc.engState);
                     return n;
                   })}
                 >
@@ -524,10 +533,11 @@ const DeliveryZones = ({
                     type="checkbox"
                     checked={isStateOn}
                     ref={(el) => { if (el) el.indeterminate = isStateInd; }}
-                    onChange={() => toggleState(loc.state)}
+                    onChange={() => toggleState(loc.engState)}
                     onClick={(e) => e.stopPropagation()}
                     className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                   />
+                  {/* Display localised name; key is engState */}
                   <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-white">{loc.state}</span>
 
                   {(isStateOn || isStateInd) && (
@@ -562,13 +572,13 @@ const DeliveryZones = ({
                 {isExpanded && (
                   <div className="border-t border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
                     {loc.cities.map((cityObj) => {
-                      const cKey     = `city|Myanmar|${loc.state}|${cityObj.city}`;
+                      const cKey      = `city|Myanmar|${loc.engState}|${cityObj.engCity}`;
                       const isCityOn  = selected.has(cKey);
-                      const isCityInd = cityIndeterminate(loc.state, cityObj.city);
+                      const isCityInd = cityIndeterminate(loc.engState, cityObj.engCity);
                       const isCityExp = expanded.has(cKey);
 
                       return (
-                        <div key={cityObj.city} className="border-b border-gray-100 dark:border-slate-700 last:border-0">
+                        <div key={cityObj.engCity} className="border-b border-gray-100 dark:border-slate-700 last:border-0">
 
                           {/* City row */}
                           <div
@@ -585,10 +595,11 @@ const DeliveryZones = ({
                               type="checkbox"
                               checked={isCityOn}
                               ref={(el) => { if (el) el.indeterminate = isCityInd; }}
-                              onChange={() => toggleCity(loc.state, cityObj.city)}
+                              onChange={() => toggleCity(loc.engState, cityObj.engCity)}
                               onClick={(e) => e.stopPropagation()}
                               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                             />
+                            {/* Display localised city name */}
                             <span className="flex-1 text-sm font-medium text-gray-800 dark:text-slate-200">{cityObj.city}</span>
 
                             {(isCityOn || isCityInd) && (
@@ -623,20 +634,23 @@ const DeliveryZones = ({
                           {isCityExp && (
                             <div className="bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700">
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 px-8 py-2">
-                                {cityObj.townships.map((township) => {
-                                  const tKey = `township|Myanmar|${loc.state}|${cityObj.city}|${township}`;
+                                {cityObj.townships.map((township, tIdx) => {
+                                  // Display localised township name; key uses canonical English engTownship
+                                  const engTownship = cityObj.engTownships[tIdx] ?? township;
+                                  const tKey = `township|Myanmar|${loc.engState}|${cityObj.engCity}|${engTownship}`;
                                   const isTOn = selected.has(tKey);
                                   return (
-                                    <div key={township} className={`flex flex-col gap-1 p-2 rounded-lg transition-colors ${
+                                    <div key={engTownship} className={`flex flex-col gap-1 p-2 rounded-lg transition-colors ${
                                       isTOn ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
                                     }`}>
                                       <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                           type="checkbox"
                                           checked={isTOn}
-                                          onChange={() => toggleTownship(loc.state, cityObj.city, township)}
+                                          onChange={() => toggleTownship(loc.engState, cityObj.engCity, engTownship)}
                                           className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                         />
+                                        {/* Display localised township name */}
                                         <span className="text-xs text-gray-700 dark:text-slate-300">{township}</span>
                                       </label>
                                       {isTOn && (
