@@ -182,7 +182,7 @@ export default function ReportPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-2xl mb-4">
             <TicketIcon className="h-7 w-7 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
             {isMM ? 'တိုင်ကြားချက်တင်ပြမည်' : 'Report an Issue'}
           </h1>
           <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm max-w-md mx-auto">

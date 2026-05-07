@@ -20,6 +20,8 @@ const ProductImageGallery = ({
   initialIndex = 0,
   onIndexChange,
   priority = true,
+  autoplay = false,
+  autoplayDelayMs = 2500,
   className = "",
 }) => {
   const normalized = useMemo(() => normalizeImages(images), [images]);
@@ -27,6 +29,7 @@ const ProductImageGallery = ({
 
   const [active, setActive] = useState(() => clampIndex(initialIndex, total));
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pauseAutoplay, setPauseAutoplay] = useState(false);
   const thumbRowRef = useRef(null);
 
   useEffect(() => {
@@ -74,20 +77,51 @@ const ProductImageGallery = ({
 
   const activeSrc = total ? getImageUrl(normalized[active]) : null;
 
+  // Autoplay (carousel): advances every `autoplayDelayMs`, pauses on hover/touch and in lightbox
+  useEffect(() => {
+    if (!autoplay) return;
+    if (total <= 1) return;
+    if (lightboxOpen) return;
+    if (pauseAutoplay) return;
+
+    const delay = Math.max(800, Number(autoplayDelayMs) || 2500);
+    const id = window.setInterval(() => {
+      setActive((prev) => {
+        const nextIdx = clampIndex(prev + 1, total);
+        onIndexChange?.(nextIdx);
+        return nextIdx;
+      });
+    }, delay);
+
+    return () => window.clearInterval(id);
+  }, [autoplay, autoplayDelayMs, total, lightboxOpen, pauseAutoplay, onIndexChange]);
+
   return (
     <div className={className}>
+      <style>{`
+        @keyframes pdFadeSlideIn {
+          from { opacity: 0; transform: translateX(10px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+      `}</style>
       {/* Main image */}
       <div
         {...swipeHandlers}
+        onMouseEnter={() => setPauseAutoplay(true)}
+        onMouseLeave={() => setPauseAutoplay(false)}
+        onTouchStart={() => setPauseAutoplay(true)}
+        onTouchEnd={() => setPauseAutoplay(false)}
         className="relative bg-gray-100 dark:bg-slate-800 rounded-xl overflow-hidden
                    aspect-square sm:aspect-[4/3] lg:aspect-[5/4]
                    select-none"
       >
         {activeSrc ? (
           <img
+            key={activeSrc}
             src={activeSrc}
             alt={alt}
             className="absolute inset-0 w-full h-full object-contain bg-white/30 dark:bg-black/10"
+            style={{ animation: "pdFadeSlideIn 450ms ease-out" }}
             loading={priority ? "eager" : "lazy"}
             decoding="async"
             fetchPriority={priority ? "high" : "low"}
@@ -200,9 +234,11 @@ const ProductImageGallery = ({
 
           <div className="absolute inset-0 flex items-center justify-center px-4">
             <img
+              key={`lb-${activeSrc}`}
               src={activeSrc}
               alt={alt}
               className="max-h-[88vh] max-w-[95vw] object-contain"
+              style={{ animation: "pdFadeSlideIn 450ms ease-out" }}
               decoding="async"
               fetchPriority="high"
             />

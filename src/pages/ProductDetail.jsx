@@ -750,6 +750,8 @@ const ProductDetail = () => {
                 initialIndex={activeImage}
                 onIndexChange={setActiveImage}
                 priority={true}
+                autoplay={true}
+                autoplayDelayMs={2500}
                 className="w-full"
               />
             </div>

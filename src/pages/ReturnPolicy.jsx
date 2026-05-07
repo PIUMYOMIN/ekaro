@@ -16,7 +16,7 @@ const ReturnPolicy = () => {
     <>
       {SeoComponent}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2 text-center dark:text-slate-100">{t('returnPolicy.title')}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-center dark:text-slate-100">{t('returnPolicy.title')}</h1>
       <p className="text-center text-gray-600 dark:text-slate-400 mb-8">{t('returnPolicy.subtitle')}</p>
 
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">

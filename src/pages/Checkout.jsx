@@ -53,6 +53,8 @@ export default function Checkout() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const isMyanmarLanguage = i18n.language?.startsWith("my");
+
   const SeoComponent = useSEO({
     title: t("checkout.seo_title"),
     description: t("checkout.seo_description"),
@@ -781,13 +783,20 @@ export default function Checkout() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{t("checkout.city")} *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                      {isMyanmarLanguage ? t("checkout.township") : t("checkout.city")} *
+                    </label>
                     <select
                       value={shippingAddress.city}
                       disabled={!shippingAddress.state}
                       onChange={e => setShippingAddress(p => ({ ...p, city: e.target.value }))}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:bg-gray-50 dark:disabled:bg-slate-700 disabled:opacity-60">
-                      <option value="">{shippingAddress.state ? t("checkout.select_city") : t("checkout.select_state_first")}</option>
+                      <option value="">
+                        {shippingAddress.state
+                          ? (isMyanmarLanguage ? t("checkout.select_township") : t("checkout.select_city"))
+                          : t("checkout.select_state_first")
+                        }
+                      </option>
                       {(locationStates.find(s => s.state === shippingAddress.state)?.cities ?? []).map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>

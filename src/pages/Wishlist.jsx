@@ -21,7 +21,7 @@ const Wishlist = () => {
     <>
       {SeoComponent}
       <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 dark:text-slate-100">Your Wishlist</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-8 dark:text-slate-100">Your Wishlist</h1>
 
       {wishlistItems.length === 0
         ? <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-8 max-w-lg mx-auto text-center">

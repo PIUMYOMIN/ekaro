@@ -167,6 +167,7 @@
     "optional": "Optional",
     "address": "Address",
     "city": "City",
+    "township": "Township",
     "state_region": "State/Region",
     "postal_code": "Postal code",
     "country": "Country",
@@ -177,6 +178,7 @@
     "loading_areas": "Loading areas...",
     "select_state_region": "Select State / Region",
     "select_city": "Select City",
+    "select_township": "Select Township",
     "select_state_first": "Select a state first",
     "payment_method": "Payment Method",
     "payment_methods": {
@@ -217,8 +219,8 @@
     "place_order": "Place Order",
     "order_summary": "Order Summary",
     "subtotal": "Subtotal",
-    "subtotal_items": "Subtotal ({{count}} item)",
-    "subtotal_items_plural": "Subtotal ({{count}} items)",
+    "subtotal_items_one": "Subtotal ({{count}} item)",
+    "subtotal_items_other": "Subtotal ({{count}} items)",
     "shipping": "Shipping",
     "shipping_handling": "Shipping & handling",
     "shipping_handling_note": "Includes delivery to your address and order handling.",
@@ -1216,55 +1218,55 @@
     "title": "About Pyonea",
     "mission": {
       "title": "Our Mission",
-      "paragraph1": "Pyonea is a next-generation digital marketplace connecting buyers and sellers through a secure, transparent, and scalable commerce ecosystem.",
-      "paragraph2": "We empower businesses and individuals by removing barriers to trade and creating equal access to opportunity in the digital economy.",
-      "paragraph3": "Our mission is to build trusted infrastructure that supports sustainable growth, innovation, and long-term digital transformation."
+      "paragraph1": "Pyonea is a Myanmar-focused B2B marketplace that helps business buyers source products from verified suppliers—faster, with clearer terms, and with better accountability.",
+      "paragraph2": "Our strategy is built on trust and transparency: verified seller onboarding, accurate listings, clear MOQ and pricing, and policies shown before checkout so buyers know what to expect.",
+      "paragraph3": "We invest in tools that make wholesale buying simpler—search and filters, RFQs for custom needs, bulk ordering, and order tracking—so businesses can buy with confidence and sellers can grow sustainably."
     },
     "buyers": {
       "title": "For Buyers",
-      "point1": "Access diverse products from verified sellers",
-      "point2": "Transparent pricing and competitive offers",
-      "point3": "Secure digital payments and protected checkout",
-      "point4": "Reliable order tracking and delivery support",
-      "point5": "Trusted reviews and ratings"
+      "point1": "Source from verified sellers and visible store profiles",
+      "point2": "See MOQ, pricing, and seller policies before confirming",
+      "point3": "Use safe payment options (including Cash on Delivery and QR-based payments where available)",
+      "point4": "Track orders and get support when something goes wrong",
+      "point5": "Use RFQs and bulk tools to buy efficiently at wholesale scale"
     },
     "sellers": {
       "title": "For Sellers",
-      "point1": "Expand your reach beyond physical boundaries",
-      "point2": "Create a professional digital storefront",
-      "point3": "Secure and timely payment processing",
-      "point4": "Advanced business insights and analytics",
-      "point5": "Scalable tools for long-term growth"
+      "point1": "Reach business buyers across Myanmar with a trusted storefront",
+      "point2": "List products with clear MOQ, pricing, and delivery coverage",
+      "point3": "Get orders through direct purchases and buyer RFQs",
+      "point4": "Build trust with fast responses, accurate fulfillment, and fair policies",
+      "point5": "Grow with tools designed for long‑term wholesale operations"
     },
     "vision": {
       "title": "Our Vision",
-      "paragraph1": "To become a globally recognized marketplace brand rooted in trust, innovation, and digital excellence.",
-      "paragraph2": "We are building technology that enables seamless commerce across regions, industries, and communities.",
-      "paragraph3": "Through innovation and strategic partnerships, Pyonea aims to shape the future of digital commerce worldwide."
+      "paragraph1": "To be the most trusted B2B marketplace in Myanmar—where buyers can purchase with confidence and sellers can grow through consistent standards.",
+      "paragraph2": "We aim to standardize wholesale commerce online: clear product information, reliable fulfillment, and transparent policies that reduce disputes.",
+      "paragraph3": "As we expand, we’ll keep focusing on verification, buyer protection, and practical tools that improve real business outcomes."
     }
   },
   "legal": {
     "title": "Legal Information",
-    "subtitle": "Legal terms, privacy policy, and other important information for Pyonea marketplace users.",
+    "subtitle": "Key policies for using Pyonea. These summaries are for convenience—please read the full policy pages for details.",
     "terms": {
       "title": "Terms of Service",
-      "content": "By accessing or using Pyonea, you agree to comply with and be legally bound by our Terms of Service. All transactions conducted through the platform are subject to these terms and applicable laws. Pyonea reserves the right to update these terms at any time."
+      "content": "By using Pyonea, you agree to these Terms.\n\n1) Accounts & eligibility: You must provide accurate information and keep your account secure. We may suspend accounts used for fraud, abuse, or policy violations.\n\n2) Marketplace role: Pyonea is a platform that connects buyers and independent sellers. Product listings, pricing, fulfillment, and warranties are the seller’s responsibility unless explicitly stated otherwise.\n\n3) Orders & payments: When you place an order you agree to pay the displayed total and follow the seller’s stated policies. Payment methods and processing may vary by seller and may involve third‑party providers.\n\n4) Content & conduct: You may not post illegal, misleading, or infringing content. Harassment, spam, and manipulation of reviews or ratings are not allowed.\n\n5) Changes: We may update these Terms to reflect product, legal, or operational changes. Continued use of Pyonea after updates means you accept the revised Terms.\n\nFor questions, contact us using the details below."
     },
     "privacy": {
       "title": "Privacy Policy",
-      "content": "Pyonea collects and processes personal information to operate and improve our services. We implement industry-standard security measures to protect user data. Personal information will not be shared with third parties without consent, except where required by law or for service fulfillment."
+      "content": "We collect and use information to provide the service—such as creating accounts, processing orders, enabling seller support, and improving the marketplace.\n\nWhat we collect: account details (name, email/phone), shipping information, order history, and device/usage data.\n\nHow we use it: to run the platform, prevent fraud, provide customer support, and communicate service updates.\n\nSharing: we share limited data with sellers (to fulfill orders) and service providers (payments, delivery, analytics) where necessary. We do not sell personal data.\n\nSecurity: we use reasonable safeguards, but no system is 100% secure.\n\nYou can request access, correction, or deletion of your personal data where applicable."
     },
     "refund": {
       "title": "Refund Policy",
-      "content": "Refund requests must comply with our return eligibility criteria. Approved refunds are typically processed within 7–10 business days. Items must be returned in their original condition unless otherwise specified. Shipping fees may be non-refundable."
+      "content": "Pyonea is a marketplace and return/refund rules can differ by seller.\n\n- Check the seller’s return policy on the product page and at checkout.\n- If a return is approved, refunds are typically processed within 7–10 business days after confirmation (timelines may vary by payment method).\n- Items generally must be returned in original condition unless the seller’s policy states otherwise.\n- Shipping fees may be non‑refundable unless the return is due to seller error or a defective/wrong item."
     },
     "seller": {
       "title": "Seller Agreement",
-      "content": "Sellers on Pyonea are responsible for maintaining accurate product listings, timely order fulfillment, and professional customer service. Pyonea may charge a commission or service fee as outlined in the applicable pricing structure."
+      "content": "Sellers are responsible for: accurate listings, lawful products, clear policies, timely fulfillment, and professional communication.\n\nSellers must:\n- Keep inventory, pricing, and delivery coverage accurate\n- Respond to buyer messages and order issues within reasonable time\n- Honor the stated return/shipping policies\n- Avoid prohibited items and misleading claims\n\nFees: Pyonea may charge platform fees or commissions according to the published pricing plan."
     },
     "dispute": {
       "title": "Dispute Resolution",
-      "content": "In the event of a dispute, buyers and sellers are encouraged to resolve issues directly. If unresolved, Pyonea may intervene and mediate at its discretion to ensure a fair outcome based on platform policies."
+      "content": "If there’s an order issue, buyers and sellers should first try to resolve it through direct communication.\n\nIf unresolved, Pyonea may review the case and help mediate based on:\n- order information and message history\n- the seller’s stated policies\n- platform rules and applicable law\n\nWe may request additional evidence (photos, invoices, delivery proof) and may take action on accounts that repeatedly violate policies."
     },
     "contact": {
       "title": "Contact Our Legal Team",
@@ -1354,41 +1356,43 @@
   },
   "privacyPolicy": {
     "title": "Privacy Policy",
-    "subtitle": "How we collect, use, and protect your information",
+    "subtitle": "How Pyonea collects, uses, and protects your information",
     "lastUpdated": "Last updated: {{date}}",
-    "intro": "Pyonea respects your privacy and is committed to protecting your personal data. This policy explains how we collect, use, and safeguard your information when you use our platform.",
+    "intro": "Pyonea is a B2B marketplace. We collect only the information we need to run the platform—verify sellers, process orders, support shipping and payments, prevent fraud, and improve the buying and selling experience.",
     "dataCollection": {
       "title": "1. Information We Collect",
-      "text": "We may collect the following types of information:",
+      "text": "Depending on how you use Pyonea (buyer or seller), we may collect:",
       "items": [
-        "Personal identification information (name, email, phone number, address)",
-        "Business information (company name, tax ID, business license)",
-        "Payment information (processed securely through third‑party providers)",
-        "Transaction history (orders, purchases, returns)",
-        "Technical data (IP address, browser type, device information)",
-        "Usage data (pages visited, time spent, interactions)"
+        "Account information (name, email/phone, password or login credentials)",
+        "Shipping and contact details needed to fulfill orders",
+        "Business and verification details for sellers (business registration, NRC/owner info, documents you provide during onboarding)",
+        "Order and transaction history (orders, payments status, refunds/returns where applicable)",
+        "Messages and support requests sent through the platform",
+        "Technical and usage data (device, browser, IP address, pages visited) for security and performance"
       ]
     },
     "dataUsage": {
       "title": "2. How We Use Your Information",
       "text": "We use your information to:",
       "items": [
-        "Provide, operate, and maintain our services",
-        "Process your transactions and fulfill orders",
-        "Communicate with you about orders, updates, and promotions",
-        "Improve our platform and user experience",
-        "Comply with legal obligations and enforce our terms",
-        "Prevent fraud and enhance security"
+        "Operate the marketplace (accounts, listings, search, cart, checkout, and order tracking)",
+        "Verify seller identity and maintain marketplace trust",
+        "Process orders and support payments and confirmations",
+        "Enable seller fulfillment and buyer delivery communication",
+        "Provide customer support and resolve disputes",
+        "Prevent fraud, abuse, and policy violations",
+        "Improve features and performance (analytics and debugging)"
       ]
     },
     "dataSharing": {
       "title": "3. Sharing of Information",
-      "text": "We do not sell your personal information. We may share data with:",
+      "text": "We do not sell your personal information. We share limited data only when necessary to run the marketplace:",
       "items": [
-        "Sellers (to fulfill orders and communicate about products)",
-        "Service providers (payment processors, shipping partners, analytics) under strict confidentiality",
-        "Legal authorities when required by law or to protect our rights",
-        "Business transfers in case of merger, acquisition, or sale of assets"
+        "Sellers (order items and shipping details so they can fulfill your order)",
+        "Payment and service providers (to process payments, confirmations, and fraud checks, where applicable)",
+        "Delivery/logistics partners (only the information needed to deliver, where used)",
+        "Legal authorities if required by law or to protect users and platform integrity",
+        "Business transfers (only if ownership or operations change, with reasonable notice)"
       ]
     },
     "dataSecurity": {
@@ -1397,18 +1401,17 @@
     },
     "userRights": {
       "title": "5. Your Rights",
-      "text": "Under the Myanmar Consumer Protection Law and best practices, you have the right to:",
+      "text": "You can request the following, subject to verification and legal retention requirements:",
       "items": [
         "Access your personal data",
         "Request correction of inaccurate data",
-        "Request deletion of your data (subject to legal retention)",
-        "Withdraw consent for processing (where applicable)",
-        "Lodge a complaint with the Myanmar Consumer Protection Commission"
+        "Request deletion of your data (where legally permitted)",
+        "Manage cookie preferences (for analytics) in your browser or consent banner"
       ]
     },
     "cookies": {
       "title": "6. Cookies",
-      "text": "We use cookies to enhance your browsing experience. You can manage cookie preferences in your browser settings."
+      "text": "We use cookies for essential functionality (like keeping you signed in) and, if you consent, for analytics to understand how the marketplace is used and where we can improve."
     },
     "changes": {
       "title": "7. Changes to This Policy",
@@ -1419,7 +1422,7 @@
       "text": "If you have questions about this policy or your data, please contact us:",
       "email": "contact@pyonea.com",
       "phone": "+95 9 792 115 547",
-      "address": "123 Business Street, Yangon, Myanmar"
+      "address": "Bet 59-60, 19 Street, Aungmyaetharsan Township, Mandalay, Myanmar"
     }
   },
   "dashboard": "Dashboard",
@@ -1604,7 +1607,7 @@
     "hero": {
       "for_sellers": "For Sellers",
       "title": "Seller Guidelines",
-      "subtitle": "These guidelines help us maintain a trusted, high-quality marketplace for every buyer and seller in Myanmar. Please read them carefully before listing your first product.",
+      "subtitle": "These guidelines explain how to sell successfully on Pyonea: verification, listing quality, MOQ and pricing transparency, delivery coverage, communication standards, and dispute handling. They protect buyers and help high‑quality sellers rank better.",
       "become_seller": "Become a Seller",
       "read_guidelines": "Read Guidelines"
     },
@@ -1793,7 +1796,7 @@
     "hero": {
       "label": "Help Center",
       "title": "Frequently Asked Questions",
-      "desc": "Find answers to the most common questions about buying, selling, payments, and more on Pyonea.",
+      "desc": "Quick answers about how Pyonea works as a B2B marketplace: verified sellers, MOQ and wholesale pricing, RFQs, payments, delivery, and account help.",
       "search_placeholder": "Search questions…"
     },
     "sidebar": {

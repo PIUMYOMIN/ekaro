@@ -57,7 +57,7 @@ const ProductComparison = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Product Comparison</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Product Comparison</h1>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
         <div className="overflow-x-auto">

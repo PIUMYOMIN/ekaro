@@ -369,10 +369,10 @@ const PaymentSuccess = ({ order: orderProp, paymentData: paymentDataProp, onClos
               <CheckCircleIcon className="h-12 w-12 text-green-600" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Payment Successful!
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-base sm:text-lg text-gray-600">
             Your order has been confirmed and payment has been processed
           </p>
         </div>
