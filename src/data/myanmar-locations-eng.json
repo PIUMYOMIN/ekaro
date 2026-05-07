@@ -133,14 +133,14 @@
           "city": "Shwebo",
           "townships": ["Shwebo", "Kanbalu", "Tabayin", "Khin-U", "Wetlet"]
         },
-      {
-        "Ye-U": "Ye-U",
-        "townships": ["Ye-U", "Taze", "Tabayin"]
-      },
-      {
-        "city": "Katha",
-        "townships": ["Katha", "Banmauk", "Indaw", "Htigyaing"]
-      },
+        {
+          "city": "Ye-U",
+          "townships": ["Ye-U", "Taze", "Tabayin"]
+        },
+        {
+          "city": "Katha",
+          "townships": ["Katha", "Banmauk", "Indaw", "Htigyaing"]
+        },
       {
         "city": "Kangbalu",
         "townships": ["Kangbalu", "Kyunhla"]
@@ -203,7 +203,12 @@
             "Minbu",
             "Chauk",
             "Nyaung-U",
-            "Yesagyo"
+            "Yesagyo",
+            "Aunglan",
+            "Saw",
+            "Gangaw",
+            "Myothit",
+            "Thit Seik"
           ]
         },
         {
@@ -213,7 +218,6 @@
             "Myaing",
             "Yesagyo",
             "Minhla",
-            "Chauk",
             "Ngazun"
           ]
         }
@@ -448,6 +452,11 @@
       {"region_state": "Magway Region", "city": "Magway", "township": "Chauk"},
       {"region_state": "Magway Region", "city": "Magway", "township": "Nyaung-U"},
       {"region_state": "Magway Region", "city": "Magway", "township": "Yesagyo"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Aunglan"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Saw"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Gangaw"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Myothit"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Thit Seik"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Pakokku"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Myaing"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Yesagyo"},
