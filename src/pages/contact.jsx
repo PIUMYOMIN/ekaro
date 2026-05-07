@@ -90,7 +90,7 @@ const Contact = () => {
                   </svg>
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">{t('contact.info.address')}</p>
-                    <p className="text-gray-600 dark:text-gray-400">Bet 59-60, 19 Street, Mandalay, Myanmar</p>
+                    <p className="text-gray-600 dark:text-gray-400">Bet 59-60, 19 Street, Aungmyaetharsan Township, Mandalay, Myanmar</p>
                   </div>
                 </div>
               </div>

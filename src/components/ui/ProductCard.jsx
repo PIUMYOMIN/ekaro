@@ -28,14 +28,6 @@ const getImageUrl = (image) => {
   return DEFAULT_PLACEHOLDER;
 };
 
-// ── Format price in MMK ───────────────────────────────────────────────────────
-const formatMMK = (amount) =>
-  new Intl.NumberFormat("my-MM", {
-    style: "currency",
-    currency: "MMK",
-    minimumFractionDigits: 0,
-  }).format(amount || 0);
-
 // ── Star rating row ───────────────────────────────────────────────────────────
 const Stars = ({ rating, count }) => {
   const filled = Math.round(rating || 0);
@@ -62,9 +54,16 @@ const Stars = ({ rating, count }) => {
 
 
 // ── Main component ────────────────────────────────────────────────────────────
-const ProductCard = ({ product, className = "" }) => {
-  const { i18n } = useTranslation();
+const ProductCard = ({ product, className = "", imagePriority = false }) => {
+  const { t, i18n } = useTranslation();
   const loc = (en, mm) => (i18n.language === "my" ? mm || en : en || mm);
+  // Locale-aware price formatter: Myanmar script numerals in "my", Arabic in "en"
+  const formatMMK = (amount) =>
+    new Intl.NumberFormat(i18n.language === "my" ? "my-MM" : "en-US", {
+      style: "currency",
+      currency: "MMK",
+      minimumFractionDigits: 0,
+    }).format(amount || 0);
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();
@@ -188,12 +187,12 @@ const ProductCard = ({ product, className = "" }) => {
     product.seller?.store_name ||
     product.seller?.name;
 
-  const cartLabel = isUnavailable  ? "Unavailable"
-    : isOutOfStock                 ? "Out of Stock"
-    : isInCart                     ? "In Cart"
-    : cartLoading                  ? "Adding…"
-    : hasVariants                  ? "Select Options"
-    :                                "Add to Cart";
+  const cartLabel = isUnavailable  ? t('productCard.unavailable')
+    : isOutOfStock                 ? t('productCard.out_of_stock')
+    : isInCart                     ? t('productCard.in_cart')
+    : cartLoading                  ? t('productCard.adding')
+    : hasVariants                  ? t('productCard.select_options')
+    :                                t('productCard.add_to_cart');
 
   return (
     <motion.div
@@ -219,6 +218,12 @@ const ProductCard = ({ product, className = "" }) => {
               className="w-full h-full object-cover
                          transition-transform duration-500 ease-out
                          group-hover:scale-105"
+              // Improve perceived speed:
+              // - Above-the-fold cards can opt into eager/high priority.
+              // - Others stay lazy/low priority to reduce network contention.
+              loading={imagePriority ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={imagePriority ? "high" : "low"}
               placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23e5e7eb'/%3E%3C/svg%3E"
               onError={() => setImageError(true)}
             />
@@ -226,7 +231,7 @@ const ProductCard = ({ product, className = "" }) => {
             <div className="w-full h-full flex flex-col items-center justify-center
                             bg-gray-100 dark:bg-gray-700">
               <PhotoIcon className="h-10 w-10 text-gray-300 dark:text-gray-500 mb-1" />
-              <span className="text-xs text-gray-400 dark:text-gray-500">No image</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">{t('productCard.no_image')}</span>
             </div>
           )}
         </Link>
@@ -244,13 +249,13 @@ const ProductCard = ({ product, className = "" }) => {
           {product.is_new && !isOutOfStock && !isUnavailable && (
             <span className="bg-green-500 text-white text-[10px] font-bold
                              px-2 py-0.5 rounded-full leading-tight shadow-sm">
-              NEW
+              {t('productCard.new_badge')}
             </span>
           )}
           {isOutOfStock && (
             <span className="bg-gray-800/75 text-white text-[10px] font-bold
                              px-2 py-0.5 rounded-full leading-tight backdrop-blur-sm">
-              Sold Out
+              {t('productCard.sold_out')}
             </span>
           )}
           {isUnavailable && !isOutOfStock && (
@@ -302,7 +307,7 @@ const ProductCard = ({ product, className = "" }) => {
                          line-clamp-2 leading-snug
                          group-hover:text-green-600 dark:group-hover:text-green-400
                          transition-colors duration-150">
-            {loc(product.name_en, product.name_mm) || product.name || "Unnamed Product"}
+            {loc(product.name_en, product.name_mm) || product.name || t('productCard.unnamed')}
           </h3>
         </Link>
 
@@ -312,7 +317,7 @@ const ProductCard = ({ product, className = "" }) => {
         {/* Seller name */}
         {sellerName && (
           <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500 truncate">
-            by {sellerName}
+            {t('productCard.by_seller', { name: sellerName })}
           </p>
         )}
 
@@ -345,7 +350,7 @@ const ProductCard = ({ product, className = "" }) => {
                                bg-gray-100 dark:bg-gray-700
                                border border-gray-200 dark:border-gray-600
                                px-1.5 py-0.5 rounded-md">
-                MOQ {product.moq}
+                {t('productCard.moq', { count: product.moq })}
               </span>
             )}
           </div>

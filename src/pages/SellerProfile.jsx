@@ -10,6 +10,7 @@ import {
   CheckBadgeIcon, CheckIcon, ShareIcon, ClockIcon, BuildingStorefrontIcon,
   ArrowUpIcon, ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
+import { LinkIcon } from '@heroicons/react/24/solid';
 import {
   StarIcon as StarSolid,
   CheckBadgeIcon as CheckBadgeSolid,
@@ -21,6 +22,7 @@ import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ui/ProductCard';
 import { SkeletonSellerProfile } from '../components/ui/Skeleton';
 import { DEFAULT_PLACEHOLDER } from '../config';
+import { useTranslation } from 'react-i18next';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmtK = (n) => {
@@ -88,6 +90,7 @@ const SellerProfile = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { i18n } = useTranslation();
   const [seller, setSeller] = useState(null);
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({});
@@ -104,6 +107,7 @@ const SellerProfile = () => {
   const [reviewForm, setReviewForm] = useState({ open: false, rating: 0, comment: '', submitting: false });
   const [activeTab, setActiveTab] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
@@ -181,46 +185,118 @@ const SellerProfile = () => {
   };
 
   // ── Share ──────────────────────────────────────────────────────────────
+  const shareData = useCallback(() => {
+    const profileUrl = `${window.location.origin}/sellers/${slug}`;
+    const title = seller?.store_name || "Seller on Pyonea";
+    const text = `Check out "${title}" on Pyonea.`;
+    const enc = encodeURIComponent;
+    const website = seller?.website
+      ? (seller.website.startsWith("http") ? seller.website : `https://${seller.website}`)
+      : null;
+    return {
+      profileUrl,
+      website,
+      title,
+      text,
+      description: `Seller profile on Pyonea • ${profileUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${enc(profileUrl)}`,
+      whatsapp: `https://wa.me/?text=${enc(`${text} ${profileUrl}`)}`,
+      viber: `viber://forward?text=${enc(`${text} ${profileUrl}`)}`,
+      telegram: `https://t.me/share/url?url=${enc(profileUrl)}&text=${enc(text)}`,
+      twitter: `https://x.com/intent/tweet?text=${enc(text)}&url=${enc(profileUrl)}`,
+    };
+  }, [seller?.store_name, seller?.website, slug]);
+
   const handleShare = async () => {
-    const url = `${window.location.origin}/sellers/${slug}`;
+    const d = shareData();
     if (navigator.share) {
-      try { await navigator.share({ title: seller?.store_name, url }); return; } catch { }
+      try {
+        await navigator.share({ title: d.title, text: d.text, url: d.profileUrl });
+        return;
+      } catch { /* ignore */ }
     }
-    await navigator.clipboard.writeText(url).catch(() => { });
+    setShareOpen((prev) => !prev);
+  };
+
+  const copyText = async (value) => {
+    if (!value) return;
+    await navigator.clipboard.writeText(value).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // Close share panel when clicking outside
+  useEffect(() => {
+    if (!shareOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest('[data-share-panel]')) setShareOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [shareOpen]);
+
   // ── SEO ────────────────────────────────────────────────────────────────
+  const sellerSchema = seller ? {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: seller.store_name,
+    description: seller.store_description,
+    image: seller.store_logo || seller.store_banner,
+    url: `${SITE_PUBLIC_URL}/sellers/${slug}`,
+    // telephone: seller.contact_phone || undefined,
+    email: seller.contact_email || undefined,
+    address: seller.address ? {
+      '@type': 'PostalAddress',
+      streetAddress: seller.address,
+      addressLocality: seller.city,
+      addressRegion: seller.state,
+      addressCountry: seller.country || 'MM',
+    } : undefined,
+    aggregateRating: (reviews?.meta?.total || 0) > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: seller.reviews_avg_rating,
+      reviewCount: seller.reviews_count,
+    } : undefined,
+  } : null;
+
+  const pageSchema = seller ? {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: `${SITE_PUBLIC_URL}/`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Sellers',
+            item: `${SITE_PUBLIC_URL}/sellers`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: seller.store_name,
+            item: `${SITE_PUBLIC_URL}/sellers/${slug}`,
+          },
+        ],
+      },
+      sellerSchema,
+    ].filter(Boolean),
+  } : null;
+
   const SeoComponent = useSEO({
-    title: seller ? `${seller.store_name} | Pyonea Marketplace` : 'Seller Profile | Pyonea',
+    title: seller ? seller.store_name : 'Seller Profile',
     description: seller?.store_description?.slice(0, 155) || 'View products and information from this verified seller on Pyonea.',
-    image: seller?.store_logo || undefined,
+    image: seller?.store_logo || seller?.store_banner || undefined,
     imageAlt: seller?.store_name || undefined,
     url: `/sellers/${slug}`,
     type: 'profile',
-    schema: seller ? {
-      '@context': 'https://schema.org',
-      '@type': 'LocalBusiness',
-      name: seller.store_name,
-      description: seller.store_description,
-      image: seller.store_logo,
-      url: `${SITE_PUBLIC_URL}/sellers/${slug}`,
-      // telephone: seller.contact_phone || undefined,
-      email: seller.contact_email || undefined,
-      address: seller.address ? {
-        '@type': 'PostalAddress',
-        streetAddress: seller.address,
-        addressLocality: seller.city,
-        addressRegion: seller.state,
-        addressCountry: seller.country || 'MM',
-      } : undefined,
-      aggregateRating: (reviews?.meta?.total || 0) > 0 ? {
-        '@type': 'AggregateRating',
-        ratingValue: seller.reviews_avg_rating,
-        reviewCount: seller.reviews_count,
-      } : undefined,
-    } : null,
+    schema: pageSchema,
   });
 
   // ── States ─────────────────────────────────────────────────────────────
@@ -327,21 +403,106 @@ const SellerProfile = () => {
 
               {/* Action buttons */}
               <div className="flex items-center gap-2 pb-1">
-                <button
-                  onClick={handleShare}
-                  aria-label={copied ? 'Link copied' : 'Share store'}
-                  className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-sm font-medium transition-colors
-                    ${copied
-                      ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                      : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
-                    }`}
-                >
-                  {copied
-                    ? <CheckIcon className="h-4 w-4" />
-                    : <ShareIcon className="h-4 w-4" />
-                  }
-                  {copied ? 'Copied!' : 'Share'}
-                </button>
+                <div className="relative" data-share-panel>
+                  <button
+                    onClick={handleShare}
+                    aria-label={shareOpen ? 'Close share menu' : 'Share store'}
+                    className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-sm font-medium transition-colors
+                      ${shareOpen
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                        : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                      }`}
+                  >
+                    <ShareIcon className="h-4 w-4" />
+                    Share
+                  </button>
+
+                  {shareOpen && (() => {
+                    const d = shareData();
+                    return (
+                      <div className="absolute right-0 top-full mt-2 z-50 w-72
+                                      bg-white dark:bg-slate-800 border border-gray-200
+                                      dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                        {/* Title preview */}
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-700">
+                          <p className="text-xs text-gray-500 dark:text-slate-400">Sharing</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 line-clamp-2">
+                            {d.title}
+                          </p>
+                        </div>
+
+                        {/* Platform links */}
+                        {[
+                          { label: "Facebook", href: d.facebook, icon: "f", desc: "Share to your feed", color: "hover:bg-blue-50 dark:hover:bg-blue-900/20" },
+                          { label: "WhatsApp", href: d.whatsapp, icon: "W", desc: "Send to a chat", color: "hover:bg-green-50 dark:hover:bg-green-900/20" },
+                          { label: "Viber", href: d.viber, icon: "V", desc: "Mobile app link", color: "hover:bg-purple-50 dark:hover:bg-purple-900/20" },
+                          { label: "Telegram", href: d.telegram, icon: "T", desc: "Share to Telegram", color: "hover:bg-sky-50 dark:hover:bg-sky-900/20" },
+                          { label: "X (Twitter)", href: d.twitter, icon: "X", desc: "Post on X", color: "hover:bg-gray-100 dark:hover:bg-slate-700" },
+                        ].map(({ label, href, icon, desc, color }) => (
+                          <a
+                            key={label}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setShareOpen(false)}
+                            className={`flex items-start gap-3 px-4 py-2.5 transition-colors ${color}`}
+                          >
+                            <span className="mt-0.5 h-7 w-7 flex-shrink-0 rounded-full
+                                             bg-gray-100 dark:bg-slate-700
+                                             text-gray-800 dark:text-slate-200
+                                             flex items-center justify-center text-xs font-bold">
+                              {icon}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold text-gray-800 dark:text-slate-200 leading-tight">
+                                {label}
+                              </span>
+                              <span className="block text-xs text-gray-500 dark:text-slate-400 leading-tight">
+                                {desc}
+                              </span>
+                            </span>
+                          </a>
+                        ))}
+
+                        {/* Copy profile link */}
+                        <button
+                          onClick={async () => { await copyText(d.profileUrl); setShareOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium
+                                     border-t border-gray-100 dark:border-slate-700
+                                     hover:bg-gray-50 dark:hover:bg-slate-700
+                                     text-gray-700 dark:text-slate-300 transition-colors"
+                        >
+                          {copied
+                            ? <><CheckIcon className="h-4 w-4 text-green-500" /> Copied profile link</>
+                            : <><LinkIcon className="h-4 w-4" /> Copy profile link</>
+                          }
+                        </button>
+
+                        {/* Website URL (if available) */}
+                        {d.website && (
+                          <button
+                            onClick={async () => { await copyText(d.website); setShareOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium
+                                       border-t border-gray-100 dark:border-slate-700
+                                       hover:bg-gray-50 dark:hover:bg-slate-700
+                                       text-gray-700 dark:text-slate-300 transition-colors"
+                          >
+                            {copied
+                              ? <><CheckIcon className="h-4 w-4 text-green-500" /> Copied website URL</>
+                              : <><GlobeAltIcon className="h-4 w-4" /> Copy website URL</>
+                            }
+                          </button>
+                        )}
+
+                        <div className="px-4 py-2 border-t border-gray-100 dark:border-slate-700">
+                          <p className="text-[11px] text-gray-400 dark:text-slate-500 leading-snug">
+                            {d.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
                 {/* Follow button — hide on own store, sellers viewing another store, admins */}
                 {!isOwnStore && (!user || user.type === 'buyer') && (
                   <div className="flex flex-col items-end gap-1">

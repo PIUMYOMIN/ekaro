@@ -55,6 +55,7 @@ const ProductList = () => {
   const [hasMore, setHasMore]     = useState(true);
 
   const isFetching = useRef(false);
+  const searchDebounceRef = useRef(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -76,6 +77,10 @@ const ProductList = () => {
     setPage(1);
     setHasMore(true);
   }, [location.search, searchQuery, categoryQuery, minPrice, maxPrice, sortBy, sortOrder]);
+
+  useEffect(() => {
+    return () => clearTimeout(searchDebounceRef.current);
+  }, []);
 
   const fetchProducts = useCallback(async (reset = false) => {
     if (isFetching.current) return;
@@ -162,21 +167,15 @@ const ProductList = () => {
     navigate(`/products?${params.toString()}`);
   };
 
-  const debouncedSearch = useCallback(
-    (() => {
-      let timeout;
-      return (value) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          const params = new URLSearchParams(location.search);
-          if (value.trim()) params.set("search", value.trim());
-          else params.delete("search");
-          navigate(`/products?${params.toString()}`, { replace: true });
-        }, 500);
-      };
-    })(),
-    [location.search, navigate]
-  );
+  const debouncedSearch = useCallback((value) => {
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(location.search);
+      if (value.trim()) params.set("search", value.trim());
+      else params.delete("search");
+      navigate(`/products?${params.toString()}`, { replace: true });
+    }, 500);
+  }, [location.search, navigate]);
 
   const handleFilterChange = useCallback((newFilters) => {
     const params = new URLSearchParams(location.search);
@@ -532,12 +531,13 @@ const ProductList = () => {
               {loading && products.length === 0
                 ? [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
                 : products.length > 0
-                ? products.map((product) => (
+                ? products.map((product, idx) => (
                     <ProductCard
                       key={product.id}
                       product={product}
                       className="w-full"
                       onAddToCart={handleAddToCart}
+                      imagePriority={idx < 6 && page === 1}
                     />
                   ))
                 : !loading && (

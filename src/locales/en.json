@@ -337,7 +337,7 @@
     "security": "Security",
     "compliance": "Compliance",
     "contact_info": "Contact Information",
-    "address": "Bet 59-60, 19 Street, Mandalay, Myanmar",
+    "address": "Bet 59-60, 19 Street, Aungmyaetharsan Township, Mandalay, Myanmar",
     "phone": "+95 9 792 115 547",
     "email": "contact@pyonea.com",
     "follow_us": "Follow Us",
@@ -1271,7 +1271,7 @@
       "description": "For legal inquiries or questions regarding our policies, please contact us at:",
       "emailLabel": "Email:",
       "addressLabel": "Address:",
-      "address": "Yangon, Myanmar"
+      "address": "Bet 59-60, 19 Street, Aungmyaetharsan Township, Mandalay, Myanmar"
     }
   },
   "contact": {
@@ -2474,5 +2474,19 @@
         "alternative": "Please contact us via email or phone"
       }
     }
+  },
+  "productCard": {
+    "no_image": "No image",
+    "sold_out": "Sold Out",
+    "unavailable": "Unavailable",
+    "new_badge": "NEW",
+    "out_of_stock": "Out of Stock",
+    "in_cart": "In Cart",
+    "adding": "Adding…",
+    "select_options": "Select Options",
+    "add_to_cart": "Add to Cart",
+    "by_seller": "by {{name}}",
+    "moq": "MOQ {{count}}",
+    "unnamed": "Unnamed Product"
   }
 }

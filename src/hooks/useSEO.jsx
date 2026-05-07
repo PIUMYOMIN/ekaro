@@ -73,7 +73,7 @@ const useSEO = ({
       "@context": "https://schema.org",
       "@type": "Product",
       name: data.name,
-      description: description,
+      description: finalDescription,
       image: image,
     };
   }

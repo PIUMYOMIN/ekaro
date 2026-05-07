@@ -20,6 +20,8 @@ import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER, SITE_PUBLIC_URL } from "../config";
 import { SkeletonProductDetail } from "../components/ui/Skeleton";
 import VariantPicker from "../components/ui/VariantPicker";
+import ProductImageGallery from "../components/ui/ProductImageGallery";
+import ProductCard from "../components/ui/ProductCard";
 import myanmarLocationsEng from "../data/myanmar-locations-eng.json";
 import myanmarLocationsMm from "../data/myanmar-locations-mm.json";
 
@@ -76,6 +78,7 @@ const ProductDetail = () => {
   const [error, setError]                 = useState(null);
   const [quantity, setQuantity]           = useState(1);
   const [activeImage, setActiveImage]     = useState(0);
+  const variantSectionRef = useRef(null);
 
   // ── Variant state ───────────────────────────────────────────────────────────
   // selectedVariant: the fully-matched ProductVariant object (or null)
@@ -111,6 +114,9 @@ const ProductDetail = () => {
   const [copied, setCopied]                     = useState(false);
   const [shareOpen, setShareOpen]               = useState(false);
   const [successMessage, setSuccessMessage]     = useState(null);
+
+  const [moreFromSeller, setMoreFromSeller] = useState([]);
+  const [moreFromSellerLoading, setMoreFromSellerLoading] = useState(false);
 
   const flashReview = (msg, type = "success") => {
     setReviewFlash({ msg, type });
@@ -270,6 +276,25 @@ const ProductDetail = () => {
   // Are all required options selected (and matched to a variant)?
   const variantReady = !hasVariants || selectedVariant !== null;
 
+  const unitLabel = (product?.quantity_unit || product?.min_order_unit || "piece").slice(0, 20);
+
+  const sellerVerified =
+    !!product?.seller?.is_verified ||
+    product?.seller?.verification_status === "verified" ||
+    product?.seller?.status === "approved" ||
+    product?.seller?.status === "active";
+
+  const stockText = product?.product_type === "physical"
+    ? (variantReady
+        ? (availableStock > 0 ? `In stock (${availableStock})` : "Out of stock")
+        : "Select options for stock")
+    : "Available";
+
+  const primaryCtaLabel =
+    addingToCart ? "Adding…"
+    : (hasVariants && !selectedVariant) ? "Select options"
+    : "Add to Cart";
+
   // ── Add to cart ─────────────────────────────────────────────────────────────
   const handleAddToCart = async () => {
     if (!user) { navigate("/login"); return; }
@@ -311,6 +336,15 @@ const ProductDetail = () => {
       setAddingToCart(false);
     }
 
+  };
+
+  const handlePrimaryCta = async () => {
+    if (hasVariants && !selectedVariant) {
+      variantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setVariantError((prev) => prev || "Please select options before continuing.");
+      return;
+    }
+    await handleAddToCart();
   };
 
   // Auto-hide success message
@@ -438,16 +472,23 @@ const ProductDetail = () => {
     if (!product) return null;
     const url   = `${SITE_PUBLIC_URL}/products/${product.slug_en || product.slug || slug}`;
     const title = loc(product.name_en, product.name_mm) || "Product";
-    const text  = `Check out ${title} on Pyonea`;
+    const text  = `Check out "${title}" on Pyonea.`;
+    const description = `Wholesale product on Pyonea • ${url}`;
     const image = product.images?.[0] ? getImageUrl(product.images[0]) : null;
     const enc   = encodeURIComponent;
     return {
-      url, title, text, image,
+      url,
+      title,
+      text,
+      description,
+      image,
+      // Share URLs
       facebook:  `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`,
-      whatsapp:  `https://wa.me/?text=${enc(text + ' ' + url)}`,
-      viber:     `viber://forward?text=${enc(text + ' ' + url)}`,
+      whatsapp:  `https://wa.me/?text=${enc(`${text} ${url}`)}`,
+      // Viber deep link is mobile-app focused; keep it but explain in UI.
+      viber:     `viber://forward?text=${enc(`${text} ${url}`)}`,
       telegram:  `https://t.me/share/url?url=${enc(url)}&text=${enc(text)}`,
-      twitter:   `https://twitter.com/intent/tweet?url=${enc(url)}&text=${enc(text)}`,
+      twitter:   `https://x.com/intent/tweet?text=${enc(text)}&url=${enc(url)}`,
     };
   }, [product, slug]);
 
@@ -486,6 +527,39 @@ const ProductDetail = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [shareOpen]);
+
+  // More from this seller (best-effort, non-blocking)
+  useEffect(() => {
+    if (!product?.id) return;
+    const sellerId = product?.seller_id || product?.seller?.id;
+    if (!sellerId) return;
+
+    let cancelled = false;
+    (async () => {
+      setMoreFromSellerLoading(true);
+      try {
+        const params = new URLSearchParams({
+          per_page: "12",
+          page: "1",
+          seller_id: String(sellerId),
+          sort_by: "created_at",
+          sort_order: "desc",
+          fields: "id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale",
+        });
+        const res = await api.get(`/products?${params.toString()}`);
+        const data = res.data.data || res.data || [];
+        const list = Array.isArray(data) ? data : [];
+        const filtered = list.filter((p) => p.id !== product.id).slice(0, 12);
+        if (!cancelled) setMoreFromSeller(filtered);
+      } catch {
+        if (!cancelled) setMoreFromSeller([]);
+      } finally {
+        if (!cancelled) setMoreFromSellerLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [product?.id, product?.seller_id, product?.seller?.id]);
   const pageTitle       = product ? (loc(product.name_en, product.name_mm) || "Product") : fallbackTitle;
   const pageDescription = product
     ? ((loc(product.description_en, product.description_mm) || "").slice(0, 155) || "View product details on Pyonea — Myanmar's trusted B2B marketplace.")
@@ -524,6 +598,44 @@ const ProductDetail = () => {
     };
   }, [product, displayPrice, availableStock]);
 
+  const pageSchema = useMemo(() => {
+    if (!product) return null;
+
+    const productName = loc(product.name_en, product.name_mm) || (product.name_en || product.name_mm || "Product");
+    const productUrl = `${SITE_PUBLIC_URL}/products/${product.slug_en || product.slug || slug}`;
+
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Home",
+              item: `${SITE_PUBLIC_URL}/`,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Products",
+              item: `${SITE_PUBLIC_URL}/products`,
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: productName,
+              item: productUrl,
+            },
+          ],
+        },
+        // Keep the existing Product JSON-LD for rich results
+        productSchema,
+      ].filter(Boolean),
+    };
+  }, [product, productSchema, slug, i18n.language]);
+
   const SeoComponent = useSEO({
     title:       pageTitle,
     description: pageDescription,
@@ -531,7 +643,7 @@ const ProductDetail = () => {
     imageAlt:    product ? (loc(product.name_en, product.name_mm) || "Product") : undefined,
     url:         pageUrl,
     type:        "product",
-    schema:      productSchema,
+    schema:      pageSchema,
   });
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -621,7 +733,7 @@ const ProductDetail = () => {
           </div>
         </div>
       )}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-8">
           {/* Back button */}
           <button onClick={() => navigate(-1)} className="flex items-center text-green-600 hover:text-green-700 mb-6">
             <ArrowLeftIcon className="h-5 w-5 mr-2" /> Back
@@ -631,35 +743,15 @@ const ProductDetail = () => {
 
             {/* ── Left: Images ────────────────────────────────────────────── */}
             <div className="space-y-4">
-              <div className="bg-gray-100 dark:bg-slate-800 rounded-lg h-80 lg:h-96 flex items-center justify-center overflow-hidden">
-                <img
-                  src={getImageUrl(
-                    typeof product.images[activeImage] === "string"
-                      ? product.images[activeImage]
-                      : product.images[activeImage]?.url
-                  )}
-                  alt={loc(product.name_en, product.name_mm) || "Product"}
-                  className="max-h-full max-w-full object-contain"
-                  onError={(e) => { e.target.src = DEFAULT_PLACEHOLDER; }}
-                />
-              </div>
-
-              {product.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {product.images.map((img, index) => (
-                    <button key={index} onClick={() => setActiveImage(index)}
-                      className={`bg-gray-100 dark:bg-slate-800 rounded h-20 flex items-center justify-center overflow-hidden border-2 transition-colors
-                        ${activeImage === index ? "border-green-500" : "border-transparent dark:border-transparent hover:border-slate-600"}`}>
-                      <img
-                        src={getImageUrl(typeof img === "string" ? img : img.url)}
-                        alt={`View ${index + 1}`}
-                        className="max-h-full max-w-full object-contain"
-                        onError={(e) => { e.target.src = DEFAULT_PLACEHOLDER; }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <ProductImageGallery
+                images={product.images}
+                getImageUrl={(img) => getImageUrl(img) || DEFAULT_PLACEHOLDER}
+                alt={loc(product.name_en, product.name_mm) || "Product"}
+                initialIndex={activeImage}
+                onIndexChange={setActiveImage}
+                priority={true}
+                className="w-full"
+              />
             </div>
 
             {/* ── Right: Product info ──────────────────────────────────────── */}
@@ -677,71 +769,7 @@ const ProductDetail = () => {
                 )}
             </div>
             
-            {product.seller && (
-                <div className="pt-2 border-t border-gray-200 dark:border-slate-700">
-
-                  {deliveryLoading ? (
-                    <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
-                  ) : deliveryLabels.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-slate-400">
-                      Delivery zones not provided by this seller yet.
-                    </p>
-                  ) : (() => {
-                    const safeIdx    = deliveryTickerIdx % deliveryLabels.length;
-                    const activeLabel = deliveryLabels[safeIdx];
-
-                    return (
-                      <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
-                        <style>{`
-                          @keyframes dzSlideUp {
-                            0%   { opacity: 0; transform: translateY(20px) rotateX(45deg); filter: blur(2px); }
-                            100% { opacity: 1; transform: translateY(0)   rotateX(0deg);   filter: blur(0);   }
-                          }
-                          .dz-word {
-                            display: inline-block;
-                            transform-origin: center bottom;
-                            animation: dzSlideUp 420ms ease-out both;
-                            perspective: 800px;
-                          }
-                        `}</style>
-
-                        <p className="text-xs text-gray-500 dark:text-slate-500 mb-2">Delivering to</p>
-
-                        <div
-                          aria-live="polite"
-                          aria-label={[activeLabel.region, activeLabel.city, activeLabel.township].filter(Boolean).join(" → ")}
-                          className="flex items-center gap-1 h-5 text-gray-100 dark:text-slate-100 text-xs overflow-hidden"
-                        >
-                          {/* Region — changes slowest, like the hour hand */}
-                          <span key={deliveryAnimKeys.region} className="dz-word truncate max-w-[130px]">
-                            {activeLabel.region}
-                          </span>
-
-                          {activeLabel.city && (
-                            <>
-                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
-                              {/* City — changes at mid-frequency, like the minute hand */}
-                              <span key={`c-${deliveryAnimKeys.city}`} className="dz-word truncate max-w-[110px]">
-                                {activeLabel.city}
-                              </span>
-                            </>
-                          )}
-
-                          {activeLabel.township && (
-                            <>
-                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
-                              {/* Township — changes every tick, like the second hand */}
-                              <span key={`t-${deliveryAnimKeys.township}`} className="dz-word truncate max-w-[100px]">
-                                {activeLabel.township}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
+            {/* Delivery zones moved to secondary section below CTAs */}
 
               {/* Rating */}
               <div className="flex items-center">
@@ -790,9 +818,40 @@ const ProductDetail = () => {
                 <p className="text-gray-500 dark:text-slate-500 mt-1">Tax inclusive</p>
               </div>
 
+              {/* Key info chips (near price) */}
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
+                  MOQ: {effectiveMoq} {unitLabel}
+                </span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
+                  Unit: {unitLabel}
+                </span>
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+                  stockText.startsWith("Out")
+                    ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                    : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+                }`}>
+                  {stockText}
+                </span>
+                {sellerVerified && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                   bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Verified seller
+                  </span>
+                )}
+                {!deliveryLoading && deliveryLabels?.length > 0 && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                                   bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
+                    Delivery zones available
+                  </span>
+                )}
+              </div>
+
               {/* ── Variant Picker ─────────────────────────────────────────── */}
               {hasVariants && (
-                <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 space-y-1">
+                <div ref={variantSectionRef} className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 space-y-1">
                   <VariantPicker
                     options={product.options ?? []}
                     variants={product.variants ?? []}
@@ -836,21 +895,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* MOQ + stock info */}
-              <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-slate-400">
-                <span>
-                  <span className="font-medium text-gray-800 dark:text-slate-200">MOQ:</span>{" "}
-                  {effectiveMoq} {product.quantity_unit ?? "piece(s)"}
-                </span>
-                {product.product_type === "physical" && (
-                  <span>
-                    <span className="font-medium text-gray-800 dark:text-slate-200">Stock:</span>{" "}
-                    {hasVariants && !selectedVariant
-                      ? `${product.total_stock ?? 0} total`
-                      : `${availableStock} ${product.quantity_unit ?? "unit(s)"}`}
-                  </span>
-                )}
-              </div>
+              {/* Key info chips above cover MOQ/stock */}
 
               {/* Quantity selector */}
               <div className="flex items-center space-x-4">
@@ -876,7 +921,7 @@ const ProductDetail = () => {
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
-                  onClick={handleAddToCart}
+                  onClick={handlePrimaryCta}
                   disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
                   className="flex-1 bg-green-600 text-white py-3 px-6 rounded-md hover:bg-green-700 transition
                              flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -889,7 +934,7 @@ const ProductDetail = () => {
                   ) : (
                     <>
                       <ShoppingCartIcon className="h-5 w-5 mr-2" />
-                      Add to Cart
+                      {primaryCtaLabel}
                     </>
                   )}
                 </button>
@@ -951,23 +996,34 @@ const ProductDetail = () => {
 
                       {/* Platform links */}
                       {[
-                        { label: "Facebook",  href: shareData.facebook,  icon: "🇫", color: "hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600" },
-                        { label: "WhatsApp",  href: shareData.whatsapp,  icon: "💬", color: "hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600" },
-                        { label: "Viber",     href: shareData.viber,     icon: "📲", color: "hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600" },
-                        { label: "Telegram",  href: shareData.telegram,  icon: "✈️", color: "hover:bg-sky-50 dark:hover:bg-sky-900/20 text-sky-600" },
-                        { label: "Twitter/X", href: shareData.twitter,   icon: "𝕏",  color: "hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200" },
-                      ].map(({ label, href, icon, color }) => (
+                        { label: "Facebook",  href: shareData.facebook,  icon: "f",  desc: "Share to your feed",     color: "hover:bg-blue-50 dark:hover:bg-blue-900/20" },
+                        { label: "WhatsApp",  href: shareData.whatsapp,  icon: "W",  desc: "Send to a chat",         color: "hover:bg-green-50 dark:hover:bg-green-900/20" },
+                        { label: "Viber",     href: shareData.viber,     icon: "V",  desc: "Mobile app link",        color: "hover:bg-purple-50 dark:hover:bg-purple-900/20" },
+                        { label: "Telegram",  href: shareData.telegram,  icon: "T",  desc: "Share to Telegram",      color: "hover:bg-sky-50 dark:hover:bg-sky-900/20" },
+                        { label: "X (Twitter)", href: shareData.twitter, icon: "X",  desc: "Post on X",              color: "hover:bg-gray-100 dark:hover:bg-slate-700" },
+                      ].map(({ label, href, icon, desc, color }) => (
                         <a
                           key={label}
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => setShareOpen(false)}
-                          className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                                      transition-colors ${color}`}
+                          className={`flex items-start gap-3 px-4 py-2.5 transition-colors ${color}`}
                         >
-                          <span className="text-base leading-none">{icon}</span>
-                          {label}
+                          <span className="mt-0.5 h-7 w-7 flex-shrink-0 rounded-full
+                                           bg-gray-100 dark:bg-slate-700
+                                           text-gray-800 dark:text-slate-200
+                                           flex items-center justify-center text-xs font-bold">
+                            {icon}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-gray-800 dark:text-slate-200 leading-tight">
+                              {label}
+                            </span>
+                            <span className="block text-xs text-gray-500 dark:text-slate-400 leading-tight">
+                              {desc}
+                            </span>
+                          </span>
                         </a>
                       ))}
 
@@ -984,10 +1040,80 @@ const ProductDetail = () => {
                           : <><LinkIcon className="h-4 w-4" /> Copy link</>
                         }
                       </button>
+
+                      {/* Description hint */}
+                      <div className="px-4 py-2 border-t border-gray-100 dark:border-slate-700">
+                        <p className="text-[11px] text-gray-400 dark:text-slate-500 leading-snug">
+                          {shareData.description}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Secondary: delivery zones */}
+              {product.seller && (
+                <div className="pt-2 border-t border-gray-200 dark:border-slate-700">
+                  {deliveryLoading ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">Loading delivery areas…</p>
+                  ) : deliveryLabels.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
+                      Delivery zones not provided by this seller yet.
+                    </p>
+                  ) : (() => {
+                    const safeIdx    = deliveryTickerIdx % deliveryLabels.length;
+                    const activeLabel = deliveryLabels[safeIdx];
+
+                    return (
+                      <div className="rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+                        <style>{`
+                          @keyframes dzSlideUp {
+                            0%   { opacity: 0; transform: translateY(20px) rotateX(45deg); filter: blur(2px); }
+                            100% { opacity: 1; transform: translateY(0)   rotateX(0deg);   filter: blur(0);   }
+                          }
+                          .dz-word {
+                            display: inline-block;
+                            transform-origin: center bottom;
+                            animation: dzSlideUp 420ms ease-out both;
+                            perspective: 800px;
+                          }
+                        `}</style>
+
+                        <p className="text-xs text-gray-500 dark:text-slate-500 mb-2">Delivering to</p>
+
+                        <div
+                          aria-live="polite"
+                          aria-label={[activeLabel.region, activeLabel.city, activeLabel.township].filter(Boolean).join(" → ")}
+                          className="flex items-center gap-1 h-5 text-gray-900 dark:text-slate-100 text-xs overflow-hidden"
+                        >
+                          <span key={deliveryAnimKeys.region} className="dz-word truncate max-w-[130px]">
+                            {activeLabel.region}
+                          </span>
+
+                          {activeLabel.city && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              <span key={`c-${deliveryAnimKeys.city}`} className="dz-word truncate max-w-[110px]">
+                                {activeLabel.city}
+                              </span>
+                            </>
+                          )}
+
+                          {activeLabel.township && (
+                            <>
+                              <span className="text-gray-400 dark:text-slate-500 flex-shrink-0 text-xs">→</span>
+                              <span key={`t-${deliveryAnimKeys.township}`} className="dz-word truncate max-w-[100px]">
+                                {activeLabel.township}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* Out of stock */}
               {product.product_type === "physical" && variantReady && availableStock === 0 && (
@@ -1023,6 +1149,51 @@ const ProductDetail = () => {
               )}
             </div>
           </div>
+
+          {/* More from this seller */}
+          {(moreFromSellerLoading || moreFromSeller.length > 0) && (
+            <div className="mt-14">
+              <div className="flex items-end justify-between gap-3 mb-5">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">More from this seller</h2>
+                  <p className="text-sm text-gray-500 dark:text-slate-500">
+                    Browse additional products from the same store.
+                  </p>
+                </div>
+                {product?.seller && (
+                  <Link
+                    to={`/sellers/${product.seller.store_slug || product.seller.id}`}
+                    className="text-sm font-medium text-green-600 hover:text-green-700"
+                  >
+                    View store →
+                  </Link>
+                )}
+              </div>
+
+              {moreFromSellerLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 animate-pulse">
+                      <div className="aspect-square bg-gray-200 dark:bg-slate-700 rounded-t-2xl" />
+                      <div className="p-3 space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded w-1/2" />
+                        <div className="h-8 bg-gray-200 dark:bg-slate-700 rounded-xl mt-3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                  {moreFromSeller.map((p, idx) => (
+                    <div key={p.slug_en || p.id} className="w-[180px] sm:w-[220px] flex-shrink-0">
+                      <ProductCard product={p} imagePriority={idx < 3} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Reviews ───────────────────────────────────────────────────── */}
           <div className="mt-16">
@@ -1124,6 +1295,28 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
+
+      {/* Sticky mobile CTA (bottom bar) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur
+                      border-t border-gray-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 dark:text-slate-500 truncate">Price</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
+              {parseFloat(displayPrice).toLocaleString()} MMK
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handlePrimaryCta}
+            disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
+            className="ml-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white
+                       bg-green-600 hover:bg-green-700 disabled:opacity-50"
+          >
+            {primaryCtaLabel}
+          </button>
+        </div>
+      </div>
     </>
   );
 };

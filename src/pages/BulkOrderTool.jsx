@@ -32,8 +32,18 @@ const lineKey = () => (typeof crypto !== "undefined" && crypto.randomUUID ? cryp
 const productToLine = (p) => {
   const moq = Math.max(1, parseInt(String(p.moq ?? 1), 10) || 1);
   const unitPrice = Number(p.selling_price ?? p.price ?? 0) || 0;
-  const sellerUserId = p.seller?.id ?? null;
-  const sellerLabel = p.seller?.store_name || p.seller?.name || (sellerUserId ? `Seller #${sellerUserId}` : "—");
+  const sellerUserId = p.seller?.id ?? p.seller_id ?? null;
+  const sellerLabel =
+    p.seller?.store_name ||
+    p.seller?.name ||
+    (sellerUserId ? `Seller #${sellerUserId}` : "—");
+  const rawImg =
+    p.image ??
+    (Array.isArray(p.images) && p.images.length
+      ? typeof p.images[0] === "string"
+        ? p.images[0]
+        : p.images[0]?.url || p.images[0]
+      : null);
   return {
     key: lineKey(),
     productId: p.id,
@@ -46,7 +56,7 @@ const productToLine = (p) => {
     moq,
     unitPrice,
     hasVariants: !!p.has_variants,
-    image: p.image,
+    image: rawImg,
     quantity: String(moq),
   };
 };
@@ -70,7 +80,7 @@ const defaultRfqDeadline = () => {
 };
 
 const BulkOrderTool = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, hasRole } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -117,7 +127,7 @@ const BulkOrderTool = () => {
         sort_by: "created_at",
         sort_order: "desc",
         fields:
-          "id,name_en,name_mm,slug_en,price,images,moq,min_order_unit,category_id,average_rating,has_variants,selling_price,is_currently_on_sale,quantity_unit",
+          "id,name_en,name_mm,slug_en,price,images,moq,min_order_unit,category_id,average_rating,has_variants,selling_price,is_currently_on_sale,quantity_unit,seller_id",
       });
       const res = await api.get(`/products?${params.toString()}`);
       const data = res.data.data || res.data || [];
@@ -428,20 +438,37 @@ const BulkOrderTool = () => {
                     </p>
                   )}
                   {searchResults.map((p) => (
+                    (() => {
+                      const rawImg =
+                        p.image ??
+                        (Array.isArray(p.images) && p.images.length
+                          ? typeof p.images[0] === "string"
+                            ? p.images[0]
+                            : p.images[0]?.url || p.images[0]
+                          : null);
+                      const name =
+                        i18n.language === "my"
+                          ? (p.name_mm || p.name_en || "Product")
+                          : (p.name_en || p.name_mm || "Product");
+                      const sellerLabel =
+                        p.seller?.store_name ||
+                        p.seller?.name ||
+                        (p.seller_id ? `Seller #${p.seller_id}` : "—");
+                      return (
                     <div
                       key={p.id}
                       className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-slate-600 hover:border-green-300 dark:hover:border-green-700 transition-colors"
                     >
                       <img
-                        src={getImageUrl(p.image) || DEFAULT_PLACEHOLDER}
+                        src={getImageUrl(rawImg) || DEFAULT_PLACEHOLDER}
                         alt=""
                         className="h-14 w-14 rounded-lg object-cover bg-gray-100 dark:bg-slate-700 flex-shrink-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">{p.name_en}</p>
+                        <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">{name}</p>
                         <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
                           <BuildingStorefrontIcon className="h-3.5 w-3.5" />
-                          {p.seller?.store_name || p.seller?.name || "—"}
+                          {sellerLabel}
                         </p>
                         <p className="text-xs text-green-700 dark:text-green-400 mt-1 font-medium">
                           {fmtMmk(p.selling_price ?? p.price)} · MOQ {p.moq ?? 1}
@@ -461,6 +488,8 @@ const BulkOrderTool = () => {
                         {t("bulk_order.add", "Add")}
                       </button>
                     </div>
+                      );
+                    })()
                   ))}
                 </div>
               </div>

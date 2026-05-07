@@ -66,10 +66,21 @@ const Header = () => {
     }
   }, [mobileSearch]);
 
+  // Clean up any pending debounce on unmount
+  useEffect(() => {
+    return () => clearTimeout(debounceRef.current);
+  }, []);
+
   // Debounced search — stable ref avoids recreation on every location change
   const handleSearchChange = useCallback((value) => {
     setSearchTerm(value);
     if (isSyncingRef.current) return;
+
+    // Only sync query params live when user is already on products listing.
+    // Otherwise, don't mutate the current page URL; submit will navigate to /products.
+    const isOnProductsPage = location.pathname.startsWith('/products');
+    if (!isOnProductsPage) return;
+
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       const params = new URLSearchParams(location.search);
@@ -208,7 +219,7 @@ const Header = () => {
 
             {/* Mobile search toggle */}
             <button
-              onClick={() => setMobileSearch(!mobileSearch)}
+              onClick={() => setMobileSearch((prev) => !prev)}
               className="sm:hidden p-2 text-gray-500 dark:text-slate-400 hover:text-green-700 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
               aria-label={t('header.search')}
             >

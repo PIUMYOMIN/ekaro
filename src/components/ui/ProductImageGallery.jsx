@@ -1,0 +1,244 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSwipeable } from "react-swipeable";
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+
+const normalizeImages = (images = []) =>
+  (Array.isArray(images) ? images : [])
+    .map((img) => (typeof img === "string" ? img : img?.url || img?.path || img))
+    .filter(Boolean);
+
+const clampIndex = (idx, len) => {
+  if (len <= 0) return 0;
+  const m = idx % len;
+  return m < 0 ? m + len : m;
+};
+
+const ProductImageGallery = ({
+  images,
+  getImageUrl,
+  alt = "Product image",
+  initialIndex = 0,
+  onIndexChange,
+  priority = true,
+  className = "",
+}) => {
+  const normalized = useMemo(() => normalizeImages(images), [images]);
+  const total = normalized.length;
+
+  const [active, setActive] = useState(() => clampIndex(initialIndex, total));
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const thumbRowRef = useRef(null);
+
+  useEffect(() => {
+    setActive((prev) => clampIndex(prev, total));
+  }, [total]);
+
+  const go = useCallback(
+    (nextIdx) => {
+      if (!total) return;
+      const idx = clampIndex(nextIdx, total);
+      setActive(idx);
+      onIndexChange?.(idx);
+
+      // Keep active thumb visible
+      const row = thumbRowRef.current;
+      const el = row?.querySelector?.(`[data-thumb-idx="${idx}"]`);
+      if (row && el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      }
+    },
+    [total, onIndexChange]
+  );
+
+  const next = useCallback(() => go(active + 1), [go, active]);
+  const prev = useCallback(() => go(active - 1), [go, active]);
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => next(),
+    onSwipedRight: () => prev(),
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+  });
+
+  // Lightbox keyboard controls
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setLightboxOpen(false);
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [lightboxOpen, next, prev]);
+
+  const activeSrc = total ? getImageUrl(normalized[active]) : null;
+
+  return (
+    <div className={className}>
+      {/* Main image */}
+      <div
+        {...swipeHandlers}
+        className="relative bg-gray-100 dark:bg-slate-800 rounded-xl overflow-hidden
+                   aspect-square sm:aspect-[4/3] lg:aspect-[5/4]
+                   select-none"
+      >
+        {activeSrc ? (
+          <img
+            src={activeSrc}
+            alt={alt}
+            className="absolute inset-0 w-full h-full object-contain bg-white/30 dark:bg-black/10"
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "low"}
+            onClick={() => setLightboxOpen(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-slate-700" />
+        )}
+
+        {/* Desktop arrows */}
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Previous image"
+              className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2
+                         h-10 w-10 items-center justify-center rounded-full
+                         bg-black/35 hover:bg-black/55 text-white
+                         backdrop-blur-sm transition-colors"
+            >
+              <ChevronLeftIcon className="h-6 w-6" />
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              aria-label="Next image"
+              className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2
+                         h-10 w-10 items-center justify-center rounded-full
+                         bg-black/35 hover:bg-black/55 text-white
+                         backdrop-blur-sm transition-colors"
+            >
+              <ChevronRightIcon className="h-6 w-6" />
+            </button>
+          </>
+        )}
+
+        {/* Mobile hint + counter */}
+        {total > 1 && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <span className="px-2 py-1 rounded-full text-[11px] font-medium text-white
+                             bg-black/45 backdrop-blur-sm">
+              {active + 1}/{total}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {total > 1 && (
+        <div
+          ref={thumbRowRef}
+          className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
+        >
+          {normalized.map((img, idx) => {
+            const src = getImageUrl(img);
+            const selected = idx === active;
+            return (
+              <button
+                key={`${img}-${idx}`}
+                type="button"
+                data-thumb-idx={idx}
+                onClick={() => go(idx)}
+                className={`relative flex-shrink-0 h-16 w-16 sm:h-18 sm:w-18 rounded-lg overflow-hidden
+                            border-2 transition-colors ${
+                              selected
+                                ? "border-green-500"
+                                : "border-transparent hover:border-gray-300 dark:hover:border-slate-600"
+                            }`}
+                aria-label={`View image ${idx + 1}`}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover bg-gray-100 dark:bg-slate-700"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxOpen && total > 0 && (
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm">
+          {/* Backdrop click to close */}
+          <div
+            className="absolute inset-0 cursor-zoom-out"
+            onClick={() => setLightboxOpen(false)}
+            aria-hidden="true"
+          />
+
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="Close image viewer"
+            className="absolute top-4 right-4 h-10 w-10 rounded-full
+                       bg-white/10 hover:bg-white/20 text-white
+                       flex items-center justify-center transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+
+          <div className="absolute top-4 left-4 px-2 py-1 rounded-full text-xs text-white bg-white/10">
+            {active + 1} / {total}
+          </div>
+
+          <div className="absolute inset-0 flex items-center justify-center px-4">
+            <img
+              src={activeSrc}
+              alt={alt}
+              className="max-h-[88vh] max-w-[95vw] object-contain"
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
+
+          {total > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Previous image"
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2
+                           h-11 w-11 sm:h-12 sm:w-12 rounded-full
+                           bg-white/10 hover:bg-white/20 text-white
+                           flex items-center justify-center transition-colors"
+              >
+                <ChevronLeftIcon className="h-7 w-7" />
+              </button>
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Next image"
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2
+                           h-11 w-11 sm:h-12 sm:w-12 rounded-full
+                           bg-white/10 hover:bg-white/20 text-white
+                           flex items-center justify-center transition-colors"
+              >
+                <ChevronRightIcon className="h-7 w-7" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProductImageGallery;
+

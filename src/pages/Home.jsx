@@ -68,6 +68,7 @@ const Home = () => {
   const [activeAnnouncement, setActiveAnnouncement] = useState(null);
   const [activeBanner, setActiveBanner]           = useState(null);
   const [bannerDismissed, setBannerDismissed]      = useState(false);
+  const [bannerImgReady, setBannerImgReady]        = useState(false);
   const announcementFetched = useRef(false);
   const [loading, setLoading] = useState({
     categories: true,
@@ -88,7 +89,10 @@ const Home = () => {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await api.get("/categories");
+      // Keep payload small for faster first paint.
+      const res = await api.get(
+        "/categories?fields=id,name_en,name_mm,image,products_count,parent_id,children&with_products_only=true"
+      );
 
       let categoriesData = [];
       if (res.data.success && res.data.data) {
@@ -115,7 +119,7 @@ const Home = () => {
 
   const fetchTopSellers = useCallback(async () => {
     try {
-      const res = await api.get("/sellers?top=true&limit=4");
+      const res = await api.get("/sellers?top=true&limit=4&fields=id,store_name,business_name,business_type,category,reviews_avg_rating,reviews_count,products_count,total_products,status,is_verified,logo,profile_image");
       const sellersData = res.data.data || res.data || [];
       setTopSellers(sellersData);
 
@@ -161,14 +165,12 @@ const Home = () => {
         await Promise.all([fetchCategories(), fetchTopSellers(), fetchProducts()]);
       } catch (error) {
         console.error("Error fetching data:", error);
-      } finally {
-        if (isMounted) setLoading({ categories: false, products: false, sellers: false });
       }
     };
 
     fetchAllData();
     return () => { isMounted = false; };
-  }, [t]);
+  }, [fetchCategories, fetchTopSellers, fetchProducts]);
 
   const getCTAButtonText = useCallback(() => {
     if (!isAuthenticated) return t("home.become_seller");
@@ -296,10 +298,11 @@ const Home = () => {
           {loading.products ? (
             [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
           ) : products.length > 0 ? (
-            products.map(product => (
+            products.map((product, idx) => (
               <ProductCard
                 key={product.slug_en || product.id}
                 product={product}
+                imagePriority={idx < 4}
               />
             ))
           ) : (
@@ -359,7 +362,10 @@ const Home = () => {
         };
 
         const heroBanner = list.find(a => a.display_style === 'page_banner' && isEligible(a));
-        if (heroBanner) setActiveBanner(heroBanner);
+        if (heroBanner) {
+          setBannerImgReady(false);
+          setActiveBanner(heroBanner);
+        }
 
         const popupAnn = list.find(a => a.display_style !== 'page_banner' && isEligible(a));
         if (popupAnn) {
@@ -395,6 +401,14 @@ const Home = () => {
               transition={{ duration: 0.4, ease: 'easeInOut' }}
               className="relative w-full overflow-hidden bg-black"
             >
+              {/* Reserve space + show skeleton until image is decoded/painted */}
+              <div
+                className={`relative w-full ${
+                  { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                    '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                  ?? 'aspect-[3/1]'
+                } ${bannerImgReady ? '' : 'bg-gray-800 animate-pulse'}`}
+              />
               {activeBanner.banner_link_url ? (
                 activeBanner.banner_link_url.startsWith('http') ? (
                   <a href={activeBanner.banner_link_url} target="_blank" rel="noopener noreferrer"
@@ -402,11 +416,15 @@ const Home = () => {
                     <img
                       src={activeBanner.image}
                       alt={activeBanner.title}
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      onLoad={() => setBannerImgReady(true)}
                       className={`w-full object-cover object-center ${
                         { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
                           '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
                         ?? 'aspect-[3/1]'
-                      }`}
+                      } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
                     />
                   </a>
                 ) : (
@@ -414,11 +432,15 @@ const Home = () => {
                     <img
                       src={activeBanner.image}
                       alt={activeBanner.title}
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                      onLoad={() => setBannerImgReady(true)}
                       className={`w-full object-cover object-center ${
                         { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
                           '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
                         ?? 'aspect-[3/1]'
-                      }`}
+                      } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
                     />
                   </Link>
                 )
@@ -426,11 +448,15 @@ const Home = () => {
                 <img
                   src={activeBanner.image}
                   alt={activeBanner.title}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  onLoad={() => setBannerImgReady(true)}
                   className={`w-full object-cover object-center ${
                     { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
                       '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
                     ?? 'aspect-[3/1]'
-                  }`}
+                  } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
                 />
               )}
 

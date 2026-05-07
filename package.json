@@ -38,6 +38,7 @@
     "react-lazy-load-image-component": "^1.6.3",
     "react-router-dom": "^6.30.1",
     "react-share": "^5.2.2",
+    "react-swipeable": "^7.0.2",
     "react-to-print": "^3.2.0",
     "recharts": "^3.1.0",
     "uuid": "^14.0.0",
