@@ -197,11 +197,25 @@
       "cities": [
         {
           "city": "Magway",
-          "townships": ["Magway", "Yenangyaung", "Pakokku"]
+          "townships": [
+            "Magway",
+            "Yenangyaung",
+            "Minbu",
+            "Chauk",
+            "Nyaung-U",
+            "Yesagyo"
+          ]
         },
         {
           "city": "Pakokku",
-          "townships": ["Pakokku", "Myaing", "Yesagyo"]
+          "townships": [
+            "Pakokku",
+            "Myaing",
+            "Yesagyo",
+            "Minhla",
+            "Chauk",
+            "Ngazun"
+          ]
         }
       ]
     },
@@ -430,7 +444,10 @@
       {"region_state": "Bago Region", "city": "Pyay", "township": "Nattalin"},
       {"region_state": "Magway Region", "city": "Magway", "township": "Magway"},
       {"region_state": "Magway Region", "city": "Magway", "township": "Yenangyaung"},
-      {"region_state": "Magway Region", "city": "Magway", "township": "Pakokku"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Minbu"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Chauk"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Nyaung-U"},
+      {"region_state": "Magway Region", "city": "Magway", "township": "Yesagyo"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Pakokku"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Myaing"},
       {"region_state": "Magway Region", "city": "Pakokku", "township": "Yesagyo"},
