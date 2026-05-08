@@ -967,50 +967,38 @@ const ProductDetail = () => {
                   Buy Now
                 </button>
 
-                <button
-                  onClick={handleAddToWishlist}
-                  disabled={wishlistLoading}
-                  title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                  className="p-3 rounded-md border border-gray-300 dark:border-slate-600
-                             text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800
-                             transition disabled:opacity-50"
-                >
-                  {wishlistLoading
-                    ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
-                    : <HeartIcon className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""}`} />
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleToggleCompare}
-                  className={`p-3 rounded-md border transition ${
-                    compared
-                      ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                      : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                  }`}
-                  title={compared ? "Remove from compare" : "Add to compare"}
-                >
-                  Compare
-                </button>
-
-                {/* ── Share button + dropdown ──────────────────────────── */}
-                <div className="relative" data-share-panel>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-2">
                   <button
-                    onClick={handleShare}
-                    title="Share product"
-                    className={`p-3 rounded-md border transition flex items-center justify-center
-                      ${shareOpen
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600"
-                        : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                    onClick={handleAddToWishlist}
+                    disabled={wishlistLoading}
+                    title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                    className="p-3 rounded-md border border-gray-300 dark:border-slate-600
+                               text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800
+                               transition disabled:opacity-50"
                   >
-                    <ShareIcon className="h-6 w-6" />
+                    {wishlistLoading
+                      ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
+                      : <HeartIcon className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""}`} />
+                    }
                   </button>
 
-                  {shareOpen && shareData && (
-                    <div className="absolute right-0 top-full mt-2 z-50 w-56
-                                    bg-white dark:bg-slate-800 border border-gray-200
-                                    dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  {/* ── Share button + dropdown ──────────────────────────── */}
+                  <div className="relative" data-share-panel>
+                    <button
+                      onClick={handleShare}
+                      title="Share product"
+                      className={`p-3 rounded-md border transition flex items-center justify-center
+                        ${shareOpen
+                          ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600"
+                          : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"}`}
+                    >
+                      <ShareIcon className="h-6 w-6" />
+                    </button>
+
+                    {shareOpen && shareData && (
+                      <div className="absolute right-0 top-full mt-2 z-50 w-56
+                                      bg-white dark:bg-slate-800 border border-gray-200
+                                      dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
 
                       {/* Product image + title preview */}
                       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-slate-700">
@@ -1079,8 +1067,22 @@ const ProductDetail = () => {
                           {shareData.description}
                         </p>
                       </div>
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleCompare}
+                    className={`p-3 rounded-md border transition ${
+                      compared
+                        ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                        : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                    }`}
+                    title={compared ? "Remove from compare" : "Add to compare"}
+                  >
+                    Compare
+                  </button>
                 </div>
               </div>
 
