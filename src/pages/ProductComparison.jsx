@@ -1,134 +1,97 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useCompare } from "../context/CompareContext";
+
+const money = (value, locale) =>
+  new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "MMK",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
 
 const ProductComparison = () => {
-  const [comparedProducts] = useState([
-    {
-      id: 1,
-      name: "Premium Rice",
-      price: "12,000 MMK/bag",
-      moq: "50 bags",
-      origin: "Ayeyarwady",
-      supplier: "Golden Grains Co.",
-      rating: 4.5,
-      delivery: "3-5 days",
-      features: ["Long grain", "Non-sticky", "High quality", "50kg bags"]
-    },
-    {
-      id: 2,
-      name: "Standard Rice",
-      price: "9,500 MMK/bag",
-      moq: "100 bags",
-      origin: "Bago",
-      supplier: "Rice Distributors Ltd.",
-      rating: 3.8,
-      delivery: "2-4 days",
-      features: ["Medium grain", "Slightly sticky", "Good quality", "50kg bags"]
-    },
-    {
-      id: 3,
-      name: "Organic Rice",
-      price: "18,000 MMK/bag",
-      moq: "30 bags",
-      origin: "Shan State",
-      supplier: "Organic Farms Myanmar",
-      rating: 4.7,
-      delivery: "5-7 days",
-      features: [
-        "Long grain",
-        "Certified organic",
-        "Premium quality",
-        "25kg bags"
-      ]
-    }
-  ]);
+  const { t, i18n } = useTranslation();
+  const { compareItems, removeFromCompare, clearCompare } = useCompare();
+  const currencyLocale = i18n.language === "my" ? "my-MM" : "en-US";
 
-  const [selectedFeatures] = useState([
-    "Price",
-    "Minimum Order Quantity",
-    "Origin",
-    "Supplier",
-    "Rating",
-    "Delivery Time",
-    "Grain Type",
-    "Quality",
-    "Packaging"
-  ]);
+  if (!compareItems.length) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100">{t("compare.title")}</h1>
+        <p className="mt-3 text-gray-600 dark:text-slate-400">
+          {t("compare.empty_message")}
+        </p>
+        <Link
+          to="/products"
+          className="inline-flex mt-5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+        >
+          {t("compare.browse_products")}
+        </Link>
+      </div>
+    );
+  }
+
+  const rows = [
+    { label: t("compare.features.price"), render: (p) => money(p.price, currencyLocale) },
+    { label: t("compare.features.rating"), render: (p) => `${Number(p.average_rating || 0).toFixed(1)} (${p.review_count || 0})` },
+    { label: t("compare.features.moq"), render: (p) => p.moq || 1 },
+    { label: t("compare.features.stock"), render: (p) => (p.is_active && p.in_stock ? t("compare.in_stock") : t("compare.out_of_stock")) },
+    { label: t("compare.features.seller"), render: (p) => p.seller_name || t("compare.not_available") },
+    { label: t("compare.features.category_id"), render: (p) => p.category_id || t("compare.not_available") },
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Product Comparison</h1>
-
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="p-4 text-left">Features</th>
-                {comparedProducts.map(product =>
-                  <th key={product.id} className="p-4 text-left">
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {product.name}
-                    </Link>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {selectedFeatures.map((feature, index) =>
-                <tr key={index} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-medium">
-                    {feature}
-                  </td>
-                  {comparedProducts.map(product =>
-                    <td key={`${product.id}-${index}`} className="p-4">
-                      {feature === "Price" && product.price}
-                      {feature === "Minimum Order Quantity" && product.moq}
-                      {feature === "Origin" && product.origin}
-                      {feature === "Supplier" && product.supplier}
-                      {feature === "Rating" &&
-                        <div className="flex items-center">
-                          <span className="mr-1">
-                            {product.rating}
-                          </span>
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map(star =>
-                              <svg
-                                key={star}
-                                className={`h-4 w-4 ${star <=
-                                Math.floor(product.rating)
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"}`}
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            )}
-                          </div>
-                        </div>}
-                      {feature === "Delivery Time" && product.delivery}
-                      {feature === "Grain Type" && product.features[0]}
-                      {feature === "Quality" && product.features[2]}
-                      {feature === "Packaging" && product.features[3]}
-                    </td>
-                  )}
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">
+          {t("compare.title")} ({compareItems.length})
+        </h1>
+        <button
+          type="button"
+          onClick={clearCompare}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          {t("compare.clear_all")}
+        </button>
       </div>
 
-      <div className="flex justify-between items-center">
-        <button className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">
-          Add Another Product
-        </button>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-          Add Selected to Cart
-        </button>
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-slate-700">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-slate-200">{t("compare.feature")}</th>
+              {compareItems.map((p) => (
+                <th key={p.id} className="min-w-[220px] px-4 py-3 text-left">
+                  <div className="space-y-2">
+                    <Link to={`/products/${p.slug}`} className="text-sm font-semibold text-green-700 hover:underline dark:text-green-400">
+                      {p.name}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCompare(p.id)}
+                      className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                    >
+                      {t("compare.remove")}
+                    </button>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.label} className="border-b border-gray-100 dark:border-slate-800">
+                <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-slate-200">{row.label}</td>
+                {compareItems.map((p) => (
+                  <td key={`${p.id}-${row.label}`} className="px-4 py-3 text-sm text-gray-600 dark:text-slate-300">
+                    {row.render(p)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

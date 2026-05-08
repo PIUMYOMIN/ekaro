@@ -52,14 +52,6 @@ const Footer = () => {
                   {t("footer.seller_guidelines")}
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/pricing"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  {t("footer.pricing")}
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -99,6 +91,14 @@ const Footer = () => {
                   className="text-gray-300 hover:text-white transition-colors"
                 >
                   {t("footer.bulk_order_tool")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/compare"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  {t("footer.compare_product")}
                 </Link>
               </li>
               <li>

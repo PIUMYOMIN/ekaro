@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useCompare } from "../context/CompareContext";
 import useSEO from "../hooks/useSEO";
 import { getImageUrl } from "../utils/imageHelpers";
 import {
@@ -72,6 +73,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user, hasRole } = useAuth();
+  const { isCompared, addToCompare, removeFromCompare } = useCompare();
 
   const [product, setProduct]             = useState(null);
   const [loading, setLoading]             = useState(true);
@@ -440,6 +442,21 @@ const ProductDetail = () => {
       flashReview("Only buyers can write reviews.", "error"); return;
     }
     setShowReviewForm(!showReviewForm);
+  };
+
+  const compared = product?.id ? isCompared(product.id) : false;
+  const handleToggleCompare = () => {
+    if (!product?.id) return;
+    if (compared) {
+      removeFromCompare(product.id);
+      return;
+    }
+    const result = addToCompare(product);
+    if (!result.success) {
+      setSuccessMessage({ type: "error", message: result.message });
+    } else {
+      setSuccessMessage(result.message);
+    }
   };
 
   const handleSubmitReview = async (e) => {
@@ -962,6 +979,19 @@ const ProductDetail = () => {
                     ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
                     : <HeartIcon className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""}`} />
                   }
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleCompare}
+                  className={`p-3 rounded-md border transition ${
+                    compared
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                      : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
+                  }`}
+                  title={compared ? "Remove from compare" : "Add to compare"}
+                >
+                  Compare
                 </button>
 
                 {/* ── Share button + dropdown ──────────────────────────── */}

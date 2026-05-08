@@ -5,6 +5,7 @@ import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import { WishlistProvider } from "./context/WishlistContext";
+import { CompareProvider } from "./context/CompareContext";
 import { CookieProvider } from "./context/CookieContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import CookieBanner from "./components/ui/CookieBanner";
@@ -71,6 +72,7 @@ import DeliveryZonesOnboarding from "./pages/Seller/DeliveryZonesOnboarding";
 import PaymentMethod from "./components/ui/PaymentMethod";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import OrderConfirmation from "./components/ui/OrderConfirmation";
+import FloatingCompareButton from "./components/ui/FloatingCompareButton";
 import RFQManager from "./pages/RFQManager";
 
 // Route Guards
@@ -114,6 +116,15 @@ const GARouteTracker = () => {
   return null;
 };
 
+// Ensure SPA route changes start at top of page.
+const ScrollToTopOnRouteChange = () => {
+  const { pathname, search } = useLocation();
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname, search]);
+  return null;
+};
+
 function App() {
   return (
     <HelmetProvider>
@@ -126,7 +137,9 @@ function App() {
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <NavigationWirer />
                 <GARouteTracker />
+                <ScrollToTopOnRouteChange />
                 <WishlistProvider>
+                  <CompareProvider>
                   <CookieProvider>
                   <ThemeProvider>
                   <div className="flex flex-col min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] theme-transition">
@@ -141,6 +154,7 @@ function App() {
                         <Route path="/sellers" element={<Sellers />} />
                         <Route path="/sellers/:slug" element={<SellerProfile />} />
                         <Route path="/product-comparison" element={<ProductComparison />} />
+                        <Route path="/compare" element={<ProductComparison />} />
                         <Route path="/bulk-order-tool" element={<BulkOrderTool />} />
                         <Route path="/order-tracking" element={<OrderTracking />} />
                         <Route path="/track-order" element={<OrderTracking />} />
@@ -353,9 +367,11 @@ function App() {
                     </main>
                     <Footer />
                     <CookieBanner />
+                    <FloatingCompareButton />
                   </div>
                   </ThemeProvider>
                   </CookieProvider>
+                  </CompareProvider>
                 </WishlistProvider>
                 </Router>
               </CartProvider>

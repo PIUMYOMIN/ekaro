@@ -9,6 +9,7 @@ import "react-lazy-load-image-component/src/effects/blur.css";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
+import { useCompare } from "../../context/CompareContext";
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../../config";
 import { useTranslation } from "react-i18next";
 
@@ -67,6 +68,7 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();
+  const { isCompared, addToCompare, removeFromCompare } = useCompare();
   const navigate = useNavigate();
 
 // const [toast, setToast]             = useState(null);
@@ -83,6 +85,7 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
     ? getImageUrl(product.image)
     : DEFAULT_PLACEHOLDER;
   const isInWishlist = !!wishlist?.some((w) => w.id === productId);
+  const compared = isCompared(productId);
 
   const toNum = (v) => {
     const n = Number(v);
@@ -159,6 +162,16 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
   };
 
   const hasVariants = !!product.has_variants;
+
+  const handleToggleCompare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (compared) {
+      removeFromCompare(productId);
+      return;
+    }
+    addToCompare(product);
+  };
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -358,31 +371,45 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
 
         {/* ── Add to Cart / Select Options button ───────────────────────────── */}
         {isBuyer && (
-          <button
-            onClick={handleAddToCart}
-            disabled={isUnavailable || isOutOfStock || isInCart || cartLoading}
-            className={`mt-2 w-full rounded-xl py-2 text-xs font-semibold
-                        flex items-center justify-center gap-1.5
-                        transition-all duration-150 focus:outline-none
-                        focus:ring-2 focus:ring-offset-1
-                        dark:focus:ring-offset-gray-800
-                        ${isUnavailable || isOutOfStock
-                          ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed focus:ring-gray-300"
-                          : isInCart
-                          ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 cursor-default focus:ring-green-500"
-                          : hasVariants
-                          ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 focus:ring-blue-500"
-                          : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm focus:ring-green-500"
-                        }`}
-            aria-label={cartLabel}
-          >
-            {!isUnavailable && !isOutOfStock && (
-              hasVariants
-                ? <AdjustmentsHorizontalIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                : <ShoppingCartIcon className="h-3.5 w-3.5 flex-shrink-0" />
-            )}
-            {cartLabel}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleToggleCompare}
+              className={`mt-2 w-full rounded-xl py-2 text-xs font-semibold border transition-colors ${
+                compared
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                  : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              }`}
+            >
+              {compared ? "Added to compare" : "Add to compare"}
+            </button>
+
+            <button
+              onClick={handleAddToCart}
+              disabled={isUnavailable || isOutOfStock || isInCart || cartLoading}
+              className={`mt-2 w-full rounded-xl py-2 text-xs font-semibold
+                          flex items-center justify-center gap-1.5
+                          transition-all duration-150 focus:outline-none
+                          focus:ring-2 focus:ring-offset-1
+                          dark:focus:ring-offset-gray-800
+                          ${isUnavailable || isOutOfStock
+                            ? "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed focus:ring-gray-300"
+                            : isInCart
+                            ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 cursor-default focus:ring-green-500"
+                            : hasVariants
+                            ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 focus:ring-blue-500"
+                            : "bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm focus:ring-green-500"
+                          }`}
+              aria-label={cartLabel}
+            >
+              {!isUnavailable && !isOutOfStock && (
+                hasVariants
+                  ? <AdjustmentsHorizontalIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                  : <ShoppingCartIcon className="h-3.5 w-3.5 flex-shrink-0" />
+              )}
+              {cartLabel}
+            </button>
+          </>
         )}
       </div>
     </motion.div>

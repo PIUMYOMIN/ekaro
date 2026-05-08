@@ -350,7 +350,8 @@
     "copyright": "Myanmar B2B Marketplace. All rights reserved.",
     "rights_reserved": "All rights reserved.",
     "report_issue": "Report an Issue",
-    "bulk_order_tool": "Bulk order tool"
+    "bulk_order_tool": "Bulk order tool",
+    "compare_product": "Compare Product"
   },
   "bulk_order": {
     "seo_title": "Bulk order tool | Pyonea",
@@ -457,6 +458,25 @@
     },
     "from": "From",
     "under": "Under"
+  },
+  "compare": {
+    "title": "Product Comparison",
+    "empty_message": "No products selected for comparison yet.",
+    "browse_products": "Browse products",
+    "clear_all": "Clear all",
+    "feature": "Feature",
+    "remove": "Remove",
+    "in_stock": "In stock",
+    "out_of_stock": "Out of stock",
+    "not_available": "N/A",
+    "features": {
+      "price": "Price",
+      "rating": "Rating",
+      "moq": "MOQ",
+      "stock": "Stock",
+      "seller": "Seller",
+      "category_id": "Category ID"
+    }
   },
   "seller": {
     "profile": "Seller Profile",
