@@ -142,6 +142,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * setSession — low-level helper for any auth entrypoint (email/pass, social, etc.)
+   * Accepts the same shape returned by the API: { token, user }.
+   */
+  const setSession = ({ token, user: userData }) => {
+    if (token) localStorage.setItem('token', token);
+    if (userData) {
+      const normalizedUser = normalizeUserRoles(userData);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+      return normalizedUser;
+    }
+    return null;
+  };
+
   const refreshUser = async () => {
     try {
       const response = await api.get('/auth/me');
@@ -221,6 +236,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    setSession,
     logout,
     refreshUser,
     updateUser,

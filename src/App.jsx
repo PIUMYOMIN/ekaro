@@ -43,6 +43,7 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import SocialRoleSelect from "./pages/Auth/SocialRoleSelect";
 
 // Protected Pages
 import BuyerDashboard from "./pages/Client/BuyerDashboard";
@@ -85,6 +86,7 @@ import SellerRouteGuard from "./components/SellerRouteGuard";
 import FinancialReports from "./components/admin/FinancialReports";
 
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
 const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
@@ -116,11 +118,12 @@ function App() {
   return (
     <HelmetProvider>
       <I18nextProvider i18n={i18n}>
-        <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
-          <AuthProvider>
-            <NotificationProvider>
-              <CartProvider>
-              <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
+          <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
+            <AuthProvider>
+              <NotificationProvider>
+                <CartProvider>
+                <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <NavigationWirer />
                 <GARouteTracker />
                 <WishlistProvider>
@@ -200,6 +203,14 @@ function App() {
                           <GuestRoute>
                             <ForgotPassword />
                           </GuestRoute>} />
+                        <Route
+                          path="/social/role"
+                          element={
+                            <GuestRoute>
+                              <SocialRoleSelect />
+                            </GuestRoute>
+                          }
+                        />
                         {/* Protected Routes */}
                         <Route path="/seller" element={
                           <ProtectedRoute roles={["seller"]}>
@@ -346,11 +357,12 @@ function App() {
                   </ThemeProvider>
                   </CookieProvider>
                 </WishlistProvider>
-              </Router>
-            </CartProvider>
-            </NotificationProvider>
-          </AuthProvider>
-        </GoogleReCaptchaProvider>
+                </Router>
+              </CartProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </GoogleReCaptchaProvider>
+        </GoogleOAuthProvider>
       </I18nextProvider>
     </HelmetProvider>);
 }

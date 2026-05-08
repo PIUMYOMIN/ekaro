@@ -8,10 +8,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import useSEO from '../../hooks/useSEO';
+import { useGoogleLogin } from "@react-oauth/google";
+import api from "../../utils/api";
+import FacebookLogin from "@greatsumini/react-facebook-login";
 
 const Login = () => {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const { login, setSession } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,6 +146,97 @@ const Login = () => {
       }
     } catch (err) {
       setError(t('login.error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleAccessToken = async (accessToken) => {
+    if (!accessToken) {
+      setError("Google sign-in failed. Please try again.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const r = await api.post("/auth/google", {
+        credential: accessToken,
+        token_type: "access_token",
+      });
+
+      if (r.data?.status === "needs_role") {
+        const pending = { ...r.data.data, provider: "google" };
+        sessionStorage.setItem("social_pending", JSON.stringify(pending));
+        navigate("/social/role", { replace: true, state: { socialPending: pending } });
+        return;
+      }
+
+      const token = r.data?.data?.token;
+      const user = r.data?.data?.user;
+      setSession({ token, user });
+
+      if (user?.email && !user?.email_verified_at) {
+        navigate("/verify-email", {
+          replace: true,
+          state: { returnTo: location.state?.from || "/" },
+        });
+        return;
+      }
+
+      await handleLoginSuccess(user);
+    } catch (err) {
+      setError(err.response?.data?.message || "Google sign-in failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    scope: "email profile",
+    onSuccess: (tokenResponse) => handleGoogleAccessToken(tokenResponse?.access_token),
+    onError: () => setError("Google sign-in failed. Please try again."),
+  });
+
+  const handleFacebookSuccess = async (response) => {
+    const accessToken = response?.accessToken;
+    if (!accessToken) {
+      setError("Facebook sign-in failed. Please try again.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const r = await api.post("/auth/facebook", {
+        credential: accessToken,
+        token_type: "access_token",
+      });
+
+      if (r.data?.status === "needs_role") {
+        const pending = { ...r.data.data, provider: "facebook" };
+        sessionStorage.setItem("social_pending", JSON.stringify(pending));
+        navigate("/social/role", { replace: true, state: { socialPending: pending } });
+        return;
+      }
+
+      const token = r.data?.data?.token;
+      const user = r.data?.data?.user;
+      setSession({ token, user });
+
+      if (user?.email && !user?.email_verified_at) {
+        navigate("/verify-email", {
+          replace: true,
+          state: { returnTo: location.state?.from || "/" },
+        });
+        return;
+      }
+
+      await handleLoginSuccess(user);
+    } catch (err) {
+      setError(err.response?.data?.message || "Facebook sign-in failed");
     } finally {
       setIsLoading(false);
     }
@@ -307,13 +401,47 @@ const Login = () => {
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600">
-            <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
-            <span className="ml-2">Facebook</span>
-          </button>
-          <button type="button" className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600">
-            <div className="bg-gray-200 border-2 border-dashed rounded-full w-5 h-5" />
-            <span className="ml-2">Google</span>
+          <div className="w-full inline-flex justify-center">
+            <FacebookLogin
+              appId={import.meta.env.VITE_FACEBOOK_APP_ID || ""}
+              onSuccess={handleFacebookSuccess}
+              onFail={() => setError("Facebook sign-in failed. Please try again.")}
+              scope="public_profile,email"
+              style={{
+                backgroundColor: "#1877F2",
+                color: "#fff",
+                fontSize: "14px",
+                padding: "10px 16px",
+                border: "none",
+                borderRadius: "6px",
+                width: "100%",
+                cursor: "pointer",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="currentColor">
+                <path d="M22 12.06C22 6.504 17.523 2 12 2S2 6.504 2 12.06C2 17.083 5.657 21.245 10.438 22v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.197 2.238.197v2.476h-1.26c-1.243 0-1.63.777-1.63 1.574v1.889h2.773l-.443 2.91h-2.33V22C18.343 21.245 22 17.083 22 12.06Z" />
+              </svg>
+              <span>Facebook</span>
+            </FacebookLogin>
+          </div>
+          <button
+            type="button"
+            onClick={() => googleLogin()}
+            disabled={isLoading}
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-semibold text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-60"
+          >
+            <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.606 32.656 29.303 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.962 3.038l5.657-5.657C34.252 6.053 29.401 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.651-.389-3.917z"/>
+              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.962 3.038l5.657-5.657C34.252 6.053 29.401 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+              <path fill="#4CAF50" d="M24 44c5.297 0 10.044-2.01 13.649-5.277l-6.3-5.333C29.31 34.862 26.747 36 24 36c-5.281 0-9.577-3.319-11.293-7.946l-6.522 5.025C9.504 39.556 16.227 44 24 44z"/>
+              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.824 2.31-2.405 4.258-4.554 5.39l.003-.002 6.3 5.333C36.604 39.131 44 34 44 24c0-1.341-.138-2.651-.389-3.917z"/>
+            </svg>
+            <span>Google</span>
           </button>
         </div>
       </div>
