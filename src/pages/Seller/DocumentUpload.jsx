@@ -14,11 +14,13 @@ import {
 } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
+import { useAuth } from '../../context/AuthContext';
 
 
 const DocumentUpload = () => {
     const navigate = useNavigate();
-    const { saveStep, isLoading, businessTypeInfo, uploadedDocs, documentRequirements, uploadDocument, deleteDocument } = useOnboardingState();
+    const { logout } = useAuth();
+    const { saveStep, isLoading, businessTypeInfo, uploadedDocs, documentRequirements, uploadDocument, deleteDocument, initError } = useOnboardingState();
     const [uploading, setUploading] = useState({});
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -26,6 +28,49 @@ const DocumentUpload = () => {
 
     // requirements come from the hook's init() call — no extra fetch needed
     const requirements = documentRequirements;
+
+    // ── Session / role error: surface before rendering the upload form ─────
+    if (initError) {
+        const is403 = initError.status === 403;
+        return (
+            <OnboardingLayout
+                title="Document Verification"
+                description="Upload required documents for verification"
+                onBack={() => navigate('/seller/onboarding/delivery-zones')}
+                onNext={null}
+                nextLabel="Continue to Review"
+                nextDisabled
+                loading={false}
+            >
+                <div className="p-6">
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-center">
+                        <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
+                            {is403 ? 'Session Out of Date' : 'Unable to Load Documents'}
+                        </h3>
+                        <p className="text-sm text-red-700 dark:text-red-400 mb-6">
+                            {initError.message}
+                        </p>
+                        {is403 ? (
+                            <button
+                                onClick={() => { logout(); navigate('/login'); }}
+                                className="inline-flex items-center px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                                Log Out &amp; Log Back In
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="inline-flex items-center px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                                Refresh Page
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </OnboardingLayout>
+        );
+    }
 
     useEffect(() => {
         checkDocumentsComplete();

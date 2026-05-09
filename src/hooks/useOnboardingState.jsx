@@ -11,6 +11,7 @@ export const useOnboardingState = () => {
     const [businessTypeInfo, setBusinessTypeInfo] = useState(null);
     const [uploadedDocs, setUploadedDocs]     = useState({});
     const [documentRequirements, setDocumentRequirements] = useState([]);
+    const [initError, setInitError]           = useState(null);
 
     // Prevent concurrent initialisations on React strict-mode double-mount
     const initStarted = useRef(false);
@@ -24,26 +25,31 @@ export const useOnboardingState = () => {
         { id: 'review-submit',    title: 'Review',           icon: '✅' },
     ];
 
-    // ── Initialise — single consolidated load call ────────────────────────
-    // FIX: the original fired 3 separate API calls on every component mount
-    // (loadOnboardingData, loadOnboardingStatus, loadDocumentRequirements).
-    // All 5 step pages mount fresh, so that was 15 calls per onboarding session.
-    // Combined into one init() that:
-    //   1. Calls POST /seller/init-profile (idempotent — creates shell if missing)
-    //   2. Calls GET /seller/onboarding/data for pre-fill data
-    //   3. Calls GET /seller/onboarding/status for step/progress/businessTypeInfo
-    //   4. Calls GET /seller/document-requirements for uploaded docs
     const init = useCallback(async () => {
         if (initStarted.current) return;
         initStarted.current = true;
 
         try {
             setIsLoading(true);
+            setInitError(null);
 
-            // 1. Ensure a shell profile exists — safe to call even if it already exists
-            await api.post('/seller/init-profile').catch(() => {
-                // If this fails (e.g. 409 already exists) that's fine — continue
-            });
+            try {
+                await api.post('/seller/init-profile');
+            } catch (err) {
+                const status = err.response?.status;
+                if (status !== 409) {
+
+                    setInitError({
+                        status,
+                        message:
+                            status === 403
+                                ? 'Your session was created before your account role was updated. Please log out and log back in to continue.'
+                                : err.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
+                    });
+                    return; // Stop — don't attempt document-requirements without a valid profile
+                }
+                // 409 means the profile already exists — continue normally
+            }
 
             // 2-4. Fire remaining calls in parallel
             const [dataRes, statusRes, docsRes] = await Promise.allSettled([
@@ -68,7 +74,16 @@ export const useOnboardingState = () => {
                 }
             }
 
-            if (docsRes.status === 'fulfilled' && docsRes.value.data.success) {
+            if (docsRes.status === 'rejected') {
+                const status = docsRes.reason?.response?.status;
+                setInitError({
+                    status,
+                    message:
+                        status === 403
+                            ? 'Your session was created before your account role was updated. Please log out and log back in to continue.'
+                            : docsRes.reason?.response?.data?.message || 'Failed to load document requirements. Please refresh the page.',
+                });
+            } else if (docsRes.status === 'fulfilled' && docsRes.value.data.success) {
                 const docsData = docsRes.value.data.data;
                 setUploadedDocs(docsData?.uploaded_documents || {});
                 setDocumentRequirements(docsData?.requirements || []);
@@ -76,6 +91,7 @@ export const useOnboardingState = () => {
 
         } catch (error) {
             console.error('Onboarding init failed:', error);
+            setInitError({ message: 'An unexpected error occurred. Please refresh the page.' });
         } finally {
             setIsLoading(false);
         }
@@ -228,6 +244,7 @@ export const useOnboardingState = () => {
         progress,
         steps,
         isLoading,
+        initError,
         businessTypeInfo,
         uploadedDocs,
         documentRequirements,
