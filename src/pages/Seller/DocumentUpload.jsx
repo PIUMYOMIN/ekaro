@@ -29,7 +29,20 @@ const DocumentUpload = () => {
     // requirements come from the hook's init() call — no extra fetch needed
     const requirements = documentRequirements;
 
-    // ── Session / role error: surface before rendering the upload form ─────
+    // ── All hooks must be called before any conditional return ─────────────
+    useEffect(() => {
+        checkDocumentsComplete();
+    }, [uploadedDocs, requirements]);
+
+    const checkDocumentsComplete = () => {
+        const requiredDocs = requirements.filter(req => req.required);
+        const allRequiredUploaded = requiredDocs.every(req =>
+            uploadedDocs[req.type]?.uploaded
+        );
+        setDocumentsComplete(allRequiredUploaded);
+    };
+
+    // ── Session / role error: safe to return early now — all hooks are above ──
     if (initError) {
         const is403 = initError.status === 403;
         return (
@@ -71,18 +84,6 @@ const DocumentUpload = () => {
             </OnboardingLayout>
         );
     }
-
-    useEffect(() => {
-        checkDocumentsComplete();
-    }, [uploadedDocs, requirements]);
-
-    const checkDocumentsComplete = () => {
-        const requiredDocs = requirements.filter(req => req.required);
-        const allRequiredUploaded = requiredDocs.every(req =>
-            uploadedDocs[req.type]?.uploaded
-        );
-        setDocumentsComplete(allRequiredUploaded);
-    };
 
     const handleFileUpload = async (field, file, requirement) => {
         if (!file) return;
