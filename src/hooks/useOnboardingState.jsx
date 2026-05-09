@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../utils/api';
 import { invalidateOnboardingCache } from '../components/StepGuard';
+import { useAuth } from '../context/AuthContext';
 
 export const useOnboardingState = () => {
+    const { refreshUser } = useAuth();
     const [currentStep, setCurrentStep]       = useState('store-basic');
     const [formData, setFormData]             = useState({});
     const [progress, setProgress]             = useState(0);
@@ -25,6 +27,15 @@ export const useOnboardingState = () => {
         { id: 'review-submit',    title: 'Review',           icon: '✅' },
     ];
 
+    // ── Initialise — single consolidated load call ────────────────────────
+    // FIX: the original fired 3 separate API calls on every component mount
+    // (loadOnboardingData, loadOnboardingStatus, loadDocumentRequirements).
+    // All 5 step pages mount fresh, so that was 15 calls per onboarding session.
+    // Combined into one init() that:
+    //   1. Calls POST /seller/init-profile (idempotent — creates shell if missing)
+    //   2. Calls GET /seller/onboarding/data for pre-fill data
+    //   3. Calls GET /seller/onboarding/status for step/progress/businessTypeInfo
+    //   4. Calls GET /seller/document-requirements for uploaded docs
     const init = useCallback(async () => {
         if (initStarted.current) return;
         initStarted.current = true;
@@ -33,22 +44,40 @@ export const useOnboardingState = () => {
             setIsLoading(true);
             setInitError(null);
 
+            // 1. Ensure a shell profile exists — safe to call even if it already exists.
+            //    On 403, the session predates the role change: refresh the auth token
+            //    and retry once. Only surface an error if the retry also fails.
             try {
                 await api.post('/seller/init-profile');
             } catch (err) {
                 const status = err.response?.status;
-                if (status !== 409) {
-
+                if (status === 409) {
+                    // Profile already exists — continue normally
+                } else if (status === 403) {
+                    // Token may carry the old role. Re-fetch /auth/me to get a fresh
+                    // token/session reflecting the admin's role change, then retry.
+                    try {
+                        await refreshUser();
+                        await api.post('/seller/init-profile');
+                        // Retry succeeded — the session is now up to date, continue.
+                    } catch (retryErr) {
+                        const retryStatus = retryErr.response?.status;
+                        setInitError({
+                            status: retryStatus ?? 403,
+                            message:
+                                retryStatus === 403 || retryStatus === undefined
+                                    ? 'Your account role could not be verified. Please log out and log back in to continue.'
+                                    : retryErr.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
+                        });
+                        return;
+                    }
+                } else {
                     setInitError({
                         status,
-                        message:
-                            status === 403
-                                ? 'Your session was created before your account role was updated. Please log out and log back in to continue.'
-                                : err.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
+                        message: err.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
                     });
-                    return; // Stop — don't attempt document-requirements without a valid profile
+                    return;
                 }
-                // 409 means the profile already exists — continue normally
             }
 
             // 2-4. Fire remaining calls in parallel
