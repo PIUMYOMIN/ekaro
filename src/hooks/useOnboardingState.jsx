@@ -2,10 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../utils/api';
 import { invalidateOnboardingCache } from '../components/StepGuard';
-import { useAuth } from '../context/AuthContext';
 
 export const useOnboardingState = () => {
-    const { refreshUser } = useAuth();
     const [currentStep, setCurrentStep]       = useState('store-basic');
     const [formData, setFormData]             = useState({});
     const [progress, setProgress]             = useState(0);
@@ -13,7 +11,6 @@ export const useOnboardingState = () => {
     const [businessTypeInfo, setBusinessTypeInfo] = useState(null);
     const [uploadedDocs, setUploadedDocs]     = useState({});
     const [documentRequirements, setDocumentRequirements] = useState([]);
-    const [initError, setInitError]           = useState(null);
 
     // Prevent concurrent initialisations on React strict-mode double-mount
     const initStarted = useRef(false);
@@ -42,43 +39,11 @@ export const useOnboardingState = () => {
 
         try {
             setIsLoading(true);
-            setInitError(null);
 
-            // 1. Ensure a shell profile exists — safe to call even if it already exists.
-            //    On 403, the session predates the role change: refresh the auth token
-            //    and retry once. Only surface an error if the retry also fails.
-            try {
-                await api.post('/seller/init-profile');
-            } catch (err) {
-                const status = err.response?.status;
-                if (status === 409) {
-                    // Profile already exists — continue normally
-                } else if (status === 403) {
-                    // Token may carry the old role. Re-fetch /auth/me to get a fresh
-                    // token/session reflecting the admin's role change, then retry.
-                    try {
-                        await refreshUser();
-                        await api.post('/seller/init-profile');
-                        // Retry succeeded — the session is now up to date, continue.
-                    } catch (retryErr) {
-                        const retryStatus = retryErr.response?.status;
-                        setInitError({
-                            status: retryStatus ?? 403,
-                            message:
-                                retryStatus === 403 || retryStatus === undefined
-                                    ? 'Your account role could not be verified. Please log out and log back in to continue.'
-                                    : retryErr.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
-                        });
-                        return;
-                    }
-                } else {
-                    setInitError({
-                        status,
-                        message: err.response?.data?.message || 'Failed to initialise seller profile. Please try again.',
-                    });
-                    return;
-                }
-            }
+            // 1. Ensure a shell profile exists — safe to call even if it already exists
+            await api.post('/seller/init-profile').catch(() => {
+                // If this fails (e.g. 409 already exists) that's fine — continue
+            });
 
             // 2-4. Fire remaining calls in parallel
             const [dataRes, statusRes, docsRes] = await Promise.allSettled([
@@ -103,16 +68,7 @@ export const useOnboardingState = () => {
                 }
             }
 
-            if (docsRes.status === 'rejected') {
-                const status = docsRes.reason?.response?.status;
-                setInitError({
-                    status,
-                    message:
-                        status === 403
-                            ? 'Your session was created before your account role was updated. Please log out and log back in to continue.'
-                            : docsRes.reason?.response?.data?.message || 'Failed to load document requirements. Please refresh the page.',
-                });
-            } else if (docsRes.status === 'fulfilled' && docsRes.value.data.success) {
+            if (docsRes.status === 'fulfilled' && docsRes.value.data.success) {
                 const docsData = docsRes.value.data.data;
                 setUploadedDocs(docsData?.uploaded_documents || {});
                 setDocumentRequirements(docsData?.requirements || []);
@@ -120,7 +76,6 @@ export const useOnboardingState = () => {
 
         } catch (error) {
             console.error('Onboarding init failed:', error);
-            setInitError({ message: 'An unexpected error occurred. Please refresh the page.' });
         } finally {
             setIsLoading(false);
         }
@@ -273,7 +228,6 @@ export const useOnboardingState = () => {
         progress,
         steps,
         isLoading,
-        initError,
         businessTypeInfo,
         uploadedDocs,
         documentRequirements,
