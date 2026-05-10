@@ -1052,6 +1052,13 @@
       "full_address": "Full Address",
       "city_township": "City/Township",
       "select_state": "Select State/Region",
+      "select_city": "Select City",
+      "select_township": "Select Township",
+      "township": {
+        "label": "Township",
+        "placeholder": "Select your township",
+        "error": "Township is required"
+      },
       "address_hint": "Include building number, street name, ward, and township",
       "location_pin": "Location Pin",
       "location_placeholder": "Google Maps link or coordinates",
