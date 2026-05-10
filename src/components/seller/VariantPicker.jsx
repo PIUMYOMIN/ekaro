@@ -1,27 +1,8 @@
 // components/ui/VariantPicker.jsx
-// Buyer-facing option selector shown on the product detail page.
-// Renders the correct UI widget per option type:
-//   color  → coloured circle swatches
-//   size   → pill buttons (S / M / L / XL)
-//   text   → pill buttons (plain text)
-//   image  → thumbnail image swatches
-//   input  → free-text field typed by the buyer
-//
-// Props:
-//   options         — array from ProductResource.options
-//   variants        — array from ProductResource.variants (active only)
-//   onVariantChange — (variant | null, selectedValues) => void
-//                     called whenever the selection changes
 
 import React, { useState, useEffect, useCallback } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Given the current map of { optionId → valueId } selections and
- * the full variant list, find the exactly matching variant (if any).
- */
 const findMatchingVariant = (variants, selectedValues) => {
   const selectedIds = Object.values(selectedValues).filter(Boolean);
   if (selectedIds.length === 0) return null;

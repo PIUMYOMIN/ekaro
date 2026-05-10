@@ -52,7 +52,7 @@ const slugify = (str) =>
 
 const ValueRow = ({ optType, val, onChange, onRemove }) => (
   <div className="flex flex-col gap-2 py-1.5 group sm:flex-row sm:items-center">
-    <div className="flex-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <div className="min-w-0 flex-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {/* Label */}
       <input
         type="text"
@@ -67,12 +67,12 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
       />
       {/* Hex colour / image URL */}
       {optType === "color" && (
-        <div className="flex items-center gap-2">
+        <div className="min-w-0 flex items-center gap-2">
           <input
             type="color"
             value={val.meta?.hex ?? "#000000"}
             onChange={(e) => onChange({ ...val, meta: { ...val.meta, hex: e.target.value } })}
-            className="h-9 w-12 rounded cursor-pointer border border-gray-300 dark:border-slate-600 bg-transparent"
+            className="h-9 w-12 flex-shrink-0 rounded cursor-pointer border border-gray-300 dark:border-slate-600 bg-transparent"
             title="Pick colour"
           />
           <input
@@ -80,7 +80,7 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
             placeholder="#000000"
             value={val.meta?.hex ?? ""}
             onChange={(e) => onChange({ ...val, meta: { ...val.meta, hex: e.target.value } })}
-            className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm
+            className="min-w-0 flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm
                        bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100
                        focus:ring-2 focus:ring-green-500"
           />
@@ -112,7 +112,7 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
     <button
       type="button"
       onClick={onRemove}
-      className="p-1.5 text-gray-400 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+      className="self-end p-1.5 text-gray-400 hover:text-red-500 rounded transition-opacity sm:self-auto sm:opacity-0 sm:group-hover:opacity-100"
     >
       <TrashIcon className="h-4 w-4" />
     </button>
@@ -138,7 +138,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
   return (
     <div className="border border-gray-200 dark:border-slate-600 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-slate-800 cursor-pointer select-none"
+      <div className="flex flex-wrap items-center gap-2 px-3 py-3 bg-gray-50 dark:bg-slate-800 cursor-pointer select-none sm:gap-3 sm:px-4"
            onClick={() => setOpen((v) => !v)}>
         <ArrowsUpDownIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
 
@@ -148,7 +148,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
           value={option.name ?? ""}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange({ ...option, name: e.target.value })}
-          className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-slate-500 rounded-lg
+          className="min-w-0 flex-[1_1_150px] px-3 py-1.5 border border-gray-300 dark:border-slate-500 rounded-lg
                      text-sm font-semibold bg-white dark:bg-slate-700
                      text-gray-800 dark:text-slate-200 placeholder-gray-400
                      focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -158,7 +158,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
           value={option.type}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange({ ...option, type: e.target.value, values: [] })}
-          className="text-xs border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1
+          className="min-w-0 flex-[1_1_120px] text-xs border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1
                      bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300"
         >
           {OPTION_TYPES.map((t) => (
@@ -166,7 +166,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
           ))}
         </select>
 
-        <label className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400"
+        <label className="flex flex-shrink-0 items-center gap-1 text-xs text-gray-500 dark:text-slate-400"
                onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"

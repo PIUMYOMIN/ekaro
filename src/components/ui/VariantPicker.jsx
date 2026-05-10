@@ -183,15 +183,15 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
       {options.map((option) => (
         <div key={option.id}>
           {/* Option label */}
-          <div className="flex items-baseline gap-2 mb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-2.5">
             <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
               {option.name}
             </span>
             {/* Show the currently selected value label next to the option name */}
             {option.type !== "input" && selected[option.id] && (
-              <span className="text-sm text-gray-500 dark:text-slate-400">
+              <span className="text-sm text-gray-500 dark:text-slate-400 min-w-0">
                 :{" "}
-                <span className="font-medium text-gray-700 dark:text-slate-300">
+                <span className="font-medium text-gray-700 dark:text-slate-300 truncate block max-w-full">
                   {option.values?.find((v) => v.id === selected[option.id])?.label}
                 </span>
               </span>
@@ -203,7 +203,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
 
           {/* Widget per type */}
           {option.type === "color" && (
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2.5 items-center min-w-0">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
@@ -223,7 +223,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           )}
 
           {(option.type === "size" || option.type === "text") && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center min-w-0">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
@@ -243,7 +243,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           )}
 
           {option.type === "image" && (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center min-w-0">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
@@ -273,7 +273,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
                 value={textInputs[option.id] ?? ""}
                 onChange={(e) => handleTextInput(option.id, e.target.value)}
                 placeholder={`Enter ${option.name.toLowerCase()}…`}
-                className="w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg
+                className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg
                            text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100
                            focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />

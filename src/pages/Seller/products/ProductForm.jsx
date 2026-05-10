@@ -511,6 +511,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   }, []);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [currentStep]);
+
+  useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
         if (!isMounted.current) return;
@@ -980,20 +984,20 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 placeholder="Any additional notes..." />
             </div>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <input id="is_featured" name="is_featured" type="checkbox" checked={formData.is_featured} onChange={handleChange}
-                  className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                <label htmlFor="is_featured" className="text-sm font-medium text-gray-900 dark:text-slate-100">Feature this product on homepage</label>
+                  className="h-4 w-4 flex-shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded sm:h-5 sm:w-5" />
+                <label htmlFor="is_featured" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Feature this product on homepage</label>
               </div>
-              <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
-                  className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                <label htmlFor="is_active" className="text-sm font-medium text-gray-900 dark:text-slate-100">Make this product active and visible</label>
+                  className="h-4 w-4 flex-shrink-0 text-green-600 focus:ring-green-500 border-gray-300 rounded sm:h-5 sm:w-5" />
+                <label htmlFor="is_active" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Make this product active and visible</label>
               </div>
-              <div className="flex items-center space-x-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-3 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                 <input id="is_new" name="is_new" type="checkbox" checked={formData.is_new} onChange={handleChange}
-                  className="h-5 w-5 text-amber-600 focus:ring-amber-500 border-gray-300 rounded" />
-                <label htmlFor="is_new" className="text-sm font-medium text-gray-900 dark:text-slate-100">Mark as new product</label>
+                  className="h-4 w-4 flex-shrink-0 text-amber-600 focus:ring-amber-500 border-gray-300 rounded sm:h-5 sm:w-5" />
+                <label htmlFor="is_new" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Mark as new product</label>
               </div>
             </div>
           </div>
@@ -1215,11 +1219,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
           {/* Navigation buttons (hidden on step 5 which has its own CTA) */}
           {!isVariantsStep && (
-            <div className="flex justify-between items-center px-6 sm:px-8 py-5 border-t border-gray-200 dark:border-slate-700">
+            <div className="flex flex-wrap justify-between items-center gap-3 px-4 sm:px-8 py-4 sm:py-5 border-t border-gray-200 dark:border-slate-700">
               <div>
                 {currentStep > 1 && (
                   <button type="button" onClick={prevStep}
-                    className="flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 font-medium">
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 font-medium sm:px-6 sm:py-3">
                     <ChevronLeftIcon className="h-4 w-4" /> Previous
                   </button>
                 )}
@@ -1228,7 +1232,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 {isLastInfoStep ? (
                   /* Step 4 → Submit core product then advance to Step 5 */
                   <button type="button" onClick={handleCoreSubmit} disabled={loading || isUploadingImages}
-                    className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 shadow-sm disabled:opacity-50 transition-colors">
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 shadow-sm disabled:opacity-50 transition-colors sm:px-8 sm:py-3">
                     {loading ? (
                       <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{product ? "Updating…" : "Creating…"}</>
                     ) : (
@@ -1237,7 +1241,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   </button>
                 ) : (
                   <button type="button" onClick={nextStep} disabled={!validateStep(currentStep)}
-                    className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors sm:px-6 sm:py-3">
                     Next <ChevronRightIcon className="h-4 w-4" />
                   </button>
                 )}

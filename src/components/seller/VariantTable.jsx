@@ -360,122 +360,218 @@ const VariantTable = ({ productId, onUpdated }) => {
           No variants yet. Save your options first, then click "Generate Variants".
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
-          <table className="min-w-[980px] w-full text-sm table-fixed">
-            <thead className="bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
-              <tr>
-                <th className="px-4 py-3 text-left">Variant</th>
-                <th className="px-3 py-3 text-left w-28">Price</th>
-                <th className="px-3 py-3 text-left w-24">Qty</th>
-                <th className="px-3 py-3 text-left w-20">Unit</th>
-                <th className="px-3 py-3 text-left w-20">MOQ</th>
-                <th className="px-3 py-3 text-left w-32">SKU</th>
-                <th className="px-3 py-3 text-center w-20">Active</th>
-                <th className="px-3 py-3 text-right w-28">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-              {variants.map((variant) => {
-                const row = edits[variant.id] ?? {};
-                const isSaving = saving[variant.id];
-                const rowErr = errors[variant.id];
+        <div className="space-y-3">
+          <div className="hidden sm:block overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
+            <table className="w-full text-sm table-fixed">
+              <thead className="bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
+                <tr>
+                  <th className="px-4 py-3 text-left">Variant</th>
+                  <th className="px-3 py-3 text-left w-28">Price</th>
+                  <th className="px-3 py-3 text-left w-24">Qty</th>
+                  <th className="px-3 py-3 text-left w-20">Unit</th>
+                  <th className="px-3 py-3 text-left w-20">MOQ</th>
+                  <th className="px-3 py-3 text-left w-32">SKU</th>
+                  <th className="px-3 py-3 text-center w-20">Active</th>
+                  <th className="px-3 py-3 text-right w-28">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                {variants.map((variant) => {
+                  const row = edits[variant.id] ?? {};
+                  const isSaving = saving[variant.id];
+                  const rowErr = errors[variant.id];
 
-                return (
-                  <React.Fragment key={variant.id}>
-                    <tr className={`bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors
-                                   ${!row.is_active ? "opacity-60" : ""}`}>
-                      {/* Variant label */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {variant.option_values?.map((ov) => (
-                            <span key={ov.value_id}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs
-                                             bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
-                              {ov.option_type === "color" && ov.meta?.hex && (
-                                <span className="inline-block w-3 h-3 rounded-full border border-gray-300"
-                                      style={{ backgroundColor: ov.meta.hex }} />
+                  return (
+                    <React.Fragment key={variant.id}>
+                      <tr className={`bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors
+                                     ${!row.is_active ? "opacity-60" : ""}`}>
+                        {/* Variant label */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {variant.option_values?.map((ov) => (
+                              <span key={ov.value_id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs
+                                               bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
+                                {ov.option_type === "color" && ov.meta?.hex && (
+                                  <span className="inline-block w-3 h-3 rounded-full border border-gray-300"
+                                        style={{ backgroundColor: ov.meta.hex }} />
+                                )}
+                                {ov.label}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        {/* Price */}
+                        <td className="px-3 py-2">
+                          <EditableCell type="number" min="0" step="0.01"
+                            value={row.price ?? ""} onChange={(v) => updateEdit(variant.id, "price", v)} />
+                        </td>
+                        {/* Qty */}
+                        <td className="px-3 py-2">
+                          <EditableCell type="number" min="0" step="0.001"
+                            value={row.quantity ?? ""} onChange={(v) => updateEdit(variant.id, "quantity", v)} />
+                        </td>
+                        {/* Unit */}
+                        <td className="px-3 py-2">
+                          <EditableCell value={row.quantity_unit ?? ""}
+                            onChange={(v) => updateEdit(variant.id, "quantity_unit", v)} />
+                        </td>
+                        {/* MOQ */}
+                        <td className="px-3 py-2">
+                          <EditableCell type="number" min="1"
+                            value={row.moq ?? ""} onChange={(v) => updateEdit(variant.id, "moq", v)} />
+                        </td>
+                        {/* SKU */}
+                        <td className="px-3 py-2">
+                          <EditableCell value={row.sku ?? ""}
+                            onChange={(v) => updateEdit(variant.id, "sku", v)} />
+                        </td>
+                        {/* Active toggle */}
+                        <td className="px-3 py-2 text-center">
+                          <button type="button" onClick={() => toggleActive(variant)}
+                            className={`w-10 h-5 rounded-full transition-colors relative ${
+                              row.is_active ? "bg-green-500" : "bg-gray-300 dark:bg-slate-600"
+                            }`}>
+                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                              row.is_active ? "left-5" : "left-0.5"
+                            }`} />
+                          </button>
+                        </td>
+                        {/* Actions */}
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveVariant(variant)}
+                              disabled={isSaving}
+                              className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium
+                                         hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+                            >
+                              {isSaving ? (
+                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircleIcon className="h-3 w-3" />
                               )}
-                              {ov.label}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      {/* Price */}
-                      <td className="px-3 py-2">
-                        <EditableCell type="number" min="0" step="0.01"
-                          value={row.price ?? ""} onChange={(v) => updateEdit(variant.id, "price", v)} />
-                      </td>
-                      {/* Qty */}
-                      <td className="px-3 py-2">
-                        <EditableCell type="number" min="0" step="0.001"
-                          value={row.quantity ?? ""} onChange={(v) => updateEdit(variant.id, "quantity", v)} />
-                      </td>
-                      {/* Unit */}
-                      <td className="px-3 py-2">
-                        <EditableCell value={row.quantity_unit ?? ""}
-                          onChange={(v) => updateEdit(variant.id, "quantity_unit", v)} />
-                      </td>
-                      {/* MOQ */}
-                      <td className="px-3 py-2">
-                        <EditableCell type="number" min="1"
-                          value={row.moq ?? ""} onChange={(v) => updateEdit(variant.id, "moq", v)} />
-                      </td>
-                      {/* SKU */}
-                      <td className="px-3 py-2">
-                        <EditableCell value={row.sku ?? ""}
-                          onChange={(v) => updateEdit(variant.id, "sku", v)} />
-                      </td>
-                      {/* Active toggle */}
-                      <td className="px-3 py-2 text-center">
-                        <button type="button" onClick={() => toggleActive(variant)}
-                          className={`w-10 h-5 rounded-full transition-colors relative ${
-                            row.is_active ? "bg-green-500" : "bg-gray-300 dark:bg-slate-600"
-                          }`}>
-                          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                            row.is_active ? "left-5" : "left-0.5"
-                          }`} />
-                        </button>
-                      </td>
-                      {/* Actions */}
-                      <td className="px-3 py-2">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => saveVariant(variant)}
-                            disabled={isSaving}
-                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium
-                                       hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                          >
-                            {isSaving ? (
-                              <ArrowPathIcon className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <CheckCircleIcon className="h-3 w-3" />
-                            )}
-                            Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteVariant(variant)}
-                            className="px-2 py-1.5 text-red-500 hover:text-red-700 text-xs rounded-lg
-                                       hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          >
-                            Del
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {rowErr && (
-                      <tr className="bg-white dark:bg-slate-900">
-                        <td colSpan={8} className="px-4 pb-2">
-                          <span className="text-xs text-red-500">{rowErr}</span>
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteVariant(variant)}
+                              className="px-2 py-1.5 text-red-500 hover:text-red-700 text-xs rounded-lg
+                                         hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            >
+                              Del
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+                      {rowErr && (
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td colSpan={8} className="px-4 pb-2">
+                            <span className="text-xs text-red-500">{rowErr}</span>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="sm:hidden space-y-3">
+            {variants.map((variant) => {
+              const row = edits[variant.id] ?? {};
+              const isSaving = saving[variant.id];
+              const rowErr = errors[variant.id];
+
+              return (
+                <div key={variant.id} className={`bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-4
+                                                    ${!row.is_active ? "opacity-70" : ""}`}>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {variant.option_values?.map((ov) => (
+                          <span key={ov.value_id}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs
+                                           bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
+                            {ov.option_type === "color" && ov.meta?.hex && (
+                              <span className="inline-block w-3 h-3 rounded-full border border-gray-300"
+                                    style={{ backgroundColor: ov.meta.hex }} />
+                            )}
+                            {ov.label}
+                          </span>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => toggleActive(variant)}
+                        className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium transition-colors
+                                    ${row.is_active ? "bg-green-500 text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300"}`}>
+                        {row.is_active ? "Active" : "Inactive"}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Price</div>
+                        <EditableCell type="number" min="0" step="0.01"
+                          value={row.price ?? ""} onChange={(v) => updateEdit(variant.id, "price", v)} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Qty</div>
+                        <EditableCell type="number" min="0" step="0.001"
+                          value={row.quantity ?? ""} onChange={(v) => updateEdit(variant.id, "quantity", v)} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Unit</div>
+                        <EditableCell value={row.quantity_unit ?? ""}
+                          onChange={(v) => updateEdit(variant.id, "quantity_unit", v)} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">MOQ</div>
+                        <EditableCell type="number" min="1"
+                          value={row.moq ?? ""} onChange={(v) => updateEdit(variant.id, "moq", v)} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">SKU</div>
+                        <EditableCell value={row.sku ?? ""}
+                          onChange={(v) => updateEdit(variant.id, "sku", v)} />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveVariant(variant)}
+                          disabled={isSaving}
+                          className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium
+                                     hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                        >
+                          {isSaving ? (
+                            <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircleIcon className="h-4 w-4" />
+                          )}
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteVariant(variant)}
+                          className="px-3 py-2 text-red-500 hover:text-red-700 text-sm rounded-lg
+                                     hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                      {rowErr && (
+                        <span className="text-xs text-red-500">{rowErr}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
