@@ -8,7 +8,7 @@ import {
   StarIcon, MapPinIcon, PhoneIcon, EnvelopeIcon, GlobeAltIcon,
   ShoppingBagIcon, UserGroupIcon, ChatBubbleLeftIcon,
   CheckBadgeIcon, CheckIcon, ShareIcon, ClockIcon, BuildingStorefrontIcon,
-  ArrowUpIcon, ArrowLeftIcon,
+  ArrowUpIcon, ArrowLeftIcon, TruckIcon, ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { LinkIcon } from '@heroicons/react/24/solid';
 import {
@@ -72,6 +72,249 @@ const TodayHours = ({ hours, enabled }) => {
   );
 };
 
+// ── Delivery Zones Panel ─────────────────────────────────────────────────────
+/**
+ * Groups flat delivery area records into a Region → City → Township tree and
+ * renders them as collapsible accordion rows. Each row shows shipping fee,
+ * free-shipping threshold, estimated delivery days, and service badges.
+ */
+
+const fmtFee = (fee) =>
+  fee === 0 || fee === '0.00' || fee == null
+    ? <span className="text-green-600 dark:text-green-400 font-semibold">Free</span>
+    : <span>{Number(fee).toLocaleString()} Ks</span>;
+
+const DeliveryBadge = ({ label, active, color = 'green' }) => {
+  if (!active) return null;
+  const colors = {
+    green:  'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-100 dark:border-green-800',
+    blue:   'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800',
+    amber:  'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-800',
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border font-medium ${colors[color]}`}>
+      {label}
+    </span>
+  );
+};
+
+const AreaRow = ({ area, indent = 0 }) => {
+  const minD = area.estimated_delivery_days_min;
+  const maxD = area.estimated_delivery_days_max;
+  const deliveryLabel = minD && maxD ? `${minD}–${maxD} days` : minD ? `${minD}+ days` : null;
+  const freeThreshold = area.free_shipping_threshold && Number(area.free_shipping_threshold) > 0
+    ? Number(area.free_shipping_threshold)
+    : null;
+
+  return (
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 border-b border-gray-50 dark:border-slate-700/50 last:border-0 ${
+        indent === 1 ? 'pl-5 sm:pl-7' : indent === 2 ? 'pl-9 sm:pl-14' : ''
+      }`}
+    >
+      {/* Location label */}
+      <div className="flex items-center gap-2 min-w-0">
+        {indent > 0 && (
+          <span className="text-gray-300 dark:text-slate-600 select-none flex-shrink-0">
+            {indent === 1 ? '├' : '└'}
+          </span>
+        )}
+        <MapPinIcon className={`flex-shrink-0 ${indent === 0 ? 'h-4 w-4 text-green-600 dark:text-green-400' : 'h-3.5 w-3.5 text-gray-400 dark:text-slate-500'}`} />
+        <span className={`truncate ${indent === 0 ? 'font-semibold text-gray-900 dark:text-slate-100 text-sm' : indent === 1 ? 'text-gray-700 dark:text-slate-300 text-sm' : 'text-gray-600 dark:text-slate-400 text-xs'}`}>
+          {area.township || area.city || area.state || area.country}
+        </span>
+        {area.pickup_available && (
+          <span className="flex-shrink-0 text-xs text-amber-600 dark:text-amber-400">• Pickup</span>
+        )}
+      </div>
+
+      {/* Right: fee + badges + days */}
+      <div className="flex items-center gap-3 flex-shrink-0 pl-6 sm:pl-0">
+        {deliveryLabel && (
+          <span className="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap">{deliveryLabel}</span>
+        )}
+        <DeliveryBadge label="Standard" active={area.standard_shipping_available} color="green" />
+        <DeliveryBadge label="Express"  active={area.express_shipping_available}  color="blue"  />
+        <div className="text-sm font-medium text-gray-900 dark:text-slate-100 min-w-[4rem] text-right">
+          {fmtFee(area.shipping_fee)}
+        </div>
+      </div>
+
+      {/* Free-shipping hint */}
+      {freeThreshold && Number(area.shipping_fee) > 0 && (
+        <p className="text-xs text-green-600 dark:text-green-400 pl-6 sm:pl-0 w-full sm:w-auto sm:text-right -mt-1">
+          Free over {freeThreshold.toLocaleString()} Ks
+        </p>
+      )}
+    </div>
+  );
+};
+
+const RegionAccordion = ({ regionName, areas }) => {
+  // Separate direct region-level rows from city-level ones
+  const regionRow = areas.find(a => a.area_type === 'state' || a.area_type === 'country');
+
+  // Group city-level areas
+  const cityMap = {};
+  areas.filter(a => a.area_type === 'city' || a.area_type === 'township' || a.area_type === 'specific_address').forEach(a => {
+    const cityKey = a.city || '—';
+    if (!cityMap[cityKey]) cityMap[cityKey] = [];
+    cityMap[cityKey].push(a);
+  });
+  const cities = Object.entries(cityMap);
+  const hasCities = cities.length > 0;
+
+  return (
+    <details
+      open={!hasCities}
+      className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden group"
+    >
+      {/* Region header */}
+      <summary className="flex items-center justify-between px-5 py-4 cursor-pointer select-none list-none gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-8 w-8 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+            <TruckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-gray-900 dark:text-slate-100 text-sm leading-snug truncate">{regionName}</p>
+            {regionRow && (
+              <p className="text-xs text-gray-400 dark:text-slate-500">
+                {regionRow.area_type === 'country' ? 'Whole country' : 'All cities in region'}
+                {regionRow.estimated_delivery_days_min && ` · ${regionRow.estimated_delivery_days_min}–${regionRow.estimated_delivery_days_max ?? regionRow.estimated_delivery_days_min} days`}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {regionRow && (
+            <div className="text-sm font-semibold text-gray-900 dark:text-slate-100">
+              {fmtFee(regionRow.shipping_fee)}
+            </div>
+          )}
+          {hasCities && (
+            <ChevronDownIcon className="h-4 w-4 text-gray-400 dark:text-slate-500 group-open:rotate-180 transition-transform flex-shrink-0" />
+          )}
+        </div>
+      </summary>
+
+      {/* Cities + Townships */}
+      {hasCities && (
+        <div className="border-t border-gray-100 dark:border-slate-700 px-5 pb-2">
+          {cities.map(([cityName, cityAreas]) => {
+            const cityRow    = cityAreas.find(a => a.area_type === 'city');
+            const townships  = cityAreas.filter(a => a.area_type === 'township' || a.area_type === 'specific_address');
+
+            return (
+              <div key={cityName}>
+                {cityRow && <AreaRow area={cityRow} indent={1} />}
+                {townships.map(t => <AreaRow key={t.id} area={t} indent={2} />)}
+                {/* If no explicit city row but there are townships, show the city as header */}
+                {!cityRow && townships.length > 0 && (
+                  <div className="flex items-center gap-2 pt-3 pb-1">
+                    <span className="text-gray-300 dark:text-slate-600">├</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{cityName}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </details>
+  );
+};
+
+const DeliveryZonesPanel = ({ areas, loading, error }) => {
+  if (loading || areas === null) {
+    return (
+      <div className="space-y-3 pb-10">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-16 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-12 text-center text-sm text-red-500 dark:text-red-400">{error}</div>
+    );
+  }
+
+  if (!areas.length) {
+    return (
+      <div className="py-16 text-center">
+        <TruckIcon className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-slate-600" />
+        <p className="text-sm text-gray-400 dark:text-slate-500">No delivery zones published yet.</p>
+      </div>
+    );
+  }
+
+  // ── Group areas into a Region → City → Township tree ──────────────────────
+  // Country-wide areas are shown first as a special region.
+  const regionMap = {};
+
+  // Separate country-wide rows
+  const countryAreas = areas.filter(a => a.area_type === 'country');
+  if (countryAreas.length) {
+    regionMap['__country__'] = countryAreas;
+  }
+
+  // Group everything else by state
+  areas.filter(a => a.area_type !== 'country').forEach(a => {
+    const regionKey = a.state || 'Other Areas';
+    if (!regionMap[regionKey]) regionMap[regionKey] = [];
+    regionMap[regionKey].push(a);
+  });
+
+  const regions = Object.entries(regionMap);
+
+  // ── Compute summary stats for the legend ──────────────────────────────────
+  const deliverableCount = areas.filter(a => a.is_deliverable !== false).length;
+  const hasExpress       = areas.some(a => a.express_shipping_available);
+  const hasPickup        = areas.some(a => a.pickup_available);
+  const hasFreeShipping  = areas.some(a => Number(a.shipping_fee) === 0);
+
+  return (
+    <div className="pb-10">
+      {/* Legend / summary */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        <span className="text-xs text-gray-500 dark:text-slate-400 self-center">
+          {deliverableCount} zone{deliverableCount !== 1 ? 's' : ''}
+        </span>
+        {hasFreeShipping && <DeliveryBadge label="Free shipping available" active color="green" />}
+        {hasExpress      && <DeliveryBadge label="Express shipping"        active color="blue"  />}
+        {hasPickup       && <DeliveryBadge label="Pickup available"        active color="amber" />}
+      </div>
+
+      {/* Column header */}
+      <div className="hidden sm:flex items-center justify-between px-5 pb-2 text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wide">
+        <span>Region / City / Township</span>
+        <div className="flex items-center gap-6 pr-1">
+          <span>Est. delivery</span>
+          <span>Services</span>
+          <span className="min-w-[4rem] text-right">Fee</span>
+        </div>
+      </div>
+
+      {/* Region accordion list */}
+      <div className="space-y-3">
+        {regions.map(([regionName, regionAreas]) => (
+          <RegionAccordion
+            key={regionName}
+            regionName={regionName === '__country__' ? 'Nationwide Delivery' : regionName}
+            areas={regionAreas}
+          />
+        ))}
+      </div>
+
+      <p className="text-xs text-gray-400 dark:text-slate-500 mt-5 text-center">
+        Delivery fees and estimates are set by the seller and may vary by order size.
+      </p>
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const getDescriptionPreview = (description, sentenceLimit = 4) => {
   const text = description?.trim();
@@ -110,6 +353,10 @@ const SellerProfile = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  // Delivery zone tab
+  const [deliveryAreas, setDeliveryAreas] = useState(null); // null = not yet fetched
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryError, setDeliveryError] = useState(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -339,11 +586,26 @@ const SellerProfile = () => {
     .map(([k, meta]) => ({ key: k, url: seller[k], ...meta }));
   const hasPolicies = seller.return_policy || seller.shipping_policy || seller.warranty_policy || seller.privacy_policy || seller.terms_of_service;
 
+  // Delivery tab index: Products(0), Reviews(1), About(2), Policies(3 if exists), Delivery(last)
+  const deliveryTabIndex = 3 + (hasPolicies ? 1 : 0);
+
+  // Lazy-load delivery areas when the Delivery tab is first selected
+  useEffect(() => {
+    if (activeTab !== deliveryTabIndex) return;
+    if (deliveryAreas !== null || deliveryLoading) return; // already fetched or in progress
+    setDeliveryLoading(true);
+    api.get(`/sellers/${slug}/delivery-areas`)
+      .then(r => setDeliveryAreas(r.data?.data ?? []))
+      .catch(() => setDeliveryError('Could not load delivery zones.'))
+      .finally(() => setDeliveryLoading(false));
+  }, [activeTab, deliveryTabIndex, slug, deliveryAreas, deliveryLoading]);
+
   const tabs = [
     { label: `Products (${products.length})` },
     { label: `Reviews (${reviewCount})` },
     { label: 'About' },
     ...(hasPolicies ? [{ label: 'Policies' }] : []),
+    { label: 'Delivery Zones' },
   ];
 
   // ── Render ─────────────────────────────────────────────────────────────
@@ -851,6 +1113,15 @@ const SellerProfile = () => {
                   </div>
                 </Tab.Panel>
               )}
+
+              {/* ── Delivery Zones ──────────────────────────────────── */}
+              <Tab.Panel>
+                <DeliveryZonesPanel
+                  areas={deliveryAreas}
+                  loading={deliveryLoading}
+                  error={deliveryError}
+                />
+              </Tab.Panel>
 
             </Tab.Panels>
           </Tab.Group>

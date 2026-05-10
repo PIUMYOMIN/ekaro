@@ -237,6 +237,7 @@ const Cart = () => {
                     const isUpdating     = updatingItemId === item.id;
                     const isRemoving     = removingItemId === item.id;
                     const minOrder       = item.min_order ?? 1;
+                    const quantityStep   = item.quantity_step ?? 1;
                     const stockLimit     = item.stock ?? Infinity;
                     const unitLabel      = item.quantity_unit ?? "pcs";
 
@@ -335,7 +336,7 @@ const Cart = () => {
                             <div className="flex items-center border border-gray-300 dark:border-slate-600 rounded">
                               <button
                                 onClick={() =>
-                                  handleUpdateQuantity(item.id, item.quantity - 1, minOrder)
+                                  handleUpdateQuantity(item.id, Math.max(item.quantity - quantityStep, minOrder), minOrder)
                                 }
                                 disabled={
                                   item.quantity <= minOrder || isUpdating || !item.is_available
@@ -352,12 +353,21 @@ const Cart = () => {
                                 <input
                                   type="number"
                                   min={minOrder}
+                                  step={quantityStep}
                                   max={stockLimit === Infinity ? undefined : stockLimit}
                                   value={item.quantity}
                                   onChange={(e) => {
-                                    const val     = parseInt(e.target.value) || minOrder;
-                                    const clamped = Math.min(Math.max(val, minOrder), stockLimit);
-                                    handleUpdateQuantity(item.id, clamped, minOrder);
+                                    const raw     = parseInt(e.target.value, 10) || minOrder;
+                                    const clamped = Math.min(Math.max(raw, minOrder), stockLimit);
+                                    // Snap to nearest valid step
+                                    let snapped = clamped;
+                                    if (quantityStep > 1) {
+                                      const remainder = (clamped - minOrder) % quantityStep;
+                                      snapped = remainder === 0
+                                        ? clamped
+                                        : clamped + (quantityStep - remainder);
+                                    }
+                                    handleUpdateQuantity(item.id, snapped, minOrder);
                                   }}
                                   disabled={isUpdating || !item.is_available}
                                   className="w-14 text-center border-0 focus:ring-0 bg-transparent
@@ -372,11 +382,13 @@ const Cart = () => {
                               </div>
 
                               <button
-                                onClick={() =>
-                                  handleUpdateQuantity(item.id, item.quantity + 1, minOrder)
-                                }
+                                onClick={() => {
+                                  const next = item.quantity + quantityStep;
+                                  if (next > stockLimit) return;
+                                  handleUpdateQuantity(item.id, next, minOrder);
+                                }}
                                 disabled={
-                                  item.quantity >= stockLimit || isUpdating || !item.is_available
+                                  item.quantity + quantityStep > stockLimit || isUpdating || !item.is_available
                                 }
                                 className="px-3 py-1 text-gray-600 dark:text-slate-400
                                            hover:bg-gray-100 dark:hover:bg-slate-700
@@ -392,10 +404,12 @@ const Cart = () => {
                             />
                           </div>
 
-                          {/* MOQ hint */}
-                          {minOrder > 1 && (
-                            <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
-                              Min. order: {minOrder} {unitLabel}
+                          {/* MOQ + step hint */}
+                          {(minOrder > 1 || quantityStep > 1) && (
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                              {minOrder > 1 && `Min. order: ${minOrder} ${unitLabel}`}
+                              {minOrder > 1 && quantityStep > 1 && " · "}
+                              {quantityStep > 1 && `Order in steps of ${quantityStep}`}
                             </p>
                           )}
                         </div>

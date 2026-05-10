@@ -361,7 +361,7 @@ const VariantTable = ({ productId, onUpdated }) => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
-          <table className="w-full text-sm">
+          <table className="min-w-[980px] w-full text-sm table-fixed">
             <thead className="bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               <tr>
                 <th className="px-4 py-3 text-left">Variant</th>

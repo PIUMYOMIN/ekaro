@@ -6,6 +6,7 @@ import api from "../../../utils/api";
 import { useAuth } from "../../../context/AuthContext";
 import ProductOptionsEditor from "../../../components/seller/ProductOptionsEditor";
 import VariantTable from "../../../components/seller/VariantTable";
+import WholesaleTiersEditor from "../../../components/seller/WholesaleTiersEditor";
 import {
   XMarkIcon, PhotoIcon, TrashIcon, PlusIcon,
   ChevronLeftIcon, ChevronRightIcon, CheckCircleIcon,
@@ -103,6 +104,7 @@ const DEFAULT_FORM = {
   category_id:       "",
   quantity_unit:     "piece",
   moq:               1,
+  quantity_step:     1,
   min_order_unit:    "piece",
   lead_time:         "",
   condition:         "new",
@@ -339,8 +341,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setError("");
 
     try {
-      const priceNum = parseFloat(formData.price);
-      const moqNum = parseInt(formData.moq, 10);
+      const priceNum    = parseFloat(formData.price);
+      const moqNum      = parseInt(formData.moq, 10);
+      const stepNum     = parseInt(formData.quantity_step, 10) || 1;
       const categoryNum = parseInt(formData.category_id, 10);
       if (Number.isNaN(priceNum) || formData.price === "") {
         setError("Please enter a valid price.");
@@ -352,6 +355,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         setLoading(false);
         return;
       }
+      if (Number.isNaN(stepNum) || stepNum < 1) {
+        setError("Order Step must be at least 1.");
+        setLoading(false);
+        return;
+      }
       if (Number.isNaN(categoryNum)) {
         setError("Please select a category.");
         setLoading(false);
@@ -360,9 +368,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
       const payload = {
         ...formData,
-        price:         priceNum,
-        moq:           moqNum,
-        category_id:   categoryNum,
+        price:          priceNum,
+        moq:            moqNum,
+        quantity_step:  stepNum,
+        category_id:    categoryNum,
         discount_price: (() => {
           if (!formData.discount_price) return null;
           const d = parseFloat(formData.discount_price);
@@ -704,6 +713,32 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   placeholder="1" />
                 <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Product-level fallback. Variants can override.</p>
               </div>
+
+              {/* quantity_step — NEW */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  Order Step
+                  <span className="ml-1 text-xs text-gray-400">(Optional)</span>
+                </label>
+                <input
+                  type="number"
+                  name="quantity_step"
+                  min="1"
+                  value={formData.quantity_step}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  placeholder="1"
+                />
+                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
+                  Buyers must order in multiples of this above the MOQ.
+                  {formData.moq > 1 && formData.quantity_step > 1 && (
+                    <span className="block text-amber-600 dark:text-amber-400 mt-0.5">
+                      e.g. {formData.moq}, {Number(formData.moq) + Number(formData.quantity_step)}, {Number(formData.moq) + Number(formData.quantity_step) * 2}…
+                    </span>
+                  )}
+                </p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Quantity Unit *</label>
                 <select name="quantity_unit" value={formData.quantity_unit} onChange={handleChange}
@@ -733,6 +768,23 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="e.g. Carton box, 12 pcs per carton" />
               </div>
+            </div>
+
+            {/* ── Wholesale Tier Pricing ─────────────────────────────────────── */}
+            <div className="pt-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px flex-1 bg-gray-100 dark:bg-slate-700" />
+                <span className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide whitespace-nowrap">
+                  Volume / Wholesale Pricing
+                </span>
+                <div className="h-px flex-1 bg-gray-100 dark:bg-slate-700" />
+              </div>
+              <WholesaleTiersEditor
+                productId={createdProductId || (product?.id ?? null)}
+                basePrice={parseFloat(formData.price) || 0}
+                moq={parseInt(formData.moq, 10) || 1}
+                quantityUnit={formData.quantity_unit || 'piece'}
+              />
             </div>
           </div>
         );

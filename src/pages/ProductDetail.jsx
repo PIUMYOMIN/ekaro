@@ -243,7 +243,9 @@ const ProductDetail = () => {
     }
 
     // Reset quantity to effective MOQ whenever variant changes
-    const moq = variant?.moq ?? product?.moq ?? 1;
+    const moq  = variant?.moq ?? product?.moq ?? 1;
+    const step = variant?.quantity_step ?? product?.quantity_step ?? 1;
+    // Snap initial quantity to the nearest valid step above MOQ
     setQuantity(moq);
   };
 
@@ -271,6 +273,9 @@ const ProductDetail = () => {
 
   // Effective MOQ
   const effectiveMoq = selectedVariant?.moq ?? product?.moq ?? 1;
+
+  // Effective quantity step (1 = no restriction, 5 = must order 5/10/15…)
+  const effectiveStep = selectedVariant?.quantity_step ?? product?.quantity_step ?? 1;
 
   // Whether the product uses the variant system
   const hasVariants = product?.has_variants || (product?.options?.length > 0);
@@ -315,6 +320,16 @@ const ProductDetail = () => {
     if (quantity < effectiveMoq) {
       setVariantError(`Minimum order quantity is ${effectiveMoq} ${product?.quantity_unit ?? "piece(s)"}.`);
       return;
+    }
+
+    // Step validation
+    if (effectiveStep > 1) {
+      const remainder = (quantity - effectiveMoq) % effectiveStep;
+      if (remainder !== 0) {
+        const nextValid = effectiveMoq + Math.ceil((quantity - effectiveMoq) / effectiveStep) * effectiveStep;
+        setVariantError(`Quantity must be in steps of ${effectiveStep}. Next valid quantity: ${nextValid}.`);
+        return;
+      }
     }
 
     if (product?.product_type === "physical" && quantity > availableStock) {
@@ -916,25 +931,129 @@ const ProductDetail = () => {
 
               {/* Key info chips above cover MOQ/stock */}
 
-              {/* Quantity selector */}
-              <div className="flex items-center space-x-4">
-                <label htmlFor="quantity" className="font-medium text-gray-800 dark:text-slate-200">
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
-                  min={effectiveMoq}
-                  max={product.product_type === "physical" ? (availableStock || undefined) : undefined}
-                  step="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(parseInt(e.target.value) || effectiveMoq, effectiveMoq))}
-                  className="w-24 px-3 py-2 border border-gray-300 dark:border-slate-600
-                             bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-md"
-                />
-                <span className="text-sm text-gray-500 dark:text-slate-400">
-                  {product.quantity_unit ?? "piece(s)"}
-                </span>
+              {/* Wholesale pricing table — rendered when the product has tiers */}
+              {product.wholesale_tiers?.length > 0 && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide mb-2">
+                    Volume Pricing
+                  </p>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-gray-500 dark:text-slate-400 border-b border-amber-200 dark:border-amber-800">
+                        <th className="pb-1 font-medium">Min. Qty</th>
+                        <th className="pb-1 font-medium">Price / {product.quantity_unit ?? "piece"}</th>
+                        <th className="pb-1 font-medium">Discount</th>
+                        <th className="pb-1 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.wholesale_tiers.map((tier, idx) => {
+                        const isActive = quantity >= tier.min_qty &&
+                          (idx === product.wholesale_tiers.length - 1 ||
+                           quantity < product.wholesale_tiers[idx + 1].min_qty);
+                        return (
+                          <tr
+                            key={tier.min_qty}
+                            className={`border-b border-amber-100 dark:border-amber-900 last:border-0 ${
+                              isActive ? "bg-amber-100 dark:bg-amber-800/30 font-semibold" : ""
+                            }`}
+                          >
+                            <td className="py-1 text-gray-700 dark:text-slate-300">
+                              ≥ {tier.min_qty} {product.quantity_unit ?? "pcs"}
+                            </td>
+                            <td className="py-1 text-green-700 dark:text-green-400">
+                              {new Intl.NumberFormat("my-MM").format(tier.price_per_unit)} Ks
+                            </td>
+                            <td className="py-1 text-red-600 dark:text-red-400">
+                              {tier.discount_pct > 0 ? `-${tier.discount_pct}%` : "—"}
+                            </td>
+                            <td className="py-1 text-xs text-gray-500 dark:text-slate-400">
+                              {tier.label ?? ""}
+                              {isActive && (
+                                <span className="ml-1 inline-block bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded text-xs">
+                                  Applied
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-3">
+                  <label htmlFor="quantity" className="font-medium text-gray-800 dark:text-slate-200">
+                    Quantity
+                  </label>
+
+                  {/* Stepper — decrement */}
+                  <button
+                    type="button"
+                    aria-label="Decrease quantity"
+                    onClick={() => {
+                      const prev = quantity - effectiveStep;
+                      setQuantity(Math.max(prev, effectiveMoq));
+                    }}
+                    disabled={quantity <= effectiveMoq}
+                    className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 dark:border-slate-600
+                               bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200
+                               hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    −
+                  </button>
+
+                  <input
+                    type="number"
+                    id="quantity"
+                    min={effectiveMoq}
+                    max={product.product_type === "physical" ? (availableStock || undefined) : undefined}
+                    step={effectiveStep}
+                    value={quantity}
+                    onChange={(e) => {
+                      const raw = parseInt(e.target.value, 10) || effectiveMoq;
+                      const clamped = Math.max(raw, effectiveMoq);
+                      // Snap to nearest valid step
+                      if (effectiveStep > 1) {
+                        const remainder = (clamped - effectiveMoq) % effectiveStep;
+                        setQuantity(remainder === 0 ? clamped : clamped + (effectiveStep - remainder));
+                      } else {
+                        setQuantity(clamped);
+                      }
+                    }}
+                    className="w-20 text-center px-2 py-2 border border-gray-300 dark:border-slate-600
+                               bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-md"
+                  />
+
+                  {/* Stepper — increment */}
+                  <button
+                    type="button"
+                    aria-label="Increase quantity"
+                    onClick={() => {
+                      const next = quantity + effectiveStep;
+                      if (product.product_type === "physical" && next > availableStock) return;
+                      setQuantity(next);
+                    }}
+                    disabled={product.product_type === "physical" && quantity + effectiveStep > availableStock}
+                    className="w-8 h-8 flex items-center justify-center rounded border border-gray-300 dark:border-slate-600
+                               bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200
+                               hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    +
+                  </button>
+
+                  <span className="text-sm text-gray-500 dark:text-slate-400">
+                    {product.quantity_unit ?? "piece(s)"}
+                  </span>
+                </div>
+
+                {/* Step hint — only shown when step > 1 */}
+                {effectiveStep > 1 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Order in multiples of {effectiveStep} (e.g. {effectiveMoq}, {effectiveMoq + effectiveStep}, {effectiveMoq + effectiveStep * 2}…)
+                  </p>
+                )}
               </div>
 
               {/* Action buttons */}
