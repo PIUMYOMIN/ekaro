@@ -60,21 +60,29 @@ const ColorSwatch = ({ value, isSelected, isDisabled, onClick }) => (
     onClick={() => !isDisabled && onClick()}
     disabled={isDisabled}
     className={`
-      relative w-9 h-9 rounded-full border-2 transition-all
-      focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500
-      ${isSelected
-        ? "border-green-500 scale-110 shadow-md"
-        : "border-gray-300 dark:border-slate-600 hover:border-gray-400 dark:hover:border-slate-400"}
-      ${isDisabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
+      relative h-11 w-11 flex-shrink-0 rounded-full p-1 transition-all
+      focus:outline-none
+      ${isSelected ? "bg-transparent" : "bg-transparent hover:bg-gray-100 dark:hover:bg-slate-800"}
+      ${isDisabled ? "opacity-35 cursor-not-allowed" : "cursor-pointer"}
     `}
-    style={{ backgroundColor: value.meta?.hex ?? "#ccc" }}
   >
-    {isSelected && (
-      <span className="absolute inset-0 flex items-center justify-center">
-        {/* Contrast ring so the tick is visible on any colour */}
-        <span className="w-2.5 h-2.5 rounded-full bg-white/80 ring-1 ring-white/60" />
-      </span>
-    )}
+    <span
+      className={`
+        block h-full w-full rounded-full border shadow-inner
+        ${isSelected ? "border-gray-300 dark:border-slate-500" : "border-gray-300 dark:border-slate-500"}
+      `}
+      style={{ backgroundColor: value.meta?.hex ?? "#ccc" }}
+      aria-hidden="true"
+    >
+      {isSelected && (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="h-3 w-3 rounded-full bg-white shadow" />
+        </span>
+      )}
+    </span>
+    <span className="sr-only">
+      {value.label}
+    </span>
   </button>
 );
 
@@ -84,7 +92,7 @@ const PillButton = ({ label, isSelected, isDisabled, onClick }) => (
     onClick={() => !isDisabled && onClick()}
     disabled={isDisabled}
     className={`
-      px-4 py-2 rounded-lg border text-sm font-medium transition-all
+      min-h-10 min-w-0 max-w-full px-3 py-2 sm:px-4 rounded-lg border text-sm font-medium leading-snug transition-all
       focus:outline-none focus:ring-2 focus:ring-green-500
       ${isSelected
         ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400"
@@ -94,7 +102,7 @@ const PillButton = ({ label, isSelected, isDisabled, onClick }) => (
         : "cursor-pointer"}
     `}
   >
-    {label}
+    <span className="block max-w-full truncate">{label}</span>
   </button>
 );
 
@@ -105,7 +113,7 @@ const ImageSwatch = ({ value, isSelected, isDisabled, onClick }) => (
     onClick={() => !isDisabled && onClick()}
     disabled={isDisabled}
     className={`
-      w-14 h-14 rounded-lg border-2 overflow-hidden transition-all
+      h-14 w-14 flex-shrink-0 rounded-lg border-2 overflow-hidden transition-all
       focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500
       ${isSelected
         ? "border-green-500 ring-1 ring-green-300 scale-105 shadow-md"
@@ -179,31 +187,32 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
   if (!options || options.length === 0) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       {options.map((option) => (
-        <div key={option.id}>
+        <div key={option.id} className="min-w-0">
           {/* Option label */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 mb-2.5">
-            <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">
+          <div className="mb-2.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="min-w-0 max-w-full break-words text-sm font-semibold text-gray-800 dark:text-slate-200">
               {option.name}
             </span>
-            {/* Show the currently selected value label next to the option name */}
             {option.type !== "input" && selected[option.id] && (
-              <span className="text-sm text-gray-500 dark:text-slate-400 min-w-0">
-                :{" "}
-                <span className="font-medium text-gray-700 dark:text-slate-300 truncate block max-w-full">
+              <span className="min-w-0 max-w-full text-sm text-gray-500 dark:text-slate-400">
+                <span className="text-gray-400 dark:text-slate-500">:</span>{" "}
+                <span className="font-medium text-gray-700 dark:text-slate-300">
                   {option.values?.find((v) => v.id === selected[option.id])?.label}
                 </span>
               </span>
             )}
             {option.is_required && (
-              <span className="text-xs text-red-500 ml-auto">Required</span>
+              <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-300">
+                Required
+              </span>
             )}
           </div>
 
           {/* Widget per type */}
           {option.type === "color" && (
-            <div className="flex flex-wrap gap-2.5 items-center min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
@@ -223,7 +232,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           )}
 
           {(option.type === "size" || option.type === "text") && (
-            <div className="flex flex-wrap gap-2 items-center min-w-0">
+            <div className="grid min-w-0 grid-cols-2 gap-2 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-center">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
@@ -243,21 +252,21 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           )}
 
           {option.type === "image" && (
-            <div className="flex flex-wrap gap-3 items-center min-w-0">
+            <div className="grid min-w-0 grid-cols-3 gap-3 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-start">
               {option.values?.map((value) => {
                 const isSelected = selected[option.id] === value.id;
                 const isDisabled =
                   !isSelected &&
                   !wouldHaveMatch(variants, selected, option.id, value.id);
                 return (
-                  <div key={value.id} className="flex flex-col items-center gap-1">
+                  <div key={value.id} className="flex min-w-0 flex-col items-center gap-1">
                     <ImageSwatch
                       value={value}
                       isSelected={isSelected}
                       isDisabled={isDisabled}
                       onClick={() => handleSelect(option.id, value.id)}
                     />
-                    <span className="text-xs text-gray-500 dark:text-slate-400">
+                    <span className="w-16 truncate text-center text-xs text-gray-500 dark:text-slate-400">
                       {value.label}
                     </span>
                   </div>
@@ -273,7 +282,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
                 value={textInputs[option.id] ?? ""}
                 onChange={(e) => handleTextInput(option.id, e.target.value)}
                 placeholder={`Enter ${option.name.toLowerCase()}…`}
-                className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg
                            text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100
                            focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
@@ -289,9 +298,9 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
         const matched = findMatchingVariant(variants, selected);
         if (allSelected && !matched && nonInputOptions.length > 0) {
           return (
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
+            <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
               <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-              This combination is currently unavailable.
+              <span className="min-w-0">This combination is currently unavailable.</span>
             </div>
           );
         }

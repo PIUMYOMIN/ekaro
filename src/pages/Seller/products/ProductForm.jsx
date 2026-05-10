@@ -104,7 +104,6 @@ const DEFAULT_FORM = {
   category_id:       "",
   quantity_unit:     "piece",
   moq:               1,
-  quantity_step:     1,
   min_order_unit:    "piece",
   lead_time:         "",
   condition:         "new",
@@ -343,7 +342,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     try {
       const priceNum    = parseFloat(formData.price);
       const moqNum      = parseInt(formData.moq, 10);
-      const stepNum     = parseInt(formData.quantity_step, 10) || 1;
       const categoryNum = parseInt(formData.category_id, 10);
       if (Number.isNaN(priceNum) || formData.price === "") {
         setError("Please enter a valid price.");
@@ -352,11 +350,6 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       }
       if (Number.isNaN(moqNum) || moqNum < 1) {
         setError("Please enter a valid minimum order quantity (MOQ).");
-        setLoading(false);
-        return;
-      }
-      if (Number.isNaN(stepNum) || stepNum < 1) {
-        setError("Order Step must be at least 1.");
         setLoading(false);
         return;
       }
@@ -370,7 +363,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         ...formData,
         price:          priceNum,
         moq:            moqNum,
-        quantity_step:  stepNum,
+        quantity_step:  moqNum,   // always equal to MOQ — backend derives it the same way
         category_id:    categoryNum,
         discount_price: (() => {
           if (!formData.discount_price) return null;
@@ -707,7 +700,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                   MOQ (Minimum Order Qty) *
@@ -715,29 +708,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <input type="number" name="moq" min="1" value={formData.moq} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="1" />
-                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Product-level fallback. Variants can override.</p>
-              </div>
-
-              {/* quantity_step — NEW */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  Order Step
-                  <span className="ml-1 text-xs text-gray-400">(Optional)</span>
-                </label>
-                <input
-                  type="number"
-                  name="quantity_step"
-                  min="1"
-                  value={formData.quantity_step}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="1"
-                />
                 <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
-                  Buyers must order in multiples of this above the MOQ.
-                  {formData.moq > 1 && formData.quantity_step > 1 && (
+                  Buyers must order at least this quantity.
+                  {formData.moq > 1 && (
                     <span className="block text-amber-600 dark:text-amber-400 mt-0.5">
-                      e.g. {formData.moq}, {Number(formData.moq) + Number(formData.quantity_step)}, {Number(formData.moq) + Number(formData.quantity_step) * 2}…
+                      Valid quantities: {formData.moq}, {Number(formData.moq) * 2}, {Number(formData.moq) * 3}… (step = MOQ)
                     </span>
                   )}
                 </p>

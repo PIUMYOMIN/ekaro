@@ -304,7 +304,7 @@ const ProductDetail = () => {
 
   // ── Add to cart ─────────────────────────────────────────────────────────────
   const handleAddToCart = async () => {
-    if (!user) { navigate("/login"); return; }
+    if (!user) { navigate("/login"); return false; }
 
     // Guard: if product has variants, buyer must select a valid combo first
     if (hasVariants && !selectedVariant) {
@@ -314,12 +314,12 @@ const ProductDetail = () => {
           ? `Please select a ${requiredOption.name} before adding to cart.`
           : "Please select your options before adding to cart."
       );
-      return;
+      return false;
     }
 
     if (quantity < effectiveMoq) {
       setVariantError(`Minimum order quantity is ${effectiveMoq} ${product?.quantity_unit ?? "piece(s)"}.`);
-      return;
+      return false;
     }
 
     // Step validation
@@ -328,13 +328,13 @@ const ProductDetail = () => {
       if (remainder !== 0) {
         const nextValid = effectiveMoq + Math.ceil((quantity - effectiveMoq) / effectiveStep) * effectiveStep;
         setVariantError(`Quantity must be in steps of ${effectiveStep}. Next valid quantity: ${nextValid}.`);
-        return;
+        return false;
       }
     }
 
     if (product?.product_type === "physical" && quantity > availableStock) {
       setVariantError(`Only ${availableStock} ${product?.quantity_unit ?? "unit(s)"} available in stock.`);
-      return;
+      return false;
     }
 
     setAddingToCart(true);
@@ -347,8 +347,10 @@ const ProductDetail = () => {
         Object.keys(selectedOptions).length > 0 ? selectedOptions : null
       );
       setSuccessMessage(result.message || "Product added to cart successfully!");
+      return true;
     } catch (error) {
       setSuccessMessage({ type: "error", message: error?.message || "Failed to add product to cart" });
+      return false;
     } finally {
       setAddingToCart(false);
     }
@@ -427,8 +429,18 @@ const ProductDetail = () => {
 
 
   const handleBuyNow = async () => {
-    await handleAddToCart();
-    navigate("/cart");
+    // Variants exist but none selected — scroll to picker and surface the error.
+    // Don't attempt checkout; buyer must choose options first.
+    if (hasVariants && !selectedVariant) {
+      variantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setVariantError((prev) => prev || "Please select your options before purchasing.");
+      return;
+    }
+
+    // handleAddToCart returns true on success, false on validation/API failure.
+    // Only navigate to cart when we know the item was actually added.
+    const added = await handleAddToCart();
+    if (added) navigate("/cart");
   };
 
   const handleAddToWishlist = async () => {
@@ -765,16 +777,16 @@ const ProductDetail = () => {
           </div>
         </div>
       )}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 sm:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-24 sm:pb-8 overflow-x-hidden">
           {/* Back button */}
-          <button onClick={() => navigate(-1)} className="flex items-center text-green-600 hover:text-green-700 mb-6">
-            <ArrowLeftIcon className="h-5 w-5 mr-2" /> Back
+          <button onClick={() => navigate(-1)} className="mb-6 inline-flex min-h-10 items-center gap-2 rounded-md px-1 text-sm font-medium text-green-600 hover:text-green-700">
+            <ArrowLeftIcon className="h-5 w-5 flex-shrink-0" /> Back
           </button>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
 
             {/* ── Left: Images ────────────────────────────────────────────── */}
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               <ProductImageGallery
                 images={product.images}
                 getImageUrl={(img) => getImageUrl(img) || DEFAULT_PLACEHOLDER}
@@ -789,15 +801,15 @@ const ProductDetail = () => {
             </div>
 
             {/* ── Right: Product info ──────────────────────────────────────── */}
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-6">
 
               {/* Name */}
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-slate-100">
+                <h1 className="break-words text-2xl lg:text-3xl font-bold text-gray-900 dark:text-slate-100">
                   {loc(product.name_en, product.name_mm) || "Product"}
                 </h1>
                 {product.name_en && product.name_mm && (
-                  <p className="text-lg text-gray-600 dark:text-slate-400 mt-1">
+                  <p className="mt-1 break-words text-base text-gray-600 dark:text-slate-400 sm:text-lg">
                     {loc(product.name_mm, product.name_en)}
                   </p>
                 )}
@@ -806,14 +818,14 @@ const ProductDetail = () => {
             {/* Delivery zones moved to secondary section below CTAs */}
 
               {/* Rating */}
-              <div className="flex items-center">
+              <div className="flex flex-wrap items-center gap-y-1">
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon key={star} className={`h-5 w-5 ${
                       star <= Math.round(product.average_rating || 0) ? "text-yellow-400" : "text-gray-300 dark:text-slate-600"}`} />
                   ))}
                 </div>
-                <span className="ml-2 text-gray-600 dark:text-slate-400">
+                <span className="ml-2 text-sm text-gray-600 dark:text-slate-400 sm:text-base">
                   {product.average_rating?.toFixed(1) || "0.0"} ({product.review_count || 0} reviews)
                 </span>
               </div>
@@ -825,11 +837,11 @@ const ProductDetail = () => {
                     <span className="inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
                       -{Math.round(displayDiscountPct)}% OFF
                     </span>
-                    <div className="flex items-baseline gap-3">
-                      <h2 className="text-2xl font-bold text-red-600">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h2 className="min-w-0 break-words text-2xl font-bold text-red-600">
                         {parseFloat(displayPrice).toLocaleString()} MMK
                       </h2>
-                      <span className="text-lg text-gray-400 dark:text-slate-600 line-through">
+                      <span className="text-base text-gray-400 line-through dark:text-slate-600 sm:text-lg">
                         {parseFloat(product.price).toLocaleString()} MMK
                       </span>
                     </div>
@@ -840,8 +852,8 @@ const ProductDetail = () => {
                     )}
                   </>
                 ) : (
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-2xl font-semibold text-green-600">
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <h2 className="min-w-0 break-words text-2xl font-semibold text-green-600">
                       {parseFloat(displayPrice).toLocaleString()} MMK
                     </h2>
                     {hasVariants && !selectedVariant && (
@@ -854,13 +866,13 @@ const ProductDetail = () => {
 
               {/* Key info chips (near price) */}
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                <span className="inline-flex min-w-0 items-center px-2.5 py-1 rounded-full text-xs font-medium
                                  bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-                  MOQ: {effectiveMoq} {unitLabel}
+                  <span className="truncate">MOQ: {effectiveMoq} {unitLabel}</span>
                 </span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
+                <span className="inline-flex min-w-0 items-center px-2.5 py-1 rounded-full text-xs font-medium
                                  bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
-                  Unit: {unitLabel}
+                  <span className="truncate">Unit: {unitLabel}</span>
                 </span>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
                   stockText.startsWith("Out")
@@ -885,7 +897,7 @@ const ProductDetail = () => {
 
               {/* ── Variant Picker ─────────────────────────────────────────── */}
               {hasVariants && (
-                <div ref={variantSectionRef} className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 space-y-1">
+                <div ref={variantSectionRef} className="min-w-0 scroll-mt-24 rounded-xl border border-gray-200 p-3 dark:border-slate-700 sm:p-4">
                   <VariantPicker
                     options={product.options ?? []}
                     variants={product.variants ?? []}
@@ -896,18 +908,18 @@ const ProductDetail = () => {
 
               {/* Variant validation error */}
               {variantError && (
-                <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400
+                <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400
                                 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700
                                 rounded-lg px-3 py-2">
                   <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-                  {variantError}
+                  <span className="min-w-0">{variantError}</span>
                 </div>
               )}
 
               {/* Description */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Description</h3>
-                <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
+                <p className="break-words text-gray-700 dark:text-slate-300 leading-relaxed">
                   {loc(product.description_en, product.description_mm) || "No description"}
                 </p>
               </div>
@@ -922,7 +934,7 @@ const ProductDetail = () => {
                         <dt className="font-medium text-gray-900 dark:text-slate-100 text-sm">
                           {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1")}
                         </dt>
-                        <dd className="text-gray-700 dark:text-slate-300 text-sm">{value}</dd>
+                        <dd className="break-words text-gray-700 dark:text-slate-300 text-sm">{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -933,11 +945,12 @@ const ProductDetail = () => {
 
               {/* Wholesale pricing table — rendered when the product has tiers */}
               {product.wholesale_tiers?.length > 0 && (
-                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                <div className="min-w-0 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 sm:p-4">
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide mb-2">
                     Volume Pricing
                   </p>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="min-w-[520px] w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-gray-500 dark:text-slate-400 border-b border-amber-200 dark:border-amber-800">
                         <th className="pb-1 font-medium">Min. Qty</th>
@@ -980,10 +993,11 @@ const ProductDetail = () => {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
               <div className="flex flex-col gap-2">
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <label htmlFor="quantity" className="font-medium text-gray-800 dark:text-slate-200">
                     Quantity
                   </label>
@@ -1057,22 +1071,21 @@ const ProductDetail = () => {
               </div>
 
               {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-stretch">
                 <button
                   onClick={handlePrimaryCta}
                   disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-                  className="flex-1 bg-green-600 text-white py-3 px-6 rounded-md hover:bg-green-700 transition
-                             flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5"
                 >
                   {addingToCart ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                      Adding...
+                      <div className="mr-2 h-5 w-5 flex-shrink-0 animate-spin rounded-full border-b-2 border-white" />
+                      <span className="truncate">Adding...</span>
                     </>
                   ) : (
                     <>
-                      <ShoppingCartIcon className="h-5 w-5 mr-2" />
-                      {primaryCtaLabel}
+                      <ShoppingCartIcon className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <span className="truncate">{primaryCtaLabel}</span>
                     </>
                   )}
                 </button>
@@ -1080,38 +1093,35 @@ const ProductDetail = () => {
                 <button
                   onClick={handleBuyNow}
                   disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-                  className="flex-1 bg-gray-800 text-white py-3 px-6 rounded-md hover:bg-gray-900
-                             transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md bg-gray-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5"
                 >
-                  Buy Now
+                  <span className="truncate">Buy Now</span>
                 </button>
 
-                <div className="flex flex-wrap items-center gap-3 sm:gap-2">
+                <div className="col-span-2 grid grid-cols-3 gap-3 sm:col-span-1 sm:flex sm:items-stretch sm:gap-2">
                   <button
                     onClick={handleAddToWishlist}
                     disabled={wishlistLoading}
                     title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                    className="p-3 rounded-md border border-gray-300 dark:border-slate-600
-                               text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800
-                               transition disabled:opacity-50"
+                    className="inline-flex h-12 min-w-0 items-center justify-center rounded-md border border-gray-300 text-gray-600 transition hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 sm:w-12"
                   >
                     {wishlistLoading
-                      ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600" />
-                      : <HeartIcon className={`h-6 w-6 ${isInWishlist ? "text-red-500 fill-current" : ""}`} />
+                      ? <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-green-600" />
+                      : <HeartIcon className={`h-5 w-5 ${isInWishlist ? "text-red-500 fill-current" : ""}`} />
                     }
                   </button>
 
                   {/* ── Share button + dropdown ──────────────────────────── */}
-                  <div className="relative" data-share-panel>
+                  <div className="relative min-w-0" data-share-panel>
                     <button
                       onClick={handleShare}
                       title="Share product"
-                      className={`p-3 rounded-md border transition flex items-center justify-center
+                      className={`inline-flex h-12 w-full items-center justify-center rounded-md border transition sm:w-12
                         ${shareOpen
                           ? "border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600"
                           : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"}`}
                     >
-                      <ShareIcon className="h-6 w-6" />
+                      <ShareIcon className="h-5 w-5" />
                     </button>
 
                     {shareOpen && shareData && (
@@ -1193,14 +1203,14 @@ const ProductDetail = () => {
                   <button
                     type="button"
                     onClick={handleToggleCompare}
-                    className={`p-3 rounded-md border transition ${
+                    className={`inline-flex h-12 min-w-0 items-center justify-center rounded-md border px-3 text-xs font-semibold transition sm:min-w-24 sm:text-sm ${
                       compared
                         ? "border-indigo-400 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                         : "border-gray-300 dark:border-slate-600 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
                     title={compared ? "Remove from compare" : "Add to compare"}
                   >
-                    Compare
+                    <span className="truncate">{compared ? "Compared" : "Compare"}</span>
                   </button>
                 </div>
               </div>
@@ -1306,8 +1316,8 @@ const ProductDetail = () => {
           {/* More from this seller */}
           {(moreFromSellerLoading || moreFromSeller.length > 0) && (
             <div className="mt-14">
-              <div className="flex items-end justify-between gap-3 mb-5">
-                <div>
+              <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">More from this seller</h2>
                   <p className="text-sm text-gray-500 dark:text-slate-500">
                     Browse additional products from the same store.
@@ -1350,18 +1360,18 @@ const ProductDetail = () => {
 
           {/* ── Reviews ───────────────────────────────────────────────────── */}
           <div className="mt-16">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="break-words text-xl font-bold text-gray-900 dark:text-slate-100 sm:text-2xl">
                 Customer Reviews ({product.review_count || 0})
               </h2>
               <button onClick={handleReviewAction}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
                 Write a Review
               </button>
             </div>
 
             {showReviewForm && (
-              <div className="mt-6 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-8">
+              <div className="mt-6 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-md mb-8">
                 <h3 className="text-lg font-medium mb-4">Write a Review</h3>
                 {reviewFlash && (
                   <div className={`mb-3 px-4 py-2.5 rounded-xl text-sm font-medium ${
@@ -1390,15 +1400,15 @@ const ProductDetail = () => {
                       value={reviewText} onChange={(e) => setReviewText(e.target.value)}
                       required placeholder="Share your experience with this product..." />
                   </div>
-                  <div className="flex justify-end space-x-4">
+                  <div className="flex flex-wrap justify-end gap-3">
                     <button type="button" onClick={() => setShowReviewForm(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
+                      className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
                       Cancel
                     </button>
                     <button type="submit" disabled={submittingReview}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center">
+                      className="inline-flex min-h-10 items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50">
                       {submittingReview ? (
-                        <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Submitting...</>
+                        <><div className="mr-2 h-4 w-4 flex-shrink-0 animate-spin rounded-full border-b-2 border-white" /><span className="truncate">Submitting...</span></>
                       ) : "Submit Review"}
                     </button>
                   </div>
@@ -1415,12 +1425,12 @@ const ProductDetail = () => {
               ) : (
                 reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-200 dark:border-slate-700 pb-6">
-                    <div className="flex items-start">
-                      <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-full w-10 h-10 flex items-center justify-center">
+                    <div className="flex min-w-0 items-start">
+                      <div className="bg-gray-200 dark:bg-slate-700 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-full w-10 h-10 flex flex-shrink-0 items-center justify-center">
                         <span className="text-gray-500 dark:text-slate-400 text-xs">User</span>
                       </div>
-                      <div className="ml-4 flex-1">
-                        <h4 className="font-medium">
+                      <div className="ml-4 min-w-0 flex-1">
+                        <h4 className="break-words font-medium">
                           {review.buyer?.name || review.user?.name || review.user || "Anonymous"}
                         </h4>
                         {(review.buyer?.company || review.user?.company_name) && (
@@ -1428,7 +1438,7 @@ const ProductDetail = () => {
                             {review.buyer?.company || review.user?.company_name}
                           </p>
                         )}
-                        <div className="flex items-center mt-1">
+                        <div className="mt-1 flex flex-wrap items-center gap-y-1">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
                               <StarIcon key={star} className={`h-4 w-4 ${star <= review.rating ? "text-yellow-400" : "text-gray-300 dark:text-slate-600"}`} />
@@ -1439,7 +1449,7 @@ const ProductDetail = () => {
                             {review.created_at || "—"}
                           </span>
                         </div>
-                        <p className="mt-3 text-gray-700 dark:text-slate-300 leading-relaxed">{review.comment}</p>
+                        <p className="mt-3 break-words text-gray-700 dark:text-slate-300 leading-relaxed">{review.comment}</p>
                       </div>
                     </div>
                   </div>
@@ -1452,7 +1462,7 @@ const ProductDetail = () => {
       {/* Sticky mobile CTA (bottom bar) */}
       <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur
                       border-t border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           <div className="min-w-0">
             <p className="text-xs text-gray-500 dark:text-slate-500 truncate">Price</p>
             <p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
@@ -1463,10 +1473,9 @@ const ProductDetail = () => {
             type="button"
             onClick={handlePrimaryCta}
             disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-            className="ml-auto px-4 py-2.5 rounded-xl text-sm font-semibold text-white
-                       bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            className="ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
           >
-            {primaryCtaLabel}
+            <span className="truncate">{primaryCtaLabel}</span>
           </button>
         </div>
       </div>
