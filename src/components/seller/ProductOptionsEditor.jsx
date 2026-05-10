@@ -51,8 +51,8 @@ const slugify = (str) =>
 // ── sub-components ────────────────────────────────────────────────────────────
 
 const ValueRow = ({ optType, val, onChange, onRemove }) => (
-  <div className="flex items-center gap-2 py-1.5 group">
-    <div className="flex-1 grid grid-cols-2 gap-2">
+  <div className="flex flex-col gap-2 py-1.5 group sm:flex-row sm:items-center">
+    <div className="flex-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {/* Label */}
       <input
         type="text"
@@ -326,7 +326,7 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
             Product Options

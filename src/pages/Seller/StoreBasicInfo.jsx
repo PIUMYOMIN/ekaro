@@ -308,7 +308,7 @@ const StoreBasicInfo = () => {
                                         id="logo-upload"
                                         disabled={uploadingLogo}
                                     />
-                                    <div className="flex space-x-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         <label
                                             htmlFor="logo-upload"
                                             className={`flex-1 text-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
@@ -371,7 +371,7 @@ const StoreBasicInfo = () => {
                                         id="banner-upload"
                                         disabled={uploadingBanner}
                                     />
-                                    <div className="flex space-x-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
                                         <label
                                             htmlFor="banner-upload"
                                             className={`flex-1 text-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${

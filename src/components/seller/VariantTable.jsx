@@ -284,7 +284,7 @@ const VariantTable = ({ productId, onUpdated }) => {
           <p className="text-sm font-medium text-green-800 dark:text-green-300">
             Auto-generate all option combinations. Set defaults applied to every new variant:
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">
                 Default Price *

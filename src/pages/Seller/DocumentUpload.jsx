@@ -135,12 +135,12 @@ const DocumentUpload = () => {
             <div className="p-6">
                 {error && (
                     <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                        <div className="flex justify-between items-start">
-                            <div className="flex">
-                                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex items-start gap-2">
+                                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                                 <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                             </div>
-                            <button onClick={() => setError("")} className="text-red-500 hover:text-red-700 dark:hover:text-red-300">
+                            <button onClick={() => setError("")} className="text-red-500 hover:text-red-700 dark:hover:text-red-300 self-start sm:self-auto">
                                 <XMarkIcon className="h-4 w-4" />
                             </button>
                         </div>
@@ -149,12 +149,12 @@ const DocumentUpload = () => {
 
                 {success && (
                     <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
-                        <div className="flex justify-between items-start">
-                            <div className="flex">
-                                <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex items-start gap-2">
+                                <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                                 <p className="text-sm text-green-700 dark:text-green-400">{success}</p>
                             </div>
-                            <button onClick={() => setSuccess("")} className="text-green-500 hover:text-green-700 dark:hover:text-green-300">
+                            <button onClick={() => setSuccess("")} className="text-green-500 hover:text-green-700 dark:hover:text-green-300 self-start sm:self-auto">
                                 <XMarkIcon className="h-4 w-4" />
                             </button>
                         </div>
@@ -182,9 +182,9 @@ const DocumentUpload = () => {
 
                     {/* Progress Status */}
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <DocumentCheckIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mr-2" />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <DocumentCheckIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
                                 <span className="font-medium text-yellow-900 dark:text-yellow-200">Document Status</span>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -205,8 +205,8 @@ const DocumentUpload = () => {
                     {/* Document Upload Sections */}
                     {requirements.map((requirement) => (
                         <div key={requirement.type} className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <div className="flex-1 min-w-0">
                                     <div className="flex items-center space-x-2">
                                         <h3 className="font-medium text-gray-900 dark:text-gray-100">
                                             {requirement.label}
@@ -217,7 +217,7 @@ const DocumentUpload = () => {
                                         )}
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{requirement.description}</p>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
                                         <div>
                                             <span className="font-medium">Accepted formats:</span> {requirement.accepted_formats || 'jpg, jpeg, png, pdf'}
                                         </div>
@@ -226,20 +226,20 @@ const DocumentUpload = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-4">
+                                <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
                                     {requirement.required ? 'Required' : 'Optional'}
                                 </div>
                             </div>
 
                             {uploadedDocs[requirement.type]?.uploaded ? (
-                                <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 gap-3">
                                     <div className="flex items-center space-x-3">
                                         <DocumentIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-gray-100">
                                                 Document uploaded
                                             </p>
-                                            <div className="flex space-x-3 mt-1">
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mt-1 gap-2">
                                                 <button
                                                     onClick={() => handleViewDocument(uploadedDocs[requirement.type].url)}
                                                     className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 flex items-center"
