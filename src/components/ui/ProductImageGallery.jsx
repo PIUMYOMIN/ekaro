@@ -33,15 +33,19 @@ const ProductImageGallery = ({
   const thumbRowRef = useRef(null);
 
   useEffect(() => {
-    setActive((prev) => clampIndex(prev, total));
-  }, [total]);
+    setActive(clampIndex(initialIndex, total));
+  }, [initialIndex, total]);
+
+  useEffect(() => {
+    if (!total) return;
+    onIndexChange?.(active);
+  }, [active, total, onIndexChange]);
 
   const go = useCallback(
     (nextIdx) => {
       if (!total) return;
       const idx = clampIndex(nextIdx, total);
       setActive(idx);
-      onIndexChange?.(idx);
 
       // Keep active thumb visible
       const row = thumbRowRef.current;
@@ -50,7 +54,7 @@ const ProductImageGallery = ({
         el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       }
     },
-    [total, onIndexChange]
+    [total]
   );
 
   const next = useCallback(() => go(active + 1), [go, active]);
@@ -88,13 +92,12 @@ const ProductImageGallery = ({
     const id = window.setInterval(() => {
       setActive((prev) => {
         const nextIdx = clampIndex(prev + 1, total);
-        onIndexChange?.(nextIdx);
         return nextIdx;
       });
     }, delay);
 
     return () => window.clearInterval(id);
-  }, [autoplay, autoplayDelayMs, total, lightboxOpen, pauseAutoplay, onIndexChange]);
+  }, [autoplay, autoplayDelayMs, total, lightboxOpen, pauseAutoplay]);
 
   return (
     <div className={className}>
