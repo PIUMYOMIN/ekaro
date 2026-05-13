@@ -21,6 +21,13 @@ import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardRFQSection, { fetchRfqDashboardTabBadgeForRole } from "../../components/Shared/DashboardRFQSection";
+import getMyanmarStates from "../../data/myanmar-locations";
+import {
+  toLocationTree,
+  myanmarLocationsEng,
+  buildCheckoutLocationRows,
+  resolveCanonicalLocation,
+} from "../../utils/myanmarLocationTree";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -1065,26 +1072,109 @@ const CartTab = ({ navigate }) => {
 
 // ─── Profile Tab ──────────────────────────────────────────────────────────────
 const ProfileTab = ({ user, onUpdate }) => {
-  const { t } = useTranslation();
-  const [editing, setEditing]   = useState(false);
-  const [form, setForm]         = useState({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "", address: user?.address || "", city: user?.city || "", state: user?.state || "" });
-  const [loading, setLoading]   = useState(false);
-  const [msg, setMsg]           = useState(null);
+  const { t, i18n } = useTranslation();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || "",
+    township: user?.township || "",
+    country: user?.country || "Myanmar",
+    postal_code: user?.postal_code || "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const displayTree = useMemo(
+    () => toLocationTree(getMyanmarStates(i18n.language), myanmarLocationsEng),
+    [i18n.language],
+  );
+  const locationRows = useMemo(
+    () => buildCheckoutLocationRows(null, displayTree),
+    [displayTree],
+  );
+
+  const selectedTreeNode = useMemo(
+    () => displayTree.find((n) => n.engState === form.state),
+    [displayTree, form.state],
+  );
+  const selectedCityNode = useMemo(
+    () => selectedTreeNode?.cities.find((c) => c.engCity === form.city),
+    [selectedTreeNode, form.city],
+  );
+
+  const openEdit = () => {
+    const { engState, engCity, engTownship } = resolveCanonicalLocation(
+      displayTree,
+      user?.state,
+      user?.city,
+      user?.township,
+    );
+    setForm({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+      city: engCity || "",
+      state: engState || "",
+      township: engTownship || "",
+      country: user?.country || "Myanmar",
+      postal_code: user?.postal_code || "",
+    });
+    setMsg(null);
+    setEditing(true);
+  };
+
+  const addressSummary = useMemo(() => {
+    if (!user) return "—";
+    const { engState, engCity, engTownship } = resolveCanonicalLocation(
+      displayTree,
+      user.state,
+      user.city,
+      user.township,
+    );
+    const stateN = displayTree.find((n) => n.engState === engState);
+    const cityN = stateN?.cities.find((c) => c.engCity === engCity);
+    const twIdx = cityN?.engTownships?.indexOf(engTownship) ?? -1;
+    const twLabel = twIdx >= 0 && cityN?.townships?.[twIdx] ? cityN.townships[twIdx] : engTownship;
+    const parts = [user.address, cityN?.city, twLabel, stateN?.state].filter(Boolean);
+    return parts.length ? parts.join(", ") : "—";
+  }, [user, displayTree]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setLoading(true); setMsg(null);
+    e.preventDefault();
+    setLoading(true);
+    setMsg(null);
     try {
       const res = await api.put("/users/profile", form);
-      if (res.data.success) { setMsg({ type:"success", text:t("buyer_dashboard.profile_updated") }); onUpdate(res.data.data); setEditing(false); }
-    } catch (err) { setMsg({ type:"error", text: err.response?.data?.message || t("buyer_dashboard.update_failed") }); }
-    finally { setLoading(false); }
+      if (res.data.success) {
+        setMsg({ type: "success", text: t("buyer_dashboard.profile_updated") });
+        onUpdate(res.data.data);
+        setEditing(false);
+      }
+    } catch (err) {
+      setMsg({
+        type: "error",
+        text: err.response?.data?.message || t("buyer_dashboard.update_failed"),
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const field = (label, name, type = "text") => (
     <div key={name}>
       <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
-      <input type={type} name={name} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm" />
+      <input
+        type={type}
+        name={name}
+        value={form[name]}
+        onChange={(e) => setForm({ ...form, [name]: e.target.value })}
+        className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+      />
     </div>
   );
 
@@ -1093,25 +1183,109 @@ const ProfileTab = ({ user, onUpdate }) => {
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100">Personal Information</h2>
         {!editing && (
-          <button onClick={() => setEditing(true)} className="flex items-center gap-1 text-green-600 hover:text-green-700 text-sm">
-            <PencilSquareIcon className="h-4 w-4" />Edit
+          <button
+            type="button"
+            onClick={openEdit}
+            className="flex items-center gap-1 text-green-600 hover:text-green-700 text-sm"
+          >
+            <PencilSquareIcon className="h-4 w-4" />
+            Edit
           </button>
         )}
       </div>
 
-      {msg && <div className={`mb-4 p-3 rounded-lg text-sm ${msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</div>}
+      {msg && (
+        <div
+          className={`mb-4 p-3 rounded-lg text-sm ${
+            msg.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
 
       {editing ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field("Full Name *", "name")} {field("Phone *", "phone", "tel")}
+            {field("Full Name *", "name")}
+            {field("Phone *", "phone", "tel")}
             {field("Email", "email", "email")}
           </div>
           {field("Address", "address")}
-          <div className="grid grid-cols-2 gap-4">{field("City", "city")} {field("State", "state")}</div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              {t("checkout.state_region")}
+            </label>
+            <select
+              value={form.state}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, state: e.target.value, city: "", township: "" }))
+              }
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
+            >
+              <option value="">{t("checkout.select_state_region")}</option>
+              {locationRows.map((row) => (
+                <option key={row.engState} value={row.engState}>
+                  {row.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+              {t("checkout.city")}
+            </label>
+            <select
+              value={form.city}
+              disabled={!form.state}
+              onChange={(e) => setForm((p) => ({ ...p, city: e.target.value, township: "" }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm disabled:opacity-60"
+            >
+              <option value="">{form.state ? t("checkout.select_city") : t("checkout.select_state_first")}</option>
+              {(locationRows.find((r) => r.engState === form.state)?.cities ?? []).map((c) => (
+                <option key={c.engCity} value={c.engCity}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {(selectedCityNode?.engTownships?.length ?? 0) > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                {t("checkout.township")}
+              </label>
+              <select
+                value={form.township}
+                disabled={!form.city}
+                onChange={(e) => setForm((p) => ({ ...p, township: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-green-500 text-sm disabled:opacity-60"
+              >
+                <option value="">{t("checkout.select_township")}</option>
+                {(selectedCityNode?.engTownships ?? []).map((engT, idx) => (
+                  <option key={engT} value={engT}>
+                    {selectedCityNode.townships[idx] || engT}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            {field(t("checkout.postal_code"), "postal_code")}
+            {field(t("checkout.country"), "country")}
+          </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setEditing(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm">Cancel</button>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50"
+            >
               {loading ? t("buyer_dashboard.saving") : t("buyer_dashboard.save_changes")}
             </button>
           </div>
@@ -1119,14 +1293,17 @@ const ProfileTab = ({ user, onUpdate }) => {
       ) : (
         <div className="space-y-4">
           {[
-            [UserIcon,    t("buyer_dashboard.full_name"), user?.name],
+            [UserIcon, t("buyer_dashboard.full_name"), user?.name],
             [EnvelopeIcon, t("buyer_dashboard.email"), user?.email],
-            [PhoneIcon,   t("buyer_dashboard.phone"), user?.phone],
-            [MapPinIcon,  t("buyer_dashboard.address"), [user?.address, user?.city, user?.state].filter(Boolean).join(", ") || "—"],
+            [PhoneIcon, t("buyer_dashboard.phone"), user?.phone],
+            [MapPinIcon, t("buyer_dashboard.address"), addressSummary],
           ].map(([Icon, label, value]) => (
             <div key={label} className="flex items-start gap-3">
               <Icon className="h-5 w-5 text-gray-400 dark:text-slate-600 mt-0.5 flex-shrink-0" />
-              <div><p className="text-xs text-gray-500 dark:text-slate-500">{label}</p><p className="font-medium text-sm">{value || "—"}</p></div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-slate-500">{label}</p>
+                <p className="font-medium text-sm">{value || "—"}</p>
+              </div>
             </div>
           ))}
         </div>

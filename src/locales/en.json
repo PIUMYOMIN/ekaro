@@ -32,6 +32,10 @@
       "title": "Login / Register | Pyonea",
       "description": "Access your Pyonea account to manage orders, wishlist, and seller dashboard."
     },
+    "local_deals": {
+      "title": "Local Deals | Pyonea",
+      "description": "Browse active coupon offers from verified Myanmar sellers by region. Save on wholesale orders and support local businesses."
+    },
     "default": {
       "title": "Pyonea",
       "description": "Myanmar's trusted B2B marketplace for wholesale trade."
@@ -43,6 +47,7 @@
     "products": "Products",
     "sellers": "Sellers",
     "categories": "Categories",
+    "local_deals": "Local Deals",
     "no_categories_found": "No Categories Found",
     "browse_categories": "Browse Categories",
     "search": "Search",
@@ -257,6 +262,8 @@
     "order_success_toast": "Order #{{number}} placed successfully!",
     "order_create_failed": "Failed to create order. Please try again.",
     "fill_required_shipping": "Please fill in all required shipping fields",
+    "fill_state_city": "Please select your state/region and city.",
+    "fill_township": "Please select your township for this city.",
     "empty_cart_title": "Your cart is empty",
     "empty_cart_message": "Add some products before checking out",
     "otp_title": "Confirm Your Order",
@@ -293,6 +300,30 @@
     "delivery_info_4": "Free returns within 7 days for eligible items",
     "place_another_order": "Place Another Order",
     "continue_shopping": "Continue Shopping"
+  },
+  "nrc_input": {
+    "title": "Myanmar NRC Number",
+    "title_mm_script": "မှတ်ပုံတင်နံပါတ်",
+    "subtitle_en": "Select division, township code, ID type, then enter the serial number.",
+    "subtitle_my": "တိုင်းဒေသကြီး / ပြည်နယ်၊ မြို့နယ်ကုဒ်၊ အမျိုးအစားနှင့် နံပါတ် ရွေးချယ်ပါ။",
+    "division": "Division",
+    "division_mm": "တိုင်း / ပြည်နယ်",
+    "township_code": "Township Code",
+    "township_code_mm": "မြို့နယ်ကုဒ်",
+    "id_type": "ID Type",
+    "id_type_mm": "အမျိုးအစား",
+    "serial": "Registration Number",
+    "serial_mm": "မှတ်ပုံတင်နံပါတ်",
+    "serial_hint_en": "Usually 6 digits; up to 10 digits allowed.",
+    "serial_hint_my": "အများအားဖြင့် ဂဏန်း ၆ လုံး၊ အများဆုံး ၁၀ လုံးအထိ ထည့်နိုင်သည်။",
+    "select": "Select",
+    "select_mm": "ရွေးချယ်ပါ",
+    "select_division_first": "Select division first",
+    "select_division_first_mm": "တိုင်းဒေသကြီးအရင်ရွေးပါ",
+    "select_township_code": "Select township code",
+    "select_township_code_mm": "မြို့နယ်ကုဒ်ရွေးချယ်ပါ",
+    "preview_title": "NRC Preview",
+    "preview_title_mm": "NRC နံပါတ် အကြိုကြည့်ရှုမှု"
   },
   "forgot_password": {
     "title": "Forgot Password?",
@@ -351,7 +382,52 @@
     "rights_reserved": "All rights reserved.",
     "report_issue": "Report an Issue",
     "bulk_order_tool": "Bulk order tool",
-    "compare_product": "Compare Product"
+    "compare_product": "Compare Product",
+    "local_deals": "Local Deals",
+    "section_discover": "Discover",
+    "section_help": "Help & orders",
+    "section_sell": "For sellers",
+    "section_company": "Company",
+    "section_legal": "Legal",
+    "track_order": "Track your order",
+    "cookie_settings": "Cookie settings",
+    "tagline": "Myanmar's B2B wholesale marketplace.",
+    "nav_label": "Footer navigation"
+  },
+  "localDeals": {
+    "title": "Local Deals",
+    "subtitle": "Active coupon codes from verified sellers — filter by region and use at checkout.",
+    "search_label": "Search deals",
+    "search_placeholder": "Search by offer name or code…",
+    "load_error": "We could not load deals. Check your connection or try again shortly.",
+    "empty": "No deals match your filters right now.",
+    "empty_hint": "Sellers publish coupons from Seller dashboard → Coupons. Once live, they appear here automatically.",
+    "showing_count": "Showing {{count}} of {{total}}",
+    "expires": "Expires",
+    "no_expiry": "No end date",
+    "min_order": "Minimum order {{amount}}",
+    "off": "OFF",
+    "view_deal": "View deal",
+    "load_more": "Load more",
+    "loading": "Loading…",
+    "about_title": "About Local Deals",
+    "about_p1": "Local Deals lists public coupon offers from approved Pyonea sellers. Offers are tied to each seller’s store and may apply to all of their products or only selected items, as configured by the seller.",
+    "about_p2": "Copy the code at checkout to apply the discount. Visit the seller’s store to shop eligible products. New coupons appear here as soon as sellers publish them.",
+    "close": "Close",
+    "coupon_code": "Coupon code",
+    "copied": "Copied to clipboard",
+    "modal_hint": "Enter this code in the coupon field at checkout when your cart includes products from this seller.",
+    "visit_store": "Visit seller store",
+    "browse_products": "Browse all products",
+    "regions": {
+      "all": "All Myanmar",
+      "yangon": "Yangon",
+      "mandalay": "Mandalay",
+      "naypyidaw": "Naypyidaw",
+      "ayeyarwady": "Ayeyarwady",
+      "shan": "Shan State",
+      "other": "Other regions"
+    }
   },
   "bulk_order": {
     "seo_title": "Bulk order tool | Pyonea",
@@ -1157,6 +1233,12 @@
       "next": "Next",
       "back": "Back",
       "saving": "Saving..."
+    },
+    "deliveryZonesOnboarding": {
+      "title": "Delivery Zones",
+      "description": "Choose where you deliver and set the shipping fee for each delivery area before continuing.",
+      "back": "Back to Address",
+      "save_continue": "Save Delivery Zones & Continue"
     },
     "documentUpload": {
       "title": "Document Verification",

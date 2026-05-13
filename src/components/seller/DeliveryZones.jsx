@@ -11,59 +11,7 @@ import {
 import api from '../../utils/api';
 import { useTranslation } from 'react-i18next';
 import getMyanmarStates from '../../data/myanmar-locations';
-// ─── FIX: always import the English JSON directly so we have canonical key names ───
-import myanmarLocationsEng from '../../data/myanmar-locations-eng.json';
-
-// ─── Myanmar Location Tree ────────────────────────────────────────────────────
-// BUG FIX: toLocationTree now accepts a second argument (engDb — always the
-// English JSON). Each tree node carries BOTH a display name (language-aware)
-// AND a canonical English name (engState / engCity / engTownships).
-// All zone keys are built from the English names so that switching the UI
-// language never invalidates previously-saved or in-memory selections.
-const toLocationTree = (db, engDb) => {
-  const locations    = Array.isArray(db?.locations)    ? db.locations    : [];
-  const engLocations = Array.isArray(engDb?.locations) ? engDb.locations : [];
-
-  const pickCityName = (cityObj) => {
-    if (!cityObj || typeof cityObj !== 'object') return null;
-    if (typeof cityObj.city === 'string' && cityObj.city.trim()) return cityObj.city.trim();
-    const fallbackKey = Object.keys(cityObj).find(
-      (k) => k !== 'townships' && k !== 'mmName' && typeof cityObj[k] === 'string',
-    );
-    return fallbackKey ? String(cityObj[fallbackKey]).trim() : null;
-  };
-
-  return locations
-    .map((rs, rIdx) => {
-      const state    = typeof rs.region_state === 'string' ? rs.region_state.trim() : null;
-      const engRs    = engLocations[rIdx];
-      // Canonical key name — always English (falls back to display name if missing)
-      const engState = typeof engRs?.region_state === 'string' ? engRs.region_state.trim() : state;
-      const cities   = Array.isArray(rs.cities) ? rs.cities : [];
-
-      return {
-        state,    // localised display name
-        engState, // canonical English key (used for all zone keys & DB storage)
-        cities: cities
-          .map((c, cIdx) => {
-            const engCityObj   = engRs?.cities?.[cIdx];
-            const engCity      = typeof engCityObj?.city === 'string'
-              ? engCityObj.city.trim()
-              : (pickCityName(c) ?? '');
-            const townships    = Array.isArray(c?.townships)          ? c.townships.filter(Boolean)          : [];
-            const engTownships = Array.isArray(engCityObj?.townships) ? engCityObj.townships.filter(Boolean) : townships;
-            return {
-              city:        pickCityName(c), // localised display name
-              engCity,                      // canonical English key
-              townships,                    // localised display names
-              engTownships,                 // canonical English keys (same indices as townships)
-            };
-          })
-          .filter((c) => !!c.city),
-      };
-    })
-    .filter((x) => !!x.state);
-};
+import { toLocationTree, myanmarLocationsEng } from '../../utils/myanmarLocationTree';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatMMK = (n) =>
@@ -91,7 +39,7 @@ const FeeInput = ({ value, onChange, placeholder }) => (
 );
 
 // ─── DaysInput ───────────────────────────────────────────────────────────────
-const DaysInput = ({ min, max, onChange }) => (
+const DaysInput = ({ min, max, onChange, daysLabel = 'days' }) => (
   <div className="flex items-center gap-1">
     <input
       type="number"
@@ -112,7 +60,7 @@ const DaysInput = ({ min, max, onChange }) => (
       onClick={(e) => e.stopPropagation()}
       className="w-10 border border-gray-300 dark:border-slate-600 rounded px-1 py-1 text-xs text-center bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-1 focus:ring-green-500 dark:focus:ring-green-400 focus:outline-none"
     />
-    <span className="text-xs text-gray-400 dark:text-slate-500">days</span>
+    <span className="text-xs text-gray-400 dark:text-slate-500">{daysLabel}</span>
   </div>
 );
 
@@ -494,6 +442,7 @@ const DeliveryZones = ({
               onChange={(v) => setFeeField('country|Myanmar', 'fee', v)}
             />
             <DaysInput
+              daysLabel={t('seller.delivery_zones.days_label')}
               min={getFee('country|Myanmar').daysMin}
               max={getFee('country|Myanmar').daysMax}
               onChange={(min, max) => {
@@ -550,6 +499,7 @@ const DeliveryZones = ({
                         onChange={(v) => setFeeField(stKey, 'fee', v)}
                       />
                       <DaysInput
+              daysLabel={t('seller.delivery_zones.days_label')}
                         min={getFee(stKey).daysMin}
                         max={getFee(stKey).daysMax}
                         onChange={(min, max) => {
@@ -612,6 +562,7 @@ const DeliveryZones = ({
                                   onChange={(v) => setFeeField(cKey, 'fee', v)}
                                 />
                                 <DaysInput
+              daysLabel={t('seller.delivery_zones.days_label')}
                                   min={getFee(cKey).daysMin}
                                   max={getFee(cKey).daysMax}
                                   onChange={(min, max) => {
@@ -660,6 +611,7 @@ const DeliveryZones = ({
                                             onChange={(v) => setFeeField(tKey, 'fee', v)}
                                           />
                                           <DaysInput
+              daysLabel={t('seller.delivery_zones.days_label')}
                                             min={getFee(tKey).daysMin}
                                             max={getFee(tKey).daysMax}
                                             onChange={(min, max) => {

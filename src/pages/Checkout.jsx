@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import useSEO from "../hooks/useSEO";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -23,8 +23,13 @@ import { useAuth } from "../context/AuthContext";
 import api from "../utils/api";
 import PaymentProcessor from "../components/payments/PaymentProcessor";
 import PaymentSuccess from "./PaymentSuccess";
-import myanmarLocationsEng from "../data/myanmar-locations-eng.json";
-import myanmarLocationsMm from "../data/myanmar-locations-mm.json";
+import getMyanmarStates from "../data/myanmar-locations";
+import {
+  toLocationTree,
+  myanmarLocationsEng,
+  buildCheckoutLocationRows,
+  resolveCanonicalLocation,
+} from "../utils/myanmarLocationTree";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -52,8 +57,6 @@ export default function Checkout() {
   const { cartItems, subtotal, totalItems, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const isMyanmarLanguage = i18n.language?.startsWith("my");
 
   const SeoComponent = useSEO({
     title: t("checkout.seo_title"),
@@ -97,7 +100,7 @@ export default function Checkout() {
   // ── Shipping / payment ───────────────────────────────────────────────────────
   const [shippingAddress, setShippingAddress] = useState({
     full_name: "", phone: "", address: "",
-    city: "", state: "", postal_code: "", country: "Myanmar",
+    city: "", state: "", township: "", postal_code: "", country: "Myanmar",
   });
   const [paymentMethod, setPaymentMethod] = useState("cash_on_delivery");
   const [orderNotes, setOrderNotes] = useState("");
@@ -123,49 +126,63 @@ export default function Checkout() {
   const [sellerShipping, setSellerShipping] = useState([]);
   const [taxRate, setTaxRate] = useState(0.05);
 
-// ── Location data — loaded from server (aggregated from seller delivery zones) ─
-  const [locationStates, setLocationStates] = useState([]);
+  const displayTree = useMemo(
+    () => toLocationTree(getMyanmarStates(i18n.language), myanmarLocationsEng),
+    [i18n.language],
+  );
+
+  const [locationRows, setLocationRows] = useState([]);
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // Load Myanmar locations with i18n support
   useEffect(() => {
-    // Try API first (seller zones)
-    api.get('/checkout-locations')
-      .then(res => {
-        const states = res.data?.data?.states || [];
-        if (res.data?.success && Array.isArray(states) && states.length > 0) {
-          setLocationStates(states);
-        } else {
-          // Fallback to local DB
-          const db = i18n.language.startsWith('my')
-            ? myanmarLocationsMm
-            : myanmarLocationsEng;
-          const stateMap = {};
-          db.flats.regions_states.forEach(region => {
-            const loc = db.locations.find(l => l.region_state === region);
-            if (loc) {
-              stateMap[loc.region_state] = loc.cities.map(c => c.city);
-            }
-          });
-          setLocationStates(Object.entries(stateMap).map(([state, cities]) => ({ state, cities })));
-        }
+    let cancelled = false;
+    setLocationLoading(true);
+    api
+      .get("/checkout-locations")
+      .then((res) => {
+        const apiStates = res.data?.success ? res.data?.data?.states : null;
+        const rows = buildCheckoutLocationRows(
+          Array.isArray(apiStates) && apiStates.length ? apiStates : null,
+          displayTree,
+        );
+        if (!cancelled) setLocationRows(rows);
       })
       .catch(() => {
-        // Network error - direct DB fallback
-        const db = i18n.language.startsWith('my')
-          ? myanmarLocationsMm
-          : myanmarLocationsEng;
-        const stateMap = {};
-        db.flats.regions_states.forEach(region => {
-          const loc = db.locations.find(l => l.region_state === region);
-          if (loc) {
-            stateMap[loc.region_state] = loc.cities.map(c => c.city);
-          }
-        });
-        setLocationStates(Object.entries(stateMap).map(([state, cities]) => ({ state, cities })));
+        if (!cancelled) setLocationRows(buildCheckoutLocationRows(null, displayTree));
       })
-      .finally(() => setLocationLoading(false));
-  }, [i18n.language]);
+      .finally(() => {
+        if (!cancelled) setLocationLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [i18n.language, displayTree]);
+
+  const selectedTreeNode = useMemo(
+    () => displayTree.find((n) => n.engState === shippingAddress.state),
+    [displayTree, shippingAddress.state],
+  );
+  const selectedCityNode = useMemo(
+    () => selectedTreeNode?.cities.find((c) => c.engCity === shippingAddress.city),
+    [selectedTreeNode, shippingAddress.city],
+  );
+
+  const shippingLocationSummary = useMemo(() => {
+    const row = locationRows.find((r) => r.engState === shippingAddress.state);
+    const cityRow = row?.cities?.find((c) => c.engCity === shippingAddress.city);
+    const twIdx = selectedCityNode?.engTownships?.indexOf(shippingAddress.township) ?? -1;
+    const twLabel =
+      twIdx >= 0 && selectedCityNode?.townships?.[twIdx]
+        ? selectedCityNode.townships[twIdx]
+        : shippingAddress.township || "";
+    return [cityRow?.label, twLabel, row?.label].filter(Boolean).join(", ");
+  }, [
+    locationRows,
+    shippingAddress.state,
+    shippingAddress.city,
+    shippingAddress.township,
+    selectedCityNode,
+  ]);
 
   // Fetch fees with location params — re-runs when address city/state changes
   // Debounced 700ms so fast typing doesn't hammer the API
@@ -176,9 +193,10 @@ export default function Checkout() {
       api.get('/orders/checkout-fees', {
         params: {
           country: shippingAddress.country || 'Myanmar',
-          state:   shippingAddress.state   || undefined,
-          city:    shippingAddress.city    || undefined,
-        }
+          state: shippingAddress.state || undefined,
+          city: shippingAddress.city || undefined,
+          township: shippingAddress.township || undefined,
+        },
       })
         .then(res => {
           if (res.data.success) {
@@ -194,7 +212,7 @@ export default function Checkout() {
         .finally(() => setFeesLoading(false));
     }, 700);
     return () => clearTimeout(timer);
-  }, [user, shippingAddress.country, shippingAddress.state, shippingAddress.city]);
+  }, [user, shippingAddress.country, shippingAddress.state, shippingAddress.city, shippingAddress.township]);
 
   // Derived totals — recalculate whenever fees or cart change
   const taxFee = subtotal * taxRate;
@@ -248,22 +266,32 @@ export default function Checkout() {
       .finally(() => setMethodsLoading(false));
   }, []);
 
-  // ── Pre-fill shipping from user profile ──────────────────────────────────────
+  // ── Pre-fill shipping from user profile (canonical English state/city/township) ─
   useEffect(() => {
     if (!user) return;
-    api.get("/auth/me").then(res => {
-      const u = res.data.data ?? res.data;
-      setShippingAddress(prev => ({
-        ...prev,
-        full_name: u.name ?? "",
-        phone: u.phone ?? "",
-        address: u.address ?? "",
-        city: u.city ?? "",
-        state: u.state ?? "",
-        postal_code: u.postal_code ?? "",
-      }));
-    }).catch(() => { });
-  }, [user]);
+    api
+      .get("/auth/me")
+      .then((res) => {
+        const u = res.data.data ?? res.data;
+        const { engState, engCity, engTownship } = resolveCanonicalLocation(
+          displayTree,
+          u.state,
+          u.city,
+          u.township,
+        );
+        setShippingAddress((prev) => ({
+          ...prev,
+          full_name: u.name ?? "",
+          phone: u.phone ?? "",
+          address: u.address ?? "",
+          city: engCity,
+          state: engState,
+          township: engTownship,
+          postal_code: u.postal_code ?? "",
+        }));
+      })
+      .catch(() => {});
+  }, [user, displayTree]);
 
   // ── Coupon ───────────────────────────────────────────────────────────────────
   const handleApplyCoupon = async () => {
@@ -365,6 +393,15 @@ export default function Checkout() {
   const handleRequestOtp = async () => {
     if (!shippingAddress.full_name || !shippingAddress.phone || !shippingAddress.address) {
       showToast('error', t("checkout.fill_required_shipping"));
+      return;
+    }
+    if (!shippingAddress.state || !shippingAddress.city) {
+      showToast('error', t("checkout.fill_state_city"));
+      return;
+    }
+    const needsTownship = (selectedCityNode?.engTownships?.length ?? 0) > 0;
+    if (needsTownship && !shippingAddress.township) {
+      showToast('error', t("checkout.fill_township"));
       return;
     }
     const unagreed = sellerPolicies.filter(p => !agreedSellers[p.seller_id]);
@@ -775,31 +812,61 @@ export default function Checkout() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{t("checkout.state_region")} *</label>
                     <select
                       value={shippingAddress.state}
-                      onChange={e => setShippingAddress(p => ({ ...p, state: e.target.value, city: "" }))}
+                      onChange={(e) =>
+                        setShippingAddress((p) => ({ ...p, state: e.target.value, city: "", township: "" }))
+                      }
                       disabled={locationLoading}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:opacity-60">
                       <option value="">{locationLoading ? t("checkout.loading_areas") : t("checkout.select_state_region")}</option>
-                      {locationStates.map(s => <option key={s.state} value={s.state}>{s.state}</option>)}
+                      {locationRows.map((row) => (
+                        <option key={row.engState} value={row.engState}>
+                          {row.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                      {isMyanmarLanguage ? t("checkout.township") : t("checkout.city")} *
+                      {t("checkout.city")} *
                     </label>
                     <select
                       value={shippingAddress.city}
                       disabled={!shippingAddress.state}
-                      onChange={e => setShippingAddress(p => ({ ...p, city: e.target.value }))}
+                      onChange={(e) =>
+                        setShippingAddress((p) => ({ ...p, city: e.target.value, township: "" }))
+                      }
                       className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 disabled:bg-gray-50 dark:disabled:bg-slate-700 disabled:opacity-60">
                       <option value="">
-                        {shippingAddress.state
-                          ? (isMyanmarLanguage ? t("checkout.select_township") : t("checkout.select_city"))
-                          : t("checkout.select_state_first")
-                        }
+                        {shippingAddress.state ? t("checkout.select_city") : t("checkout.select_state_first")}
                       </option>
-                      {(locationStates.find(s => s.state === shippingAddress.state)?.cities ?? []).map(c => <option key={c} value={c}>{c}</option>)}
+                      {(locationRows.find((r) => r.engState === shippingAddress.state)?.cities ?? []).map((c) => (
+                        <option key={c.engCity} value={c.engCity}>
+                          {c.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
+                  {(selectedCityNode?.engTownships?.length ?? 0) > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                        {t("checkout.township")} *
+                      </label>
+                      <select
+                        value={shippingAddress.township}
+                        disabled={!shippingAddress.city}
+                        onChange={(e) =>
+                          setShippingAddress((p) => ({ ...p, township: e.target.value }))
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 disabled:bg-gray-50 dark:disabled:bg-slate-700 disabled:opacity-60">
+                        <option value="">{t("checkout.select_township")}</option>
+                        {(selectedCityNode?.engTownships ?? []).map((engT, idx) => (
+                          <option key={engT} value={engT}>
+                            {selectedCityNode.townships[idx] || engT}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{t("checkout.postal_code")}</label>
                     <input type="text" value={shippingAddress.postal_code} onChange={e => setShippingAddress(p => ({ ...p, postal_code: e.target.value }))}
@@ -1022,7 +1089,11 @@ export default function Checkout() {
                       <span className="text-gray-600 dark:text-slate-400">{t("checkout.shipping_handling")}</span>
                       {(shippingAddress.city || shippingAddress.state) && (
                         <p className="text-[10px] text-gray-400 dark:text-slate-600 mt-0.5">
-                          {t("checkout.to_location", { location: [shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ') })}
+                          {t("checkout.to_location", {
+                            location:
+                              shippingLocationSummary ||
+                              [shippingAddress.city, shippingAddress.state].filter(Boolean).join(", "),
+                          })}
                         </p>
                       )}
                       <p className="text-[10px] text-gray-400 dark:text-slate-600 mt-0.5 max-w-[220px]">

@@ -46,8 +46,16 @@
           ]
         },
         {
+          "city": "Hlaegu",
+          "townships": ["Hlaegu"]
+        },
+        {
+          "city": "Tikekyi",
+          "townships": ["Tikekyi"]
+        },
+        {
           "city": "Thanlyin",
-          "townships": ["Thanlyin", "Kyauktada"]
+          "townships": ["Thanlyin", "Thonekhwa", "Kyauktan", "Khayan", "Kokokyun"]
         }
       ]
     },
@@ -81,7 +89,7 @@
         },
         {
           "city": "Thabeikkyin",
-          "townships": ["Thabeikkyin", "Singu", "Moekok"]
+          "townships": ["Thabeikkyin", "Sinkgu", "Moekok"]
         },
         {
           "city": "Kyaukse",

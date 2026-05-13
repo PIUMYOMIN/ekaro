@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
 import DeliveryZones from '../../components/seller/DeliveryZones';
@@ -7,11 +8,12 @@ import { invalidateOnboardingCache } from '../../components/StepGuard';
 
 const DeliveryZonesOnboarding = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <OnboardingLayout
-      title="Delivery Zones"
-      description="Choose where you deliver and set the shipping fee for each delivery area before continuing."
+      title={t('seller_onboarding.deliveryZonesOnboarding.title')}
+      description={t('seller_onboarding.deliveryZonesOnboarding.description')}
       showFooter={false}
       currentStepOverride="delivery-zones"
     >
@@ -22,12 +24,12 @@ const DeliveryZonesOnboarding = () => {
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-green-700 dark:text-slate-300 dark:hover:text-green-400"
         >
           <ArrowLeftIcon className="h-4 w-4" />
-          Back to Address
+          {t('seller_onboarding.deliveryZonesOnboarding.back')}
         </button>
 
         <DeliveryZones
           showHeader={false}
-          saveButtonLabel="Save Delivery Zones & Continue"
+          saveButtonLabel={t('seller_onboarding.deliveryZonesOnboarding.save_continue')}
           onSaveSuccess={() => {
             invalidateOnboardingCache();
             navigate('/seller/onboarding/documents');
