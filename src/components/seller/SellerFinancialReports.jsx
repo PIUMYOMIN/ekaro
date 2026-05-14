@@ -16,6 +16,7 @@ import {
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import api from '../../utils/api';
+import * as XLSX from 'xlsx';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -61,16 +62,7 @@ const GROUP_OPTIONS = [
 
 // ── Excel Export ───────────────────────────────────────────────────────────────
 
-async function exportToExcel(data, storeName) {
-  // xlsx must be installed: npm install xlsx
-  let XLSX;
-  try {
-    XLSX = await import('xlsx');
-  } catch {
-    alert('Excel library not available. Run: npm install xlsx');
-    return;
-  }
-
+function exportToExcel(data, storeName) {
   const { summary: s, orders, trend } = data;
 
   const buildSheet = (rows) => {
