@@ -669,9 +669,16 @@ const ProductManagement = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
-                          {stockStatus.text}{product.total_stock != null ? ` (${product.total_stock})` : ""}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${stockStatus.color}`}>
+                            {stockStatus.text}
+                          </span>
+                          {product.total_stock != null && (
+                            <span className="text-xs text-gray-500 dark:text-slate-400 pl-1">
+                              {product.total_stock.toLocaleString()} units
+                            </span>
+                          )}
+                        </div>
                       </td>
                       {/* NEW Discount Column Data */}
                       <td className="px-6 py-4">
