@@ -42,6 +42,11 @@
     }
   },
   "app_name": "Pyonea",
+  "common": {
+    "currency": {
+      "mmk": "ကျပ်"
+    }
+  },
   "header": {
     "home": "ပင်မစာမျက်နှာ",
     "products": "ကုန်ပစ္စည်းများ",

@@ -106,12 +106,14 @@ const Cart = () => {
   const [removingItemId, setRemovingItemId] = useState(null);
   const [error, setError]                 = useState(null);
 
-  const formatMMK = (amount) =>
-    new Intl.NumberFormat("my-MM", {
-      style: "currency",
-      currency: "MMK",
+  // t already declared above
+  const formatMMK = (amount) => {
+    const num = Number(amount) || 0;
+    const formattedNumber = new Intl.NumberFormat("en-MM", {
       minimumFractionDigits: 0,
-    }).format(amount || 0);
+    }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
+  };
 
   const handleUpdateQuantity = async (cartItemId, newQuantity, minOrder = 1) => {
     if (newQuantity < minOrder) return;

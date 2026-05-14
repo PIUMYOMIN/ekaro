@@ -59,12 +59,19 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
   const { t, i18n } = useTranslation();
   const loc = (en, mm) => (i18n.language === "my" ? mm || en : en || mm);
   // Locale-aware price formatter: Myanmar script numerals in "my", Arabic in "en"
-  const formatMMK = (amount) =>
-    new Intl.NumberFormat(i18n.language === "my" ? "my-MM" : "en-US", {
-      style: "currency",
-      currency: "MMK",
+  const formatMMK = (amount) => {
+    const num = Number(amount) || 0;
+    const formattedNumber = new Intl.NumberFormat(i18n.language === "my" ? "my-MM" : "en-US", {
+      maximumFractionDigits: 0,
       minimumFractionDigits: 0,
-    }).format(amount || 0);
+    }).format(num);
+
+    // Keep currency label consistent with the app's translation system.
+    // Default fallback: "MMK"
+    const currencySymbol = t('common.currency.mmk', 'MMK');
+    return `${formattedNumber} ${currencySymbol}`;
+  };
+
   const { user } = useAuth();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { cartItems, addToCart } = useCart();

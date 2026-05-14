@@ -1,7 +1,8 @@
 // src/pages/Client/BuyerDashboard.jsx
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
+import i18n from "../../i18n";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import {
@@ -30,8 +31,12 @@ import {
 } from "../../utils/myanmarLocationTree";
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
-const formatMMK = (n) =>
-  new Intl.NumberFormat("en-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 }).format(n || 0);
+const formatMMK = (n) => {
+  const num = Number(n) || 0;
+  const formattedNumber = new Intl.NumberFormat("en-MM", { minimumFractionDigits: 0 }).format(num);
+  const currencySymbol = i18n.t('common.currency.mmk', 'MMK');
+  return `${formattedNumber} ${currencySymbol}`;
+};
 
 const formatDate = (d, opts) =>
   new Date(d).toLocaleDateString("en-US", opts || { year: "numeric", month: "short", day: "numeric" });

@@ -1,5 +1,6 @@
 // components/PaymentSuccess.jsx
 import React, { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircleIcon, 
@@ -50,12 +51,14 @@ const PaymentSuccess = ({ order, paymentData, onClose }) => {
     }
   }, [order]);
 
+  const { t } = useTranslation();
+
   const formatMMK = (amount) => {
-    return new Intl.NumberFormat('en-MM', {
-      style: 'currency',
-      currency: 'MMK',
+    const num = Number(amount) || 0;
+    const formattedNumber = new Intl.NumberFormat('en-MM', {
       minimumFractionDigits: 0
-    }).format(amount);
+    }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
   };
 
   const formatDate = (dateString) => {

@@ -267,11 +267,11 @@ const ProductManagement = () => {
 
   // Format price in MMK
   const formatMMK = (amount) => {
-    return new Intl.NumberFormat("my-MM", {
-      style: "currency",
-      currency: "MMK",
+    const num = Number(amount) || 0;
+    const formattedNumber = new Intl.NumberFormat("en-MM", {
       minimumFractionDigits: 0
-    }).format(amount || 0);
+    }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
   };
 
   const getLocalizedText = (item, field) => {

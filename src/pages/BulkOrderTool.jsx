@@ -22,11 +22,6 @@ import { DEFAULT_PLACEHOLDER } from "../config";
 
 const STORAGE_KEY = "pyonea_bulk_order_lines_v1";
 
-const fmtMmk = (n) =>
-  new Intl.NumberFormat("en-MM", { style: "currency", currency: "MMK", maximumFractionDigits: 0 }).format(
-    Number.isFinite(n) ? n : 0
-  );
-
 const lineKey = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ln-${Date.now()}-${Math.random()}`);
 
 const productToLine = (p) => {
@@ -84,6 +79,12 @@ const BulkOrderTool = () => {
   const { user, hasRole } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+
+  const fmtMmk = (n) => {
+    const num = Number.isFinite(n) ? n : 0;
+    const formattedNumber = new Intl.NumberFormat("en-MM", { maximumFractionDigits: 0 }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
+  };
 
   const SeoComponent = useSEO({
     title: t("bulk_order.seo_title", "Bulk order tool | Pyonea"),

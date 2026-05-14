@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 import {
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -14,10 +16,12 @@ const fmtK = (n) => {
   if (v >= 1_000)         return (v / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
   return v.toLocaleString();
 };
-const fmtMMK  = (n) => `${fmtK(n)} MMK`;
-const fullMMK = (n) =>
-  new Intl.NumberFormat("my-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 })
-    .format(Number(n) || 0);
+const fmtMMK  = (n) => `${fmtK(n)} ${i18n.t('common.currency.mmk', 'MMK')}`;
+const fullMMK = (n) => {
+  const num = Number(n) || 0;
+  const formattedNumber = new Intl.NumberFormat("en-MM", { minimumFractionDigits: 0 }).format(num);
+  return `${formattedNumber} ${i18n.t('common.currency.mmk', 'MMK')}`;
+};
 const mmkNum = (n) => Math.round(Number(n) || 0);
 const fmtDate = (d) => d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -100,7 +104,20 @@ const SCard = ({ label, value, sub, accent }) => {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const FinancialReports = () => {
+  const { t } = useTranslation();
   const [period,   setPeriod]   = useState("month");
+
+  const fmtMMK = (n) => {
+    const num = Number(n) || 0;
+    const formattedNumber = fmtK(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
+  };
+
+  const fullMMK = (n) => {
+    const num = Number(n) || 0;
+    const formattedNumber = new Intl.NumberFormat("en-MM", { minimumFractionDigits: 0 }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
+  };
   const [groupBy,  setGroupBy]  = useState("day");
   const [fromDate, setFromDate] = useState(todayStr());
   const [toDate,   setToDate]   = useState(todayStr());

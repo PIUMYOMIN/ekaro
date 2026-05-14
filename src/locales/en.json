@@ -42,6 +42,11 @@
     }
   },
   "app_name": "Pyonea",
+  "common": {
+    "currency": {
+      "mmk": "MMK"
+    }
+  },
   "header": {
     "home": "Home",
     "products": "Products",

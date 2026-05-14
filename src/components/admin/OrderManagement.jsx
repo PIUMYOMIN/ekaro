@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   MagnifyingGlassIcon,
   ArrowPathIcon,
@@ -33,9 +34,6 @@ const STATUS_RANK = {
 };
 
 const ORDER_STATUS_OPTIONS = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
-
-const fmt = (n) =>
-  new Intl.NumberFormat("my-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 }).format(n || 0);
 
 const parseShippingAddress = (raw) => {
   if (!raw) return null;
@@ -344,7 +342,14 @@ const OrderDetailModal = ({ order, onClose }) => {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 const OrderManagement = () => {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
+
+  const fmt = (n) => {
+    const num = Number(n) || 0;
+    const formattedNumber = new Intl.NumberFormat("en-MM", { minimumFractionDigits: 0 }).format(num);
+    return `${formattedNumber} ${t('common.currency.mmk', 'MMK')}`;
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState(null);

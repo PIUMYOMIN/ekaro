@@ -20,6 +20,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER, SITE_PUBLIC_URL } from "../config";
 import { SkeletonProductDetail } from "../components/ui/Skeleton";
+import MoreFromSellerDesktopCarousel from "../components/ui/MoreFromSellerDesktopCarousel";
 import VariantPicker from "../components/ui/VariantPicker";
 import ProductImageGallery from "../components/ui/ProductImageGallery";
 import ProductCard from "../components/ui/ProductCard";
@@ -1361,13 +1362,9 @@ const ProductDetail = () => {
                   ))}
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {moreFromSeller.map((p, idx) => (
-                    <div key={p.slug_en || p.id} className="w-[180px] sm:w-[220px] flex-shrink-0">
-                      <ProductCard product={p} imagePriority={idx < 3} />
-                    </div>
-                  ))}
-                </div>
+                <MoreFromSellerDesktopCarousel
+                  moreFromSeller={moreFromSeller}
+                />
               )}
             </div>
           )}
