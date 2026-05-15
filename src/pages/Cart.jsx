@@ -239,9 +239,23 @@ const Cart = () => {
                     const isUpdating     = updatingItemId === item.id;
                     const isRemoving     = removingItemId === item.id;
                     const minOrder       = item.min_order ?? 1;
-                    const quantityStep   = minOrder; // step always equals MOQ
+                    const quantityStep   = item.quantity_step ?? minOrder;
                     const stockLimit     = item.stock ?? Infinity;
                     const unitLabel      = item.quantity_unit ?? "pcs";
+
+                    // Active wholesale tier: highest tier whose min_qty ≤ current quantity
+                    const activeTier = item.wholesale_tiers?.length
+                      ? [...item.wholesale_tiers]
+                          .sort((a, b) => b.min_qty - a.min_qty)
+                          .find(t => item.quantity >= t.min_qty) ?? null
+                      : null;
+                    // Next tier the buyer could unlock by increasing quantity
+                    const nextTier = item.wholesale_tiers?.length
+                      ? item.wholesale_tiers
+                          .slice()
+                          .sort((a, b) => a.min_qty - b.min_qty)
+                          .find(t => t.min_qty > item.quantity) ?? null
+                      : null;
 
                     return (
                       <li
@@ -410,8 +424,27 @@ const Cart = () => {
                           {(minOrder > 1 || quantityStep > 1) && (
                             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                               {minOrder > 1 && `Min. order: ${minOrder} ${unitLabel}`}
-                              {minOrder > 1 && quantityStep > 1 && " · "}
-                              {quantityStep > 1 && `Order in steps of ${quantityStep}`}
+                              {minOrder > 1 && quantityStep > 1 && quantityStep !== minOrder && " · "}
+                              {quantityStep > 1 && quantityStep !== minOrder && `Order in steps of ${quantityStep}`}
+                            </p>
+                          )}
+
+                          {/* Active volume pricing tier */}
+                          {activeTier && (
+                            <p className="mt-1 text-xs text-green-700 dark:text-green-400 font-medium">
+                              🏷 Volume tier active: {activeTier.discount_pct > 0 ? `-${activeTier.discount_pct}%` : ""} for ≥{activeTier.min_qty} {unitLabel}
+                              {activeTier.label ? ` (${activeTier.label})` : ""}
+                            </p>
+                          )}
+                          {/* Next tier nudge */}
+                          {!activeTier && nextTier && (
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                              💡 Add {nextTier.min_qty - item.quantity} more to unlock {nextTier.discount_pct > 0 ? `-${nextTier.discount_pct}%` : "volume"} pricing
+                            </p>
+                          )}
+                          {activeTier && nextTier && (
+                            <p className="mt-1 text-xs text-amber-500 dark:text-amber-400">
+                              💡 Add {nextTier.min_qty - item.quantity} more to unlock {nextTier.discount_pct > 0 ? `-${nextTier.discount_pct}%` : "a better"} tier
                             </p>
                           )}
                         </div>

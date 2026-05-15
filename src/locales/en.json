@@ -904,6 +904,8 @@
     "volume_pricing": "Volume Pricing",
     "min_qty": "Min. Qty",
     "price_per_unit": "Price / {{unit}}",
+    "add_more_for_tier": "Add {{count}} more {{unit}} to unlock {{discount}} volume pricing",
+    "better_price": "a better price",
     "discount": "Discount",
     "applied": "Applied",
     "decrease_quantity": "Decrease quantity",

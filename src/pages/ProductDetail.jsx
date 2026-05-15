@@ -251,21 +251,33 @@ const ProductDetail = () => {
   };
 
   // ── Derived values ──────────────────────────────────────────────────────────
-  // Show the variant price when one is selected, otherwise the base product price
+  // Active wholesale tier: highest tier whose min_qty ≤ current quantity.
+  // Tiers only apply to simple (non-variant) products.
+  const activeTier = useMemo(() => {
+    if (selectedVariant || !product?.wholesale_tiers?.length) return null;
+    return [...product.wholesale_tiers]
+      .sort((a, b) => b.min_qty - a.min_qty)
+      .find(t => quantity >= t.min_qty) ?? null;
+  }, [product?.wholesale_tiers, quantity, selectedVariant]);
+
+  // Show the variant price when one is selected.
+  // If a wholesale tier is active, that price overrides the base/sale price.
+  // Otherwise fall through to active sale price, then base price.
   const displayPrice = selectedVariant?.price
+    ?? activeTier?.price_per_unit
     ?? (product?.is_currently_on_sale ? product?.selling_price : null)
     ?? product?.price;
 
-  // Effective discount percentage for the badge — only when no variant selected
-  // (variants are not discounted at the product level).
-  const displayDiscountPct = !selectedVariant && product?.is_currently_on_sale
-    ? (product?.effective_discount_pct ?? 0)
-    : 0;
+  // Effective discount percentage for the badge.
+  // Tier discount takes priority over sale discount. Variants are not discounted at product level.
+  const displayDiscountPct = activeTier
+    ? (activeTier.discount_pct ?? 0)
+    : (!selectedVariant && product?.is_currently_on_sale ? (product?.effective_discount_pct ?? 0) : 0);
   
-  // How much the buyer saves (shown below the price)
-  const displayDiscountSaved = !selectedVariant && product?.is_currently_on_sale
-    ? (product?.discount_saved ?? 0)
-    : 0;
+  // Per-unit savings shown below the price
+  const displayDiscountSaved = activeTier
+    ? Math.max(0, parseFloat(product?.price ?? 0) - parseFloat(activeTier.price_per_unit))
+    : (!selectedVariant && product?.is_currently_on_sale ? (product?.discount_saved ?? 0) : 0);
 
   // Stock available for the current selection
   const availableStock = selectedVariant != null
@@ -1004,6 +1016,24 @@ const ProductDetail = () => {
                     </tbody>
                   </table>
                   </div>
+                  {/* Next tier nudge — show when buyer is below the next tier threshold */}
+                  {(() => {
+                    const nextTier = product.wholesale_tiers
+                      .slice()
+                      .sort((a, b) => a.min_qty - b.min_qty)
+                      .find(t => t.min_qty > quantity);
+                    if (!nextTier) return null;
+                    const needed = nextTier.min_qty - quantity;
+                    return (
+                      <p className="mt-2 text-xs text-amber-700 dark:text-amber-300 font-medium">
+                        💡 {t("productDetail.add_more_for_tier", {
+                          count: needed,
+                          unit: product.quantity_unit ?? t("productDetail.pieces"),
+                          discount: nextTier.discount_pct > 0 ? `-${nextTier.discount_pct}%` : t("productDetail.better_price"),
+                        })}
+                      </p>
+                    );
+                  })()}
                 </div>
               )}
               <div className="flex flex-col gap-2">
