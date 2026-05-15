@@ -2724,16 +2724,18 @@
   "productCard": {
     "no_image": "ပုံမရှိပါ",
     "sold_out": "ပစ္စည်းကုန်သွားပြီ",
-    "unavailable": "မရနိုင်ပါ",
+    "unavailable": "မရနိုင်တော့ပါ",
     "new_badge": "အသစ်",
-    "out_of_stock": "ကုန်သွားပြီ",
-    "in_cart": "တောင်းထဲရှိပြီ",
-    "adding": "ထည့်နေသည်…",
+    "out_of_stock": "ပစ္စည်းကုန်သွားပြီ",
+    "in_cart": "ဈေးခြင်းတောင်းတွင်ထည့်ပြီး",
+    "adding": "ပေါင်းထည့်နေသည်…",
     "select_options": "ရွေးချယ်မှုကြည့်ရန်",
     "add_to_cart": "တောင်းထဲထည့်ရန်",
     "by_seller": "{{name}} မှ",
     "moq": "အနည်းဆုံး {{count}}",
-    "unnamed": "ကုန်ပစ္စည်းအမည်မဲ့"
+    "unnamed": "ကုန်ပစ္စည်းအမည်မဲ့",
+    "add_to_compare": "နှိုင်းယှဉ်ရန် ထည့်ရန်",
+    "added_to_compare": "နှိုင်းယှဉ်ရန် ထည့်ပြီး"
   },
   "admin": {
     "productManagement": {

@@ -388,7 +388,7 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
                   : "border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
-              {compared ? "Added to compare" : "Add to compare"}
+              {compared ? t('productCard.added_to_compare') : t('productCard.add_to_compare')}
             </button>
 
             <button

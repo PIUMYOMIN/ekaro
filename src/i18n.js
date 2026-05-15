@@ -11,7 +11,7 @@ const resources = {
 };
 
 i18n
-  .use(LanguageDetector)   // detects from localStorage, navigator, etc.
+  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
@@ -21,10 +21,14 @@ i18n
       escapeValue: false,
     },
     detection: {
-      // Check localStorage first, then browser language, then default to 'en'
-      order: ['localStorage', 'navigator'],
+      // 1. ?lang= query param  — Google Search crawl and hreflang links
+      // 2. localStorage        — user's previously chosen language
+      // 3. navigator           — browser's preferred language
+      order: ['querystring', 'localStorage', 'navigator'],
+      lookupQuerystring: 'lang',
       lookupLocalStorage: 'pyonea_language',
       caches: ['localStorage'],
+      excludeCacheFor: ['querystring'],
     },
   });
 

@@ -33,6 +33,33 @@ const SEO = ({
     ? safeUrl
     : `${siteUrl}${safeUrl}`;
 
+  // Auto-generate ?lang= alternates when caller doesn't provide explicit ones.
+  // Strips any existing ?lang= first to avoid ?lang=en&lang=my duplicates.
+  const buildLangUrl = (base, lang) => {
+    try {
+      const u = new URL(base);
+      u.searchParams.set("lang", lang);
+      return u.toString();
+    } catch {
+      const stripped = base.replace(/([?&])lang=[^&]*/g, "").replace(/[?&]$/, "");
+      const sep = stripped.includes("?") ? "&" : "?";
+      return `${stripped}${sep}lang=${lang}`;
+    }
+  };
+
+  const effectiveAlternates = Object.keys(alternateUrls).length > 0
+    ? alternateUrls
+    : {
+        en: buildLangUrl(absoluteUrl, "en"),
+        my: buildLangUrl(absoluteUrl, "my"),
+      };
+
+  // Map lang code → og:locale value
+  const ogLocaleMap = { en: "en_US", my: "my_MM" };
+  const ogLocaleAlternates = Object.keys(effectiveAlternates)
+    .filter((lang) => ogLocaleMap[lang] && ogLocaleMap[lang] !== locale)
+    .map((lang) => ogLocaleMap[lang]);
+
   return (
     <Helmet>
       <title>{fullTitle}</title>
@@ -41,40 +68,40 @@ const SEO = ({
 
       <link rel="canonical" href={absoluteUrl} />
 
-      {/* hreflang */}
-      {Object.entries(alternateUrls).map(([lang, href]) => (
-        <link
-          key={lang}
-          rel="alternate"
-          hrefLang={lang}
-          href={href}
-        />
+      {/* hreflang — one link per supported language */}
+      {Object.entries(effectiveAlternates).map(([lang, href]) => (
+        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
       ))}
 
+      {/* x-default points to the English version */}
       <link
         rel="alternate"
         hrefLang="x-default"
-        href={alternateUrls.en || siteUrl}
+        href={effectiveAlternates.en || siteUrl}
       />
 
       {/* Open Graph */}
-      <meta property="og:type" content={type} />
-      <meta property="og:title" content={fullTitle} />
+      <meta property="og:type"        content={type} />
+      <meta property="og:title"       content={fullTitle} />
       <meta property="og:description" content={description || ""} />
-      <meta property="og:image" content={absoluteImage} />
+      <meta property="og:image"       content={absoluteImage} />
       {imageAlt ? <meta property="og:image:alt" content={imageAlt} /> : null}
-      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:width"  content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:url" content={absoluteUrl} />
-      <meta property="og:site_name" content="Pyonea" />
-      <meta property="og:locale" content={locale} />
+      <meta property="og:url"         content={absoluteUrl} />
+      <meta property="og:site_name"   content="Pyonea" />
+      <meta property="og:locale"      content={locale} />
+      {/* og:locale:alternate lists the other available language */}
+      {ogLocaleAlternates.map((alt) => (
+        <meta key={alt} property="og:locale:alternate" content={alt} />
+      ))}
 
       {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@PyoneaMarket" />
-      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:card"        content="summary_large_image" />
+      <meta name="twitter:site"        content="@PyoneaMarket" />
+      <meta name="twitter:title"       content={fullTitle} />
       <meta name="twitter:description" content={description || ""} />
-      <meta name="twitter:image" content={absoluteImage} />
+      <meta name="twitter:image"       content={absoluteImage} />
 
       {/* noindex */}
       {noindex && (

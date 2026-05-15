@@ -2682,7 +2682,9 @@
     "add_to_cart": "Add to Cart",
     "by_seller": "by {{name}}",
     "moq": "MOQ {{count}}",
-    "unnamed": "Unnamed Product"
+    "unnamed": "Unnamed Product",
+    "add_to_compare": "Add to compare",
+    "added_to_compare": "Added to compare"
   },
   "admin": {
     "productManagement": {
