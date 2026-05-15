@@ -145,7 +145,7 @@ const Home = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/products?featured=true&per_page=8&fields=id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
+      const res = await api.get("/products?featured=true&per_page=20&fields=id,name_en,name_mm,slug_en,price,images,average_rating,review_count,quantity,is_active,moq,min_order_unit,category_id,seller_id,is_on_sale");
       setProducts(res.data.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch featured products:", err);
