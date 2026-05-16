@@ -19,16 +19,36 @@ import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 /**
+ * Returns true when at least one variant has option_values rows populated.
+ * When every variant has an empty option_values array it means the product
+ * uses the "default variant" pattern (single stock row, no real combinations),
+ * so disable-logic based on combinations is meaningless.
+ */
+const hasRealVariantCombinations = (variants) =>
+  Array.isArray(variants) && variants.some((v) => v.option_values?.length > 0);
+
+/**
  * Given the current map of { optionId → valueId } selections and
  * the full variant list, find the exactly matching variant (if any).
+ *
+ * Special case — "default variant" pattern:
+ *   A product whose variants all have option_values = [] is a simple product
+ *   stored with one placeholder variant for uniform stock management.
+ *   Once the buyer makes any selection we return that first variant so the
+ *   add-to-cart flow can proceed with the correct SKU / price.
  */
 const findMatchingVariant = (variants, selectedValues) => {
   const selectedIds = Object.values(selectedValues).filter(Boolean);
   if (selectedIds.length === 0) return null;
 
+  // Default-variant pattern: no real combinations → use the first variant.
+  if (!hasRealVariantCombinations(variants)) {
+    return variants?.[0] ?? null;
+  }
+
   return (
     variants.find((v) => {
-      const variantValueIds = v.option_values.map((ov) => ov.value_id);
+      const variantValueIds = (v.option_values ?? []).map((ov) => ov.value_id);
       return (
         selectedIds.length === variantValueIds.length &&
         selectedIds.every((id) => variantValueIds.includes(id))
@@ -40,13 +60,20 @@ const findMatchingVariant = (variants, selectedValues) => {
 /**
  * Given the current partial selection and a candidate value,
  * check if adding it would lead to at least one valid variant.
+ *
+ * Returns true (never disables) when:
+ *   • variants is empty — seller hasn't generated combinations yet
+ *   • no variant has option_values — default-variant pattern
  */
 const wouldHaveMatch = (variants, currentSelected, optionId, valueId) => {
+  // No real combinations to validate against → treat all values as available.
+  if (!hasRealVariantCombinations(variants)) return true;
+
   const hypothetical = { ...currentSelected, [optionId]: valueId };
   const selectedIds = Object.values(hypothetical).filter(Boolean);
 
   return variants.some((v) => {
-    const variantValueIds = v.option_values.map((ov) => ov.value_id);
+    const variantValueIds = (v.option_values ?? []).map((ov) => ov.value_id);
     return selectedIds.every((id) => variantValueIds.includes(id));
   });
 };
@@ -291,8 +318,10 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
         </div>
       ))}
 
-      {/* Validation hint — shown when all non-input options are selected but no variant matches */}
+      {/* Validation hint — shown when all non-input options are selected but no variant matches.
+           Only meaningful when the product has real variant combinations. */}
       {(() => {
+        if (!hasRealVariantCombinations(variants)) return null;
         const nonInputOptions = options.filter((o) => o.type !== "input");
         const allSelected = nonInputOptions.every((o) => selected[o.id]);
         const matched = findMatchingVariant(variants, selected);

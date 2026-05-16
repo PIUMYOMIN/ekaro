@@ -25,8 +25,11 @@ const STORAGE_KEY = "pyonea_bulk_order_lines_v1";
 const lineKey = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ln-${Date.now()}-${Math.random()}`);
 
 const productToLine = (p) => {
-  const moq = Math.max(1, parseInt(String(p.moq ?? 1), 10) || 1);
-  const unitPrice = Number(p.selling_price ?? p.price ?? 0) || 0;
+  const moq          = Math.max(1, parseInt(String(p.moq ?? 1), 10) || 1);
+  const quantityStep = Math.max(1, parseInt(String(p.quantity_step ?? 1), 10) || 1);
+  const basePrice    = Number(p.selling_price ?? p.price ?? 0) || 0;
+  const wholesaleTiers = Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [];
+
   const sellerUserId = p.seller?.id ?? p.seller_id ?? null;
   const sellerLabel =
     p.seller?.store_name ||
@@ -39,6 +42,13 @@ const productToLine = (p) => {
         ? p.images[0]
         : p.images[0]?.url || p.images[0]
       : null);
+
+  // Compute the effective unit price at MOQ quantity (accounts for any tier that applies immediately).
+  const activeTierAtMoq = wholesaleTiers.length
+    ? [...wholesaleTiers].sort((a, b) => b.min_qty - a.min_qty).find(t => moq >= t.min_qty)
+    : null;
+  const unitPrice = activeTierAtMoq ? Number(activeTierAtMoq.price_per_unit) : basePrice;
+
   return {
     key: lineKey(),
     productId: p.id,
@@ -49,6 +59,9 @@ const productToLine = (p) => {
     sellerLabel,
     unitLabel: (p.quantity_unit || p.min_order_unit || "piece").slice(0, 20),
     moq,
+    quantityStep,
+    basePrice,
+    wholesaleTiers,
     unitPrice,
     hasVariants: !!p.has_variants,
     image: rawImg,
@@ -122,13 +135,9 @@ const BulkOrderTool = () => {
     setSearchLoading(true);
     try {
       const params = new URLSearchParams({
-        search: debouncedSearch,
+        q: debouncedSearch,   // backend reads `q`, not `search`
         per_page: "12",
-        page: "1",
-        sort_by: "created_at",
-        sort_order: "desc",
-        fields:
-          "id,name_en,name_mm,slug_en,price,images,moq,min_order_unit,category_id,average_rating,has_variants,selling_price,is_currently_on_sale,quantity_unit,seller_id",
+        sort: "newest",       // backend reads `sort`, not `sort_by`/`sort_order`
       });
       const res = await api.get(`/products?${params.toString()}`);
       const data = res.data.data || res.data || [];
@@ -157,7 +166,7 @@ const BulkOrderTool = () => {
 
   useEffect(() => {
     try {
-      const minimal = lines.map(({ key, productId, name, slug, categoryId, sellerUserId, sellerLabel, unitLabel, moq, unitPrice, hasVariants, quantity }) => ({
+      const minimal = lines.map(({ key, productId, name, slug, categoryId, sellerUserId, sellerLabel, unitLabel, moq, quantityStep, basePrice, wholesaleTiers, unitPrice, hasVariants, quantity }) => ({
         key,
         productId,
         name,
@@ -167,6 +176,9 @@ const BulkOrderTool = () => {
         sellerLabel,
         unitLabel,
         moq,
+        quantityStep,
+        basePrice,
+        wholesaleTiers,
         unitPrice,
         hasVariants,
         quantity,
@@ -182,9 +194,10 @@ const BulkOrderTool = () => {
     setLines((prev) => {
       const ex = prev.find((l) => l.productId === p.id);
       if (ex) {
-        const inc = Math.max(1, parseInt(String(p.moq ?? 1), 10) || 1);
+        // Increment by the step, not the MOQ
+        const step = Math.max(1, parseInt(String(p.quantity_step ?? ex.quantityStep ?? 1), 10) || 1);
         return prev.map((l) =>
-          l.productId === p.id ? { ...l, quantity: String(parseQty(l.quantity) + inc) } : l
+          l.productId === p.id ? { ...l, quantity: String(parseQty(l.quantity) + step) } : l
         );
       }
       return [...prev, productToLine(p)];
@@ -199,10 +212,37 @@ const BulkOrderTool = () => {
 
   const validatedLines = useMemo(() => {
     return lines.map((l) => {
+      const step = l.quantityStep ?? 1;
+      const moq  = l.moq ?? 1;
+
+      // 1. Clamp to MOQ floor
       let q = parseQty(l.quantity);
-      if (q < l.moq) q = l.moq;
-      const subtotal = q * (l.unitPrice || 0);
-      return { ...l, quantityNum: q, subtotal, valid: !!l.sellerUserId && !!l.categoryId };
+      if (q < moq) q = moq;
+
+      // 2. Snap to nearest valid step above MOQ: valid = moq + n*step
+      if (step > 1) {
+        const rem = (q - moq) % step;
+        if (rem !== 0) q = q + (step - rem); // round up to next valid step
+      }
+
+      // 3. Resolve effective unit price from wholesale tiers at quantity q
+      const tiers = Array.isArray(l.wholesaleTiers) ? l.wholesaleTiers : [];
+      const activeTier = tiers.length
+        ? [...tiers].sort((a, b) => b.min_qty - a.min_qty).find(t => q >= t.min_qty)
+        : null;
+      const unitPrice = activeTier
+        ? Number(activeTier.price_per_unit)
+        : (l.basePrice ?? l.unitPrice ?? 0);
+
+      const subtotal = q * unitPrice;
+      return {
+        ...l,
+        quantityNum: q,
+        unitPrice,
+        activeTier: activeTier ?? null,
+        subtotal,
+        valid: !!l.sellerUserId && !!l.categoryId,
+      };
     });
   }, [lines]);
 
@@ -438,24 +478,24 @@ const BulkOrderTool = () => {
                       {t("bulk_order.no_results", "No products found.")}
                     </p>
                   )}
-                  {searchResults.map((p) => (
-                    (() => {
-                      const rawImg =
-                        p.image ??
-                        (Array.isArray(p.images) && p.images.length
-                          ? typeof p.images[0] === "string"
-                            ? p.images[0]
-                            : p.images[0]?.url || p.images[0]
-                          : null);
-                      const name =
-                        i18n.language === "my"
-                          ? (p.name_mm || p.name_en || "Product")
-                          : (p.name_en || p.name_mm || "Product");
-                      const sellerLabel =
-                        p.seller?.store_name ||
-                        p.seller?.name ||
-                        (p.seller_id ? `Seller #${p.seller_id}` : "—");
-                      return (
+                  {searchResults.map((p) => {
+                    const rawImg =
+                      p.image ??
+                      (Array.isArray(p.images) && p.images.length
+                        ? typeof p.images[0] === "string"
+                          ? p.images[0]
+                          : p.images[0]?.url || p.images[0]
+                        : null);
+                    const name =
+                      i18n.language === "my"
+                        ? (p.name_mm || p.name_en || "Product")
+                        : (p.name_en || p.name_mm || "Product");
+                    const sellerLabel =
+                      p.seller?.store_name ||
+                      p.seller?.name ||
+                      (p.seller_id ? `Seller #${p.seller_id}` : "—");
+                    const alreadyAdded = lines.some((l) => l.productId === p.id);
+                    return (
                     <div
                       key={p.id}
                       className="flex gap-3 p-3 rounded-xl border border-gray-100 dark:border-slate-600 hover:border-green-300 dark:hover:border-green-700 transition-colors"
@@ -473,6 +513,9 @@ const BulkOrderTool = () => {
                         </p>
                         <p className="text-xs text-green-700 dark:text-green-400 mt-1 font-medium">
                           {fmtMmk(p.selling_price ?? p.price)} · MOQ {p.moq ?? 1}
+                          {(p.quantity_step ?? 1) > 1 && (p.quantity_step !== p.moq) && (
+                            <span className="ml-1 text-gray-500 dark:text-slate-400">· step {p.quantity_step}</span>
+                          )}
                           {p.has_variants && (
                             <span className="ml-2 text-amber-600 dark:text-amber-400">
                               {t("bulk_order.variants_label", "(variants — cart from product page)")}
@@ -483,15 +526,18 @@ const BulkOrderTool = () => {
                       <button
                         type="button"
                         onClick={() => addProduct(p)}
-                        className="self-center flex-shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700"
+                        className={`self-center flex-shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                          alreadyAdded
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60"
+                            : "bg-green-600 text-white hover:bg-green-700"
+                        }`}
                       >
                         <PlusIcon className="h-4 w-4" />
-                        {t("bulk_order.add", "Add")}
+                        {alreadyAdded ? t("bulk_order.add_more", "+More") : t("bulk_order.add", "Add")}
                       </button>
                     </div>
-                      );
-                    })()
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -531,7 +577,7 @@ const BulkOrderTool = () => {
                         <tr>
                           <th className="px-4 py-3">{t("bulk_order.col_product", "Product")}</th>
                           <th className="px-4 py-3">{t("bulk_order.col_seller", "Seller")}</th>
-                          <th className="px-4 py-3">{t("bulk_order.col_price", "Est. unit")}</th>
+                          <th className="px-4 py-3">{t("bulk_order.col_price", "Unit price")}</th>
                           <th className="px-4 py-3">{t("bulk_order.col_qty", "Qty")}</th>
                           <th className="px-4 py-3 text-right">{t("bulk_order.col_line", "Line")}</th>
                           <th className="px-4 py-3 w-10" />
@@ -568,17 +614,27 @@ const BulkOrderTool = () => {
                             <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-300 max-w-[120px]">
                               {l.sellerLabel}
                             </td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">{fmtMmk(l.unitPrice)}</td>
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
+                              {fmtMmk(l.unitPrice)}
+                              {l.activeTier && (
+                                <span className="ml-1 inline-block bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                                  {l.activeTier.discount_pct > 0 ? `-${l.activeTier.discount_pct}%` : "Tier"}
+                                </span>
+                              )}
+                            </td>
                             <td className="px-4 py-3">
                               <input
                                 type="number"
                                 min={l.moq}
+                                step={l.quantityStep ?? 1}
                                 value={l.quantity}
                                 onChange={(e) => updateQty(l.key, e.target.value)}
                                 className="w-20 border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100"
                               />
                               <p className="text-[10px] text-gray-400 mt-0.5">
-                                MOQ {l.moq} {l.unitLabel}
+                                MOQ {l.moq}
+                                {l.quantityStep > 1 && l.quantityStep !== l.moq && ` · step ${l.quantityStep}`}
+                                {" "}{l.unitLabel}
                               </p>
                             </td>
                             <td className="px-4 py-3 text-right font-medium whitespace-nowrap">{fmtMmk(l.subtotal)}</td>

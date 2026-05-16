@@ -1,22 +1,4 @@
 // src/components/seller/WholesaleTiersEditor.jsx
-//
-// Inline editor for product-level wholesale pricing tiers (variant_id = null).
-// Embedded in ProductForm Step 2 (Pricing & B2B) after the MOQ / quantity_step fields.
-//
-// UX contract:
-//   • Tiers are edited locally in a draft list.
-//   • "Save Tiers" calls POST /wholesale-tiers/sync for an atomic replace.
-//   • Requires a saved product ID (productId prop must be non-null).
-//   • If productId is null (new product not yet created), shows a hint to
-//     complete Step 1–4 first — tiers are saved in Step 5 context anyway.
-//
-// Props:
-//   productId      int|null   – the saved product's ID
-//   basePrice      float      – product.price — used to compute discount_pct live
-//   moq            int        – product.moq   — lower bound for min_qty
-//   quantityUnit   string     – e.g. "piece", "kg" — shown in column headers
-//   onSaved?       function   – callback after successful sync
-
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../utils/api';
 import {
@@ -110,7 +92,7 @@ const WholesaleTiersEditor = ({
       else                         qtys.add(qty);
 
       if (isNaN(price) || price < 0)  errs.push(`Row ${rowN}: Price per unit must be a positive number.`);
-      if (price >= basePrice && basePrice > 0) errs.push(`Row ${rowN}: Tier price should be less than base price (${fmtMMK(basePrice)}).`);
+      if (price > basePrice && basePrice > 0) errs.push(`Row ${rowN}: Tier price should be less than or equal to base price (${fmtMMK(basePrice)}).`);
     });
 
     return errs;

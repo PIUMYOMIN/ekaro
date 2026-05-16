@@ -239,7 +239,7 @@ const Cart = () => {
                     const isUpdating     = updatingItemId === item.id;
                     const isRemoving     = removingItemId === item.id;
                     const minOrder       = item.min_order ?? 1;
-                    const quantityStep   = item.quantity_step ?? minOrder;
+                    const quantityStep   = item.quantity_step ?? 1;
                     const stockLimit     = item.stock ?? Infinity;
                     const unitLabel      = item.quantity_unit ?? "pcs";
 

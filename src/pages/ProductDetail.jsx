@@ -16,7 +16,7 @@ import {
   CheckIcon,
   LinkIcon,
 } from "@heroicons/react/24/solid";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { ExclamationCircleIcon, CursorArrowRaysIcon } from "@heroicons/react/24/outline";
 import api from "../utils/api";
 import { DEFAULT_PLACEHOLDER, SITE_PUBLIC_URL } from "../config";
 import { SkeletonProductDetail } from "../components/ui/Skeleton";
@@ -252,31 +252,38 @@ const ProductDetail = () => {
 
   // ── Derived values ──────────────────────────────────────────────────────────
   // Active wholesale tier: highest tier whose min_qty ≤ current quantity.
-  // Tiers only apply to simple (non-variant) products.
+  // Applies to both simple and variant products — product-level tiers are
+  // universal and the CartController will apply the same logic server-side.
   const activeTier = useMemo(() => {
-    if (selectedVariant || !product?.wholesale_tiers?.length) return null;
+    if (!product?.wholesale_tiers?.length) return null;
     return [...product.wholesale_tiers]
       .sort((a, b) => b.min_qty - a.min_qty)
       .find(t => quantity >= t.min_qty) ?? null;
-  }, [product?.wholesale_tiers, quantity, selectedVariant]);
+  }, [product?.wholesale_tiers, quantity]);
 
-  // Show the variant price when one is selected.
-  // If a wholesale tier is active, that price overrides the base/sale price.
-  // Otherwise fall through to active sale price, then base price.
-  const displayPrice = selectedVariant?.price
-    ?? activeTier?.price_per_unit
+  // Price to display:
+  //   1. Wholesale tier price (quantity threshold met) — overrides everything
+  //   2. Selected variant's own price
+  //   3. Active sale price (simple products only)
+  //   4. Product base price
+  const displayPrice = activeTier?.price_per_unit
+    ?? selectedVariant?.price
     ?? (product?.is_currently_on_sale ? product?.selling_price : null)
     ?? product?.price;
 
+  // Base price used for savings calculation:
+  //   • When a variant is selected: savings are relative to the variant price
+  //   • Otherwise: relative to the product's base price
+  const baseComparePrice = parseFloat(selectedVariant?.price ?? product?.price ?? 0);
+
   // Effective discount percentage for the badge.
-  // Tier discount takes priority over sale discount. Variants are not discounted at product level.
   const displayDiscountPct = activeTier
     ? (activeTier.discount_pct ?? 0)
     : (!selectedVariant && product?.is_currently_on_sale ? (product?.effective_discount_pct ?? 0) : 0);
-  
+
   // Per-unit savings shown below the price
   const displayDiscountSaved = activeTier
-    ? Math.max(0, parseFloat(product?.price ?? 0) - parseFloat(activeTier.price_per_unit))
+    ? Math.max(0, baseComparePrice - parseFloat(activeTier.price_per_unit))
     : (!selectedVariant && product?.is_currently_on_sale ? (product?.discount_saved ?? 0) : 0);
 
   // Stock available for the current selection
@@ -594,6 +601,16 @@ const ProductDetail = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, [shareOpen]);
 
+  // ── Initialise quantity to product MOQ on load (simple products only) ───────
+  // For variant products, handleVariantChange already sets quantity = variant MOQ.
+  // For simple products the quantity state starts at 1 which may be below product.moq,
+  // so we snap it up once the product is available and no variant system is in use.
+  useEffect(() => {
+    if (!product) return;
+    const moq = product.moq ?? 1;
+    setQuantity(prev => Math.max(prev, moq));
+  }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // More from this seller (best-effort, non-blocking)
   useEffect(() => {
     if (!product?.id) return;
@@ -856,15 +873,22 @@ const ProductDetail = () => {
               <div>
                 {displayDiscountPct > 0 ? (
                   <>
-                    <span className="inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mb-2">
-                      {t("productDetail.discount_off", { percent: Math.round(displayDiscountPct) })}
-                    </span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 mb-2">
+                      <span className="inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {t("productDetail.discount_off", { percent: Math.round(displayDiscountPct) })}
+                      </span>
+                      {activeTier && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-semibold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                          🎉 {t("productDetail.volume_price_active")}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
                       <h2 className="min-w-0 break-words text-2xl font-bold text-red-600">
                         {parseFloat(displayPrice).toLocaleString()} MMK
                       </h2>
                       <span className="text-base text-gray-400 line-through dark:text-slate-600 sm:text-lg">
-                        {parseFloat(product.price).toLocaleString()} MMK
+                        {parseFloat(baseComparePrice || product.price).toLocaleString()} MMK
                       </span>
                     </div>
                     {displayDiscountSaved > 0 && (
@@ -878,6 +902,11 @@ const ProductDetail = () => {
                     <h2 className="min-w-0 break-words text-2xl font-semibold text-green-600">
                       {parseFloat(displayPrice).toLocaleString()} MMK
                     </h2>
+                    {activeTier && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/40 px-2.5 py-1 text-xs font-semibold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 animate-pulse">
+                        🎉 {t("productDetail.volume_price_active")}
+                      </span>
+                    )}
                     {hasVariants && !selectedVariant && (
                       <span className="text-sm text-gray-500 dark:text-slate-400">{t("productDetail.starting_price")}</span>
                     )}
@@ -965,7 +994,7 @@ const ProductDetail = () => {
 
               {/* Key info chips above cover MOQ/stock */}
 
-              {/* Wholesale pricing table — rendered when the product has tiers */}
+              {/* Wholesale pricing table — product-level tiers apply universally */}
               {product.wholesale_tiers?.length > 0 && (
                 <div className="min-w-0 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 sm:p-4">
                   <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide mb-2">
@@ -982,10 +1011,8 @@ const ProductDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {product.wholesale_tiers.map((tier, idx) => {
-                        const isActive = quantity >= tier.min_qty &&
-                          (idx === product.wholesale_tiers.length - 1 ||
-                           quantity < product.wholesale_tiers[idx + 1].min_qty);
+                      {product.wholesale_tiers.map((tier) => {
+                        const isActive = activeTier?.min_qty === tier.min_qty;
                         return (
                           <tr
                             key={tier.min_qty}
@@ -1120,17 +1147,25 @@ const ProductDetail = () => {
                 <button
                   onClick={handlePrimaryCta}
                   disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-                  className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5"
+                  className={`col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5
+                    ${variantReady
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-amber-500 hover:bg-amber-600"}`}
                 >
                   {addingToCart ? (
                     <>
                       <div className="mr-2 h-5 w-5 flex-shrink-0 animate-spin rounded-full border-b-2 border-white" />
                        <span className="truncate">{t("productDetail.adding")}</span>
                     </>
-                  ) : (
+                  ) : variantReady ? (
                     <>
                       <ShoppingCartIcon className="mr-2 h-5 w-5 flex-shrink-0" />
-                      <span className="truncate">{primaryCtaLabel}</span>
+                      <span className="truncate">{t("productDetail.add_to_cart")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <CursorArrowRaysIcon className="mr-2 h-5 w-5 flex-shrink-0" />
+                      <span className="truncate">{t("productDetail.select_options")}</span>
                     </>
                   )}
                 </button>
@@ -1514,8 +1549,12 @@ const ProductDetail = () => {
             type="button"
             onClick={handlePrimaryCta}
             disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-            className="ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+            className={`ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50
+              ${variantReady ? "bg-green-600 hover:bg-green-700" : "bg-amber-500 hover:bg-amber-600"}`}
           >
+            {variantReady
+              ? <ShoppingCartIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
+              : <CursorArrowRaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
             <span className="truncate">{primaryCtaLabel}</span>
           </button>
         </div>

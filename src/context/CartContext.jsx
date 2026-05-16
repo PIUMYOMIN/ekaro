@@ -69,7 +69,7 @@ export const CartProvider = ({ children }) => {
    * @param {number|null} variantId   — required when the product has variants
    * @param {object}  selectedOptions — snapshot e.g. { "Color": "Red", "Size": "M" }
    */
-  const addToCart = async (productId, quantity = 1, variantId = null, selectedOptions = null) => {
+  const addToCart = useCallback(async (productId, quantity = 1, variantId = null, selectedOptions = null) => {
     if (!user) throw new Error('Please login');
 
     setLoading(true);
@@ -99,10 +99,10 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchCartItems]);
 
   // Update quantity
-  const updateQuantity = async (cartItemId, newQuantity) => {
+  const updateQuantity = useCallback(async (cartItemId, newQuantity) => {
     if (!user) throw new Error('Please login');
 
     const currentItem = cartItems.find(item => item.id === cartItemId);
@@ -112,6 +112,9 @@ export const CartProvider = ({ children }) => {
     const oldTotalItems = totalItems;
     const oldSubtotal = subtotal;
 
+    // Optimistic update: use the item's current selling_price for the subtotal.
+    // Note: crossing a tier boundary changes selling_price server-side, so we
+    // always re-fetch after the PUT succeeds to keep the UI in sync.
     const updatedItems = cartItems.map(item =>
       item.id === cartItemId
         ? { ...item, quantity: newQuantity, subtotal: (item.selling_price ?? item.price) * newQuantity }
@@ -126,13 +129,16 @@ export const CartProvider = ({ children }) => {
     setTotalItems(newTotalItems);
     setCartSummary(prev => {
       const rate     = prev.tax_rate ?? 0.05;
-      const shipping = prev.shipping_fee ?? 5000;
+      const shipping = prev.shipping_fee ?? 8000;
       const tax      = Math.round(newSubtotal * rate * 100) / 100;
       return { ...prev, subtotal: newSubtotal, tax, total: Math.round((newSubtotal + shipping + tax) * 100) / 100 };
     });
 
     try {
       const response = await api.put(`/buyer/cart/${cartItemId}`, { quantity: newQuantity });
+      // Always re-fetch: the server may have applied a different tier price after
+      // the quantity change, which would make the optimistic subtotal stale.
+      await fetchCartItems();
       return response.data;
     } catch (err) {
       setCartItems(oldCartItems);
@@ -144,10 +150,10 @@ export const CartProvider = ({ children }) => {
       setError(msg);
       throw new Error(msg);
     }
-  };
+  }, [user, cartItems, totalItems, subtotal, fetchCartItems]);
 
   // Remove from cart
-  const removeFromCart = async (cartItemId) => {
+  const removeFromCart = useCallback(async (cartItemId) => {
     if (!user) throw new Error('Please login');
 
     const currentItem = cartItems.find(item => item.id === cartItemId);
@@ -166,7 +172,7 @@ export const CartProvider = ({ children }) => {
     setTotalItems(newTotalItems);
     setCartSummary(prev => {
       const rate     = prev.tax_rate ?? 0.05;
-      const shipping = prev.shipping_fee ?? 5000;
+      const shipping = prev.shipping_fee ?? 8000;
       const tax      = Math.round(newSubtotal * rate * 100) / 100;
       return { ...prev, subtotal: newSubtotal, tax, total: Math.round((newSubtotal + shipping + tax) * 100) / 100 };
     });
@@ -184,10 +190,10 @@ export const CartProvider = ({ children }) => {
       setError(msg);
       throw new Error(msg);
     }
-  };
+  }, [user, cartItems, totalItems, subtotal, fetchCartItems]);
 
   // Clear cart
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     if (!user) throw new Error('Please login');
 
     const oldCartItems = [...cartItems];
@@ -214,7 +220,7 @@ export const CartProvider = ({ children }) => {
       setError(msg);
       throw new Error(msg);
     }
-  };
+  }, [user, cartItems, totalItems, subtotal, cartSummary, fetchCartItems]);
 
   useEffect(() => {
     fetchCartItems();

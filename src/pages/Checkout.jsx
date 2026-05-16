@@ -330,9 +330,11 @@ export default function Checkout() {
     items: cartItems.map(item => ({
       product_id: item.product_id,
       quantity: item.quantity,
-      // Use selling_price when an active discount exists (mirrors CartController logic).
-      // Falls back to item.price (base price) for non-discounted items.
-      price: item.is_currently_on_sale && item.selling_price != null && item.selling_price < item.price
+      // Use selling_price whenever it's below the base price — this covers both
+      // active sale discounts and wholesale tier pricing. The CartController
+      // already resolves the correct selling_price server-side; we mirror that here
+      // so the order record always reflects what the buyer actually paid.
+      price: item.selling_price != null && item.selling_price < item.price
         ? item.selling_price
         : item.price,
       variant_id: item.variant_id ?? null,
@@ -982,7 +984,7 @@ export default function Checkout() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        {item.is_currently_on_sale && item.selling_price != null && item.selling_price < item.price ? (
+                        {item.selling_price != null && item.selling_price < item.price ? (
                           <>
                             <p className="font-medium text-red-600 dark:text-red-400">
                               {formatMMK(item.selling_price * item.quantity)}
@@ -992,6 +994,11 @@ export default function Checkout() {
                             </p>
                             <p className="text-xs text-gray-500 dark:text-slate-500">
                               {formatMMK(item.selling_price)} {t("checkout.each")}
+                              {item.applied_tier && (
+                                <span className="ml-1 text-green-600 dark:text-green-400 font-semibold">
+                                  · {item.applied_tier.discount_pct > 0 ? `-${item.applied_tier.discount_pct}%` : t("checkout.tier_price", "Tier")}
+                                </span>
+                              )}
                             </p>
                           </>
                         ) : (
