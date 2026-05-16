@@ -321,7 +321,8 @@ const ProductDetail = () => {
   const stockIsOut = product?.product_type === "physical" && variantReady && availableStock === 0;
 
   const primaryCtaLabel =
-    addingToCart ? t("productDetail.adding")
+    addingToCart        ? t("productDetail.adding")
+    : stockIsOut        ? t("productDetail.out_of_stock")
     : (hasVariants && !selectedVariant) ? t("productDetail.select_options")
     : t("productDetail.add_to_cart");
 
@@ -869,6 +870,23 @@ const ProductDetail = () => {
                 </span>
               </div>
 
+              {/* ── Out-of-stock banner — shown prominently before price ──── */}
+              {product.product_type === "physical" && variantReady && availableStock === 0 && (
+                <div className="flex items-start gap-3 rounded-xl border-2 border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/30 px-4 py-3.5">
+                  <span className="mt-0.5 text-xl leading-none">🚫</span>
+                  <div>
+                    <p className="font-semibold text-red-700 dark:text-red-300 text-sm sm:text-base">
+                      {hasVariants && selectedVariant
+                        ? t("productDetail.variant_out_of_stock")
+                        : t("productDetail.product_out_of_stock")}
+                    </p>
+                    <p className="mt-0.5 text-xs text-red-500 dark:text-red-400">
+                      {t("productDetail.out_of_stock_hint", "You can still browse details or contact the seller.")}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Price — shows variant price when selected */}
               <div>
                 {displayDiscountPct > 0 ? (
@@ -1144,39 +1162,53 @@ const ProductDetail = () => {
 
               {/* Action buttons */}
               <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-stretch">
-                <button
-                  onClick={handlePrimaryCta}
-                  disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-                  className={`col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5
-                    ${variantReady
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-amber-500 hover:bg-amber-600"}`}
-                >
-                  {addingToCart ? (
-                    <>
-                      <div className="mr-2 h-5 w-5 flex-shrink-0 animate-spin rounded-full border-b-2 border-white" />
-                       <span className="truncate">{t("productDetail.adding")}</span>
-                    </>
-                  ) : variantReady ? (
-                    <>
-                      <ShoppingCartIcon className="mr-2 h-5 w-5 flex-shrink-0" />
-                      <span className="truncate">{t("productDetail.add_to_cart")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <CursorArrowRaysIcon className="mr-2 h-5 w-5 flex-shrink-0" />
-                      <span className="truncate">{t("productDetail.select_options")}</span>
-                    </>
-                  )}
-                </button>
+                {stockIsOut ? (
+                  <button
+                    disabled
+                    className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md
+                               bg-gray-300 dark:bg-slate-700 px-4 py-3 text-sm font-semibold
+                               text-gray-500 dark:text-slate-400 cursor-not-allowed sm:px-5"
+                  >
+                    <span>🚫</span>
+                    <span className="ml-2 truncate">{t("productDetail.out_of_stock")}</span>
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handlePrimaryCta}
+                      disabled={addingToCart}
+                      className={`col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md px-4 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5
+                        ${variantReady
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-amber-500 hover:bg-amber-600"}`}
+                    >
+                      {addingToCart ? (
+                        <>
+                          <div className="mr-2 h-5 w-5 flex-shrink-0 animate-spin rounded-full border-b-2 border-white" />
+                           <span className="truncate">{t("productDetail.adding")}</span>
+                        </>
+                      ) : variantReady ? (
+                        <>
+                          <ShoppingCartIcon className="mr-2 h-5 w-5 flex-shrink-0" />
+                          <span className="truncate">{t("productDetail.add_to_cart")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <CursorArrowRaysIcon className="mr-2 h-5 w-5 flex-shrink-0" />
+                          <span className="truncate">{t("productDetail.select_options")}</span>
+                        </>
+                      )}
+                    </button>
 
-                <button
-                  onClick={handleBuyNow}
-                  disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-                  className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md bg-gray-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5"
-                >
-                  <span className="truncate">{t("productDetail.buy_now")}</span>
-                </button>
+                    <button
+                      onClick={handleBuyNow}
+                      disabled={addingToCart}
+                      className="col-span-2 inline-flex min-h-12 min-w-0 items-center justify-center rounded-md bg-gray-800 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-1 sm:px-5"
+                    >
+                      <span className="truncate">{t("productDetail.buy_now")}</span>
+                    </button>
+                  </>
+                )}
 
                 <div className="col-span-2 grid grid-cols-3 gap-3 sm:col-span-1 sm:flex sm:items-stretch sm:gap-2">
                   <button
@@ -1358,14 +1390,14 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Out of stock */}
+              {/* Out of stock — compact reminder near CTAs */}
               {product.product_type === "physical" && variantReady && availableStock === 0 && (
-                <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700
-                                text-red-700 dark:text-red-300 px-4 py-3 rounded">
+                <p className="text-sm font-medium text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <span>🚫</span>
                   {hasVariants && selectedVariant
                     ? t("productDetail.variant_out_of_stock")
                     : t("productDetail.product_out_of_stock")}
-                </div>
+                </p>
               )}
 
               {/* Seller info */}
@@ -1545,18 +1577,30 @@ const ProductDetail = () => {
               {parseFloat(displayPrice).toLocaleString()} MMK
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handlePrimaryCta}
-            disabled={addingToCart || (product.product_type === "physical" && availableStock === 0 && variantReady)}
-            className={`ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50
-              ${variantReady ? "bg-green-600 hover:bg-green-700" : "bg-amber-500 hover:bg-amber-600"}`}
-          >
-            {variantReady
-              ? <ShoppingCartIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
-              : <CursorArrowRaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
-            <span className="truncate">{primaryCtaLabel}</span>
-          </button>
+          {stockIsOut ? (
+            <button
+              disabled
+              className="ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl
+                         bg-gray-300 dark:bg-slate-700 px-4 py-2.5 text-sm font-semibold
+                         text-gray-500 dark:text-slate-400 cursor-not-allowed"
+            >
+              <span>🚫</span>
+              <span className="ml-1.5 truncate">{t("productDetail.out_of_stock")}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handlePrimaryCta}
+              disabled={addingToCart}
+              className={`ml-auto inline-flex min-h-11 max-w-[52vw] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50
+                ${variantReady ? "bg-green-600 hover:bg-green-700" : "bg-amber-500 hover:bg-amber-600"}`}
+            >
+              {variantReady
+                ? <ShoppingCartIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                : <CursorArrowRaysIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />}
+              <span className="truncate">{primaryCtaLabel}</span>
+            </button>
+          )}
         </div>
       </div>
     </>

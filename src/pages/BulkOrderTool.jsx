@@ -64,6 +64,9 @@ const productToLine = (p) => {
     wholesaleTiers,
     unitPrice,
     hasVariants: !!p.has_variants,
+    variantOptions: [],
+    variantsLoading: false,
+    selectedVariantId: null,
     image: rawImg,
     quantity: String(moq),
   };
@@ -158,7 +161,16 @@ const BulkOrderTool = () => {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) setLines(parsed);
+      if (Array.isArray(parsed) && parsed.length) {
+        // Normalise lines from old saved data that may be missing new fields
+        const normalised = parsed.map((l) => ({
+          ...l,
+          variantOptions:    Array.isArray(l.variantOptions) ? l.variantOptions : [],
+          variantsLoading:   false,
+          selectedVariantId: l.selectedVariantId ?? null,
+        }));
+        setLines(normalised);
+      }
     } catch {
       /* ignore */
     }
@@ -166,7 +178,7 @@ const BulkOrderTool = () => {
 
   useEffect(() => {
     try {
-      const minimal = lines.map(({ key, productId, name, slug, categoryId, sellerUserId, sellerLabel, unitLabel, moq, quantityStep, basePrice, wholesaleTiers, unitPrice, hasVariants, quantity }) => ({
+      const minimal = lines.map(({ key, productId, name, slug, categoryId, sellerUserId, sellerLabel, unitLabel, moq, quantityStep, basePrice, wholesaleTiers, unitPrice, hasVariants, variantOptions, selectedVariantId, quantity }) => ({
         key,
         productId,
         name,
@@ -181,6 +193,8 @@ const BulkOrderTool = () => {
         wholesaleTiers,
         unitPrice,
         hasVariants,
+        variantOptions: variantOptions ?? [],
+        selectedVariantId: selectedVariantId ?? null,
         quantity,
       }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(minimal));
@@ -191,6 +205,8 @@ const BulkOrderTool = () => {
 
   const addProduct = (p) => {
     setActionMsg(null);
+    let isNew = false;
+    let newKey = null;
     setLines((prev) => {
       const ex = prev.find((l) => l.productId === p.id);
       if (ex) {
@@ -200,14 +216,75 @@ const BulkOrderTool = () => {
           l.productId === p.id ? { ...l, quantity: String(parseQty(l.quantity) + step) } : l
         );
       }
-      return [...prev, productToLine(p)];
+      const line = productToLine(p);
+      isNew = true;
+      newKey = line.key;
+      return [...prev, line];
     });
+    // Fetch variants once when a variant-product is first added
+    if (p.has_variants) {
+      // Use a microtask so newKey is set before the async call
+      Promise.resolve().then(() => {
+        if (isNew && newKey) {
+          fetchVariantsForLine(newKey, p.slug_en || p.id);
+        }
+      });
+    }
   };
 
   const removeLine = (key) => setLines((prev) => prev.filter((l) => l.key !== key));
 
   const updateQty = (key, value) => {
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, quantity: value } : l)));
+  };
+
+  // Update selected variant on a line and sync moq / unitPrice to that variant
+  const updateVariant = (key, variantId) => {
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.key !== key) return l;
+        const v = l.variantOptions.find((o) => String(o.id) === String(variantId));
+        if (!v) return { ...l, selectedVariantId: null };
+        const moq  = v.moq ?? l.moq;
+        const step = v.quantity_step ?? l.quantityStep;
+        return {
+          ...l,
+          selectedVariantId: variantId,
+          moq,
+          quantityStep: step,
+          basePrice: v.price,
+          unitPrice: v.price,
+          quantity: String(moq),
+        };
+      })
+    );
+  };
+
+  // Fetch full variant list for a product-with-variants line (runs once per product)
+  const fetchVariantsForLine = async (key, slugOrId) => {
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, variantsLoading: true } : l)));
+    try {
+      const res = await api.get(`/products/${slugOrId}`);
+      const product = res.data?.data ?? res.data;
+      const variants = Array.isArray(product?.variants) ? product.variants : [];
+      const options = variants
+        .filter((v) => v.is_active)
+        .map((v) => ({
+          id: v.id,
+          label: v.label || v.sku || `Variant #${v.id}`,
+          price: Number(v.price ?? 0),
+          in_stock: v.in_stock ?? (v.quantity > 0),
+          moq: v.moq ?? 1,
+          quantity_step: v.quantity_step ?? 1,
+        }));
+      setLines((prev) =>
+        prev.map((l) =>
+          l.key === key ? { ...l, variantOptions: options, variantsLoading: false } : l
+        )
+      );
+    } catch {
+      setLines((prev) => prev.map((l) => (l.key === key ? { ...l, variantsLoading: false } : l)));
+    }
   };
 
   const validatedLines = useMemo(() => {
@@ -312,7 +389,7 @@ const BulkOrderTool = () => {
     }
   };
 
-  const addSimpleLinesToCart = async () => {
+  const addLinesToCart = async () => {
     if (!user) {
       navigate("/login", { state: { from: "/bulk-order-tool" } });
       return;
@@ -321,20 +398,35 @@ const BulkOrderTool = () => {
       setActionMsg({ type: "error", text: t("bulk_order.cart_buyers_only", "Only buyer accounts can use the cart.") });
       return;
     }
-    const eligible = validatedLines.filter((l) => !l.hasVariants && l.quantityNum > 0);
+
+    // Simple products are always eligible; variant products need a variant selected
+    const eligible     = validatedLines.filter((l) => l.quantityNum > 0 && (!l.hasVariants || l.selectedVariantId));
+    const needsVariant = validatedLines.filter((l) => l.hasVariants && !l.selectedVariantId);
+
     if (!eligible.length) {
       setActionMsg({
         type: "error",
-        text: t("bulk_order.no_cart_lines", "No cart-ready lines: add products without variants, or open each variant product from its page."),
+        text: t("bulk_order.no_cart_lines", "Select a variant for each product that requires one before adding to cart."),
       });
       return;
     }
+
+    if (needsVariant.length) {
+      setActionMsg({
+        type: "error",
+        text: t("bulk_order.variant_required", "Please select a variant for: {{names}}", {
+          names: needsVariant.map((l) => l.name).join(", "),
+        }),
+      });
+      return;
+    }
+
     setSubmitting(true);
     setActionMsg(null);
     let ok = 0;
     try {
       for (const l of eligible) {
-        await addToCart(l.productId, l.quantityNum);
+        await addToCart(l.productId, l.quantityNum, l.selectedVariantId ?? null);
         ok++;
       }
       setActionMsg({ type: "success", text: t("bulk_order.cart_added", "{{count}} item(s) added to cart.", { count: ok }) });
@@ -577,6 +669,7 @@ const BulkOrderTool = () => {
                         <tr>
                           <th className="px-4 py-3">{t("bulk_order.col_product", "Product")}</th>
                           <th className="px-4 py-3">{t("bulk_order.col_seller", "Seller")}</th>
+                          <th className="px-4 py-3">{t("bulk_order.col_variant", "Variant")}</th>
                           <th className="px-4 py-3">{t("bulk_order.col_price", "Unit price")}</th>
                           <th className="px-4 py-3">{t("bulk_order.col_qty", "Qty")}</th>
                           <th className="px-4 py-3 text-right">{t("bulk_order.col_line", "Line")}</th>
@@ -603,16 +696,46 @@ const BulkOrderTool = () => {
                                       {t("bulk_order.view_product", "View")}
                                     </Link>
                                   )}
-                                  {l.hasVariants && (
-                                    <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
-                                      {t("bulk_order.variants_short", "Variants — use PDP for cart")}
-                                    </p>
-                                  )}
+
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-600 dark:text-slate-300 max-w-[120px]">
                               {l.sellerLabel}
+                            </td>
+                            {/* Variant column */}
+                            <td className="px-4 py-3 min-w-[140px]">
+                              {l.hasVariants ? (
+                                l.variantsLoading ? (
+                                  <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
+                                    <div className="h-3.5 w-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                                    {t("bulk_order.loading_variants", "Loading…")}
+                                  </div>
+                                ) : !Array.isArray(l.variantOptions) || l.variantOptions.length === 0 ? (
+                                  <span className="text-xs text-red-500 dark:text-red-400">
+                                    {t("bulk_order.variants_unavailable", "Unavailable")}
+                                  </span>
+                                ) : (
+                                  <select
+                                    value={l.selectedVariantId ?? ""}
+                                    onChange={(e) => updateVariant(l.key, e.target.value || null)}
+                                    className={`w-full rounded-lg border px-2 py-1.5 text-xs bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 ${
+                                      !l.selectedVariantId
+                                        ? "border-amber-400 dark:border-amber-500"
+                                        : "border-gray-200 dark:border-slate-600"
+                                    }`}
+                                  >
+                                    <option value="">{t("bulk_order.select_variant", "— Select —")}</option>
+                                    {(l.variantOptions ?? []).map((v) => (
+                                      <option key={v.id} value={v.id} disabled={!v.in_stock}>
+                                        {v.label}{!v.in_stock ? ` (${t("bulk_order.out_of_stock", "Out of stock")})` : ""}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )
+                              ) : (
+                                <span className="text-xs text-gray-400 dark:text-slate-500">—</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-xs whitespace-nowrap">
                               {fmtMmk(l.unitPrice)}
@@ -679,7 +802,7 @@ const BulkOrderTool = () => {
                       </button>
                       <button
                         type="button"
-                        onClick={addSimpleLinesToCart}
+                        onClick={addLinesToCart}
                         disabled={submitting}
                         className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
                       >

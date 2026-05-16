@@ -550,7 +550,7 @@ const QuoteCard = ({ quote, rfqId, onAccepted, onRejected, canRespond = true }) 
 };
 
 // ── RFQ Detail Modal (sent RFQs) ───────────────────────────────────────────────
-const RFQDetailModal = ({ rfq, onClose, onRefresh, canManageQuotes = true }) => {
+const RFQDetailModal = ({ rfq, onClose, onRefresh, canManageQuotes = true, canRefresh = false }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [data, setData]       = useState(rfq);
@@ -558,15 +558,21 @@ const RFQDetailModal = ({ rfq, onClose, onRefresh, canManageQuotes = true }) => 
   const [error, setError]     = useState(null);
   const [closing, setClosing] = useState(false);
 
+  // Only call getOne when the current user's role allows it (canRefresh) and only
+  // after a mutating action — never on mount. The rfq prop already has full data
+  // from the list fetch, so an extra GET /rfq/{id} on open is unnecessary and
+  // causes 403 for users who don't own the record on the backend.
   const refresh = async () => {
+    if (!canRefresh) return;
     setLoading(true);
     try {
       const res = await rfqApi.getOne(rfq.id);
       setData(res.data.data ?? res.data);
-    } catch { /* use cached data */ } finally { setLoading(false); }
+    } catch { /* keep cached data on error */ } finally { setLoading(false); }
   };
 
-  useEffect(() => { refresh(); }, [rfq.id]);
+  // Sync data if the parent passes a fresher rfq object (e.g. after list refetch)
+  useEffect(() => { setData(rfq); }, [rfq]);
 
   const handleClose = async () => {
     setClosing(true);
@@ -1016,25 +1022,31 @@ const RFQManager = () => {
   };
 
   // ── Fetch data ─────────────────────────────────────────────────────────────
+  // Role-gated fetch helpers — never call the wrong endpoint for the current role.
+  // /rfq/sent    → role:buyer|admin   (403 for sellers)
+  // /rfq/received → role:seller|admin (403 for buyers)
+  const canFetchSent     = userRole === "buyer"  || userRole === "admin";
+  const canFetchReceived = userRole === "seller" || userRole === "admin";
+
   const fetchSent = useCallback(async () => {
+    if (!canFetchSent) return;
     setLoading(true); setError(null);
     try {
       const res = await rfqApi.listSent();
       setSentRFQs(res.data.data?.data ?? res.data.data ?? []);
     } catch (e) {
-      // Fallback to mock data when API doesn't exist yet
       if (e.response?.status === 404 || e.code === "ERR_NETWORK") {
         setSentRFQs([]);
-
       } else {
         setError(e.response?.data?.message || t("rfq.errors.load_failed"));
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canFetchSent]);
 
   const fetchReceived = useCallback(async () => {
+    if (!canFetchReceived) return;
     setLoading(true); setError(null);
     try {
       const res = await rfqApi.listReceived();
@@ -1042,19 +1054,18 @@ const RFQManager = () => {
     } catch (e) {
       if (e.response?.status === 404 || e.code === "ERR_NETWORK") {
         setReceivedRFQs([]);
-
       } else {
         setError(e.response?.data?.message || t("rfq.errors.load_received_failed"));
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canFetchReceived]);
 
   useEffect(() => {
-    if (activeTab === "sent")     fetchSent();
-    if (activeTab === "received") fetchReceived();
-  }, [activeTab, fetchSent, fetchReceived]);
+    if (activeTab === "sent"     && canFetchSent)     fetchSent();
+    if (activeTab === "received" && canFetchReceived) fetchReceived();
+  }, [activeTab, fetchSent, fetchReceived, canFetchSent, canFetchReceived]);
 
   // ── Derived lists ──────────────────────────────────────────────────────────
   const filterList = (list) =>
@@ -1295,6 +1306,7 @@ const RFQManager = () => {
           rfq={selectedRFQ}
           onClose={() => setSelectedRFQ(null)}
           canManageQuotes={userRole === "buyer" && activeTab === "sent"}
+          canRefresh={(activeTab === "sent" && canFetchSent) || (activeTab === "received" && canFetchReceived)}
           onRefresh={activeTab === "sent" ? fetchSent : fetchReceived}
         />
       )}
