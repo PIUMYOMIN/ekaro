@@ -20,7 +20,8 @@ import {
   WalletIcon,
   TagIcon,
   DocumentTextIcon,
-  SparklesIcon
+  SparklesIcon,
+  ArrowUpTrayIcon
 } from "@heroicons/react/24/outline";
 import DashboardSummary from "../../components/seller/DashboardSummary";
 import OrderManagement from "../../components/seller/OrderManagement";
@@ -43,6 +44,7 @@ import { NotificationBell } from "../../components/Shared/NotificationsPanel";
 import ReferralPanel from "../../components/Shared/ReferralPanel";
 import SellerWallet from "../../components/seller/SellerWallet";
 import SellerFinancialReports from "../../components/seller/SellerFinancialReports";
+import BulkImportProducts from "../../components/seller/BulkImportProducts";
 import DashboardRFQSection, { fetchRfqDashboardTabBadgeForRole } from "../../components/Shared/DashboardRFQSection";
 import SellerSubscription from '../../components/seller/SellerSubscription';
 
@@ -156,7 +158,7 @@ const SellerDashboard = () => {
 
   const navigation = useMemo(() => [
     { name: t("seller.dashboard"), icon: ChartBarIcon, key: "dashboard" },
-    { name: "Notifications",              icon: BellIcon,               key: "notifications" },
+    { name: "Notifications",            icon: BellIcon,               key: "notifications" },
     { name: t("seller.my_store"),       icon: BuildingStorefrontIcon, key: "my_store" },
     { name: t("seller.order.title"),    icon: ShoppingBagIcon,        key: "orders" },
     { name: "RFQ",                      icon: DocumentTextIcon,       key: "rfq" },
@@ -167,12 +169,13 @@ const SellerDashboard = () => {
     { name: t("seller.sales.title"),    icon: CurrencyDollarIcon,     key: "sales" },
     { name: t("seller.reviews.title"),  icon: StarIcon,               key: "reviews" },
     { name: t("seller.customers"),      icon: UserGroupIcon,          key: "customers" },
-    { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
+    { name: t("seller.delivery.title"), icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"), icon: CogIcon, key: "settings" },
     { name: "Referrals", icon: GiftIcon, key: "referrals" },
     { name: "Seller Wallet", icon: WalletIcon, key: "wallet" },
     { name: 'Subscription', icon: SparklesIcon, key: 'subscription' },
     { name: "Financial Reports", icon: ChartBarIcon,      key: "financial_reports" },
+    { name: "Bulk Import",       icon: ArrowUpTrayIcon,   key: "bulk_import" },
   ], [t]);
 
   // Render the active tab with current state — separated from the stable nav structure
@@ -196,6 +199,7 @@ const SellerDashboard = () => {
       case "wallet": return <SellerWallet />;
       case 'subscription': return <SellerSubscription />;
       case "financial_reports": return <SellerFinancialReports storeName={storeData?.store_name} />;
+      case "bulk_import":       return <BulkImportProducts />;
       case "rfq": return <DashboardRFQSection role="seller" />;
       default:               return null;
     }
