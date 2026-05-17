@@ -20,6 +20,7 @@ import {
 } from "recharts";
 import api from "../../utils/api";
 import { exportToExcel, mmkCell, todayStr } from "../../utils/exportExcel";
+import PlanFeatureGate from "./PlanFeatureGate";
 
 
 const fmtK = (n) => {
@@ -552,4 +553,10 @@ function LocalDownloadIcon(props) {
   );
 }
 
-export default SalesReports;
+export default function SalesReportsGated(props) {
+  return (
+    <PlanFeatureGate feature="analytics_enabled">
+      <SalesReports {...props} />
+    </PlanFeatureGate>
+  );
+}

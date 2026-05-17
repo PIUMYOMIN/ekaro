@@ -242,7 +242,8 @@ const SubscriptionManagement = () => {
   }, []);
 
   useEffect(() => { loadSubs(); }, [loadSubs]);
-  useEffect(() => { if (tab === 'plans') loadPlans(); }, [tab, loadPlans]);
+  useEffect(() => { loadPlans(); }, [loadPlans]);
+  useEffect(() => { if (tab === 'plans') loadPlans(); }, [tab]);
 
   const debouncedSearch = (v) => {
     clearTimeout(searchTimer.current);

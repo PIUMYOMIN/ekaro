@@ -15,6 +15,7 @@ import OrderTracking from "./pages/OrderTracking";
 import { setNavigate } from "./utils/api";
 import { trackPageView, isInitialised } from "./utils/analytics";
 import { NotificationProvider } from './context/NotificationContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 
 // Layout
 import Header from "./components/layout/Header";
@@ -153,6 +154,7 @@ function App() {
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
           <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
             <AuthProvider>
+              <SubscriptionProvider>
               <NotificationProvider>
                 <CartProvider>
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -398,6 +400,7 @@ function App() {
                 </Router>
               </CartProvider>
               </NotificationProvider>
+              </SubscriptionProvider>
             </AuthProvider>
           </GoogleReCaptchaProvider>
         </GoogleOAuthProvider>

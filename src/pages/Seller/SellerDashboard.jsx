@@ -119,7 +119,8 @@ const SellerDashboard = () => {
     } catch (error) {
       console.error("Failed to fetch global data:", error);
       if (error.response?.status === 403) {
-        navigate('/');
+        // 403 here means a plan feature is blocked — not an auth error.
+        // Do nothing; the PlanFeatureGate in child components handles the UI.
       }
     } finally {
       setLoading(false);

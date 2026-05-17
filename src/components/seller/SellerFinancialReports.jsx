@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import api from '../../utils/api';
 import * as XLSX from 'xlsx';
+import PlanFeatureGate from './PlanFeatureGate';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -187,7 +188,7 @@ function SummaryCard({ label, value, sub, Icon, color }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
-export default function SellerFinancialReports({ storeName }) {
+function SellerFinancialReports({ storeName }) {
   const [period,   setPeriod]   = useState('month');
   const [groupBy,  setGroupBy]  = useState('day');
   const [fromDate, setFromDate] = useState('');
@@ -595,5 +596,12 @@ export default function SellerFinancialReports({ storeName }) {
         </>
       )}
     </div>
+  );
+}
+export default function SellerFinancialReportsGated(props) {
+  return (
+    <PlanFeatureGate feature="analytics_enabled">
+      <SellerFinancialReports {...props} />
+    </PlanFeatureGate>
   );
 }
