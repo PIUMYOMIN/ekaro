@@ -42,14 +42,14 @@ const SubmitOnboarding = () => {
           navigate('/seller', {
             state: {
               success: true,
-              message: 'Seller onboarding completed successfully! Your store is now under review.'
+              message: t('seller_onboarding.reviewSubmit.success_desc')
             }
           });
         }, 3000);
       }
     } catch (error) {
       console.error('Failed to submit onboarding:', error);
-      setError(error.response?.data?.message || 'Failed to complete onboarding. Please try again.');
+      setError(error.response?.data?.message || t('seller_onboarding.reviewSubmit.error_save'));
     } finally {
       setLoading(false);
     }
@@ -66,13 +66,11 @@ const SubmitOnboarding = () => {
           <div className="mx-auto h-20 w-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
             <CheckCircleIcon className="h-10 w-10 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">🎉 Congratulations!</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Your seller profile has been submitted successfully and is now under review.
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('seller_onboarding.reviewSubmit.success_title')}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{t('seller_onboarding.reviewSubmit.success_desc')}</p>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Redirecting to seller dashboard...</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('seller_onboarding.reviewSubmit.redirecting')}</p>
           </div>
         </div>
       </div>
@@ -92,12 +90,8 @@ const SubmitOnboarding = () => {
           <div className="mx-auto h-20 w-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
             <ShieldCheckIcon className="h-10 w-10 text-white" />
           </div>
-          <h1 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Review &amp; Submit
-          </h1>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            Review your information before submitting for verification
-          </p>
+          <h1 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">{t('seller_onboarding.reviewSubmit.title')}</h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{t('seller_onboarding.reviewSubmit.description')}</p>
           <div className="mt-4 flex justify-center space-x-2">
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
             <div className="w-3 h-3 bg-green-600 rounded-full"></div>
@@ -119,25 +113,25 @@ const SubmitOnboarding = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <BuildingStorefrontIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Store Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('seller_onboarding.reviewSubmit.store_info')}</h3>
               </div>
-              <button onClick={() => handleEditSection('store-basic')} className={editBtnClass}>Edit</button>
+              <button onClick={() => handleEditSection('store-basic')} className={editBtnClass}>{t('seller_onboarding.reviewSubmit.edit')}</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className={labelClass}>Store Name</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.store_name')}</p>
                 <p className={valueClass}>{onboardingData.store_name}</p>
               </div>
               <div>
-                <p className={labelClass}>Business Type</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.business_type')}</p>
                 <p className={valueClass}>{onboardingData.business_type}</p>
               </div>
               <div>
-                <p className={labelClass}>Contact Email</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.contact_email')}</p>
                 <p className={valueClass}>{onboardingData.contact_email}</p>
               </div>
               <div>
-                <p className={labelClass}>Contact Phone</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.contact_phone')}</p>
                 <p className={valueClass}>{onboardingData.contact_phone}</p>
               </div>
             </div>
@@ -148,32 +142,32 @@ const SubmitOnboarding = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <DocumentTextIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Business Details</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('seller_onboarding.reviewSubmit.business_details')}</h3>
               </div>
               <button onClick={() => handleEditSection('business-details')} className={editBtnClass}>Edit</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {onboardingData.business_registration_number && (
                 <div>
-                  <p className={labelClass}>Registration Number</p>
+                  <p className={labelClass}>{t('seller_onboarding.reviewSubmit.reg_number')}</p>
                   <p className={valueClass}>{onboardingData.business_registration_number}</p>
                 </div>
               )}
               {onboardingData.tax_id && (
                 <div>
-                  <p className={labelClass}>Tax ID</p>
+                  <p className={labelClass}>{t('seller_onboarding.reviewSubmit.tax_id')}</p>
                   <p className={valueClass}>{onboardingData.tax_id}</p>
                 </div>
               )}
               {onboardingData.website && (
                 <div>
-                  <p className={labelClass}>Website</p>
+                  <p className={labelClass}>{t('seller_onboarding.reviewSubmit.website')}</p>
                   <p className={valueClass}>{onboardingData.website}</p>
                 </div>
               )}
               {onboardingData.account_number && (
                 <div>
-                  <p className={labelClass}>Account Number</p>
+                  <p className={labelClass}>{t('seller_onboarding.reviewSubmit.account_number')}</p>
                   <p className={valueClass}>{onboardingData.account_number}</p>
                 </div>
               )}
@@ -185,22 +179,20 @@ const SubmitOnboarding = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <ShieldCheckIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Documents</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('seller_onboarding.reviewSubmit.documents')}</h3>
               </div>
               <button onClick={() => handleEditSection('documents')} className={editBtnClass}>Edit</button>
             </div>
             <div className="flex items-center space-x-3">
               <div className="flex-1">
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <span>Document Upload Status</span>
-                  <span>Documents can be uploaded later</span>
+                  <span>{t('seller_onboarding.reviewSubmit.docs_submitted')}</span>
+                  <span>{t('seller_onboarding.reviewSubmit.docs_uploaded_desc')}</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '50%' }}></div>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  You can upload documents now or skip and upload later from your dashboard
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('seller_onboarding.reviewSubmit.docs_uploaded_desc')}</p>
               </div>
             </div>
           </div>
@@ -210,30 +202,30 @@ const SubmitOnboarding = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <MapPinIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Address Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('seller_onboarding.reviewSubmit.address_info')}</h3>
               </div>
               <button onClick={() => handleEditSection('address')} className={editBtnClass}>Edit</button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <p className={labelClass}>Address</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.address')}</p>
                 <p className={valueClass}>{onboardingData.address}</p>
               </div>
               <div>
-                <p className={labelClass}>City</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.city')}</p>
                 <p className={valueClass}>{onboardingData.city}</p>
               </div>
               <div>
-                <p className={labelClass}>State/Region</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.state_region')}</p>
                 <p className={valueClass}>{onboardingData.state}</p>
               </div>
               <div>
-                <p className={labelClass}>Country</p>
+                <p className={labelClass}>{t('seller_onboarding.reviewSubmit.country')}</p>
                 <p className={valueClass}>{onboardingData.country || 'Myanmar'}</p>
               </div>
               {onboardingData.postal_code && (
                 <div>
-                  <p className={labelClass}>Postal Code</p>
+                  <p className={labelClass}>{t('seller_onboarding.reviewSubmit.postal_code')}</p>
                   <p className={valueClass}>{onboardingData.postal_code}</p>
                 </div>
               )}
@@ -243,25 +235,25 @@ const SubmitOnboarding = () => {
 
         {/* Terms and Conditions */}
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-6 mb-6">
-          <h4 className="font-medium text-yellow-900 dark:text-yellow-200 mb-3">📋 Terms &amp; Conditions</h4>
+          <h4 className="font-medium text-yellow-900 dark:text-yellow-200 mb-3">{t('seller_onboarding.reviewSubmit.terms_title')}</h4>
           <ul className="space-y-2 text-sm text-yellow-700 dark:text-yellow-400">
-            <li>• I confirm that all information provided is accurate and truthful</li>
-            <li>• I agree to comply with the platform's terms of service</li>
-            <li>• I understand that providing false information may result in account suspension</li>
-            <li>• I authorize verification of the documents submitted</li>
-            <li>• I agree to receive communications regarding my seller account</li>
+            <li>• {t('seller_onboarding.reviewSubmit.term_0')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.term_1')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.term_2')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.term_3')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.term_4')}</li>
           </ul>
         </div>
 
         {/* Submission Note */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 mb-6">
-          <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">ℹ️ What Happens Next?</h4>
+          <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">{t('seller_onboarding.reviewSubmit.next_steps_title')}</h4>
           <ul className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-            <li>• Your store profile will be created</li>
-            <li>• You'll be redirected to the seller dashboard</li>
-            <li>• You can upload verification documents anytime from the dashboard</li>
-            <li>• Without verification documents, you can only list limited products</li>
-            <li>• Full selling capabilities require document verification (1-3 business days)</li>
+            <li>• {t('seller_onboarding.reviewSubmit.next_0')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.next_1')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.next_2')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.next_3')}</li>
+            <li>• {t('seller_onboarding.reviewSubmit.next_4')}</li>
           </ul>
         </div>
 
@@ -272,7 +264,7 @@ const SubmitOnboarding = () => {
             className="flex items-center justify-center space-x-2 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <ArrowLeftIcon className="h-5 w-5" />
-            <span>Back to Address Info</span>
+            <span>{t('seller_onboarding.reviewSubmit.back_to_address') || t('seller_onboarding.reviewSubmit.address_info')}</span>
           </button>
 
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
@@ -284,12 +276,12 @@ const SubmitOnboarding = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Submitting...</span>
+                  <span>{t('seller_onboarding.reviewSubmit.saving')}</span>
                 </>
               ) : (
                 <>
                   <CheckCircleIcon className="h-5 w-5" />
-                  <span>Submit &amp; Complete Onboarding</span>
+                  <span>{t('seller_onboarding.reviewSubmit.submit')}</span>
                 </>
               )}
             </button>

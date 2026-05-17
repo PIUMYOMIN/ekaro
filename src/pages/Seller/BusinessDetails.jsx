@@ -130,7 +130,7 @@ const BusinessDetails = () => {
                                         className={inputClass(errors.business_registration_number)}
                                         placeholder={t("seller_onboarding.businessDetails.registrationNumber.placeholder")}
                                         {...register("business_registration_number", {
-                                            required: !isIndividual ? "Business registration number is required" : false
+                                            required: !isIndividual ? t('seller_onboarding.businessDetails.error_reg_required') : false
                                         })}
                                     />
                                     {errors.business_registration_number && (
@@ -150,7 +150,7 @@ const BusinessDetails = () => {
                                         className={inputClass(errors.tax_id)}
                                         placeholder={t("seller_onboarding.businessDetails.taxId.placeholder")}
                                         {...register("tax_id", {
-                                            required: !isIndividual ? "Tax ID is required" : false
+                                            required: !isIndividual ? t('seller_onboarding.businessDetails.error_tax_required') : false
                                         })}
                                     />
                                     {errors.tax_id && (

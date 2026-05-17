@@ -131,10 +131,10 @@ const StoreBasicInfo = () => {
                 setValue('store_logo', path, { shouldValidate: true });
                 return path;
             } else {
-                setError(response.data.message || 'Failed to upload logo');
+                setError(response.data.message || t('store_basic.upload_logo_failed'));
             }
         } catch (error) {
-            const errorMsg = error.response?.data?.message || error.message || 'Failed to upload logo';
+            const errorMsg = error.response?.data?.message || error.message || t('store_basic.upload_logo_failed');
             setError(errorMsg);
             console.error('Logo upload error:', error);
         } finally {
@@ -156,7 +156,7 @@ const StoreBasicInfo = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            if (response.data.success) {
+                if (response.data.success) {
                 const { url, path } = response.data.data;
                 setStoreBannerPreview(url);
                 setBannerPath(path);
@@ -164,10 +164,10 @@ const StoreBasicInfo = () => {
                 setValue('store_banner', path, { shouldValidate: true });
                 return path;
             } else {
-                setError(response.data.message || 'Failed to upload banner');
+                setError(response.data.message || t('store_basic.upload_banner_failed'));
             }
         } catch (error) {
-            const errorMsg = error.response?.data?.message || error.message || 'Failed to upload banner';
+            const errorMsg = error.response?.data?.message || error.message || t('store_basic.upload_banner_failed');
             setError(errorMsg);
             console.error('Banner upload error:', error);
         } finally {
@@ -417,12 +417,12 @@ const StoreBasicInfo = () => {
                             } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder={t("store_basic.enter_store_name")}
                             {...register("store_name", {
-                                required: "Store name is required",
-                                minLength: {
-                                    value: 2,
-                                    message: "Store name must be at least 2 characters"
-                                }
-                            })}
+                                    required: t('store_basic.store_name_required'),
+                                    minLength: {
+                                        value: 2,
+                                        message: t('store_basic.store_name_min')
+                                    }
+                                })}
                         />
                         {errors.store_name && (
                             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.store_name.message}</p>
@@ -444,7 +444,7 @@ const StoreBasicInfo = () => {
                                     errors.business_type_slug ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
                                 } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 appearance-none`}
                                 {...register("business_type_slug", {
-                                    required: "Business type is required"
+                                    required: t('store_basic.business_type_required')
                                 })}
                             >
                                 <option value="">{t("store_basic.select_business_type")}</option>
@@ -476,10 +476,10 @@ const StoreBasicInfo = () => {
                             } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder="contact@yourstore.com"
                             {...register("contact_email", {
-                                required: "Contact email is required",
+                                required: t('store_basic.email_required'),
                                 pattern: {
                                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                    message: "Invalid email address"
+                                    message: t('store_basic.invalid_email')
                                 }
                             })}
                         />
@@ -504,10 +504,10 @@ const StoreBasicInfo = () => {
                             } rounded-xl shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
                             placeholder="+95 123 456 789"
                             {...register("contact_phone", {
-                                required: "Contact phone is required",
+                                required: t('store_basic.phone_required'),
                                 pattern: {
                                     value: /^\+?[0-9\s\-\(\)]+$/,
-                                    message: "Invalid phone number"
+                                    message: t('store_basic.invalid_phone')
                                 }
                             })}
                         />
@@ -532,7 +532,7 @@ const StoreBasicInfo = () => {
                             {...register("store_description", {
                                 maxLength: {
                                     value: 2000,
-                                    message: "Description must be less than 2000 characters"
+                                    message: t('store_basic.description_limit')
                                 }
                             })}
                         />

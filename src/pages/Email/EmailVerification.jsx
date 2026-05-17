@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import SEO from '../../components/SEO/SEO';
 
 // ── Code Input — 6 separate digit boxes ──────────────────────────────────────
@@ -67,6 +68,7 @@ const EmailVerification = () => {
   const location       = useLocation();
   const navigate       = useNavigate();
   const { refreshUser, isSeller, isAdmin, user, logout, updateUser } = useAuth();
+  const { t } = useTranslation();
 
   // Link-based verification state
   const [linkStatus, setLinkStatus]   = useState(id && hash ? 'verifying' : 'idle');
@@ -122,7 +124,7 @@ const EmailVerification = () => {
 
     if (!expires || !signature) {
       setLinkStatus('error');
-      setLinkMessage('This verification link is incomplete or malformed.');
+      setLinkMessage(t('email_verification.link_failed_desc', { message: 'This verification link is incomplete or malformed.' }));
       return;
     }
 
@@ -146,12 +148,12 @@ const EmailVerification = () => {
         }
         linkSuccessParamsKeyRef.current = paramsKey;
         setLinkStatus('success');
-        setLinkMessage(r.data.message || 'Email verified successfully!');
+        setLinkMessage(r.data.message || t('email_verification.success_default_msg'));
       })
       .catch(err => {
         if (err.name === 'CanceledError' || err.name === 'AbortError') return;
         setLinkStatus('error');
-        setLinkMessage(err.response?.data?.message || 'Verification failed. The link may be invalid or expired.');
+        setLinkMessage(err.response?.data?.message || t('email_verification.link_failed_desc', { message: 'Verification failed. The link may be invalid or expired.' }));
       });
 
     return () => ctrl.abort();
@@ -175,11 +177,11 @@ const EmailVerification = () => {
         }
       }
       setCodeStatus('success');
-      setCodeMessage(r.data.message || 'Email verified!');
+      setCodeMessage(r.data.message || t('email_verification.success_default_msg'));
       setLinkStatus('success'); // unify success state
     } catch (err) {
       setCodeStatus('error');
-      setCodeMessage(err.response?.data?.message || 'Invalid or expired code.');
+      setCodeMessage(err.response?.data?.message || t('email_verification.resend_failed'));
     }
   };
 
@@ -208,7 +210,7 @@ const EmailVerification = () => {
     setResendMsg('');
     try {
       await api.post('/email/resend');
-      setResendMsg('New code sent — please check your inbox.');
+      setResendMsg(t('email_verification.resend_success'));
       setCode('');
       setCodeStatus('idle');
       setCodeMessage('');
@@ -228,7 +230,7 @@ const EmailVerification = () => {
       }, 1000);
       resendCooldownIntervalRef.current = id;
     } catch (err) {
-      setResendMsg(err.response?.data?.message || 'Failed to resend. Please try again shortly.');
+      setResendMsg(err.response?.data?.message || t('email_verification.resend_failed'));
     } finally {
       setResending(false);
     }
@@ -247,15 +249,15 @@ const EmailVerification = () => {
   if (user?.email_verified_at && linkStatus !== 'verifying') {
     return (
       <>
-        <SEO title="Email Verified | Pyonea" noindex={true} url="/verify-email"/>
+        <SEO title={t('email_verification.seo_title')} noindex={true} url="/verify-email"/>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
           <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center space-y-4">
             <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto"/>
-            <h1 className="text-2xl font-bold text-gray-900">Email already verified</h1>
-            <p className="text-gray-500 text-sm">Your email address is confirmed. You're all set!</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('email_verification.already_verified_title')}</h1>
+            <p className="text-gray-500 text-sm">{t('email_verification.already_verified_desc')}</p>
             <button onClick={redirect}
               className="w-full px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors">
-              Continue to {isAdmin?.() ? 'Admin' : isSeller?.() ? 'Seller' : ''} Dashboard
+              {isAdmin?.() ? t('email_verification.go_admin') : isSeller?.() ? t('email_verification.go_seller') : t('email_verification.start_shopping')}
             </button>
           </div>
         </div>
@@ -268,7 +270,7 @@ const EmailVerification = () => {
 
   return (
     <>
-      <SEO title="Verify Your Email | Pyonea" noindex={true} url="/verify-email"/>
+      <SEO title={t('email_verification.seo_title')} noindex={true} url="/verify-email"/>
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full space-y-4">
 
@@ -278,8 +280,8 @@ const EmailVerification = () => {
             {linkStatus === 'verifying' && (
               <div className="text-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mx-auto"/>
-                <h2 className="text-xl font-bold text-gray-900">Verifying your email…</h2>
-                <p className="text-gray-500 text-sm">Please wait, this only takes a moment.</p>
+                <h2 className="text-xl font-bold text-gray-900">{t('email_verification.verifying_title')}</h2>
+                <p className="text-gray-500 text-sm">{t('email_verification.verifying_desc')}</p>
               </div>
             )}
 
@@ -289,16 +291,16 @@ const EmailVerification = () => {
                 <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                   <CheckCircleIcon className="h-9 w-9 text-green-600"/>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Email Verified! 🎉</h2>
+                <h2 className="text-2xl font-bold text-gray-900">{t('email_verification.success_title')}</h2>
                 <p className="text-gray-500 text-sm">
-                  {linkMessage || codeMessage || 'Your email has been confirmed. Welcome to Pyonea!'}
+                  {linkMessage || codeMessage || t('email_verification.success_default_msg')}
                 </p>
                 <button onClick={redirect}
                   className="w-full px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors">
-                  {isAdmin?.() ? 'Go to Admin Dashboard' : isSeller?.() ? 'Go to Seller Dashboard' : 'Start Shopping'}
+                  {isAdmin?.() ? t('email_verification.go_admin') : isSeller?.() ? t('email_verification.go_seller') : t('email_verification.start_shopping')}
                 </button>
                 <Link to="/" className="block text-sm text-gray-400 hover:text-gray-600 transition-colors">
-                  Back to home
+                  {t('email_verification.back_home')}
                 </Link>
               </div>
             )}
@@ -310,11 +312,9 @@ const EmailVerification = () => {
                   <div className="h-14 w-14 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <EnvelopeIcon className="h-7 w-7 text-green-600"/>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">Check your email</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t('email_verification.check_email_title')}</h2>
                   <p className="text-gray-500 text-sm mt-2">
-                    We sent a 6-digit verification code to
-                    {user?.email ? <> <strong className="text-gray-700">{user.email}</strong></> : ' your email address'}.
-                    Enter it below or click the link in the email.
+                    {t('email_verification.check_email_desc', { email: user?.email || 'your email address' })}
                   </p>
                 </div>
 
@@ -323,8 +323,8 @@ const EmailVerification = () => {
                   <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
                     <XCircleIcon className="h-5 w-5 flex-shrink-0 mt-0.5 text-amber-500"/>
                     <div>
-                      <p className="font-medium">Link verification failed</p>
-                      <p className="text-xs mt-0.5 text-amber-600">{linkMessage} You can still enter the code below.</p>
+                          <p className="font-medium">{t('email_verification.link_failed_title')}</p>
+                          <p className="text-xs mt-0.5 text-amber-600">{t('email_verification.link_failed_desc', { message: linkMessage })}</p>
                     </div>
                   </div>
                 )}
@@ -332,7 +332,7 @@ const EmailVerification = () => {
                 {/* Code input */}
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-gray-500 text-center uppercase tracking-wide">
-                    Enter 6-digit code
+                    {t('email_verification.enter_6_digit')}
                   </p>
                   <CodeInput
                     value={code}
@@ -343,7 +343,7 @@ const EmailVerification = () => {
                   {/* Code status */}
                   {codeStatus === 'loading' && (
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                      <ArrowPathIcon className="h-4 w-4 animate-spin"/> Verifying…
+                      <ArrowPathIcon className="h-4 w-4 animate-spin"/> {t('email_verification.verifying')}
                     </div>
                   )}
                   {codeStatus === 'error' && (
@@ -357,15 +357,15 @@ const EmailVerification = () => {
                     onClick={submitCode}
                     disabled={code.replace(/\s/g, '').length < 6}
                     className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl disabled:opacity-40 transition-colors">
-                    <KeyIcon className="h-4 w-4"/> Verify Email
+                    <KeyIcon className="h-4 w-4"/> {t('email_verification.verify_email_btn')}
                   </button>
                 )}
 
                 {/* Divider */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"/></div>
-                  <div className="relative flex justify-center text-xs text-gray-400 bg-white px-2">
-                    Didn't get the email?
+                    <div className="relative flex justify-center text-xs text-gray-400 bg-white px-2">
+                    {t('email_verification.didnt_get')}
                   </div>
                 </div>
 
@@ -377,10 +377,10 @@ const EmailVerification = () => {
                     className="flex items-center justify-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed mx-auto transition-colors">
                     <ArrowPathIcon className={`h-4 w-4 ${resending ? 'animate-spin' : ''}`}/>
                     {resending
-                      ? 'Sending…'
+                      ? t('email_verification.resend_sending')
                       : resendCooldown > 0
-                        ? `Resend in ${resendCooldown}s`
-                        : 'Resend verification code'}
+                        ? t('email_verification.resend_in', { seconds: resendCooldown })
+                        : t('email_verification.resend_code')}
                   </button>
                   {resendMsg && (
                     <p className={`text-xs ${resendMsg.includes('sent') ? 'text-green-600' : 'text-red-500'}`}>
@@ -388,7 +388,7 @@ const EmailVerification = () => {
                     </p>
                   )}
                   <p className="text-xs text-gray-400">
-                    Check your spam folder if you don't see it within a minute.
+                    {t('email_verification.check_spam')}
                   </p>
                 </div>
               </div>
@@ -396,7 +396,7 @@ const EmailVerification = () => {
           </div>
 
           <p className="text-center text-xs text-gray-400">
-            Wrong account?{' '}
+            {t('email_verification.wrong_account')}{' '}
             <button
               type="button"
               onClick={() => {
@@ -405,7 +405,7 @@ const EmailVerification = () => {
               }}
               className="text-green-600 hover:underline bg-transparent border-0 p-0 cursor-pointer text-xs"
             >
-              Sign out
+              {t('email_verification.sign_out')}
             </button>
           </p>
         </div>

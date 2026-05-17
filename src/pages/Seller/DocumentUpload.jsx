@@ -13,11 +13,13 @@ import {
     DocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import OnboardingLayout from '../../components/OnboardingLayout';
+import { useTranslation } from 'react-i18next';
 import { useOnboardingState } from '../../hooks/useOnboardingState';
 
 
 const DocumentUpload = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { saveStep, isLoading, businessTypeInfo, uploadedDocs, documentRequirements, uploadDocument, deleteDocument } = useOnboardingState();
     const [uploading, setUploading] = useState({});
     const [error, setError] = useState('');
@@ -46,13 +48,13 @@ const DocumentUpload = () => {
         const fileExt = file.name.split('.').pop().toLowerCase();
 
         if (!validExtensions.includes(fileExt)) {
-            setError(`Invalid file type. Accepted: ${validExtensions.join(', ')}`);
+            setError(`${t('seller_onboarding.documentUpload.error_invalid_type')} ${validExtensions.join(', ')}`);
             return;
         }
 
         const maxSize = requirement.max_size?.includes('5MB') ? 5 * 1024 * 1024 : 2 * 1024 * 1024;
         if (file.size > maxSize) {
-            setError(`File too large. Max size: ${requirement.max_size || '2MB'}`);
+            setError(`${t('seller_onboarding.documentUpload.error_too_large')} ${requirement.max_size || '2MB'}`);
             return;
         }
 
@@ -63,10 +65,10 @@ const DocumentUpload = () => {
         const result = await uploadDocument(file, field);
 
         if (result.success) {
-            setSuccess(`${requirement.label} uploaded successfully!`);
+            setSuccess(`${requirement.label} ${t('seller_onboarding.documentUpload.success_upload')}`);
             setTimeout(() => setSuccess(""), 3000);
         } else {
-            setError(result.message || 'Failed to upload document');
+            setError(result.message || t('seller_onboarding.documentUpload.error_upload'));
         }
 
         setUploading({ ...uploading, [field]: false });
@@ -76,10 +78,10 @@ const DocumentUpload = () => {
         const result = await deleteDocument(field);
 
         if (result.success) {
-            setSuccess('Document removed successfully');
+            setSuccess(t('seller_onboarding.documentUpload.success_remove'));
             setTimeout(() => setSuccess(""), 3000);
         } else {
-            setError(result.message || 'Failed to remove document');
+            setError(result.message || t('seller_onboarding.documentUpload.error_remove'));
         }
     };
 
@@ -100,7 +102,7 @@ const DocumentUpload = () => {
         });
 
         if (missing.length > 0) {
-            setError(`Please upload required documents: ${missing.join(', ')}`);
+            setError(`${t('seller_onboarding.documentUpload.error_required_docs')} ${missing.join(', ')}`);
             return;
         }
 
@@ -109,7 +111,7 @@ const DocumentUpload = () => {
         if (result.success) {
             navigate(`/seller/onboarding/review-submit`);
         } else {
-            setError(result.message || "Failed to save document status");
+            setError(result.message || t('seller_onboarding.documentUpload.error_save'));
         }
     };
 
@@ -119,16 +121,16 @@ const DocumentUpload = () => {
             req => uploadedDocs[req.type]?.uploaded
         ).length;
 
-        return `${uploadedRequired}/${requiredDocs.length} required documents uploaded`;
+        return t('seller_onboarding.documentUpload.status_count', { uploaded: uploadedRequired, total: requiredDocs.length });
     };
 
     return (
         <OnboardingLayout
-            title="Document Verification"
-            description="Upload required documents for verification"
+            title={t('seller_onboarding.documentUpload.title')}
+            description={t('seller_onboarding.documentUpload.description')}
             onBack={() => navigate('/seller/onboarding/delivery-zones')}
             onNext={handleContinue}
-            nextLabel="Continue to Review"
+            nextLabel={t('seller_onboarding.documentUpload.continue_to_review')}
             nextDisabled={isLoading || !documentsComplete}
             loading={isLoading}
         >
@@ -164,28 +166,28 @@ const DocumentUpload = () => {
                 <div className="space-y-6">
                     {/* Business Type Info */}
                     {businessTypeInfo && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                             <div className="flex items-start">
                                 <InformationCircleIcon className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
                                 <div>
                                     <h3 className="font-medium text-blue-900 dark:text-blue-200 mb-1">Business Type: {businessTypeInfo.name}</h3>
-                                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                                        {businessTypeInfo.is_individual
-                                            ? "As an individual seller, you need to upload identity documents."
-                                            : "As a business seller, you need to upload business registration, tax, and identity documents."
-                                        }
-                                    </p>
+                                                <p className="text-sm text-blue-700 dark:text-blue-300">
+                                                    {businessTypeInfo.is_individual
+                                                        ? t('seller_onboarding.documentUpload.individual_message')
+                                                        : t('seller_onboarding.documentUpload.business_message')
+                                                    }
+                                                </p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {/* Progress Status */}
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <DocumentCheckIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
-                                <span className="font-medium text-yellow-900 dark:text-yellow-200">Document Status</span>
+                                <span className="font-medium text-yellow-900 dark:text-yellow-200">{t('seller_onboarding.documentUpload.doc_status')}</span>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                                 documentsComplete
@@ -196,9 +198,9 @@ const DocumentUpload = () => {
                             </span>
                         </div>
                         <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
-                            <p>• All documents must be clear and readable</p>
-                            <p>• Accepted formats: PDF, JPG, JPEG, PNG</p>
-                            <p>• Files should not exceed 5MB (2MB for images)</p>
+                            <p>• {t('seller_onboarding.documentUpload.rule_1')}</p>
+                            <p>• {t('seller_onboarding.documentUpload.rule_2')}</p>
+                            <p>• {t('seller_onboarding.documentUpload.rule_3')}</p>
                         </div>
                     </div>
 
@@ -219,15 +221,15 @@ const DocumentUpload = () => {
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{requirement.description}</p>
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
                                         <div>
-                                            <span className="font-medium">Accepted formats:</span> {requirement.accepted_formats || 'jpg, jpeg, png, pdf'}
+                                            <span className="font-medium">{t('seller_onboarding.documentUpload.accepted_formats')}</span> {requirement.accepted_formats || 'jpg, jpeg, png, pdf'}
                                         </div>
                                         <div>
-                                            <span className="font-medium">Max file size:</span> {requirement.max_size || '2MB'}
+                                            <span className="font-medium">{t('seller_onboarding.documentUpload.max_size')}</span> {requirement.max_size || '2MB'}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                                    {requirement.required ? 'Required' : 'Optional'}
+                                    {requirement.required ? t('seller_onboarding.documentUpload.required') : t('seller_onboarding.documentUpload.optional')}
                                 </div>
                             </div>
 
@@ -237,15 +239,15 @@ const DocumentUpload = () => {
                                         <DocumentIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                Document uploaded
+                                                {t('seller_onboarding.documentUpload.doc_uploaded')}
                                             </p>
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mt-1 gap-2">
-                                                <button
+                                                    <button
                                                     onClick={() => handleViewDocument(uploadedDocs[requirement.type].url)}
                                                     className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 flex items-center"
                                                 >
                                                     <EyeIcon className="h-4 w-4 inline mr-1" />
-                                                    View
+                                                    {t('seller_onboarding.documentUpload.view')}
                                                 </button>
                                             </div>
                                         </div>
@@ -253,7 +255,7 @@ const DocumentUpload = () => {
                                     <button
                                         onClick={() => handleRemoveDocument(requirement.type)}
                                         className="p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                        title="Remove document"
+                                        title={t('seller_onboarding.documentUpload.remove')}
                                     >
                                         <TrashIcon className="h-5 w-5" />
                                     </button>
@@ -279,12 +281,12 @@ const DocumentUpload = () => {
                                         {uploading[requirement.type] ? (
                                             <div className="text-center">
                                                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-3"></div>
-                                                <span className="text-sm text-blue-600 dark:text-blue-400">Uploading...</span>
+                                                <span className="text-sm text-blue-600 dark:text-blue-400">{t('seller_onboarding.documentUpload.uploading')}</span>
                                             </div>
                                         ) : (
                                             <>
                                                 <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-3" />
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">Click to upload {requirement.label}</span>
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">{t('seller_onboarding.documentUpload.click_to_upload')} {requirement.label}</span>
                                                 <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                                                     {requirement.accepted_formats || 'PDF, JPG, JPEG, PNG'} • Max {requirement.max_size || '2MB'}
                                                 </span>
