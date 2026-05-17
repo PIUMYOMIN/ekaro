@@ -20,6 +20,7 @@ import {
   WalletIcon,
   TagIcon,
   DocumentTextIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import DashboardSummary from "../../components/seller/DashboardSummary";
 import OrderManagement from "../../components/seller/OrderManagement";
@@ -43,6 +44,7 @@ import ReferralPanel from "../../components/Shared/ReferralPanel";
 import SellerWallet from "../../components/seller/SellerWallet";
 import SellerFinancialReports from "../../components/seller/SellerFinancialReports";
 import DashboardRFQSection, { fetchRfqDashboardTabBadgeForRole } from "../../components/Shared/DashboardRFQSection";
+import SellerSubscription from '../../components/seller/SellerSubscription';
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -167,7 +169,8 @@ const SellerDashboard = () => {
     { name: t("seller.delivery.title"),       icon: TruckIcon,        key: "delivery" },
     { name: t("seller.settings"), icon: CogIcon, key: "settings" },
     { name: "Referrals", icon: GiftIcon, key: "referrals" },
-    { name: "Seller Wallet", icon: WalletIcon,         key: "wallet" },
+    { name: "Seller Wallet", icon: WalletIcon, key: "wallet" },
+    { name: 'Subscription', icon: SparklesIcon, key: 'subscription' },
     { name: "Financial Reports", icon: ChartBarIcon,      key: "financial_reports" },
   ], [t]);
 
@@ -190,6 +193,7 @@ const SellerDashboard = () => {
       case "settings": return <StoreSettings storeData={storeData} setStoreData={setStoreData} refreshData={refreshGlobalData} />;
       case "referrals": return <ReferralPanel />;
       case "wallet": return <SellerWallet />;
+      case 'subscription': return <SellerSubscription />;
       case "financial_reports": return <SellerFinancialReports storeName={storeData?.store_name} />;
       case "rfq": return <DashboardRFQSection role="seller" />;
       default:               return null;

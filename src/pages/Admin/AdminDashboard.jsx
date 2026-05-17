@@ -20,6 +20,7 @@ import {
   UserCircleIcon,
   DocumentTextIcon,
   BuildingStorefrontIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -50,6 +51,7 @@ import CodInvoiceManagement from "../../components/admin/CodInvoiceManagement";
 import FinancialReports from "../../components/admin/FinancialReports";
 import SEO from "../../components/SEO/SEO";
 import DashboardRFQSection from "../../components/Shared/DashboardRFQSection";
+import SubscriptionManagement from '../../components/admin/SubscriptionManagement';
 
 // ── Admin personal profile tab ────────────────────────────────────────────────
 const inputCls =
@@ -409,6 +411,11 @@ const AdminDashboard = () => {
       name: "Commission Rules",
       icon: CurrencyDollarIcon,
       component: <CommissionRulesManagement />,
+    },
+    {
+      name: 'Subscriptions',
+      icon: SparklesIcon,
+      component: <SubscriptionManagement />,
     },
     {
       name: t("analytics"),
