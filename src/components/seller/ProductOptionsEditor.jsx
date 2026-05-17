@@ -7,6 +7,7 @@
 //   onSaved    — () => void  called after options are successfully saved
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../../utils/api";
 import {
   PlusIcon,
@@ -21,11 +22,11 @@ import {
 // ── constants ─────────────────────────────────────────────────────────────────
 
 const OPTION_TYPES = [
-  { value: "color",  label: "Color",       hint: "Shows colour swatches. Add a hex code per value." },
-  { value: "size",   label: "Size",        hint: "Shows S/M/L/XL pill buttons." },
-  { value: "text",   label: "Text",        hint: "Shows plain text pill buttons." },
-  { value: "image",  label: "Image",       hint: "Shows thumbnail swatches. Add an image URL per value." },
-  { value: "input",  label: "Custom Input",hint: "Buyer types a value (e.g. engraving text). No predefined values needed." },
+  { value: "color",  labelKey: "color", hintKey: "color_hint" },
+  { value: "size",   labelKey: "size", hintKey: "size_hint" },
+  { value: "text",   labelKey: "text", hintKey: "text_hint" },
+  { value: "image",  labelKey: "image", hintKey: "image_hint" },
+  { value: "input",  labelKey: "input", hintKey: "input_hint" },
 ];
 
 const emptyOption = () => ({
@@ -50,13 +51,13 @@ const slugify = (str) =>
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-const ValueRow = ({ optType, val, onChange, onRemove }) => (
+const ValueRow = ({ optType, val, onChange, onRemove, t }) => (
   <div className="flex flex-col gap-2 py-1.5 group sm:flex-row sm:items-center">
     <div className="min-w-0 flex-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
       {/* Label */}
       <input
         type="text"
-        placeholder="Label (e.g. Red)"
+        placeholder={t("product_form.options.value_label_placeholder")}
         value={val.label}
         onChange={(e) => {
           onChange({ ...val, label: e.target.value, value: slugify(e.target.value) });
@@ -73,7 +74,7 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
             value={val.meta?.hex ?? "#000000"}
             onChange={(e) => onChange({ ...val, meta: { ...val.meta, hex: e.target.value } })}
             className="h-9 w-12 flex-shrink-0 rounded cursor-pointer border border-gray-300 dark:border-slate-600 bg-transparent"
-            title="Pick colour"
+            title={t("product_form.options.pick_colour")}
           />
           <input
             type="text"
@@ -100,7 +101,7 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
       {optType !== "color" && optType !== "image" && (
         <input
           type="text"
-          placeholder="Slug (auto-filled)"
+          placeholder={t("product_form.options.slug_placeholder")}
           value={val.value}
           onChange={(e) => onChange({ ...val, value: slugify(e.target.value) })}
           className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm
@@ -119,7 +120,7 @@ const ValueRow = ({ optType, val, onChange, onRemove }) => (
   </div>
 );
 
-const OptionBlock = ({ option, onChange, onRemove }) => {
+const OptionBlock = ({ option, onChange, onRemove, t }) => {
   const [open, setOpen] = useState(true);
   const typeInfo = OPTION_TYPES.find((t) => t.value === option.type);
 
@@ -144,7 +145,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
 
         <input
           type="text"
-          placeholder="Option name (e.g. Color)"
+          placeholder={t("product_form.options.option_name_placeholder")}
           value={option.name ?? ""}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onChange({ ...option, name: e.target.value })}
@@ -161,8 +162,8 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
           className="min-w-0 flex-[1_1_120px] text-xs border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1
                      bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300"
         >
-          {OPTION_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+          {OPTION_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>{t(`product_form.options.types.${type.labelKey}`)}</option>
           ))}
         </select>
 
@@ -174,7 +175,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
             onChange={(e) => onChange({ ...option, is_required: e.target.checked })}
             className="rounded text-green-600"
           />
-          Required
+          {t("product_form.options.required")}
         </label>
 
         <button
@@ -193,15 +194,17 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
       {/* Body */}
       {open && (
         <div className="px-4 py-3 bg-white dark:bg-slate-900 space-y-1">
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">{typeInfo?.hint}</p>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mb-2">
+            {typeInfo ? t(`product_form.options.types.${typeInfo.hintKey}`) : ""}
+          </p>
 
           {option.type !== "input" ? (
             <>
               {/* Column headers */}
               {option.values.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 text-xs font-medium text-gray-500 dark:text-slate-400 px-0 mb-1">
-                  <span>Label</span>
-                  <span>{option.type === "color" ? "Hex colour" : option.type === "image" ? "Image URL" : "Slug"}</span>
+                  <span>{t("product_form.options.label")}</span>
+                  <span>{option.type === "color" ? t("product_form.options.hex_colour") : option.type === "image" ? t("product_form.options.image_url") : t("product_form.options.slug")}</span>
                 </div>
               )}
 
@@ -210,6 +213,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
                   key={val._id}
                   optType={option.type}
                   val={val}
+                  t={t}
                   onChange={(updated) => updateValue(idx, updated)}
                   onRemove={() => removeValue(idx)}
                 />
@@ -221,12 +225,12 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
                 className="mt-2 flex items-center gap-1 text-sm text-green-600 dark:text-green-400
                            hover:text-green-700 font-medium"
               >
-                <PlusIcon className="h-4 w-4" /> Add value
+                <PlusIcon className="h-4 w-4" /> {t("product_form.options.add_value")}
               </button>
             </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-slate-400 italic">
-              No predefined values — the buyer will type their own.
+              {t("product_form.options.no_predefined_values")}
             </p>
           )}
         </div>
@@ -238,6 +242,7 @@ const OptionBlock = ({ option, onChange, onRemove }) => {
 // ── main component ────────────────────────────────────────────────────────────
 
 const ProductOptionsEditor = ({ productId, onSaved }) => {
+  const { t } = useTranslation();
   const [options, setOptions] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -281,16 +286,16 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
       if (!opt.name || !String(opt.name).trim()) {
-        setError(`Option #${i + 1} is missing a name. Fill it in or remove it.`);
+        setError(t("product_form.options.error_missing_name", { number: i + 1 }));
         return;
       }
       if (opt.type !== "input" && opt.values.length === 0) {
-        setError(`Option "${opt.name}" needs at least one value.`);
+        setError(t("product_form.options.error_needs_value", { name: opt.name }));
         return;
       }
       for (const v of opt.values) {
         if (!v.label || !v.label.trim()) {
-          setError(`All values in option "${opt.name}" need a label.`);
+          setError(t("product_form.options.error_value_label", { name: opt.name }));
           return;
         }
       }
@@ -312,12 +317,12 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
           })),
         })),
       });
-      setSuccess("Options saved! Now generate your variants below.");
+      setSuccess(t("product_form.options.saved"));
       onSaved?.();
     } catch (err) {
       const msgs = err.response?.data?.errors
         ? Object.values(err.response.data.errors).flat().join(", ")
-        : err.response?.data?.message ?? "Failed to save options.";
+        : err.response?.data?.message ?? t("product_form.options.save_failed");
       setError(msgs);
     } finally {
       setSaving(false);
@@ -329,10 +334,10 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
-            Product Options
+            {t("product_form.options.title")}
           </h3>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            Define the choices buyers can select (e.g. Color, Size).
+            {t("product_form.options.subtitle")}
           </p>
         </div>
         <button
@@ -341,15 +346,15 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
           className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white
                      rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
         >
-          <PlusIcon className="h-4 w-4" /> Add Option
+          <PlusIcon className="h-4 w-4" /> {t("product_form.options.add_option")}
         </button>
       </div>
 
       {options.length === 0 && (
         <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-slate-600
                         rounded-xl text-gray-400 dark:text-slate-500">
-          <p className="text-sm">No options yet.</p>
-          <p className="text-xs mt-1">Click "Add Option" to define Color, Size, etc.</p>
+          <p className="text-sm">{t("product_form.options.empty_title")}</p>
+          <p className="text-xs mt-1">{t("product_form.options.empty_hint")}</p>
         </div>
       )}
 
@@ -358,6 +363,7 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
           <OptionBlock
             key={opt._id}
             option={opt}
+            t={t}
             onChange={(updated) => updateOption(idx, updated)}
             onRemove={() => removeOption(idx)}
           />
@@ -389,7 +395,7 @@ const ProductOptionsEditor = ({ productId, onSaved }) => {
           className="w-full py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm
                      hover:bg-green-700 disabled:opacity-50 transition-colors"
         >
-          {saving ? "Saving…" : "Save Options"}
+          {saving ? t("product_form.actions.saving") : t("product_form.options.save_options")}
         </button>
       )}
     </div>

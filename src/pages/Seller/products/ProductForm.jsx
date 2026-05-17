@@ -1,4 +1,4 @@
-// pages/Seller/products/ProductForm.jsx
+﻿// pages/Seller/products/ProductForm.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -30,29 +30,29 @@ const IMAGE_ANGLES = [
 ];
 
 const PRODUCT_TYPES = [
-  { value: "physical", label: "Physical",        hint: "Has stock, requires shipping." },
-  { value: "digital",  label: "Digital",         hint: "Download/link delivered. No shipping." },
-  { value: "service",  label: "Service",         hint: "No stock, no shipping (e.g. consulting)." },
+  { value: "physical", labelKey: "physical", hintKey: "physical_hint", label: "Physical", hint: "Has stock, requires shipping." },
+  { value: "digital",  labelKey: "digital",  hintKey: "digital_hint",  label: "Digital",  hint: "Download/link delivered. No shipping." },
+  { value: "service",  labelKey: "service",  hintKey: "service_hint",  label: "Service",  hint: "No stock, no shipping (e.g. consulting)." },
 ];
 
 const QUANTITY_UNITS = [
-  { value: "piece",   label: "Piece" },
-  { value: "kg",      label: "Kilogram" },
-  { value: "gram",    label: "Gram" },
-  { value: "meter",   label: "Meter" },
-  { value: "liter",   label: "Liter" },
-  { value: "set",     label: "Set" },
-  { value: "pack",    label: "Pack" },
-  { value: "box",     label: "Box" },
-  { value: "pallet",  label: "Pallet" },
-  { value: "roll",    label: "Roll" },
+  { value: "piece",   labelKey: "piece",  label: "Piece" },
+  { value: "kg",      labelKey: "kg",     label: "Kilogram" },
+  { value: "gram",    labelKey: "gram",   label: "Gram" },
+  { value: "meter",   labelKey: "meter",  label: "Meter" },
+  { value: "liter",   labelKey: "liter",  label: "Liter" },
+  { value: "set",     labelKey: "set",    label: "Set" },
+  { value: "pack",    labelKey: "pack",   label: "Pack" },
+  { value: "box",     labelKey: "box",    label: "Box" },
+  { value: "pallet",  labelKey: "pallet", label: "Pallet" },
+  { value: "roll",    labelKey: "roll",   label: "Roll" },
 ];
 
 const WARRANTY_TYPES = [
-  { value: "manufacturer",  label: "Manufacturer Warranty" },
-  { value: "seller",        label: "Seller Warranty" },
-  { value: "international", label: "International Warranty" },
-  { value: "no_warranty",   label: "No Warranty" },
+  { value: "manufacturer",  labelKey: "manufacturer",  label: "Manufacturer Warranty" },
+  { value: "seller",        labelKey: "seller",        label: "Seller Warranty" },
+  { value: "international", labelKey: "international", label: "International Warranty" },
+  { value: "no_warranty",   labelKey: "no_warranty",   label: "No Warranty" },
 ];
 
 const PRODUCT_CONDITIONS = [
@@ -135,11 +135,11 @@ const DEFAULT_FORM = {
 // ── steps ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, title: "Basic Info",     description: "Product details" },
-  { id: 2, title: "Pricing",        description: "Price & B2B" },
-  { id: 3, title: "Media",          description: "Images & specs" },
-  { id: 4, title: "Shipping",       description: "Delivery & more" },
-  { id: 5, title: "Variants",       description: "Options & stock" },
+  { id: 1, titleKey: "basic_info", title: "Basic Info", description: "Product details" },
+  { id: 2, titleKey: "pricing",    title: "Pricing",    description: "Price & B2B" },
+  { id: 3, titleKey: "media",      title: "Media",      description: "Images & specs" },
+  { id: 4, titleKey: "shipping",   title: "Shipping",   description: "Delivery & more" },
+  { id: 5, titleKey: "variants",   title: "Variants",   description: "Options & stock" },
 ];
 
 // ── component ─────────────────────────────────────────────────────────────────
@@ -151,6 +151,17 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const fileInputRef = useRef(null);
   const isMounted    = useRef(true);
   const catName = (c) => i18n.language === "my" ? (c.name_mm || c.name_en) : c.name_en;
+  const tf = (key, defaultValue, options = {}) => t(`product_form.${key}`, { defaultValue, ...options });
+  const optionalLabel = tf("labels.optional", "Optional");
+  const stepTitle = (step) => tf(`steps.${step.titleKey}.title`, step.title);
+  const stepDescription = (step) => tf(`steps.${step.titleKey}.description`, step.description);
+  const productTypeLabel = (pt) => tf(`product_types.${pt.labelKey}`, pt.label);
+  const productTypeHint = (pt) => tf(`product_types.${pt.hintKey}`, pt.hint);
+  const quantityUnitLabel = (u) => tf(`quantity_units.${u.labelKey}`, u.label);
+  const warrantyTypeLabel = (w) => tf(`warranty_types.${w.labelKey}`, w.label);
+  const conditionLabel = (c) => tf(`conditions.${c.value}.label`, c.label);
+  const conditionDescription = (c) => tf(`conditions.${c.value}.description`, c.description);
+  const imageAngleLabel = (a) => tf(`image_angles.${a.value}`, a.label);
 
   // ── form state ───────────────────────────────────────────────────────────────
   const [formData, setFormData] = useState(() => {
@@ -344,17 +355,17 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       const moqNum      = parseInt(formData.moq, 10);
       const categoryNum = parseInt(formData.category_id, 10);
       if (Number.isNaN(priceNum) || formData.price === "") {
-        setError("Please enter a valid price.");
+        setError(tf("errors.valid_price", "Please enter a valid price."));
         setLoading(false);
         return;
       }
       if (Number.isNaN(moqNum) || moqNum < 1) {
-        setError("Please enter a valid minimum order quantity (MOQ).");
+        setError(tf("errors.valid_moq", "Please enter a valid minimum order quantity (MOQ)."));
         setLoading(false);
         return;
       }
       if (Number.isNaN(categoryNum)) {
-        setError("Please select a category.");
+        setError(tf("errors.select_category", "Please select a category."));
         setLoading(false);
         return;
       }
@@ -394,16 +405,16 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       let response;
       if (product) {
         response = await api.put(`/seller/products/${product.id}`, payload);
-        setSuccessMessage("Product updated! Now set up your variants in Step 5.");
+        setSuccessMessage(tf("messages.updated", "Product updated! Now set up your variants in Step 5."));
         setCreatedProductId(product.id);
       } else {
         response = await api.post("/seller/products", payload);
-        setSuccessMessage("Product created! Now define your options and variants in Step 5.");
+        setSuccessMessage(tf("messages.created", "Product created! Now define your options and variants in Step 5."));
         const created = response.data?.data;
         const newId = created?.id ?? created?.data?.id;
         setCreatedProductId(newId ?? null);
         if (!newId) {
-          setError("Product was created but the response did not include an id. Refresh and open the product to add variants.");
+          setError(tf("errors.missing_created_id", "Product was created but the response did not include an id. Refresh and open the product to add variants."));
         }
       }
 
@@ -417,7 +428,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       if (err.response?.data?.errors) {
         setError(Object.values(err.response.data.errors).flat().join(", "));
       } else {
-        setError(err.response?.data?.message || err.message || "Something went wrong.");
+        setError(err.response?.data?.message || err.message || tf("errors.generic", "Something went wrong."));
       }
     } finally {
       setLoading(false);
@@ -468,7 +479,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         const { images: _, ...rest } = data;
         setFormData((prev) => ({ ...prev, ...rest }));
         setCreatedProductId(product.id);
-      } catch { setError("Failed to load product details."); }
+      } catch { setError(tf("errors.load_product", "Failed to load product details.")); }
     };
 
     if (product?.id) {
@@ -539,14 +550,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Basic Information</h2>
-              <p className="text-gray-500 dark:text-slate-400 text-sm mt-0.5">English fields are required</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{tf("sections.basic_title", "Basic Information")}</h2>
+              <p className="text-gray-500 dark:text-slate-400 text-sm mt-0.5">{tf("sections.basic_subtitle", "English fields are required")}</p>
             </div>
 
             {/* Product Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                Product Type *
+                {tf("labels.product_type", "Product Type")} *
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {PRODUCT_TYPES.map((pt) => (
@@ -557,8 +568,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                         ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                         : "border-gray-200 dark:border-slate-600 hover:border-gray-300"
                     }`}>
-                    <p className="font-medium text-sm text-gray-900 dark:text-slate-100">{pt.label}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{pt.hint}</p>
+                    <p className="font-medium text-sm text-gray-900 dark:text-slate-100">{productTypeLabel(pt)}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{productTypeHint(pt)}</p>
                   </button>
                 ))}
               </div>
@@ -567,74 +578,74 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             {/* Names */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Product Name (English) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.name_en", "Product Name (English)")} *</label>
                 <input type="text" name="name_en" value={formData.name_en} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="Enter product name in English" />
+                  placeholder={tf("placeholders.name_en", "Enter product name in English")} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Product Name (Myanmar) <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.name_mm", "Product Name (Myanmar)")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="text" name="name_mm" value={formData.name_mm} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="Enter product name in Myanmar" />
+                  placeholder={tf("placeholders.name_mm", "Enter product name in Myanmar")} />
               </div>
             </div>
 
             {/* Descriptions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Description (English) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.description_en", "Description (English)")} *</label>
                 <textarea name="description_en" rows="4" value={formData.description_en} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="Describe your product in detail..." />
+                  placeholder={tf("placeholders.description_en", "Describe your product in detail...")} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Description (Myanmar) <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.description_mm", "Description (Myanmar)")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <textarea name="description_mm" rows="4" value={formData.description_mm} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="Describe in Myanmar..." />
+                  placeholder={tf("placeholders.description_mm", "Describe in Myanmar...")} />
               </div>
             </div>
 
             {/* Category + Condition */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.category", "Category")} *</label>
                 {loadingCategories ? (
                   <div className="flex items-center p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-600" />
-                    <span className="ml-2 text-gray-600 dark:text-slate-400">Loading categories...</span>
+                    <span className="ml-2 text-gray-600 dark:text-slate-400">{tf("messages.loading_categories", "Loading categories...")}</span>
                   </div>
                 ) : categories.length > 0 ? (
                   <select name="category_id" value={formData.category_id} onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100">
-                    <option value="">Select a category</option>
+                    <option value="">{tf("placeholders.select_category", "Select a category")}</option>
                     {categories.map((parent) => (
                       <optgroup key={parent.id} label={catName(parent)}>
                         {parent.children?.length > 0
                           ? parent.children.map((c) => <option key={c.id} value={c.id}>{catName(c)}</option>)
-                          : <option disabled>No sub-categories</option>}
+                          : <option disabled>{tf("messages.no_sub_categories", "No sub-categories")}</option>}
                       </optgroup>
                     ))}
                   </select>
                 ) : (
                   <div className="text-center py-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-300 dark:border-slate-600">
                     <p className="text-gray-500 dark:text-slate-400 text-sm mb-2">
-                      {catError ? "Failed to load categories." : "No categories available."}
+                      {catError ? tf("errors.load_categories", "Failed to load categories.") : tf("messages.no_categories", "No categories available.")}
                     </p>
                     <button type="button" onClick={fetchCategories}
-                      className="text-xs text-green-700 dark:text-green-400 underline">Try again</button>
+                      className="text-xs text-green-700 dark:text-green-400 underline">{tf("actions.try_again", "Try again")}</button>
                   </div>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Condition *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.condition", "Condition")} *</label>
                 <select name="condition" value={formData.condition} onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100">
-                  {PRODUCT_CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  {PRODUCT_CONDITIONS.map((c) => <option key={c.value} value={c.value}>{conditionLabel(c)}</option>)}
                 </select>
                 <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
-                  {PRODUCT_CONDITIONS.find((c) => c.value === formData.condition)?.description}
+                  {conditionDescription(PRODUCT_CONDITIONS.find((c) => c.value === formData.condition) || PRODUCT_CONDITIONS[0])}
                 </p>
               </div>
             </div>
@@ -678,22 +689,22 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Pricing & B2B</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{tf("sections.pricing_title", "Pricing & B2B")}</h2>
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-                Set the base price and B2B rules. Per-variant pricing is configured in Step 5.
+                {tf("sections.pricing_subtitle", "Set the base price and B2B rules. Per-variant pricing is configured in Step 5.")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Base Price (MMK) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.base_price", "Base Price (MMK)")} *</label>
                 <input type="number" name="price" step="0.01" min="0" value={formData.price} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="0.00" />
-                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Displayed on listing cards. Variants override per-combination.</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">{tf("hints.base_price", "Displayed on listing cards. Variants override per-combination.")}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Discount Price (MMK) <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.discount_price", "Discount Price (MMK)")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="number" name="discount_price" step="0.01" min="0" value={formData.discount_price} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="0.00" />
@@ -703,28 +714,28 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  MOQ (Minimum Order Qty) *
+                  {tf("labels.moq", "MOQ (Minimum Order Qty)")} *
                 </label>
                 <input type="number" name="moq" min="1" value={formData.moq} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
                   placeholder="1" />
                 <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
-                  Buyers must order at least this quantity.
+                  {tf("hints.moq", "Buyers must order at least this quantity.")}
                   {formData.moq > 1 && (
                     <span className="block text-amber-600 dark:text-amber-400 mt-0.5">
-                      Valid quantities: {formData.moq}, {Number(formData.moq) * 2}, {Number(formData.moq) * 3}… (step = MOQ)
+                      {tf("hints.valid_quantities", "Valid quantities: {{a}}, {{b}}, {{c}}... (step = MOQ)", { a: formData.moq, b: Number(formData.moq) * 2, c: Number(formData.moq) * 3 })}
                     </span>
                   )}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Quantity Unit *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.quantity_unit", "Quantity Unit")} *</label>
                 <select name="quantity_unit" value={formData.quantity_unit} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100">
-                  {QUANTITY_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
+                  {QUANTITY_UNITS.map((u) => <option key={u.value} value={u.value}>{quantityUnitLabel(u)}</option>)}
                 </select>
-                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Unit for stock and ordering (e.g. kg, meter, piece).</p>
+                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">{tf("hints.quantity_unit", "Unit for stock and ordering (e.g. kg, meter, piece).")}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Lead Time <span className="text-xs text-gray-400">(Optional)</span></label>
@@ -773,15 +784,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         return (
           <div className="space-y-8">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Media & Specifications</h2>
-              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Add images and product specifications</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{tf("sections.media_title", "Media & Specifications")}</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{tf("sections.media_subtitle", "Add images and product specifications")}</p>
             </div>
 
             {/* Image upload */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
-                  Product Images * <span className="text-xs font-normal text-gray-500">({imagePreviews.length} image(s))</span>
+                  {tf("labels.product_images", "Product Images")} * <span className="text-xs font-normal text-gray-500">{tf("labels.image_count", "({{count}} image(s))", { count: imagePreviews.length })}</span>
                 </label>
                 <div className="flex gap-2">
                   <div className="flex gap-1">
@@ -791,13 +802,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       className="text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1.5 w-48 focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" />
                     <button type="button" onClick={addImageFromUrl} disabled={!urlInput.trim()}
                       className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 text-gray-700 dark:text-slate-300">
-                      Add URL
+                      {tf("actions.add_url", "Add URL")}
                     </button>
                   </div>
                   {imagePreviews.length > 0 && (
                     <button type="button" onClick={() => setCancelModal("clear-images")}
                       className="px-3 py-1.5 text-sm border border-red-300 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-                      Clear All
+                      {tf("actions.clear_all", "Clear All")}
                     </button>
                   )}
                 </div>
@@ -806,7 +817,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               {isUploadingImages && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Uploading images...</span>
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">{tf("messages.uploading_images", "Uploading images...")}</span>
                     <span className="text-sm text-blue-600 dark:text-blue-400">{uploadProgress}%</span>
                   </div>
                   <div className="w-full bg-blue-200 dark:bg-blue-900/30 rounded-full h-2">
@@ -819,10 +830,10 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <div className="flex flex-col items-center justify-center h-full p-4">
                   <CloudArrowUpIcon className="h-10 w-10 text-gray-400 dark:text-slate-500 mb-2 group-hover:text-green-500" />
                   <span className="text-base font-medium text-gray-600 dark:text-slate-400 group-hover:text-green-600">
-                    {imagePreviews.length > 0 ? "Add more images" : "Click to upload images"}
+                    {imagePreviews.length > 0 ? tf("actions.add_more_images", "Add more images") : tf("actions.click_upload_images", "Click to upload images")}
                   </span>
                   <span className="text-sm text-gray-500 dark:text-slate-500 mt-1 text-center">
-                    PNG, JPG, WebP up to 5 MB each
+                    {tf("hints.image_formats", "PNG, JPG, WebP up to 5 MB each")}
                   </span>
                 </div>
                 <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={handleImageSelect} className="hidden" />
@@ -844,28 +855,28 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                           onClick={() => setPreviewImage(image.url)} />
                         {image.is_primary && (
                           <div className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full flex items-center">
-                            <CheckCircleIcon className="h-3 w-3 mr-1" /> Primary
+                            <CheckCircleIcon className="h-3 w-3 mr-1" /> {tf("labels.primary", "Primary")}
                           </div>
                         )}
                         <div className="absolute top-2 right-2">
                           <select value={image.angle} onChange={(e) => updateImageAngle(index, e.target.value)}
                             className="text-xs bg-black/60 text-white border-none rounded px-1.5 py-0.5 focus:ring-0">
-                            {IMAGE_ANGLES.map((a) => <option key={a.value} value={a.value}>{a.icon} {a.label}</option>)}
+                            {IMAGE_ANGLES.map((a) => <option key={a.value} value={a.value}>{a.icon} {imageAngleLabel(a)}</option>)}
                           </select>
                         </div>
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
                           <div className="flex flex-col space-y-1">
                             <button type="button" onClick={() => setPrimaryImage(index)}
                               className={`px-2 py-1 rounded text-xs flex items-center ${image.is_primary ? "bg-green-600 text-white" : "bg-white text-gray-700 hover:bg-gray-100"}`}>
-                              <StarIcon className="h-3 w-3 mr-1" />{image.is_primary ? "Primary" : "Set Primary"}
+                              <StarIcon className="h-3 w-3 mr-1" />{image.is_primary ? tf("labels.primary", "Primary") : tf("actions.set_primary", "Set Primary")}
                             </button>
                             <button type="button" onClick={() => removeImage(index)}
                               className="px-2 py-1 bg-red-600 text-white rounded text-xs flex items-center hover:bg-red-700">
-                              <TrashIcon className="h-3 w-3 mr-1" /> Remove
+                              <TrashIcon className="h-3 w-3 mr-1" /> {tf("actions.remove", "Remove")}
                             </button>
                             <button type="button" onClick={() => setPreviewImage(image.url)}
                               className="px-2 py-1 bg-blue-600 text-white rounded text-xs flex items-center hover:bg-blue-700">
-                              <EyeIcon className="h-3 w-3 mr-1" /> Preview
+                              <EyeIcon className="h-3 w-3 mr-1" /> {tf("actions.preview", "Preview")}
                             </button>
                           </div>
                         </div>
@@ -920,8 +931,8 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Shipping & More</h2>
-              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">Delivery, warranty, and flags</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{tf("sections.shipping_title", "Shipping & More")}</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{tf("sections.shipping_subtitle", "Delivery, warranty, and flags")}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
@@ -932,7 +943,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               ].map(([name, label, type, placeholder]) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    {label} <span className="text-xs text-gray-400">(Optional)</span>
+                    {label} <span className="text-xs text-gray-400">({optionalLabel})</span>
                   </label>
                   <input type={type} name={name} value={formData[name]} onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
@@ -942,37 +953,37 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                Warranty Type <span className="text-xs text-gray-400">(Optional)</span>
+                {tf("labels.warranty_type", "Warranty Type")} <span className="text-xs text-gray-400">({optionalLabel})</span>
               </label>
               <select name="warranty_type" value={formData.warranty_type} onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100">
-                <option value="">Select warranty type</option>
-                {WARRANTY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                <option value="">{tf("placeholders.select_warranty_type", "Select warranty type")}</option>
+                {WARRANTY_TYPES.map((w) => <option key={w.value} value={w.value}>{warrantyTypeLabel(w)}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                Additional Information <span className="text-xs text-gray-400">(Optional)</span>
+                {tf("labels.additional_info", "Additional Information")} <span className="text-xs text-gray-400">({optionalLabel})</span>
               </label>
               <textarea name="additional_info" rows="3" value={formData.additional_info} onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                placeholder="Any additional notes..." />
+                placeholder={tf("placeholders.additional_info", "Any additional notes...")} />
             </div>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <input id="is_featured" name="is_featured" type="checkbox" checked={formData.is_featured} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded sm:h-5 sm:w-5" />
-                <label htmlFor="is_featured" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Feature this product on homepage</label>
+                <label htmlFor="is_featured" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">{tf("labels.is_featured", "Feature this product on homepage")}</label>
               </div>
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-green-600 focus:ring-green-500 border-gray-300 rounded sm:h-5 sm:w-5" />
-                <label htmlFor="is_active" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Make this product active and visible</label>
+                <label htmlFor="is_active" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">{tf("labels.is_active", "Make this product active and visible")}</label>
               </div>
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                 <input id="is_new" name="is_new" type="checkbox" checked={formData.is_new} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-amber-600 focus:ring-amber-500 border-gray-300 rounded sm:h-5 sm:w-5" />
-                <label htmlFor="is_new" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">Mark as new product</label>
+                <label htmlFor="is_new" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">{tf("labels.is_new", "Mark as new product")}</label>
               </div>
             </div>
           </div>
@@ -983,14 +994,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         return (
           <div className="space-y-8">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Options & Variants</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{tf("sections.variants_title", "Options & Variants")}</h2>
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-                Define the choices buyers can select (Color, Size, etc.), then generate and price your variants.
+                {tf("sections.variants_subtitle", "Define the choices buyers can select (Color, Size, etc.), then generate and price your variants.")}
               </p>
               {!createdProductId && (
                 <div className="mt-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
                   <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-                  Complete Steps 1–4 first to save the product, then configure variants here.
+                  {tf("messages.complete_steps_first", "Complete Steps 1-4 first to save the product, then configure variants here.")}
                 </div>
               )}
             </div>
@@ -999,7 +1010,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               <>
                 {/* Step A: Define options */}
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Step A — Define Options</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">{tf("sections.step_a_options", "Step A - Define Options")}</p>
                   <ProductOptionsEditor
                     productId={createdProductId}
                     onSaved={() => {}}
@@ -1008,7 +1019,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
                 {/* Step B: Generate & price variants */}
                 <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Step B — Generate & Price Variants</p>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">{tf("sections.step_b_variants", "Step B - Generate & Price Variants")}</p>
                   <VariantTable
                     productId={createdProductId}
                     onUpdated={() => {}}
@@ -1019,13 +1030,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <button type="button" onClick={handleFinish}
                     className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 shadow-sm transition-colors">
                     <CheckCircleIcon className="h-5 w-5" />
-                    Done — Finish Listing
+                    {tf("actions.finish_listing", "Done - Finish Listing")}
                   </button>
                 </div>
               </>
             ) : (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl text-gray-400 dark:text-slate-500">
-                <p className="text-sm">Save the product in Steps 1–4 first.</p>
+                <p className="text-sm">{tf("messages.save_steps_first", "Save the product in Steps 1-4 first.")}</p>
               </div>
             )}
           </div>
@@ -1066,11 +1077,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       {cancelModal === "leave" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Leave without saving?</h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">Your draft has been auto-saved.</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">{tf("modals.leave_title", "Leave without saving?")}</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">{tf("modals.leave_body", "Your draft has been auto-saved.")}</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setCancelModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300">Keep Editing</button>
-              <button onClick={confirmCancel} className="px-4 py-2 bg-gray-800 dark:bg-slate-700 text-white rounded-lg text-sm font-medium">Leave</button>
+              <button onClick={() => setCancelModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300">{tf("actions.keep_editing", "Keep Editing")}</button>
+              <button onClick={confirmCancel} className="px-4 py-2 bg-gray-800 dark:bg-slate-700 text-white rounded-lg text-sm font-medium">{tf("actions.leave", "Leave")}</button>
             </div>
           </div>
         </div>
@@ -1080,12 +1091,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       {cancelModal === "clear-images" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Remove all images?</h3>
-            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">This cannot be undone.</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">{tf("modals.remove_images_title", "Remove all images?")}</h3>
+            <p className="text-sm text-gray-600 dark:text-slate-400 mb-4">{tf("modals.cannot_undone", "This cannot be undone.")}</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setCancelModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300">Cancel</button>
+              <button onClick={() => setCancelModal(false)} className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-700 dark:text-slate-300">{tf("actions.cancel", "Cancel")}</button>
               <button onClick={() => { setImagePreviews([]); setImagesModified(true); setCancelModal(false); }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">Remove All</button>
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">{tf("actions.remove_all", "Remove All")}</button>
             </div>
           </div>
         </div>
@@ -1098,9 +1109,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircleIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">All Done!</h3>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-2">{tf("messages.all_done", "All Done!")}</h3>
             <p className="text-gray-600 dark:text-slate-400 mb-4">{successMessage}</p>
-            <p className="text-sm text-gray-500 dark:text-slate-500">Redirecting...</p>
+            <p className="text-sm text-gray-500 dark:text-slate-500">{tf("messages.redirecting", "Redirecting...")}</p>
           </div>
         </div>
       )}
@@ -1111,11 +1122,11 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           <div className="px-6 py-5 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-                {product ? "Edit Product" : "New Listing"}
+                {product ? tf("titles.edit", "Edit Product") : tf("titles.new", "New Listing")}
               </h1>
               <p className="text-gray-500 dark:text-slate-400 mt-0.5 text-sm">
-                {product ? "Update your product details" : "Create a new product listing"}
-                {!product && <span className="text-blue-600 dark:text-blue-400 ml-2">• Draft auto-saved</span>}
+                {product ? tf("titles.edit_subtitle", "Update your product details") : tf("titles.new_subtitle", "Create a new product listing")}
+                {!product && <span className="text-blue-600 dark:text-blue-400 ml-2">{tf("messages.draft_saved", "• Draft auto-saved")}</span>}
               </p>
             </div>
             <button onClick={handleCancel} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
@@ -1128,15 +1139,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             {/* Mobile */}
             <div className="sm:hidden">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">{STEPS[currentStep - 1]?.title}</span>
-                <span className="text-xs font-bold text-green-700 dark:text-green-400">Step {currentStep} of {STEPS.length}</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">{stepTitle(STEPS[currentStep - 1])}</span>
+                <span className="text-xs font-bold text-green-700 dark:text-green-400">{tf("steps.count", "Step {{current}} of {{total}}", { current: currentStep, total: STEPS.length })}</span>
               </div>
               <div className="flex gap-1.5">
                 {STEPS.map((step) => (
                   <button key={step.id} onClick={() => goToStep(step.id)}
                     className={`flex-1 h-2 rounded-full transition-all ${
                       currentStep === step.id ? "bg-green-500" : completedSteps.has(step.id) ? "bg-green-400" : "bg-gray-200 dark:bg-slate-600"
-                    }`} aria-label={step.title} />
+                    }`} aria-label={stepTitle(step)} />
                 ))}
               </div>
             </div>
@@ -1158,9 +1169,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                       </div>
                       <span className={`mt-1.5 text-[11px] font-medium text-center leading-tight w-16 break-words
                         ${current ? "text-green-700 dark:text-green-400" : done ? "text-gray-600 dark:text-slate-400" : "text-gray-400 dark:text-slate-500"}`}>
-                        {step.title}
+                        {stepTitle(step)}
                       </span>
-                      <span className="text-[10px] text-gray-400 dark:text-slate-500 text-center w-16 leading-tight">{step.description}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 text-center w-16 leading-tight">{stepDescription(step)}</span>
                     </button>
                     {!last && (
                       <div className="flex-1 mt-4 mx-2">
@@ -1199,7 +1210,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 {currentStep > 1 && (
                   <button type="button" onClick={prevStep}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 font-medium sm:px-6 sm:py-3">
-                    <ChevronLeftIcon className="h-4 w-4" /> Previous
+                    <ChevronLeftIcon className="h-4 w-4" /> {tf("actions.previous", "Previous")}
                   </button>
                 )}
               </div>
@@ -1209,15 +1220,15 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <button type="button" onClick={handleCoreSubmit} disabled={loading || isUploadingImages}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 shadow-sm disabled:opacity-50 transition-colors sm:px-8 sm:py-3">
                     {loading ? (
-                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{product ? "Updating…" : "Creating…"}</>
+                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />{product ? tf("actions.updating", "Updating...") : tf("actions.creating", "Creating...")}</>
                     ) : (
-                      <><CheckCircleIcon className="h-4 w-4" />{product ? "Update & Continue" : "Save & Continue"}</>
+                      <><CheckCircleIcon className="h-4 w-4" />{product ? tf("actions.update_continue", "Update & Continue") : tf("actions.save_continue", "Save & Continue")}</>
                     )}
                   </button>
                 ) : (
                   <button type="button" onClick={nextStep} disabled={!validateStep(currentStep)}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition-colors sm:px-6 sm:py-3">
-                    Next <ChevronRightIcon className="h-4 w-4" />
+                    {tf("actions.next", "Next")} <ChevronRightIcon className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -1230,3 +1241,4 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 };
 
 export default ProductForm;
+

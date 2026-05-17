@@ -7,6 +7,7 @@
 //   onUpdated    — () => void  called after any variant save
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../../utils/api";
 import {
   CheckCircleIcon,
@@ -37,6 +38,7 @@ const EditableCell = ({ value, type = "text", min, step, onChange, className = "
 // ── main component ────────────────────────────────────────────────────────────
 
 const VariantTable = ({ productId, onUpdated }) => {
+  const { t } = useTranslation();
   const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -68,11 +70,11 @@ const VariantTable = ({ productId, onUpdated }) => {
     } catch (err) {
       // Clear variants on failure so user can't act on mismatched IDs.
       setVariants([]);
-      setGlobalError(err.response?.data?.message ?? "Failed to load variants.");
+      setGlobalError(err.response?.data?.message ?? t("product_form.variants.load_failed"));
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [productId, t]);
 
   useEffect(() => { fetchVariants(); }, [fetchVariants]);
 
@@ -115,18 +117,18 @@ const VariantTable = ({ productId, onUpdated }) => {
     const price = parseFloat(row.price);
     const quantity = parseFloat(row.quantity);
     if (row.price === "" || Number.isNaN(price)) {
-      setErrors((prev) => ({ ...prev, [variant.id]: "Enter a valid price." }));
+      setErrors((prev) => ({ ...prev, [variant.id]: t("product_form.variants.valid_price") }));
       return;
     }
     if (row.quantity === "" || Number.isNaN(quantity)) {
-      setErrors((prev) => ({ ...prev, [variant.id]: "Enter a valid quantity." }));
+      setErrors((prev) => ({ ...prev, [variant.id]: t("product_form.variants.valid_quantity") }));
       return;
     }
     let moqVal = null;
     if (row.moq !== "" && row.moq != null) {
       moqVal = parseInt(row.moq, 10);
       if (Number.isNaN(moqVal)) {
-        setErrors((prev) => ({ ...prev, [variant.id]: "MOQ must be a whole number or empty." }));
+        setErrors((prev) => ({ ...prev, [variant.id]: t("product_form.variants.valid_moq") }));
         return;
       }
     }
@@ -145,7 +147,7 @@ const VariantTable = ({ productId, onUpdated }) => {
       });
       onUpdated?.();
     } catch (err) {
-      const msg = err.response?.data?.message ?? "Save failed.";
+      const msg = err.response?.data?.message ?? t("product_form.variants.save_failed");
       setErrors((prev) => ({ ...prev, [variant.id]: msg }));
     } finally {
       setSaving((prev) => ({ ...prev, [variant.id]: false }));
@@ -167,20 +169,20 @@ const VariantTable = ({ productId, onUpdated }) => {
       updateEdit(variant.id, "is_active", res.data.is_active);
       onUpdated?.();
     } catch {
-      setErrors((prev) => ({ ...prev, [variant.id]: "Toggle failed." }));
+      setErrors((prev) => ({ ...prev, [variant.id]: t("product_form.variants.toggle_failed") }));
     }
   };
 
   // ── delete variant ─────────────────────────────────────────────────────────
 
   const deleteVariant = async (variant) => {
-    if (!window.confirm(`Delete variant "${variant.label}"?`)) return;
+    if (!window.confirm(t("product_form.variants.delete_confirm", { label: variant.label }))) return;
     try {
       await api.delete(`/seller/products/${productId}/variants/${variant.id}`);
       setVariants((prev) => prev.filter((v) => v.id !== variant.id));
       onUpdated?.();
     } catch (err) {
-      const msg = err.response?.data?.message ?? "Delete failed.";
+      const msg = err.response?.data?.message ?? t("product_form.variants.delete_failed");
       setErrors((prev) => ({ ...prev, [variant.id]: msg }));
       // If backend says variant doesn't belong / not found, refresh to sync UI.
       if (err.response?.status === 404) {
@@ -193,17 +195,17 @@ const VariantTable = ({ productId, onUpdated }) => {
 
   const generateVariants = async () => {
     if (!genDefaults.price) {
-      setGlobalError("Please enter a default price before generating.");
+      setGlobalError(t("product_form.variants.default_price_required"));
       return;
     }
     const genPrice = parseFloat(genDefaults.price);
     const genQty = parseFloat(genDefaults.quantity || "0");
     if (Number.isNaN(genPrice)) {
-      setGlobalError("Please enter a valid default price.");
+      setGlobalError(t("product_form.variants.valid_default_price"));
       return;
     }
     if (Number.isNaN(genQty) || genQty < 0) {
-      setGlobalError("Please enter a valid default quantity (0 or more).");
+      setGlobalError(t("product_form.variants.valid_default_quantity"));
       return;
     }
     setGenerating(true);
@@ -222,7 +224,7 @@ const VariantTable = ({ productId, onUpdated }) => {
       setShowGenForm(false);
       onUpdated?.();
     } catch (err) {
-      setGlobalError(err.response?.data?.message ?? "Generation failed.");
+      setGlobalError(err.response?.data?.message ?? t("product_form.variants.generation_failed"));
     } finally {
       setGenerating(false);
     }
@@ -233,7 +235,7 @@ const VariantTable = ({ productId, onUpdated }) => {
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-gray-500 dark:text-slate-400 text-sm py-6 justify-center">
-        <ArrowPathIcon className="h-4 w-4 animate-spin" /> Loading variants…
+        <ArrowPathIcon className="h-4 w-4 animate-spin" /> {t("product_form.variants.loading")}
       </div>
     );
   }
@@ -244,15 +246,15 @@ const VariantTable = ({ productId, onUpdated }) => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-slate-100">
-            Variants
+            {t("product_form.variants.title")}
             {variants.length > 0 && (
               <span className="ml-2 text-sm font-normal text-gray-500">
-                ({variants.length} total)
+                {t("product_form.variants.total", { count: variants.length })}
               </span>
             )}
           </h3>
           <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">
-            Each row is one purchasable combination. Set price and stock per variant.
+            {t("product_form.variants.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -263,14 +265,14 @@ const VariantTable = ({ productId, onUpdated }) => {
                        rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
-            {variants.length > 0 ? "Generate More" : "Generate Variants"}
+            {variants.length > 0 ? t("product_form.variants.generate_more") : t("product_form.variants.generate_variants")}
           </button>
           <button
             type="button"
             onClick={fetchVariants}
             className="p-2 border border-gray-300 dark:border-slate-600 rounded-lg
                        text-gray-500 hover:text-gray-700 transition-colors"
-            title="Refresh"
+            title={t("product_form.actions.refresh")}
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>
@@ -282,12 +284,12 @@ const VariantTable = ({ productId, onUpdated }) => {
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700
                         rounded-xl p-4 space-y-3">
           <p className="text-sm font-medium text-green-800 dark:text-green-300">
-            Auto-generate all option combinations. Set defaults applied to every new variant:
+            {t("product_form.variants.generate_hint")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">
-                Default Price *
+                {t("product_form.variants.default_price")} *
               </label>
               <input
                 type="number" min="0" step="0.01"
@@ -300,7 +302,7 @@ const VariantTable = ({ productId, onUpdated }) => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">
-                Default Qty
+                {t("product_form.variants.default_qty")}
               </label>
               <input
                 type="number" min="0" step="0.001"
@@ -313,13 +315,13 @@ const VariantTable = ({ productId, onUpdated }) => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-slate-400 mb-1">
-                Default MOQ
+                {t("product_form.variants.default_moq")}
               </label>
               <input
                 type="number" min="1"
                 value={genDefaults.moq}
                 onChange={(e) => setGenDefaults((p) => ({ ...p, moq: e.target.value }))}
-                placeholder="Inherit"
+                placeholder={t("product_form.variants.inherit")}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm
                            bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
               />
@@ -331,7 +333,7 @@ const VariantTable = ({ productId, onUpdated }) => {
               onClick={() => setShowGenForm(false)}
               className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm text-gray-600 dark:text-slate-300"
             >
-              Cancel
+              {t("product_form.actions.cancel")}
             </button>
             <button
               type="button"
@@ -340,7 +342,7 @@ const VariantTable = ({ productId, onUpdated }) => {
               className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium
                          hover:bg-green-700 disabled:opacity-50 transition-colors"
             >
-              {generating ? "Generating…" : "Generate"}
+              {generating ? t("product_form.variants.generating") : t("product_form.variants.generate")}
             </button>
           </div>
         </div>
@@ -357,7 +359,7 @@ const VariantTable = ({ productId, onUpdated }) => {
       {variants.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-slate-700
                         rounded-xl text-gray-400 dark:text-slate-500 text-sm">
-          No variants yet. Save your options first, then click "Generate Variants".
+          {t("product_form.variants.empty")}
         </div>
       ) : (
         <div className="space-y-3">
@@ -365,14 +367,14 @@ const VariantTable = ({ productId, onUpdated }) => {
             <table className="w-full text-sm table-fixed">
               <thead className="bg-gray-50 dark:bg-slate-800 text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-3 text-left">Variant</th>
-                  <th className="px-3 py-3 text-left w-28">Price</th>
-                  <th className="px-3 py-3 text-left w-24">Qty</th>
-                  <th className="px-3 py-3 text-left w-20">Unit</th>
-                  <th className="px-3 py-3 text-left w-20">MOQ</th>
-                  <th className="px-3 py-3 text-left w-32">SKU</th>
-                  <th className="px-3 py-3 text-center w-20">Active</th>
-                  <th className="px-3 py-3 text-right w-28">Actions</th>
+                  <th className="px-4 py-3 text-left">{t("product_form.variants.col_variant")}</th>
+                  <th className="px-3 py-3 text-left w-28">{t("product_form.variants.col_price")}</th>
+                  <th className="px-3 py-3 text-left w-24">{t("product_form.variants.col_qty")}</th>
+                  <th className="px-3 py-3 text-left w-20">{t("product_form.variants.col_unit")}</th>
+                  <th className="px-3 py-3 text-left w-20">{t("product_form.variants.col_moq")}</th>
+                  <th className="px-3 py-3 text-left w-32">{t("product_form.variants.col_sku")}</th>
+                  <th className="px-3 py-3 text-center w-20">{t("product_form.variants.col_active")}</th>
+                  <th className="px-3 py-3 text-right w-28">{t("product_form.variants.col_actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
@@ -452,7 +454,7 @@ const VariantTable = ({ productId, onUpdated }) => {
                               ) : (
                                 <CheckCircleIcon className="h-3 w-3" />
                               )}
-                              Save
+                              {t("product_form.actions.save")}
                             </button>
                             <button
                               type="button"
@@ -460,7 +462,7 @@ const VariantTable = ({ productId, onUpdated }) => {
                               className="px-2 py-1.5 text-red-500 hover:text-red-700 text-xs rounded-lg
                                          hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                             >
-                              Del
+                              {t("product_form.actions.del")}
                             </button>
                           </div>
                         </td>
@@ -506,33 +508,33 @@ const VariantTable = ({ productId, onUpdated }) => {
                       <button type="button" onClick={() => toggleActive(variant)}
                         className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium transition-colors
                                     ${row.is_active ? "bg-green-500 text-white" : "bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300"}`}>
-                        {row.is_active ? "Active" : "Inactive"}
+                        {row.is_active ? t("product_form.variants.active") : t("product_form.variants.inactive")}
                       </button>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Price</div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">{t("product_form.variants.col_price")}</div>
                         <EditableCell type="number" min="0" step="0.01"
                           value={row.price ?? ""} onChange={(v) => updateEdit(variant.id, "price", v)} />
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Qty</div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">{t("product_form.variants.col_qty")}</div>
                         <EditableCell type="number" min="0" step="0.001"
                           value={row.quantity ?? ""} onChange={(v) => updateEdit(variant.id, "quantity", v)} />
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">Unit</div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">{t("product_form.variants.col_unit")}</div>
                         <EditableCell value={row.quantity_unit ?? ""}
                           onChange={(v) => updateEdit(variant.id, "quantity_unit", v)} />
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">MOQ</div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">{t("product_form.variants.col_moq")}</div>
                         <EditableCell type="number" min="1"
                           value={row.moq ?? ""} onChange={(v) => updateEdit(variant.id, "moq", v)} />
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">SKU</div>
+                        <div className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-slate-400 mb-1">{t("product_form.variants.col_sku")}</div>
                         <EditableCell value={row.sku ?? ""}
                           onChange={(v) => updateEdit(variant.id, "sku", v)} />
                       </div>
@@ -552,7 +554,7 @@ const VariantTable = ({ productId, onUpdated }) => {
                           ) : (
                             <CheckCircleIcon className="h-4 w-4" />
                           )}
-                          Save
+                          {t("product_form.actions.save")}
                         </button>
                         <button
                           type="button"
@@ -560,7 +562,7 @@ const VariantTable = ({ productId, onUpdated }) => {
                           className="px-3 py-2 text-red-500 hover:text-red-700 text-sm rounded-lg
                                      hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
-                          Delete
+                          {t("product_form.actions.delete")}
                         </button>
                       </div>
                       {rowErr && (
