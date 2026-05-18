@@ -56,6 +56,7 @@ const ProductList = () => {
 
   const isFetching = useRef(false);
   const searchDebounceRef = useRef(null);
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -90,7 +91,7 @@ const ProductList = () => {
 
     try {
       const params = new URLSearchParams();
-      params.append("per_page", "12");
+      params.append("per_page", "24");
       params.append("page", reset ? "1" : page.toString());
       if (searchQuery)      params.append("search",     searchQuery);
       if (selectedCategory) params.append("category",   selectedCategory);
@@ -112,7 +113,7 @@ const ProductList = () => {
         });
       }
 
-      if (data.length < 12) setHasMore(false);
+      if (data.length < 24) setHasMore(false);
     } catch (err) {
       console.error("Failed to fetch products:", err);
       setError(t("products.fetch_error"));
@@ -128,18 +129,18 @@ const ProductList = () => {
   }, [searchQuery, selectedCategory, filters.minPrice, filters.maxPrice, filters.sortBy, filters.sortOrder]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 500 &&
-        !loading && hasMore && !isFetching.current
-      ) {
-        setPage((prev) => prev + 1);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, hasMore]);
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetching.current) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: "300px" } // start loading 300px before sentinel is visible
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   useEffect(() => {
     if (page > 1) fetchProducts(false);
@@ -564,6 +565,9 @@ const ProductList = () => {
                 [...Array(4)].map((_, i) => <ProductCardSkeleton key={`more-${i}`} />)
               }
             </div>
+
+            {/* Sentinel — IntersectionObserver watches this to trigger next page */}
+            <div ref={sentinelRef} className="h-1" />
 
             {/* Loading spinner */}
             {loading && products.length > 0 && (
