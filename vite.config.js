@@ -37,5 +37,33 @@ export default defineConfig(({ mode }) => ({
     },
 
     chunkSizeWarningLimit: 1000,
+
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core — tiny, loads first
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+
+          // Charts — heavy, only needed on analytics pages
+          'vendor-charts': ['recharts'],
+
+          // Spreadsheet — heavy, only needed on bulk import / reports
+          'vendor-xlsx': ['xlsx'],
+
+          // Icons — medium, used widely but separating reduces main chunk
+          'vendor-icons': ['@heroicons/react'],
+
+          // i18n
+          'vendor-i18n': ['i18next', 'react-i18next'],
+
+          // Misc UI libs
+          'vendor-ui': [
+            'react-helmet-async',
+            'react-google-recaptcha-v3',
+            '@react-oauth/google',
+          ],
+        },
+      },
+    },
   },
 }));

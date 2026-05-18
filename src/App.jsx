@@ -1,7 +1,9 @@
 //src/App.jsx
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import i18n from "./i18n";
+
+// ─── Contexts (eager — needed before first render) ────────────────────────────
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { I18nextProvider } from "react-i18next";
@@ -9,95 +11,104 @@ import { WishlistProvider } from "./context/WishlistContext";
 import { CompareProvider } from "./context/CompareContext";
 import { CookieProvider } from "./context/CookieContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import CookieBanner from "./components/ui/CookieBanner";
-import { HelmetProvider } from "react-helmet-async";
-import OrderTracking from "./pages/OrderTracking";
-import { setNavigate } from "./utils/api";
-import { trackPageView, isInitialised } from "./utils/analytics";
 import { NotificationProvider } from './context/NotificationContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
-
-// Layout
-import Header from "./components/layout/Header";
-import Footer from "./components/layout/Footer";
-
-// Public Pages
-import Home from "./pages/Home";
-import ProductList from "./pages/ProductList";
-import ProductDetail from "./pages/ProductDetail";
-import CategoryBrowser from "./pages/CategoryBrowser";
-import Sellers from "./pages/Sellers";
-import SellerProfile from "./pages/SellerProfile";
-import ProductComparison from "./pages/ProductComparison";
-import BulkOrderTool from "./pages/BulkOrderTool";
-import Pricing from "./pages/Pricing";
-import AboutUs from "./pages/AboutUs";
-import Legal from "./pages/Legal";
-import HelpCenter from "./pages/HelpCenter";
-import ReturnPolicy from './pages/ReturnPolicy';
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import SellerGuidelines from "./pages/SellerGuidelines";
-import FAQ from "./pages/FAQ";
-import ShippingInfo from "./pages/ShippingInfo";
-import Contact from "./pages/Contact";
-
-// Auth Pages
-import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
-import ForgotPassword from "./pages/Auth/ForgotPassword";
-import ResetPassword from "./pages/Auth/ResetPassword";
-import SocialRoleSelect from "./pages/Auth/SocialRoleSelect";
-
-// Protected Pages
-import BuyerDashboard from "./pages/Client/BuyerDashboard";
-import Wishlist from "./pages/Wishlist";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import SellerDashboard from "./pages/Seller/SellerDashboard";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
-
-// Admin Management
-import CategoryCreate from "./pages/Admin/categories/CategoryCreate";
-import CategoryEdit from "./pages/Admin/categories/CategoryEdit";
-
-// Seller Product Management
-import ProductCreate from "./pages/Seller/products/ProductCreate";
-import ProductEdit from "./pages/Seller/products/ProductEdit";
-import ProductView from "./pages/Seller/products/ProductView";
-
-import StoreBasicInfo from "./pages/Seller/StoreBasicInfo";
-import BusinessDetails from "./pages/Seller/BusinessDetails";
-import AddressInfo from "./pages/Seller/AddressInfo";
-import DeliveryZonesOnboarding from "./pages/Seller/DeliveryZonesOnboarding";
-
-// Common Components
-import PaymentMethod from "./components/ui/PaymentMethod";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import OrderConfirmation from "./components/ui/OrderConfirmation";
-import FloatingCompareButton from "./components/ui/FloatingCompareButton";
-import RFQManager from "./pages/RFQManager";
-
-// Route Guards
-import ProtectedRoute from "./components/ProtectedRoute";
-import GuestRoute from "./components/GuestRoute";
-import OrderTrackingPage from "./pages/OrderTrackingPage";
-import DocumentUpload from './pages/Seller/DocumentUpload';
-import SellerDashboardRedirect from './components/seller/SellerDashboardRedirect';
-import ReviewSubmit from "./pages/Seller/ReviewSubmit";
-import LocalDeals from "./pages/LocalDeals";
-import StepGuard from "./components/StepGuard";
-import Error from "./pages/Errors/404";
-import SellerRouteGuard from "./components/SellerRouteGuard";
-import FinancialReports from "./components/admin/FinancialReports";
-
+import { HelmetProvider } from "react-helmet-async";
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-const Unsubscribe = React.lazy(() => import("./pages/Unsubscribe"));
-const NewsletterConfirm = React.lazy(() => import("./pages/NewsletterConfirm"));
-const EmailVerification = React.lazy(() => import("./pages/Email/EmailVerification"));
-const MyReports   = React.lazy(() => import("./pages/MyReports"));
-const ReportPage  = React.lazy(() => import("./pages/ReportPage"));
+// ─── Guards & Layout (eager — needed for routing shell) ───────────────────────
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+import GuestRoute from "./components/GuestRoute";
+import StepGuard from "./components/StepGuard";
+import SellerRouteGuard from "./components/SellerRouteGuard";
+import CookieBanner from "./components/ui/CookieBanner";
+import FloatingCompareButton from "./components/ui/FloatingCompareButton";
+
+import { setNavigate } from "./utils/api";
+import { trackPageView, isInitialised } from "./utils/analytics";
+
+// ─── Pages (lazy — each loads only when its route is visited) ─────────────────
+
+// Public
+const Home                    = lazy(() => import("./pages/Home"));
+const ProductList             = lazy(() => import("./pages/ProductList"));
+const ProductDetail           = lazy(() => import("./pages/ProductDetail"));
+const CategoryBrowser         = lazy(() => import("./pages/CategoryBrowser"));
+const Sellers                 = lazy(() => import("./pages/Sellers"));
+const SellerProfile           = lazy(() => import("./pages/SellerProfile"));
+const ProductComparison       = lazy(() => import("./pages/ProductComparison"));
+const BulkOrderTool           = lazy(() => import("./pages/BulkOrderTool"));
+const Pricing                 = lazy(() => import("./pages/Pricing"));
+const AboutUs                 = lazy(() => import("./pages/AboutUs"));
+const Legal                   = lazy(() => import("./pages/Legal"));
+const HelpCenter              = lazy(() => import("./pages/HelpCenter"));
+const ReturnPolicy            = lazy(() => import("./pages/ReturnPolicy"));
+const PrivacyPolicy           = lazy(() => import("./pages/PrivacyPolicy"));
+const SellerGuidelines        = lazy(() => import("./pages/SellerGuidelines"));
+const FAQ                     = lazy(() => import("./pages/FAQ"));
+const ShippingInfo            = lazy(() => import("./pages/ShippingInfo"));
+const Contact                 = lazy(() => import("./pages/Contact"));
+const LocalDeals              = lazy(() => import("./pages/LocalDeals"));
+const RFQManager              = lazy(() => import("./pages/RFQManager"));
+const OrderTracking           = lazy(() => import("./pages/OrderTracking"));
+const OrderTrackingPage       = lazy(() => import("./pages/OrderTrackingPage"));
+
+// Auth
+const Login                   = lazy(() => import("./pages/Auth/Login"));
+const Register                = lazy(() => import("./pages/Auth/Register"));
+const ForgotPassword          = lazy(() => import("./pages/Auth/ForgotPassword"));
+const ResetPassword           = lazy(() => import("./pages/Auth/ResetPassword"));
+const SocialRoleSelect        = lazy(() => import("./pages/Auth/SocialRoleSelect"));
+
+// Buyer
+const BuyerDashboard          = lazy(() => import("./pages/Client/BuyerDashboard"));
+const Wishlist                = lazy(() => import("./pages/Wishlist"));
+const Cart                    = lazy(() => import("./pages/Cart"));
+const Checkout                = lazy(() => import("./pages/Checkout"));
+const PaymentMethod           = lazy(() => import("./components/ui/PaymentMethod"));
+const PaymentSuccess          = lazy(() => import("./pages/PaymentSuccess"));
+const OrderConfirmation       = lazy(() => import("./components/ui/OrderConfirmation"));
+
+// Seller
+const SellerDashboard         = lazy(() => import("./pages/Seller/SellerDashboard"));
+const SellerDashboardRedirect = lazy(() => import("./components/seller/SellerDashboardRedirect"));
+const ProductCreate           = lazy(() => import("./pages/Seller/products/ProductCreate"));
+const ProductEdit             = lazy(() => import("./pages/Seller/products/ProductEdit"));
+const ProductView             = lazy(() => import("./pages/Seller/products/ProductView"));
+
+// Seller Onboarding
+const StoreBasicInfo          = lazy(() => import("./pages/Seller/StoreBasicInfo"));
+const BusinessDetails         = lazy(() => import("./pages/Seller/BusinessDetails"));
+const AddressInfo             = lazy(() => import("./pages/Seller/AddressInfo"));
+const DeliveryZonesOnboarding = lazy(() => import("./pages/Seller/DeliveryZonesOnboarding"));
+const DocumentUpload          = lazy(() => import("./pages/Seller/DocumentUpload"));
+const ReviewSubmit            = lazy(() => import("./pages/Seller/ReviewSubmit"));
+import OnboardingLayout from "./components/OnboardingLayout";
+import SellerOnboardingRoute from "./components/SellerOnboardingRoute";
+
+// Admin
+const AdminDashboard          = lazy(() => import("./pages/Admin/AdminDashboard"));
+const CategoryCreate          = lazy(() => import("./pages/Admin/categories/CategoryCreate"));
+const CategoryEdit            = lazy(() => import("./pages/Admin/categories/CategoryEdit"));
+const FinancialReports        = lazy(() => import("./components/admin/FinancialReports"));
+
+// Email / misc (already lazy)
+const Unsubscribe             = lazy(() => import("./pages/Unsubscribe"));
+const NewsletterConfirm       = lazy(() => import("./pages/NewsletterConfirm"));
+const EmailVerification       = lazy(() => import("./pages/Email/EmailVerification"));
+const MyReports               = lazy(() => import("./pages/MyReports"));
+const ReportPage              = lazy(() => import("./pages/ReportPage"));
+const Error                   = lazy(() => import("./pages/Errors/404"));
+
+// ─── Suspense fallback ────────────────────────────────────────────────────────
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+    <div className="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const NavigationWirer = () => {
   const navigate = useNavigate();
@@ -168,6 +179,7 @@ function App() {
                   <div className="flex flex-col min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] theme-transition">
                     <Header />
                     <main className="flex-grow">
+                      <Suspense fallback={<PageLoader />}>
                       <Routes>
                         {/* Public Routes */}
                         <Route path="/" element={<Home />} />
@@ -388,6 +400,7 @@ function App() {
                         {/* Catch-all 404 — must be LAST */}
                         <Route path="*" element={<Error />} />
                       </Routes>
+                      </Suspense>
                     </main>
                     <Footer />
                     <CookieBanner />
