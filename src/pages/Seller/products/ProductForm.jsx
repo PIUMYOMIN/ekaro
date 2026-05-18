@@ -998,6 +998,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 </div>
               )}
             </div>
+            <div>
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-green-600 focus:ring-green-500 border-gray-300 rounded sm:h-5 sm:w-5" />
