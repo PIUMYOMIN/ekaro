@@ -199,7 +199,7 @@ const SalesReports = ({ refreshData }) => {
           <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Error Loading Data</h3>
           <p className="text-gray-600 dark:text-slate-400 mb-4">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => refreshData?.()}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
           >
             Retry

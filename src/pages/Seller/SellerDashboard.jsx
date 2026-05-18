@@ -286,15 +286,16 @@ const SellerDashboard = () => {
       } catch (error) {
         console.error('Failed to verify seller status:', error);
         try {
-          await fetchGlobalData();
-        } catch (storeError) {
+          // Silently sync store data — don't trip the full-page loading spinner.
+          await refreshGlobalData();
+        } catch {
           navigate('/seller/onboarding/store-basic');
         }
       }
     };
 
     if (user) checkAccess();
-  }, [user, navigate, fetchGlobalData]);
+  }, [user, navigate, fetchGlobalData, refreshGlobalData]);
 
   // ---------- Setup notification based on storeData ----------
   useEffect(() => {

@@ -90,7 +90,7 @@ const ValueRow = ({ optType, val, onChange, onRemove, t }) => (
       {optType === "image" && (
         <input
           type="url"
-          placeholder="https://…/image.jpg"
+          placeholder={t("product_form.placeholders.image_url", "https://…/image.jpg")}
           value={val.meta?.image_url ?? ""}
           onChange={(e) => onChange({ ...val, meta: { ...val.meta, image_url: e.target.value } })}
           className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-sm

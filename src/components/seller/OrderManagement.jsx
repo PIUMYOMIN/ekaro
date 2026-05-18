@@ -20,6 +20,14 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const escapeHtml = (str) =>
+  String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const formatMMK = (amount) =>
   new Intl.NumberFormat("en-MM", { style: "currency", currency: "MMK", minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -642,15 +650,15 @@ const OrderManagement = () => {
 
       const res = await api.post(`/orders/${orderId}/${endpoint}`, data);
       if (res.data?.success) {
-        await fetchOrders();
         try {
           const freshRes = await api.get(`/orders/${orderId}`);
-          const fresh = freshRes.data?.data;
-          if (fresh) {
-            setSelectedOrder((prev) => (prev && prev.id === orderId ? fresh : prev));
+          const updated = freshRes.data?.data;
+          if (updated) {
+            setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o)));
+            setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, ...updated } : prev));
           }
         } catch {
-          /* list refresh is enough */
+          console.error("Failed to refresh order after status update");
         }
         return true;
       }
@@ -680,13 +688,15 @@ const OrderManagement = () => {
       });
 
       if (res.data.success) {
-        await fetchOrders();
         try {
           const freshRes = await api.get(`/orders/${orderId}`);
           const updated = freshRes.data?.data;
-          if (updated) setSelectedOrder((prev) => (prev && prev.id === orderId ? updated : prev));
+          if (updated) {
+            setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o)));
+            setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, ...updated } : prev));
+          }
         } catch {
-          /* fetchOrders already ran */
+          console.error("Failed to refresh order after delivery method set");
         }
         return true;
       } else {
@@ -726,8 +736,8 @@ const OrderManagement = () => {
       const items = (order.items ?? []).map(item => `
         <tr style="border-bottom:1px solid #f3f4f6;">
           <td style="padding:10px 8px;">
-            <div style="font-weight:500;">${item.product_name ?? 'Product'}</div>
-            <div style="font-size:11px;color:#6b7280;">SKU: ${item.product_sku ?? item.sku ?? 'N/A'}</div>
+            <div style="font-weight:500;">${escapeHtml(item.product_name ?? 'Product')}</div>
+            <div style="font-size:11px;color:#6b7280;">SKU: ${escapeHtml(item.product_sku ?? item.sku ?? 'N/A')}</div>
           </td>
           <td style="padding:10px 8px;text-align:center;">${item.quantity ?? 0}</td>
           <td style="padding:10px 8px;text-align:right;">${formatMMK(item.unit_price ?? item.price ?? 0)}</td>
@@ -761,9 +771,9 @@ const OrderManagement = () => {
             </div>
             <div style="text-align:right;">
               <div style="font-size:16px;font-weight:700;color:#111827;">ORDER SLIP</div>
-              <div style="font-size:20px;font-weight:800;font-family:monospace;color:#16a34a;margin-top:4px;">${order.order_number}</div>
+              <div style="font-size:20px;font-weight:800;font-family:monospace;color:#16a34a;margin-top:4px;">${escapeHtml(order.order_number)}</div>
               <div style="margin-top:6px;display:inline-block;background:${statusColor}20;color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;">
-                ${order.status}
+                ${escapeHtml(order.status)}
               </div>
             </div>
           </div>
@@ -772,23 +782,23 @@ const OrderManagement = () => {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:8px;">Customer</div>
-              <div style="font-weight:600;">${address.full_name ?? 'N/A'}</div>
-              <div style="color:#6b7280;">${address.phone ?? ''}</div>
-              <div style="color:#6b7280;font-size:12px;">${address.email ?? ''}</div>
+              <div style="font-weight:600;">${escapeHtml(address.full_name ?? 'N/A')}</div>
+              <div style="color:#6b7280;">${escapeHtml(address.phone ?? '')}</div>
+              <div style="color:#6b7280;font-size:12px;">${escapeHtml(address.email ?? '')}</div>
             </div>
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#9ca3af;margin-bottom:8px;">Shipping Address</div>
-              <div>${address.address ?? 'N/A'}</div>
-              <div style="color:#6b7280;">${[address.city, address.state].filter(Boolean).join(', ')}</div>
-              <div style="color:#6b7280;">${address.country ?? 'Myanmar'}</div>
+              <div>${escapeHtml(address.address ?? 'N/A')}</div>
+              <div style="color:#6b7280;">${escapeHtml([address.city, address.state].filter(Boolean).join(', '))}</div>
+              <div style="color:#6b7280;">${escapeHtml(address.country ?? 'Myanmar')}</div>
             </div>
           </div>
 
           <!-- Order dates -->
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f9fafb;border-radius:8px;padding:12px 16px;margin-bottom:24px;font-size:12px;">
             <div><span style="color:#9ca3af;">Order Date</span><br/><strong>${new Date(order.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</strong></div>
-            <div><span style="color:#9ca3af;">Payment</span><br/><strong>${(order.payment_method ?? '').replace(/_/g,' ').toUpperCase() || 'N/A'}</strong></div>
-            <div><span style="color:#9ca3af;">Payment Status</span><br/><strong style="color:${order.payment_status==='paid'?'#16a34a':'#d97706'}">${(order.payment_status ?? 'pending').toUpperCase()}</strong></div>
+            <div><span style="color:#9ca3af;">Payment</span><br/><strong>${escapeHtml((order.payment_method ?? '').replace(/_/g,' ').toUpperCase() || 'N/A')}</strong></div>
+            <div><span style="color:#9ca3af;">Payment Status</span><br/><strong style="color:${order.payment_status==='paid'?'#16a34a':'#d97706'}">${escapeHtml((order.payment_status ?? 'pending').toUpperCase())}</strong></div>
           </div>
 
           <!-- Items table -->

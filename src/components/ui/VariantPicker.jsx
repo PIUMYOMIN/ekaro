@@ -14,6 +14,7 @@
 //                     called whenever the selection changes
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -160,6 +161,7 @@ const ImageSwatch = ({ value, isSelected, isDisabled, onClick }) => (
 // ── main component ────────────────────────────────────────────────────────────
 
 const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
+  const { t } = useTranslation();
   // { [optionId]: valueId }  for predefined-choice options
   const [selected, setSelected] = useState({});
   // { [optionId]: string }   for free-text "input" options
@@ -232,7 +234,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
             )}
             {option.is_required && (
               <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600 dark:bg-red-900/20 dark:text-red-300">
-                Required
+                {t("product_form.options.required", "Required")}
               </span>
             )}
           </div>
@@ -329,7 +331,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           return (
             <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
               <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-              <span className="min-w-0">This combination is currently unavailable.</span>
+              <span className="min-w-0">{t("product_form.variants.unavailable_combination", "This combination is currently unavailable.")}</span>
             </div>
           );
         }

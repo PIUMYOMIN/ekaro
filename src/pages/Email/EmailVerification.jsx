@@ -237,8 +237,23 @@ const EmailVerification = () => {
   };
 
   // ── Redirect destination after verification ─────────────────────────────
+  // Accept returnTo only from a safe internal path (blocks external URLs,
+  // protocol-relative URLs and JavaScript-scheme attacks).
+  const getSafeReturn = () => {
+    const candidates = [location.state?.returnTo, new URLSearchParams(location.search).get('returnTo')];
+    for (const raw of candidates) {
+      if (!raw) continue;
+      const cleaned = raw.trim();
+      if (/^https?:\/\//i.test(cleaned)) continue;      // explicit http/https schemes
+      if (cleaned.startsWith('//')) continue;             // protocol-relative URL
+      if (/^javascript:/i.test(cleaned)) continue;        // javascript: scheme
+      if (cleaned.startsWith('/')) return cleaned;        // safe internal path
+    }
+    return null;
+  };
+
   const redirect = () => {
-    const returnTo = location.state?.returnTo;
+    const returnTo = getSafeReturn();
     if (returnTo) return navigate(returnTo, { replace: true });
     if (isAdmin?.()) return navigate('/admin/dashboard');
     if (isSeller?.()) return navigate('/seller');

@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 const SubscriptionContext = createContext();
 
 export const SubscriptionProvider = ({ children }) => {
-  const { user, isSeller } = useAuth();
+  const { user, isSeller, hasRole } = useAuth();
   const [subscription, setSubscription] = useState(null);  // full subscription object
   const [loading, setLoading]           = useState(false);
 
@@ -21,7 +21,7 @@ export const SubscriptionProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [user, isSeller]);
+  }, [user, isSeller, hasRole]);
 
   // Fetch once on login / user change
   useEffect(() => {

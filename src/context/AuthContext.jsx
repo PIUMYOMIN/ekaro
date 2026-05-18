@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import api from '../utils/api';
 
 const AuthContext = createContext();
@@ -199,7 +199,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Helper methods for role checks
-  const hasRole = (role) => {
+  const hasRole = useCallback((role) => {
     if (!user) return false;
 
     // Check roles array
@@ -214,10 +214,10 @@ export const AuthProvider = ({ children }) => {
 
     // Check single role fields
     return user.role === role || user.type === role;
-  };
+  }, [user]);
 
   // Add method to get user's primary role
-  const getPrimaryRole = () => {
+  const getPrimaryRole = useCallback(() => {
     if (!user) return null;
 
     if (hasRole('admin')) return 'admin';
@@ -225,11 +225,11 @@ export const AuthProvider = ({ children }) => {
     if (hasRole('buyer')) return 'buyer';
 
     return user.role || user.type || 'buyer';
-  };
+  }, [user, hasRole]);
 
-  const isBuyer = () => hasRole('buyer');
-  const isSeller = () => hasRole('seller');
-  const isAdmin = () => hasRole('admin');
+  const isBuyer = useCallback(() => hasRole('buyer'), [hasRole]);
+  const isSeller = useCallback(() => hasRole('seller'), [hasRole]);
+  const isAdmin = useCallback(() => hasRole('admin'), [hasRole]);
 
   const value = {
     user,

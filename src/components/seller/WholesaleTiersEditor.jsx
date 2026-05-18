@@ -1,5 +1,6 @@
 // src/components/seller/WholesaleTiersEditor.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import api from '../../utils/api';
 import {
   PlusIcon,
@@ -33,6 +34,7 @@ const WholesaleTiersEditor = ({
   quantityUnit = 'piece',
   onSaved,
 }) => {
+  const { t } = useTranslation();
   const [tiers, setTiers]         = useState([]);     // draft rows
   const [saved, setSaved]         = useState([]);     // last-saved snapshot (for dirty check)
   const [loading, setLoading]     = useState(false);
@@ -141,9 +143,9 @@ const WholesaleTiersEditor = ({
 
   if (!productId) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 dark:border-slate-700 p-5 text-sm text-gray-400 dark:text-slate-500 text-center">
+        <div className="rounded-xl border border-dashed border-gray-200 dark:border-slate-700 p-5 text-sm text-gray-400 dark:text-slate-500 text-center">
         <TagIcon className="h-5 w-5 mx-auto mb-1.5 opacity-50" />
-        Save the product first (Steps 1–4) to unlock wholesale tier pricing.
+        {t("product_form.wholesale_tiers.save_first", "Save the product first (Steps 1–4) to unlock wholesale tier pricing.")}
       </div>
     );
   }
@@ -154,11 +156,10 @@ const WholesaleTiersEditor = ({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">
-            Volume Pricing Tiers
+            {t("product_form.wholesale_tiers.title", "Volume Pricing Tiers")}
           </h3>
           <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-            Buyers automatically get the best matching price based on quantity ordered.
-            Base price ({fmtMMK(basePrice)}) applies when no tier is met.
+            {t("product_form.wholesale_tiers.subtitle", "Buyers automatically get the best matching price based on quantity ordered. Base price ({{price}}) applies when no tier is met.", { price: fmtMMK(basePrice) })}
           </p>
         </div>
 
@@ -167,7 +168,7 @@ const WholesaleTiersEditor = ({
             type="button"
             onClick={fetchTiers}
             disabled={loading || saving}
-            title="Reload"
+            title={t("product_form.wholesale_tiers.reload", "Reload")}
             className="p-2 rounded-lg border border-gray-200 dark:border-slate-600 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition disabled:opacity-40"
           >
             <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -182,8 +183,8 @@ const WholesaleTiersEditor = ({
                        border border-green-200 dark:border-green-800
                        hover:bg-green-100 dark:hover:bg-green-900/50 transition disabled:opacity-40"
           >
-            <PlusIcon className="h-3.5 w-3.5" />
-            Add Tier
+          <PlusIcon className="h-3.5 w-3.5" />
+          {t("product_form.wholesale_tiers.add_tier", "Add Tier")}
           </button>
         </div>
       </div>
@@ -196,28 +197,27 @@ const WholesaleTiersEditor = ({
           ))}
         </div>
       ) : tiers.length === 0 ? (
-        <div className="text-center py-8 rounded-xl border border-dashed border-gray-200 dark:border-slate-700 text-sm text-gray-400 dark:text-slate-500">
-          No tiers yet. Click <strong>Add Tier</strong> to define volume discounts.
-        </div>
+        <div className="text-center py-8 rounded-xl border border-dashed border-gray-200 dark:border-slate-700 text-sm text-gray-400 dark:text-slate-500"
+             dangerouslySetInnerHTML={{ __html: t("product_form.wholesale_tiers.empty", "No tiers yet. Click <strong>Add Tier</strong> to define volume discounts.") }} />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-slate-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-slate-800 text-xs text-gray-500 dark:text-slate-400 uppercase tracking-wide">
               <tr>
                 <th className="px-4 py-2.5 text-left font-medium">
-                  Min. Qty ({quantityUnit})
+                  {t("product_form.wholesale_tiers.col_min_qty", "Min. Qty ({{unit}})", { unit: quantityUnit })}
                 </th>
                 <th className="px-4 py-2.5 text-left font-medium">
-                  Price / {quantityUnit} (Ks)
+                  {t("product_form.wholesale_tiers.col_price_per_unit", "Price / {{unit}} (Ks)", { unit: quantityUnit })}
                 </th>
                 <th className="px-4 py-2.5 text-left font-medium hidden sm:table-cell">
-                  Discount
+                  {t("product_form.wholesale_tiers.col_discount", "Discount")}
                 </th>
                 <th className="px-4 py-2.5 text-left font-medium hidden md:table-cell">
-                  Label
+                  {t("product_form.wholesale_tiers.col_label", "Label")}
                 </th>
                 <th className="px-4 py-2.5 text-left font-medium hidden md:table-cell">
-                  Active
+                  {t("product_form.wholesale_tiers.col_active", "Active")}
                 </th>
                 <th className="px-3 py-2.5" />
               </tr>
@@ -272,7 +272,7 @@ const WholesaleTiersEditor = ({
                         maxLength={60}
                         value={row.label ?? ''}
                         onChange={e => updateRow(idx, 'label', e.target.value)}
-                        placeholder="e.g. Wholesale"
+                        placeholder={t("product_form.wholesale_tiers.label_placeholder", "e.g. Wholesale")}
                         className="w-32 px-2 py-1.5 border border-gray-200 dark:border-slate-600
                                    bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400
                                    rounded-md text-sm focus:ring-1 focus:ring-green-500 focus:border-green-500"
@@ -295,7 +295,7 @@ const WholesaleTiersEditor = ({
                         type="button"
                         onClick={() => removeRow(idx)}
                         className="text-gray-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition"
-                        title="Remove tier"
+                        title={t("product_form.wholesale_tiers.remove_tier", "Remove tier")}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -322,12 +322,14 @@ const WholesaleTiersEditor = ({
           {success && (
             <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
               <CheckIcon className="h-4 w-4" />
-              Tiers saved!
+              {t("product_form.wholesale_tiers.tiers_saved", "Tiers saved!")}
             </span>
           )}
           {!success && (
             <span className="text-xs text-gray-400 dark:text-slate-500">
-              {isDirty ? 'Unsaved changes' : `${tiers.length} tier${tiers.length !== 1 ? 's' : ''} saved`}
+              {isDirty
+                ? t("product_form.wholesale_tiers.unsaved_changes", "Unsaved changes")
+                : t("product_form.wholesale_tiers.tiers_saved_count", "{{n}} tier{{s}} saved", { n: tiers.length, s: tiers.length !== 1 ? 's' : '' })}
             </span>
           )}
 
@@ -343,12 +345,12 @@ const WholesaleTiersEditor = ({
             {saving ? (
               <>
                 <ArrowPathIcon className="h-4 w-4 animate-spin" />
-                Saving…
+                {t("product_form.wholesale_tiers.saving", "Saving…")}
               </>
             ) : (
               <>
                 <CheckIcon className="h-4 w-4" />
-                Save Tiers
+                {t("product_form.wholesale_tiers.save_tiers", "Save Tiers")}
               </>
             )}
           </button>
@@ -358,7 +360,7 @@ const WholesaleTiersEditor = ({
       {/* Quick example hint */}
       {tiers.length === 0 && !loading && productId && (
         <p className="text-xs text-gray-400 dark:text-slate-500 text-center">
-          Example: 1 {quantityUnit} → {fmtMMK(basePrice)} (base) · 5 {quantityUnit} → 10% off · 20 {quantityUnit} → 20% off
+          {t("product_form.wholesale_tiers.example", "Example: 1 {{unit}} → {{base}} (base) · 5 {{unit}} → 10% off · 20 {{unit}} → 20% off", { unit: quantityUnit, base: fmtMMK(basePrice) })}
         </p>
       )}
     </div>

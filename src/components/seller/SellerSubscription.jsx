@@ -17,6 +17,7 @@ import {
   CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
+import { useSubscription } from '../../context/SubscriptionContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ const SellerSubscription = () => {
   const [modal, setModal]           = useState(null);   // plan object being confirmed
 
   // ── Data fetch ────────────────────────────────────────────────────────
+  const { refetch: refetchSubscription } = useSubscription();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -178,6 +180,7 @@ const SellerSubscription = () => {
         setSuccess(`Successfully ${plan.price_mmk === 0 ? 'downgraded' : 'upgraded'} to the ${plan.name} plan!`);
         setModal(null);
         await load();
+        await refetchSubscription();
       } else {
         setError(res.data.message ?? 'Upgrade failed.');
       }

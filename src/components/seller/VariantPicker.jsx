@@ -1,6 +1,7 @@
 // components/ui/VariantPicker.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 const findMatchingVariant = (variants, selectedValues) => {
@@ -106,6 +107,7 @@ const ImageSwatch = ({ value, isSelected, isDisabled, onClick }) => (
 // ── main component ────────────────────────────────────────────────────────────
 
 const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
+  const { t } = useTranslation();
   // { [optionId]: valueId }  for predefined-choice options
   const [selected, setSelected] = useState({});
   // { [optionId]: string }   for free-text "input" options
@@ -178,7 +180,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
               </span>
             )}
             {option.is_required && (
-              <span className="text-xs text-red-500 ml-auto">Required</span>
+              <span className="text-xs text-red-500 ml-auto">{t("product_form.options.required", "Required")}</span>
             )}
           </div>
 
@@ -272,7 +274,7 @@ const VariantPicker = ({ options = [], variants = [], onVariantChange }) => {
           return (
             <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2">
               <ExclamationCircleIcon className="h-4 w-4 flex-shrink-0" />
-              This combination is currently unavailable.
+              <span>{t("product_form.variants.unavailable_combination", "This combination is currently unavailable.")}</span>
             </div>
           );
         }

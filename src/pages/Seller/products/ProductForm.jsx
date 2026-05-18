@@ -66,8 +66,8 @@ const PRODUCT_CONDITIONS = [
 
 const validateImageFile = (file) => {
   const allowed = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
-  if (!allowed.includes(file.type)) return { valid: false, message: "Invalid format. Use JPEG, PNG, GIF, or WebP." };
-  if (file.size > 5 * 1024 * 1024)  return { valid: false, message: "Image must be under 5 MB." };
+  if (!allowed.includes(file.type)) return { valid: false, message: tf("images.invalid_format", "Invalid format. Use JPEG, PNG, GIF, or WebP.") };
+  if (file.size > 5 * 1024 * 1024)  return { valid: false, message: tf("images.too_large", "Image must be under 5 MB.") };
   return { valid: true, message: "" };
 };
 
@@ -243,7 +243,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
       v.valid ? validFiles.push(file) : errors.push(`${file.name}: ${v.message}`);
     });
 
-    if (errors.length) setError(`Some images were rejected:\n${errors.join("\n")}`);
+    if (errors.length) setError(tf("images.some_rejected", "Some images were rejected:\n{{details}}", { details: errors.join("\n") }));
     if (!validFiles.length) return;
 
     setIsUploadingImages(true);
@@ -270,7 +270,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         }
         return null;
       } catch (err) {
-        setError(`Failed to upload ${file.name}: ${err.message}`);
+        setError(tf("images.upload_failed", "Failed to upload {{name}}: {{error}}", { name: file.name, error: err.message }));
         return null;
       }
     };
@@ -652,14 +652,14 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 
             {/* Brand / Model / Material / Origin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[["brand","Brand"],["model","Model"],["material","Material"],["origin","Country of Origin"]].map(([name, label]) => (
+              {[["brand", tf("labels.brand", "Brand")], ["model", tf("labels.model", "Model")], ["material", tf("labels.material", "Material")], ["origin", tf("labels.origin", "Country of Origin")]].map(([name, label]) => (
                 <div key={name}>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    {label} <span className="text-xs text-gray-400">(Optional)</span>
+                    {label} <span className="text-xs text-gray-400">({optionalLabel})</span>
                   </label>
                   <input type="text" name={name} value={formData[name]} onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                    placeholder={label} />
+                    placeholder={tf(`placeholders.${name}`, label)} />
                 </div>
               ))}
             </div>
@@ -668,16 +668,16 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             {formData.product_type === "digital" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">File URL *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.file_url_required", "File URL *")}</label>
                   <input type="url" name="file_url" value={formData.file_url} onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                    placeholder="https://your-cdn.com/file.pdf" />
+                    placeholder={tf("placeholders.image_url", "https://…/image.jpg")} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">File Type</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.file_type", "File Type")}</label>
                   <input type="text" name="file_type" value={formData.file_type} onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                    placeholder="e.g. PDF, ZIP, MP4" />
+                    placeholder={tf("placeholders.file_type", "e.g. PDF, ZIP, MP4")} />
                 </div>
               </div>
             )}
@@ -700,14 +700,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.base_price", "Base Price (MMK)")} *</label>
                 <input type="number" name="price" step="0.01" min="0" value={formData.price} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="0.00" />
-                <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">{tf("hints.base_price", "Displayed on listing cards. Variants override per-combination.")}</p>
+                  placeholder={tf("placeholders.base_price", "0.00")} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.discount_price", "Discount Price (MMK)")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="number" name="discount_price" step="0.01" min="0" value={formData.discount_price} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="0.00" />
+                  placeholder={tf("placeholders.discount_price", "0.00")} />
               </div>
             </div>
 
@@ -738,25 +737,25 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">{tf("hints.quantity_unit", "Unit for stock and ordering (e.g. kg, meter, piece).")}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Lead Time <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.lead_time", "Lead Time")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="text" name="lead_time" value={formData.lead_time} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="e.g. 3–5 days" />
+                  placeholder={tf("placeholders.lead_time", "e.g. 3-5 days")} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Weight (kg) <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.weight", "Weight (kg)")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="number" step="0.01" min="0" name="weight_kg" value={formData.weight_kg} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="Product weight" />
+                  placeholder={tf("placeholders.weight", "Product weight")} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Packaging Details <span className="text-xs text-gray-400">(Optional)</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.packaging_details", "Packaging Details")} <span className="text-xs text-gray-400">({optionalLabel})</span></label>
                 <input type="text" name="packaging_details" value={formData.packaging_details} onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                  placeholder="e.g. Carton box, 12 pcs per carton" />
+                  placeholder={tf("placeholders.packaging_details", "e.g. Carton box, 12 pcs per carton")} />
               </div>
             </div>
 
@@ -798,7 +797,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div className="flex gap-1">
                     <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageFromUrl(); } }}
-                      placeholder="https://…/image.jpg"
+                      placeholder={tf("placeholders.image_url", "https://…/image.jpg")}
                       className="text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1.5 w-48 focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" />
                     <button type="button" onClick={addImageFromUrl} disabled={!urlInput.trim()}
                       className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 text-gray-700 dark:text-slate-300">
@@ -888,26 +887,26 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             </div>
 
             {/* Specifications */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">
-                Product Specifications <span className="text-xs text-gray-400">(Optional)</span>
-              </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-4">
+                  {tf("labels.specifications", "Product Specifications")} <span className="text-xs text-gray-400">({optionalLabel})</span>
+                </label>
               <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div className="md:col-span-2">
-                    <input type="text" name="key" placeholder="Spec name (e.g. Material)"
+                    <input type="text" name="key" placeholder={tf("placeholders.spec_name", "Spec name (e.g. Material)")}
                       value={specInput.key} onChange={(e) => setSpecInput((p) => ({ ...p, key: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" />
                   </div>
                   <div className="md:col-span-2">
-                    <input type="text" name="value" placeholder="Spec value (e.g. Cotton)"
+                    <input type="text" name="value" placeholder={tf("placeholders.spec_value", "Spec value (e.g. Cotton)")}
                       value={specInput.value} onChange={(e) => setSpecInput((p) => ({ ...p, value: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" />
                   </div>
                   <div>
                     <button type="button" onClick={addSpecification} disabled={!specInput.key || !specInput.value}
                       className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center">
-                      <PlusIcon className="h-4 w-4 mr-1" /> Add
+                      <PlusIcon className="h-4 w-4 mr-1" /> {tf("actions.add_spec", "Add")}
                     </button>
                   </div>
                 </div>
@@ -935,21 +934,38 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{tf("sections.shipping_subtitle", "Delivery, warranty, and flags")}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                ["shipping_cost", "Shipping Cost (MMK)", "number", "0.00"],
-                ["shipping_time", "Shipping Time", "text", "e.g. 3–5 business days"],
-                ["warranty_period", "Warranty Period", "text", "e.g. 12 months"],
-                ["return_policy", "Return Policy", "text", "e.g. 30 days return"],
-              ].map(([name, label, type, placeholder]) => (
-                <div key={name}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                    {label} <span className="text-xs text-gray-400">({optionalLabel})</span>
-                  </label>
-                  <input type={type} name={name} value={formData[name]} onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                    placeholder={placeholder} />
-                </div>
-              ))}
+              <div key="shipping_cost">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  {tf("labels.shipping_cost", "Shipping Cost (MMK)")} <span className="text-xs text-gray-400">({optionalLabel})</span>
+                </label>
+                <input type="number" name="shipping_cost" value={formData.shipping_cost} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  placeholder={tf("placeholders.shipping_cost", "0.00")} />
+              </div>
+              <div key="shipping_time">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  {tf("labels.shipping_time", "Shipping Time")} <span className="text-xs text-gray-400">({optionalLabel})</span>
+                </label>
+                <input type="text" name="shipping_time" value={formData.shipping_time} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  placeholder={tf("placeholders.shipping_time", "e.g. 3-5 business days")} />
+              </div>
+              <div key="warranty_period">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  {tf("labels.warranty_period", "Warranty Period")} <span className="text-xs text-gray-400">({optionalLabel})</span>
+                </label>
+                <input type="text" name="warranty_period" value={formData.warranty_period} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  placeholder={tf("placeholders.warranty_period", "e.g. 12 months")} />
+              </div>
+              <div key="return_policy">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                  {tf("labels.return_policy", "Return Policy")} <span className="text-xs text-gray-400">({optionalLabel})</span>
+                </label>
+                <input type="text" name="return_policy" value={formData.return_policy} onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
+                  placeholder={tf("placeholders.return_policy", "e.g. 30 days return")} />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -970,11 +986,18 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 placeholder={tf("placeholders.additional_info", "Any additional notes...")} />
             </div>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <input id="is_featured" name="is_featured" type="checkbox" checked={formData.is_featured} onChange={handleChange}
-                  className="h-4 w-4 flex-shrink-0 text-blue-600 focus:ring-blue-500 border-gray-300 rounded sm:h-5 sm:w-5" />
-                <label htmlFor="is_featured" className="min-w-0 text-sm font-medium leading-5 text-gray-900 dark:text-slate-100">{tf("labels.is_featured", "Feature this product on homepage")}</label>
-              </div>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="free_shipping" checked={formData.free_shipping} onChange={handleChange} className="rounded border-gray-300" />
+                <span className="text-sm text-gray-700 dark:text-slate-300">{tf("labels.free_shipping", "Free Shipping")}</span>
+              </label>
+              {!formData.free_shipping && (
+                <div className="flex items-center gap-2">
+                  <input type="number" name="shipping_cost" value={formData.shipping_cost} onChange={handleChange} placeholder={tf("placeholders.shipping_cost", "0.00")}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800" />
+                  <span className="text-xs text-gray-400">{tf("labels.shipping_cost_free", "Shipping cost · leave 0 to mark it as free")}</span>
+                </div>
+              )}
+            </div>
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-green-600 focus:ring-green-500 border-gray-300 rounded sm:h-5 sm:w-5" />
