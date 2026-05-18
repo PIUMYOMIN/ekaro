@@ -28,6 +28,22 @@
   animation: fadeInUp 0.5s ease-out both;
 }
 
+/* ─── Card entrance (replaces framer-motion initial opacity:0) ────────────── */
+/* Cards are immediately visible to the browser paint engine (no JS gate),    */
+/* but still animate in smoothly via CSS — this is what fixes LCP.            */
+.animate-card-in {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+/* ─── Banner CSS transition (replaces AnimatePresence on hero) ────────────── */
+.banner-enter {
+  animation: bannerReveal 0.4s ease-in-out both;
+}
+@keyframes bannerReveal {
+  from { opacity: 0; max-height: 0; overflow: hidden; }
+  to   { opacity: 1; max-height: 800px; overflow: hidden; }
+}
+
 /* ─── Tailwind ─────────────────────────────────────────────────────────────── */
 
 @tailwind base;

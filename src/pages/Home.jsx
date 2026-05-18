@@ -4,7 +4,6 @@ import AnnouncementModal from "../components/ui/AnnouncementModal";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -256,8 +255,8 @@ const Home = () => {
           </div>
         ) : categories.length > 0 ? (
           <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {categories.map((category) => (
-              <CategoryCard key={category.id} category={category} />
+            {categories.map((category, idx) => (
+              <CategoryCard key={category.id} category={category} priority={idx < 2} />
             ))}
           </div>
         ) : (
@@ -386,110 +385,102 @@ const Home = () => {
       )}
       {SeoComponent}
       <div className="bg-gray-50 dark:bg-gray-900">
-        {/* Hero area */}
-        <AnimatePresence mode="wait">
-          {activeBanner && !bannerDismissed ? (
-            <motion.div
-              key="page-banner"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-              className="relative w-full overflow-hidden bg-black"
-            >
-              {/* Reserve space + show skeleton until image is decoded/painted */}
-              <div
-                className={`relative w-full ${
+        {/* Hero area — render immediately without AnimatePresence so LCP
+            registers as soon as JS loads, not after framer-motion boots.    */}
+        {activeBanner && !bannerDismissed ? (
+          <div className="banner-enter relative w-full overflow-hidden bg-black">
+            {/* Reserve space until image decodes */}
+            <div
+              className={`relative w-full ${
+                { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                  '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                ?? 'aspect-[3/1]'
+              } ${bannerImgReady ? '' : 'bg-gray-800 animate-pulse'}`}
+            />
+            {activeBanner.banner_link_url ? (
+              activeBanner.banner_link_url.startsWith('http') ? (
+                <a href={activeBanner.banner_link_url} target="_blank" rel="noopener noreferrer"
+                   className="block w-full cursor-pointer">
+                  <img
+                    src={activeBanner.image}
+                    alt={activeBanner.title}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    onLoad={() => setBannerImgReady(true)}
+                    className={`w-full object-cover object-center ${
+                      { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                        '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                      ?? 'aspect-[3/1]'
+                    } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                </a>
+              ) : (
+                <Link to={activeBanner.banner_link_url} className="block w-full cursor-pointer">
+                  <img
+                    src={activeBanner.image}
+                    alt={activeBanner.title}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    onLoad={() => setBannerImgReady(true)}
+                    className={`w-full object-cover object-center ${
+                      { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
+                        '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
+                      ?? 'aspect-[3/1]'
+                    } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                </Link>
+              )
+            ) : (
+              <img
+                src={activeBanner.image}
+                alt={activeBanner.title}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onLoad={() => setBannerImgReady(true)}
+                className={`w-full object-cover object-center ${
                   { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
                     '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
                   ?? 'aspect-[3/1]'
-                } ${bannerImgReady ? '' : 'bg-gray-800 animate-pulse'}`}
+                } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
               />
-              {activeBanner.banner_link_url ? (
-                activeBanner.banner_link_url.startsWith('http') ? (
-                  <a href={activeBanner.banner_link_url} target="_blank" rel="noopener noreferrer"
-                     className="block w-full cursor-pointer">
-                    <img
-                      src={activeBanner.image}
-                      alt={activeBanner.title}
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                      onLoad={() => setBannerImgReady(true)}
-                      className={`w-full object-cover object-center ${
-                        { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
-                          '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
-                        ?? 'aspect-[3/1]'
-                      } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
-                    />
-                  </a>
-                ) : (
-                  <Link to={activeBanner.banner_link_url} className="block w-full cursor-pointer">
-                    <img
-                      src={activeBanner.image}
-                      alt={activeBanner.title}
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                      onLoad={() => setBannerImgReady(true)}
-                      className={`w-full object-cover object-center ${
-                        { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
-                          '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
-                        ?? 'aspect-[3/1]'
-                      } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
-                    />
-                  </Link>
-                )
-              ) : (
-                <img
-                  src={activeBanner.image}
-                  alt={activeBanner.title}
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                  onLoad={() => setBannerImgReady(true)}
-                  className={`w-full object-cover object-center ${
-                    { '16:9': 'aspect-video', '4:3': 'aspect-[4/3]',
-                      '3:1': 'aspect-[3/1]', '1:1': 'aspect-square' }[activeBanner.banner_aspect_ratio ?? '16:9']
-                    ?? 'aspect-[3/1]'
-                  } absolute inset-0 transition-opacity duration-300 ${bannerImgReady ? 'opacity-100' : 'opacity-0'}`}
-                />
-              )}
+            )}
 
-              {activeBanner.badge_label && (
-                <span className={`absolute top-3 left-4 sm:top-4 sm:left-6 z-10
-                                  text-xs font-bold px-2.5 py-1 rounded-full shadow
-                                  ${{ green:'bg-green-500 text-white', red:'bg-red-500 text-white',
-                                      blue:'bg-blue-500 text-white', yellow:'bg-yellow-400 text-gray-900',
-                                      purple:'bg-purple-500 text-white', orange:'bg-orange-500 text-white',
-                                   }[activeBanner.badge_color] ?? 'bg-green-500 text-white'}`}>
-                  {activeBanner.badge_label}
-                </span>
-              )}
+            {activeBanner.badge_label && (
+              <span className={`absolute top-3 left-4 sm:top-4 sm:left-6 z-10
+                                text-xs font-bold px-2.5 py-1 rounded-full shadow
+                                ${{ green:'bg-green-500 text-white', red:'bg-red-500 text-white',
+                                    blue:'bg-blue-500 text-white', yellow:'bg-yellow-400 text-gray-900',
+                                    purple:'bg-purple-500 text-white', orange:'bg-orange-500 text-white',
+                                 }[activeBanner.badge_color] ?? 'bg-green-500 text-white'}`}>
+                {activeBanner.badge_label}
+              </span>
+            )}
 
-              <button
-                onClick={() => {
-                  if (activeBanner.show_once) {
-                    const key = `ann_seen_${activeBanner.id}_${new Date().toDateString()}`;
-                    localStorage.setItem(key, '1');
-                  }
-                  setBannerDismissed(true);
-                }}
-                aria-label="Dismiss banner"
-                className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10
-                           p-1.5 sm:p-2 bg-black/40 hover:bg-black/60
-                           backdrop-blur-sm rounded-full text-white transition-colors"
-              >
-                <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
-            </motion.div>
-          ) : (
-            // Plain div — hero renders immediately, no JS needed, LCP registers right away
-            <div key="hero-gradient">
-              {renderHeroSection}
-            </div>
-          )}
-        </AnimatePresence>
+            <button
+              onClick={() => {
+                if (activeBanner.show_once) {
+                  const key = `ann_seen_${activeBanner.id}_${new Date().toDateString()}`;
+                  localStorage.setItem(key, '1');
+                }
+                setBannerDismissed(true);
+              }}
+              aria-label="Dismiss banner"
+              className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10
+                         p-1.5 sm:p-2 bg-black/40 hover:bg-black/60
+                         backdrop-blur-sm rounded-full text-white transition-colors"
+            >
+              <XMarkIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          </div>
+        ) : (
+          // Hero gradient — plain div, renders synchronously, no JS gate
+          <div>
+            {renderHeroSection}
+          </div>
+        )}
 
         {renderCategoriesSection}
         {renderProductsSection}

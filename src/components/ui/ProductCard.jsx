@@ -215,16 +215,15 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
     :                                t('productCard.add_to_cart');
 
   return (
-    <motion.div
-      className={`group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
+    // CSS animation — card is immediately visible at paint time (no JS gate).
+    // This prevents framer-motion from blocking the LCP score.
+    <div
+      className={`animate-card-in group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
                   flex flex-col h-full
                   border border-gray-100 dark:border-gray-700
                   shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-gray-900/40
                   hover:border-gray-200 dark:hover:border-gray-600
-                  transition-all duration-300 ease-out ${className}`}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0  }}
-      transition={{ duration: 0.3 }}
+                  transition-shadow duration-300 ease-out ${className}`}
     >
       {/* ── Image ───────────────────────────────────────────────────────────── */}
       <div className="relative flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-700 aspect-square">
@@ -419,7 +418,7 @@ const ProductCard = ({ product, className = "", imagePriority = false }) => {
           </>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

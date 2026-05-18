@@ -1,6 +1,42 @@
 // src/utils/imageHelpers.jsx
 import { IMAGE_BASE_URL, DEFAULT_PLACEHOLDER } from "../config";
 
+/**
+ * Returns a WebP-optimised URL for backend images.
+ * If the backend (Laravel + Intervention Image or Spatie Media) supports
+ * query-param conversions, this will serve WebP automatically.
+ * Falls back silently to the original URL for CDN / external images.
+ *
+ * Usage: getWebPUrl(url, { width: 400, quality: 80 })
+ */
+export const getWebPUrl = (url, { width, quality = 80 } = {}) => {
+  if (!url || url.startsWith('data:')) return url;
+
+  // External URLs (CDN, S3, etc.) — skip transformation
+  if (!url.includes(IMAGE_BASE_URL) && url.startsWith('http')) return url;
+
+  try {
+    const u = new URL(url.startsWith('http') ? url : `${IMAGE_BASE_URL}/${url}`);
+    u.searchParams.set('format', 'webp');
+    u.searchParams.set('quality', String(quality));
+    if (width) u.searchParams.set('w', String(width));
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+
+/**
+ * Generates a srcSet string for responsive images.
+ * widths: array of pixel widths, e.g. [200, 400, 800]
+ */
+export const getSrcSet = (url, widths = [200, 400, 800]) => {
+  if (!url || url.startsWith('data:')) return '';
+  return widths
+    .map((w) => `${getWebPUrl(url, { width: w })} ${w}w`)
+    .join(', ');
+};
+
 export const getImageUrl = (image) => {
   if (image == null) return DEFAULT_PLACEHOLDER;     // FIX: catches both null and undefined
 

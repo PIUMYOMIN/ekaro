@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useTranslation } from "react-i18next";
+import { getWebPUrl } from "../../utils/imageHelpers";
 
 // Deterministic gradient from category name — consistent across renders
 const gradientFromName = (name = "") => {
@@ -54,7 +55,7 @@ const SlidingText = ({ items }) => {
   );
 };
 
-const CategoryCard = ({ category }) => {
+const CategoryCard = ({ category, priority = false }) => {
   const { i18n } = useTranslation();
 
   if (!category || category.products_count === 0) return null;
@@ -96,27 +97,44 @@ const CategoryCard = ({ category }) => {
   const maxDiscountPct = Math.round(Math.max(categoryPct, childrenPct));
 
   return (
-    <motion.div
-      className="bg-white dark:bg-slate-800 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    // CSS animation instead of framer-motion: card is immediately visible to
+    // the browser paint engine (no JS gate), which fixes the LCP render delay.
+    <div className="animate-card-in bg-white dark:bg-slate-800 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-gray-200 dark:border-slate-700 overflow-hidden">
       <Link to={`/products?category=${category.id}`} className="block">
 
         {/* ── Image / Gradient placeholder ────────────── */}
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-700">
           {category.image ? (
-            <LazyLoadImage
-              src={category.image}
-              alt={displayName}
-              effect="blur"
-              className="w-full h-full object-cover"
-              placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
-                viewBox='0 0 300 300'%3E%3Crect width='300' height='300'
-                fill='%23f3f4f6'/%3E%3C/svg%3E"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+            priority ? (
+              // Above-fold (first cards): native <img> so fetchPriority="high"
+              // and eager loading take effect without the LazyLoadImage JS overhead.
+              <img
+                src={getWebPUrl(category.image, { width: 400 })}
+                alt={displayName}
+                loading="eager"
+                decoding="sync"
+                fetchPriority="high"
+                width={400}
+                height={400}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            ) : (
+              // Below-fold: lazy-load with blur-up
+              <LazyLoadImage
+                src={getWebPUrl(category.image, { width: 400 })}
+                alt={displayName}
+                effect="blur"
+                loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+                width={400}
+                height={400}
+                className="w-full h-full object-cover"
+                placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )
           ) : (
             // Colourful gradient tile used until an image is uploaded via admin
             <div className={`w-full h-full bg-gradient-to-br ${gradient}
@@ -151,7 +169,7 @@ const CategoryCard = ({ category }) => {
         )}
 
       </Link>
-    </motion.div>
+    </div>
   );
 };
 
