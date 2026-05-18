@@ -14,7 +14,6 @@ module.exports = {
         sans:            ["Noto Sans Myanmar", "sans-serif"],   // DEFAULT body
         display:         ["Torus", "sans-serif"],               // headings, logo
         notosansmyanmar: ["Noto Sans Myanmar", "sans-serif"],   // explicit alias
-        roboto:          ["Roboto", "sans-serif"],
         poppins:         ["Poppins", "sans-serif"],
         lato:            ["Lato", "sans-serif"],
         torus:           ["Torus", "sans-serif"],

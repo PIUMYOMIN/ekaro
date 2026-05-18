@@ -1,3 +1,4 @@
+//src/components/seller/ProductManagement.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -625,7 +626,7 @@ const ProductManagement = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0 relative group">
-                            <img
+                            <img loading="lazy"
                               className="h-12 w-12 rounded-lg object-cover cursor-pointer"
                               src={getPrimaryImage(product)}
                               alt={product.name}
@@ -788,7 +789,7 @@ const ProductManagement = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {selectedImages.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img src={image.url} alt={`Product image ${index + 1}`} className="w-full h-48 object-cover rounded-lg" onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
+                      <img loading="lazy" src={image.url} alt={`Product image ${index + 1}`} className="w-full h-48 object-cover rounded-lg" onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
                       {image.is_primary && <div className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">Primary</div>}
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
                         <div className="flex space-x-2">

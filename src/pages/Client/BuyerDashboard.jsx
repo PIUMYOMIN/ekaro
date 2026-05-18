@@ -285,7 +285,7 @@ const OrderCard = ({ order, onViewDetails, onCancel, onPaySlip }) => {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 hover:shadow-md transition p-4">
       <div className="flex items-start gap-3">
-        <img src={thumb} alt={firstItem.product_name || "Product"}
+        <img loading="lazy" src={thumb} alt={firstItem.product_name || "Product"}
           className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
           onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
         <div className="flex-1 min-w-0">
@@ -471,7 +471,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   const img  = getImageUrl(imgs.find((x) => x.is_primary) || imgs[0]);
                   return (
                     <div key={i} className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900 p-3 rounded-lg">
-                      <img src={img} alt={item.product_name} className="w-12 h-12 object-cover rounded flex-shrink-0"
+                      <img loading="lazy" src={img} alt={item.product_name} className="w-12 h-12 object-cover rounded flex-shrink-0"
                         onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{item.product_name}</p>
@@ -875,7 +875,7 @@ const WishlistTab = ({ navigate }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {wishlist.map((item) => (
             <div key={item.id} className="border border-gray-200 dark:border-slate-700 rounded-xl p-3 hover:shadow-md transition flex gap-3">
-              <img src={getImageUrl(item.images?.[0])} alt={item.name}
+              <img loading="lazy" src={getImageUrl(item.images?.[0])} alt={item.name}
                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                 onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
               <div className="flex-1 min-w-0">
@@ -1009,7 +1009,7 @@ const CartTab = ({ navigate }) => {
               {cartItems.map((item) => (
                 <li key={item.id} className={`py-4 flex gap-3 ${removingId === item.id ? "opacity-40" : ""}`}>
                   <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 flex-shrink-0">
-                    <img src={getImageUrl(item.image)} alt={item.name}
+                    <img loading="lazy" src={getImageUrl(item.image)} alt={item.name}
                       className="w-full h-full object-contain"
                       onError={(e) => { e.target.src = "/placeholder-product.jpg"; }} />
                   </div>

@@ -1,3 +1,4 @@
+// src/components/admin/UserManagement.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MagnifyingGlassIcon, FunnelIcon, TrashIcon, ShieldCheckIcon,
@@ -359,7 +360,7 @@ const UserManagement = () => {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-slate-600 flex-shrink-0 overflow-hidden">
                             {u.profile_photo
-                              ? <img src={u.profile_photo} alt="" className="w-full h-full object-cover" />
+                              ? <img loading="lazy" src={u.profile_photo} alt="" className="w-full h-full object-cover" />
                               : <span className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-500 dark:text-slate-400">
                                   {u.name?.[0]?.toUpperCase() || "?"}
                                 </span>

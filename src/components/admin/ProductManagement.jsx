@@ -528,7 +528,7 @@ const ProductManagement = () => {
       ),
       image: (
         <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-700 flex-shrink-0">
-          <img
+          <img loading="lazy"
             src={getProductImage(product)}
             alt={product.name_en || 'Product'}
             className="w-full h-full object-cover"
@@ -832,7 +832,7 @@ const ProductManagement = () => {
                     {imgs.map((img, idx) => {
                       const imgSrc = img.url || img.path || DEFAULT_PLACEHOLDER;
                       return (
-                        <img
+                        <img loading="lazy"
                           key={idx}
                           src={imgSrc}
                           alt={`Product ${idx + 1}`}
@@ -842,7 +842,7 @@ const ProductManagement = () => {
                       );
                     })}
                     {imgs.length === 0 && (
-                      <img src={DEFAULT_PLACEHOLDER} alt="placeholder" className="h-40 w-40 rounded-lg object-cover border border-gray-200 dark:border-slate-600" />
+                      <img loading="lazy" src={DEFAULT_PLACEHOLDER} alt="placeholder" className="h-40 w-40 rounded-lg object-cover border border-gray-200 dark:border-slate-600" />
                     )}
                   </div>
                 );

@@ -1,6 +1,4 @@
 // src/components/seller/StoreProfileEditor.jsx
-// Single unified component for all seller profile management.
-// Tabs: Basic Info · Images · Policies · Business Hours · Social · Documents · Password
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -75,7 +73,7 @@ const ImageUploadBox = ({ label, hint, currentUrl, onUpload, onRemove, uploading
       <p className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{label}</p>
       {currentUrl ? (
         <div className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600" style={{ aspectRatio: aspect }}>
-          <img src={currentUrl} alt={label} className="w-full h-full object-cover"/>
+          <img loading="lazy" src={currentUrl} alt={label} className="w-full h-full object-cover"/>
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button onClick={() => ref.current?.click()}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-slate-700">
@@ -156,7 +154,7 @@ const DocumentRow = ({ label, fieldName, value, onUpload, uploading, hint, requi
         {/* Thumbnail — only for image files that loaded successfully */}
         {isImage && !thumbErr ? (
           <a href={value} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
-            <img
+            <img loading="lazy"
               src={value}
               alt={label}
               onError={() => setThumbErr(true)}

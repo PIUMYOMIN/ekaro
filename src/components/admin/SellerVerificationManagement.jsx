@@ -121,7 +121,7 @@ const ImageLightbox = ({ url, title, onClose }) => {
             Close (Esc)
           </button>
         </div>
-        <img
+        <img loading="lazy"
           src={url}
           alt={title || "ID document"}
           className="max-h-[min(88vh,900px)] max-w-full object-contain rounded-lg shadow-2xl"
@@ -221,7 +221,7 @@ const DocButton = ({ url, label, colour = "blue" }) => {
           onClick={() => setLightbox(true)}
           className="group relative block w-full border-b border-gray-200/80 dark:border-slate-600/80 bg-gray-900/[0.03] dark:bg-black/20"
         >
-          <img
+          <img loading="lazy"
             src={url}
             alt=""
             className="mx-auto max-h-56 w-full object-contain p-2 transition-transform duration-200 group-hover:scale-[1.02]"
@@ -363,7 +363,7 @@ const DocPreview = ({ url, alt, label }) => {
           onClick={() => setLightbox(true)}
           className="group relative block w-full bg-gray-900/[0.04] dark:bg-black/25"
         >
-          <img
+          <img loading="lazy"
             src={url}
             alt={alt}
             className="mx-auto max-h-[min(420px,55vh)] w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.01]"
@@ -571,7 +571,7 @@ const SellerVerificationManagement = () => {
       cell: (row) => (
         <div className="flex items-center gap-3">
           {row.store_logo ? (
-            <img
+            <img loading="lazy"
               src={docUrl(row.store_logo)}
               alt={row.store_name}
               className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
@@ -886,7 +886,7 @@ const SellerVerificationManagement = () => {
               <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
                 <div className="flex items-center gap-3">
                   {selectedSeller.store_logo ? (
-                    <img src={docUrl(selectedSeller.store_logo)} alt={selectedSeller.store_name}
+                    <img loading="lazy" src={docUrl(selectedSeller.store_logo)} alt={selectedSeller.store_name}
                       className="h-10 w-10 rounded-xl object-cover border-2 border-white/30" />
                   ) : (
                     <div className="h-10 w-10 rounded-xl bg-white/20 flex items-center justify-center">

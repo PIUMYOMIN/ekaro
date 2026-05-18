@@ -462,7 +462,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           // `img.url` is the absolute display URL built by the backend.
           // `img.path` is the relative storage path to round-trip on save.
           // Use getImageUrl() as a safety net in case the backend ever sends
-          // a bare relative path (e.g. from an older record) so the <img>
+          // a bare relative path (e.g. from an older record) so the <img loading="lazy">
           // src always resolves correctly even for offline/local-disk images.
           const displayUrl = img.url ? getImageUrl(img.url) : getImageUrl(img.path || "");
           return {
@@ -850,7 +850,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                         ${image.is_primary ? "border-green-500 ring-2 ring-green-200 dark:ring-green-800" : "border-gray-200 dark:border-slate-600 hover:border-green-300"}
                         ${draggedImage === index ? "opacity-50" : ""}`}>
                       <div className="aspect-square bg-gray-100 dark:bg-slate-800 relative">
-                        <img src={getImageUrl(image.url)} alt={`Preview ${index + 1}`}
+                        <img loading="lazy" src={getImageUrl(image.url)} alt={`Preview ${index + 1}`}
                           className="w-full h-full object-cover cursor-pointer"
                           onClick={() => setPreviewImage(image.url)} />
                         {image.is_primary && (
@@ -1058,7 +1058,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
             className="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-black/75">
             <XMarkIcon className="h-6 w-6" />
           </button>
-          <img src={getImageUrl(previewImage)} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
+          <img loading="lazy" src={getImageUrl(previewImage)} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg" />
         </div>
       </div>
     );
@@ -1241,4 +1241,3 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
 };
 
 export default ProductForm;
-
