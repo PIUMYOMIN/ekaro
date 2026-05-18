@@ -131,7 +131,7 @@ const MoreFromSellerDesktopCarousel = ({ moreFromSeller = [] }) => {
         ref={rowRef}
         role="list"
         aria-label="Seller products"
-        className="flex gap-4 overflow-x-auto pb-2 scroll-smooth px-0 md:px-2"
+        className="flex gap-4 overflow-x-auto scroll-smooth px-0 md:px-2 scrollbar-hide"
         style={{ scrollSnapType: "x mandatory" }}
       >
         {safeCards.map((p, idx) => (
