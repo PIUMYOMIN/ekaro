@@ -234,45 +234,54 @@ const Home = () => {
     </div>
   ), [getCTAButtonLink, getCTAButtonText, isAuthenticated, isBuyer, t]);
 
+  // Static — no deps, renders once, h2 is the LCP element, must be immediate
+  const renderCategoriesHeading = useMemo(() => (
+    <div className="text-center">
+      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+        {t("home.popular_categories")}
+      </h2>
+      <Link
+        to="/categories"
+        className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
+      >
+        {t("home.browse_all_categories")} →
+      </Link>
+    </div>
+  ), [t]);
+
+  // Dynamic — depends on loading state, re-renders when categories arrive
+  const renderCategoriesGrid = useMemo(() => (
+    loading.categories ? (
+      <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {[...Array(6)].map((_, i) => <CategoryCardSkeleton key={i} />)}
+      </div>
+    ) : categories.length > 0 ? (
+      <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {categories.map((category, idx) => (
+          <CategoryCard key={category.id} category={category} priority={idx < 2} />
+        ))}
+      </div>
+    ) : (
+      <div className="mt-8 sm:mt-10 text-center py-10 sm:py-12">
+        <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">{t("home.no_categories_found")}</p>
+        <Link
+          to="/categories"
+          className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 font-medium transition-colors"
+        >
+          {t("home.browse_categories")}
+        </Link>
+      </div>
+    )
+  ), [loading.categories, categories, t]);
+
   const renderCategoriesSection = useMemo(() => (
     <section className="py-10 sm:py-12 bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-            {t("home.popular_categories")}
-          </h2>
-          <Link
-            to="/categories"
-            className="inline-block mt-2 sm:mt-2 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 font-medium transition-colors"
-          >
-            {t("home.browse_all_categories")} →
-          </Link>
-        </div>
-
-        {loading.categories ? (
-          <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {[...Array(6)].map((_, i) => <CategoryCardSkeleton key={i} />)}
-          </div>
-        ) : categories.length > 0 ? (
-          <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {categories.map((category, idx) => (
-              <CategoryCard key={category.id} category={category} priority={idx < 2} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-8 sm:mt-10 text-center py-10 sm:py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">{t("home.no_categories_found")}</p>
-            <Link
-              to="/categories"
-              className="inline-block mt-3 sm:mt-4 text-sm sm:text-base text-green-600 dark:text-green-400 hover:text-green-800 font-medium transition-colors"
-            >
-              {t("home.browse_categories")}
-            </Link>
-          </div>
-        )}
+        {renderCategoriesHeading}
+        {renderCategoriesGrid}
       </div>
     </section>
-  ), [loading.categories, categories, t]);
+  ), [renderCategoriesHeading, renderCategoriesGrid]);
 
   const renderProductsSection = useMemo(() => (
     <section className="py-10 sm:py-12 bg-gray-50 dark:bg-gray-800/50">

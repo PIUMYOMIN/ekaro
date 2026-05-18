@@ -15,6 +15,14 @@ import { NotificationProvider } from './context/NotificationContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { HelmetProvider } from "react-helmet-async";
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+
+// Shorthand — avoids repeating the env var on every route
+const RC_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const WithRC = ({ children }) => (
+  <GoogleReCaptchaProvider reCaptchaKey={RC_KEY}>
+    {children}
+  </GoogleReCaptchaProvider>
+);
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // ─── Guards & Layout (eager — needed for routing shell) ───────────────────────
@@ -163,7 +171,6 @@ function App() {
     <HelmetProvider>
       <I18nextProvider i18n={i18n}>
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
-          <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}>
             <AuthProvider>
               <SubscriptionProvider>
               <NotificationProvider>
@@ -203,9 +210,9 @@ function App() {
                         <Route path="/seller-guidelines" element={<SellerGuidelines />} />
                         <Route path="/faq" element={<FAQ />} />
                         <Route path="/shipping" element={<ShippingInfo />} />
-                        <Route path="/contact" element={<Contact />} />
+                        <Route path="/contact" element={<WithRC><Contact /></WithRC>} />
                         <Route path="/page-not-found" element={<Error />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/reset-password" element={<WithRC><ResetPassword /></WithRC>} />
                         <Route path="/local-deals" element={<LocalDeals />} />
                         <Route
                           path="/verify-email/:id/:hash"
@@ -243,15 +250,15 @@ function App() {
                         {/* Guest-only Routes */}
                         <Route path="/login" element={
                           <GuestRoute>
-                            <Login />
+                            <WithRC><Login /></WithRC>
                           </GuestRoute>} />
                         <Route path="/register" element={
                           <GuestRoute>
-                            <Register />
+                            <WithRC><Register /></WithRC>
                           </GuestRoute>} />
                         <Route path="/forgot-password" element={
                           <GuestRoute>
-                            <ForgotPassword />
+                            <WithRC><ForgotPassword /></WithRC>
                           </GuestRoute>} />
                         <Route
                           path="/social/role"
@@ -377,23 +384,27 @@ function App() {
                         {/* ── Report Page (public) ── */}
                         <Route path="/report" element={
                           <React.Suspense fallback={null}>
-                            <ReportPage />
+                            <WithRC><ReportPage /></WithRC>
                           </React.Suspense>
                         } />
 
                         {/* ── My Reports ── */}
                         <Route path="/my-reports" element={
                           <ProtectedRoute>
+                            <WithRC>
                             <React.Suspense fallback={<div className="flex justify-center py-16"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-500" /></div>}>
                               <MyReports />
                             </React.Suspense>
+                            </WithRC>
                           </ProtectedRoute>
                         } />
                         <Route path="/my-reports/:ticket_id" element={
                           <ProtectedRoute>
+                            <WithRC>
                             <React.Suspense fallback={null}>
                               <MyReports />
                             </React.Suspense>
+                            </WithRC>
                           </ProtectedRoute>
                         } />
 
@@ -415,7 +426,6 @@ function App() {
               </NotificationProvider>
               </SubscriptionProvider>
             </AuthProvider>
-          </GoogleReCaptchaProvider>
         </GoogleOAuthProvider>
       </I18nextProvider>
     </HelmetProvider>);

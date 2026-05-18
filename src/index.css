@@ -3,7 +3,8 @@
 @font-face {
   font-family: "Noto Sans Myanmar";
   src: local("Noto Sans Myanmar"),
-       url("./fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf") format("truetype");
+       url("./fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.woff2") format("woff2"),
+       url("./fonts/NotoSansMyanmar/NotoSansMyanmar-Regular.ttf")   format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,7 +13,8 @@
 @font-face {
   font-family: "Torus";
   src: local("Torus Bold"),
-       url("./fonts/Torus/Torus-SemiBold.ttf") format("truetype");
+       url("./fonts/Torus/Torus-SemiBold.woff2") format("woff2"),
+       url("./fonts/Torus/Torus-SemiBold.ttf")   format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
