@@ -194,12 +194,8 @@ const Home = () => {
         <div className="absolute inset-0 bg-gray-900 opacity-40" />
       </div>
       <div className="relative max-w-7xl mx-auto py-16 sm:py-24 md:py-32 px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
+        {/* CSS animation instead of framer-motion — LCP element visible immediately */}
+        <div className="text-center animate-fade-in-up">
           <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
             {t("home.hero_title")}
           </h1>
@@ -234,7 +230,7 @@ const Home = () => {
               </Link>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   ), [getCTAButtonLink, getCTAButtonText, isAuthenticated, isBuyer, t]);
@@ -488,15 +484,10 @@ const Home = () => {
               </button>
             </motion.div>
           ) : (
-            <motion.div
-              key="hero-gradient"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            // Plain div — hero renders immediately, no JS needed, LCP registers right away
+            <div key="hero-gradient">
               {renderHeroSection}
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
