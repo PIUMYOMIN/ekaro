@@ -7,8 +7,11 @@ const SubscriptionContext = createContext();
 
 export const SubscriptionProvider = ({ children }) => {
   const { user, isSeller, hasRole } = useAuth();
-  const [subscription, setSubscription] = useState(null);  // full subscription object
-  const [loading, setLoading]           = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  // Start as true when user already exists (e.g. page refresh with active session)
+  // so PlanFeatureGate shows a spinner instead of flashing the upgrade prompt
+  // before the first fetch completes.
+  const [loading, setLoading] = useState(!!user);
 
   const fetchSubscription = useCallback(async () => {
     if (!user || !isSeller()) return;

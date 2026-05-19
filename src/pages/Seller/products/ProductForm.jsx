@@ -14,7 +14,7 @@ import {
   EyeIcon, StarIcon, PencilIcon,
 } from "@heroicons/react/24/outline";
 
-// ── constants ─────────────────────────────────────────────────────────────────
+// ?? constants ?????????????????????????????????????????????????????????????????
 
 const STORAGE_KEYS = {
   PRODUCT_DRAFT:   "product_draft",
@@ -22,11 +22,11 @@ const STORAGE_KEYS = {
 };
 
 const IMAGE_ANGLES = [
-  { value: "front",   label: "Front View",  icon: "👁️" },
-  { value: "back",    label: "Back View",   icon: "↩️" },
-  { value: "side",    label: "Side View",   icon: "↔️" },
-  { value: "top",     label: "Top View",    icon: "⬆️" },
-  { value: "default", label: "Other View",  icon: "📷" },
+  { value: "front", label: "Front View", icon: "???" },
+  { value: "back", label: "Back View", icon: "??" },
+  { value: "side", label: "Side View", icon: "??" },
+  { value: "top", label: "Top View", icon: "??" },
+  { value: "default", label: "Other View", icon: "??" },
 ];
 
 const PRODUCT_TYPES = [
@@ -57,12 +57,12 @@ const WARRANTY_TYPES = [
 
 const PRODUCT_CONDITIONS = [
   { value: "new",           label: "New",               description: "Brand new, never used" },
-  { value: "used_like_new", label: "Used – Like New",   description: "Used but looks and functions like new" },
-  { value: "used_good",     label: "Used – Good",       description: "Used with minor signs of wear" },
-  { value: "used_fair",     label: "Used – Fair",       description: "Used with visible signs of wear" },
+  { value: "used_like_new", label: "Used ? Like New", description: "Used but looks and functions like new" },
+  { value: "used_good", label: "Used ? Good", description: "Used with minor signs of wear" },
+  { value: "used_fair", label: "Used ? Fair", description: "Used with visible signs of wear" },
 ];
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ?? helpers ???????????????????????????????????????????????????????????????????
 
 const validateImageFile = (file) => {
   const allowed = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
@@ -92,7 +92,7 @@ const sanitizeProductData = (data) => {
   return sanitized;
 };
 
-// ── default form data ─────────────────────────────────────────────────────────
+// ?? default form data ?????????????????????????????????????????????????????????
 
 const DEFAULT_FORM = {
   name_en:           "",
@@ -132,7 +132,7 @@ const DEFAULT_FORM = {
   file_type:         "",
 };
 
-// ── steps ─────────────────────────────────────────────────────────────────────
+// ?? steps ?????????????????????????????????????????????????????????????????????
 
 const STEPS = [
   { id: 1, titleKey: "basic_info", title: "Basic Info", description: "Product details" },
@@ -142,7 +142,7 @@ const STEPS = [
   { id: 5, titleKey: "variants",   title: "Variants",   description: "Options & stock" },
 ];
 
-// ── component ─────────────────────────────────────────────────────────────────
+// ?? component ?????????????????????????????????????????????????????????????????
 
 const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const { t, i18n } = useTranslation();
@@ -163,7 +163,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const conditionDescription = (c) => tf(`conditions.${c.value}.description`, c.description);
   const imageAngleLabel = (a) => tf(`image_angles.${a.value}`, a.label);
 
-  // ── form state ───────────────────────────────────────────────────────────────
+  // ?? form state ???????????????????????????????????????????????????????????????
   const [formData, setFormData] = useState(() => {
     if (product) {
       const { images, ...rest } = product;
@@ -176,7 +176,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     return DEFAULT_FORM;
   });
 
-  // createdProductId tracks the ID returned after step 1–4 submit,
+  // createdProductId tracks the ID returned after step 1?4 submit,
   // so step 5 can load options/variants for the right product.
   const [createdProductId, setCreatedProductId] = useState(product?.id ?? null);
 
@@ -199,7 +199,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
   const [urlInput,           setUrlInput]           = useState("");
   const [cancelModal,        setCancelModal]        = useState(false);
 
-  // ── image helpers ────────────────────────────────────────────────────────────
+  // ?? image helpers ????????????????????????????????????????????????????????????
 
   const setPrimaryImage = (index) => {
     setImagesModified(true);
@@ -293,7 +293,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     setUrlInput("");
   };
 
-  // ── form change ───────────────────────────────────────────────────────────────
+  // ?? form change ???????????????????????????????????????????????????????????????
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -315,7 +315,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     });
   };
 
-  // ── step validation ────────────────────────────────────────────────────────────
+  // ?? step validation ????????????????????????????????????????????????????????????
 
   const validateStep = (step) => {
     switch (step) {
@@ -343,7 +343,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // ── submit steps 1-4 (core product) ──────────────────────────────────────────
+  // ?? submit steps 1-4 (core product) ??????????????????????????????????????????
 
   const handleCoreSubmit = async () => {
     if (loading || isUploadingImages) return;
@@ -374,7 +374,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         ...formData,
         price:          priceNum,
         moq:            moqNum,
-        quantity_step:  moqNum,   // always equal to MOQ — backend derives it the same way
+        quantity_step: moqNum,   // always equal to MOQ ? backend derives it the same way
         category_id:    categoryNum,
         discount_price: (() => {
           if (!formData.discount_price) return null;
@@ -390,7 +390,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
         file_type: formData.product_type === "digital" ? formData.file_type || null : null,
       };
 
-      // Remove quantity from payload — stock is per-variant now
+      // Remove quantity from payload ? stock is per-variant now
       delete payload.quantity;
       delete payload.color;
 
@@ -435,13 +435,13 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // ── finish (called from step 5) ────────────────────────────────────────────
+  // ?? finish (called from step 5) ????????????????????????????????????????????
 
   const handleFinish = () => {
     setShowSuccessPopup(true);
   };
 
-  // ── effects ────────────────────────────────────────────────────────────────
+  // ?? effects ????????????????????????????????????????????????????????????????
 
   const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
@@ -540,12 +540,12 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     if (onCancel) onCancel(); else navigate("/seller/dashboard");
   };
 
-  // ── step content ──────────────────────────────────────────────────────────
+  // ?? step content ??????????????????????????????????????????????????????????
 
   const renderStepContent = () => {
     switch (currentStep) {
 
-      // ── STEP 1: Basic Info ─────────────────────────────────────────────────
+      // ?? STEP 1: Basic Info ?????????????????????????????????????????????????
       case 1:
         return (
           <div className="space-y-6">
@@ -671,7 +671,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.file_url_required", "File URL *")}</label>
                   <input type="url" name="file_url" value={formData.file_url} onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100"
-                    placeholder={tf("placeholders.image_url", "https://…/image.jpg")} />
+                    placeholder={tf("placeholders.image_url", "https://?/image.jpg")} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">{tf("labels.file_type", "File Type")}</label>
@@ -684,7 +684,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           </div>
         );
 
-      // ── STEP 2: Pricing & B2B ──────────────────────────────────────────────
+      // ?? STEP 2: Pricing & B2B ??????????????????????????????????????????????
       case 2:
         return (
           <div className="space-y-6">
@@ -759,7 +759,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </div>
             </div>
 
-            {/* ── Wholesale Tier Pricing ─────────────────────────────────────── */}
+            {/* ?? Wholesale Tier Pricing ??????????????????????????????????????? */}
             <div className="pt-2">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-px flex-1 bg-gray-100 dark:bg-slate-700" />
@@ -778,7 +778,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           </div>
         );
 
-      // ── STEP 3: Media & Specs (unchanged from original) ────────────────────
+      // ?? STEP 3: Media & Specs (unchanged from original) ????????????????????
       case 3:
         return (
           <div className="space-y-8">
@@ -797,7 +797,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                   <div className="flex gap-1">
                     <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImageFromUrl(); } }}
-                      placeholder={tf("placeholders.image_url", "https://…/image.jpg")}
+                      placeholder={tf("placeholders.image_url", "https://?/image.jpg")}
                       className="text-sm border border-gray-300 dark:border-slate-600 rounded-lg px-2 py-1.5 w-48 focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100" />
                     <button type="button" onClick={addImageFromUrl} disabled={!urlInput.trim()}
                       className="px-3 py-1.5 text-sm border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 text-gray-700 dark:text-slate-300">
@@ -925,7 +925,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
           </div>
         );
 
-      // ── STEP 4: Shipping & More ───────────────────────────────────────────
+      // STEP 4: Shipping & More
       case 4:
         return (
           <div className="space-y-6">
@@ -994,11 +994,9 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
                 <div className="flex items-center gap-2">
                   <input type="number" name="shipping_cost" value={formData.shipping_cost} onChange={handleChange} placeholder={tf("placeholders.shipping_cost", "0.00")}
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 bg-white dark:bg-slate-800" />
-                  <span className="text-xs text-gray-400">{tf("labels.shipping_cost_free", "Shipping cost · leave 0 to mark it as free")}</span>
+                  <span className="text-xs text-gray-400">{tf("labels.shipping_cost_free", "Shipping cost ? leave 0 to mark it as free")}</span>
                 </div>
               )}
-            </div>
-            <div>
               <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <input id="is_active" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleChange}
                   className="h-4 w-4 flex-shrink-0 text-green-600 focus:ring-green-500 border-gray-300 rounded sm:h-5 sm:w-5" />
@@ -1071,7 +1069,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     }
   };
 
-  // ── image preview modal ────────────────────────────────────────────────────
+  // ?? image preview modal ????????????????????????????????????????????????????
 
   const ImagePreviewModal = () => {
     if (!previewImage) return null;
@@ -1088,7 +1086,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
     );
   };
 
-  // ── whether the current nav button is "Submit" or "Next" ──────────────────
+  // ?? whether the current nav button is "Submit" or "Next" ??????????????????
 
   const isLastInfoStep = currentStep === 4;
   const isVariantsStep = currentStep === 5;
@@ -1150,7 +1148,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </h1>
               <p className="text-gray-500 dark:text-slate-400 mt-0.5 text-sm">
                 {product ? tf("titles.edit_subtitle", "Update your product details") : tf("titles.new_subtitle", "Create a new product listing")}
-                {!product && <span className="text-blue-600 dark:text-blue-400 ml-2">{tf("messages.draft_saved", "• Draft auto-saved")}</span>}
+                {!product && <span className="text-blue-600 dark:text-blue-400 ml-2">{tf("messages.draft_saved", "? Draft auto-saved")}</span>}
               </p>
             </div>
             <button onClick={handleCancel} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
@@ -1240,7 +1238,7 @@ const ProductForm = ({ product = null, onSuccess, onCancel }) => {
               </div>
               <div>
                 {isLastInfoStep ? (
-                  /* Step 4 → Submit core product then advance to Step 5 */
+                  /* Step 4 ? Submit core product then advance to Step 5 */
                   <button type="button" onClick={handleCoreSubmit} disabled={loading || isUploadingImages}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 shadow-sm disabled:opacity-50 transition-colors sm:px-8 sm:py-3">
                     {loading ? (

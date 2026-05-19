@@ -140,6 +140,22 @@ const SellerDashboard = () => {
     }
   }, [doFetchStoreAndStats]);
 
+  // Fetch onboarding status silently — called by the polling interval so
+  // admin-approved/rejected status changes appear in real time without a
+  // full page reload.  Does NOT set loading=true.
+  const fetchOnboardingStatus = useCallback(async () => {
+    try {
+      const response = await api.get('/seller/onboarding/status').catch(error => {
+        if (error.response?.status === 404) return null;
+        throw error;
+      });
+      if (response?.data?.success) {
+        setOnboardingStatus(response.data.data || response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch onboarding status:', error);
+    }
+  }, []);
   // ---------- Handle setup click (only for navigation) ----------
   const handleSetupClick = useCallback((step) => {
     if (step === 'my-store') {
@@ -384,9 +400,12 @@ const SellerDashboard = () => {
   // ---------- Polling for global data (silent, every 60s) ----------
   useEffect(() => {
     if (!user || !storeData) return;
-    const interval = setInterval(refreshGlobalData, 60000);
+    const interval = setInterval(() => {
+      void refreshGlobalData();
+      void fetchOnboardingStatus();
+    }, 60000);
     return () => clearInterval(interval);
-  }, [user, storeData, refreshGlobalData]);
+  }, [user, storeData, refreshGlobalData, fetchOnboardingStatus]);
 
   if (loading) {
     return (
