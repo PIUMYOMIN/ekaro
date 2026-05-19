@@ -1,5 +1,6 @@
 // src/components/seller/SellerSubscription.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -44,7 +45,7 @@ const featureRow = (label, value, ok = true) => (
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-const UsageBar = ({ used, limit, label }) => {
+const UsageBar = ({ used, limit, label, t }) => {
   const pct = limit === -1 ? 0 : Math.min(100, Math.round((used / limit) * 100));
   const danger = pct >= 90;
   const warn = pct >= 70 && !danger;
@@ -69,7 +70,7 @@ const UsageBar = ({ used, limit, label }) => {
       {danger && (
         <p className="text-xs text-red-500 flex items-center gap-1">
           <ExclamationTriangleIcon className="w-3 h-3" />
-          You're nearly at your product limit — consider upgrading.
+          {t('subscription.usage_warning')}
         </p>
       )}
     </div>
@@ -79,6 +80,7 @@ const UsageBar = ({ used, limit, label }) => {
 // Payment reference modal for paid plan upgrades
 const UpgradeModal = ({ plan, onConfirm, onCancel, loading }) => {
   const [ref, setRef] = useState('');
+  const { t } = useTranslation();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -86,28 +88,28 @@ const UpgradeModal = ({ plan, onConfirm, onCancel, loading }) => {
         <div className="flex items-center gap-3">
           <span className="text-3xl">{PLAN_ICONS[plan.slug] ?? '⭐'}</span>
           <div>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Upgrade to {plan.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{fmtMMK(plan.price_mmk)} / month</p>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{t('subscription.upgrade_to', { name: plan.name })}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{fmtMMK(plan.price_mmk)} {t('subscription.per_month')}</p>
           </div>
         </div>
 
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-sm text-amber-800 dark:text-amber-300 flex gap-2">
           <InformationCircleIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>Transfer <strong>{fmtMMK(plan.price_mmk)}</strong> via KBZPay, Wave Money, or bank transfer, then paste your payment reference below.</span>
+          <span><strong>{fmtMMK(plan.price_mmk)}</strong> {t('subscription.payment_instruction')}</span>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Payment Reference <span className="text-red-500">*</span>
+            {t('subscription.payment_ref_label')}<span className="text-red-500"> *</span>
           </label>
           <input
             type="text"
             value={ref}
             onChange={e => setRef(e.target.value)}
-            placeholder="e.g. TXN-20260517-001234"
+            placeholder={t('subscription.ref_placeholder', 'e.g. TXN-20260517-001234')}
             className="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none text-sm"
           />
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Enter the transaction ID from your payment confirmation.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t('subscription.ref_hint')}</p>
         </div>
 
         <div className="flex gap-3 pt-2">
@@ -116,14 +118,14 @@ const UpgradeModal = ({ plan, onConfirm, onCancel, loading }) => {
             disabled={loading}
             className="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium transition-colors"
           >
-            Cancel
+            {t('subscription.cancel')}
           </button>
           <button
             onClick={() => onConfirm(ref)}
             disabled={loading || !ref.trim()}
             className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
           >
-            {loading ? 'Processing…' : 'Confirm Upgrade'}
+            {loading ? t('subscription.alerts.processing') : t('subscription.confirm_upgrade')}
           </button>
         </div>
       </div>
@@ -134,6 +136,7 @@ const UpgradeModal = ({ plan, onConfirm, onCancel, loading }) => {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const SellerSubscription = () => {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState(null);   // current subscription object
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,11 +159,11 @@ const SellerSubscription = () => {
       setCurrent(subRes.data.data);
       setPlans(plansRes.data.data ?? []);
     } catch (e) {
-      setError(e.response?.data?.message ?? 'Failed to load subscription data.');
+      setError(e.response?.data?.message ?? t('subscription.load_error'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -176,15 +179,15 @@ const SellerSubscription = () => {
 
       const res = await api.post('/seller/subscription/upgrade', payload);
       if (res.data.success) {
-        setSuccess(`Successfully ${plan.price_mmk === 0 ? 'downgraded' : 'upgraded'} to the ${plan.name} plan!`);
+        setSuccess(t('subscription.upgrade_msg', { action: plan.price_mmk === 0 ? 'downgraded' : 'upgraded', name: plan.name }));
         setModal(null);
         await load();
         await refetchSubscription();
       } else {
-        setError(res.data.message ?? 'Upgrade failed.');
+        setError(res.data.message ?? t('subscription.upgrade_failed'));
       }
     } catch (e) {
-      setError(e.response?.data?.message ?? 'Upgrade failed. Please try again.');
+      setError(e.response?.data?.message ?? t('subscription.upgrade_failed_retry'));
     } finally {
       setUpgrading(false);
     }
@@ -242,10 +245,10 @@ const SellerSubscription = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  {current?.plan?.name ?? 'Basic'} Plan
+                  {current?.plan?.name ?? t('subscription.plan_names.basic')} Plan
                 </h2>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors.badge}`}>
-                  {current?.status_label ?? 'Active'}
+                  {current?.status_label ?? t('subscription.status.active', 'Active')}
                 </span>
               </div>
               <p className={`text-sm font-medium ${colors.accent}`}>
@@ -264,18 +267,18 @@ const SellerSubscription = () => {
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
               <CalendarDaysIcon className="w-4 h-4" />
-              Renews: <span className="font-medium text-gray-700 dark:text-gray-200">{current.next_billing_at ?? current.ends_at}</span>
+              {t('subscription.renews')} <span className="font-medium text-gray-700 dark:text-gray-200">{current.next_billing_at ?? current.ends_at}</span>
             </div>
             {current.days_remaining !== null && (
               <div className={`flex items-center gap-1.5 ${current.days_remaining <= 7 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 <BoltIcon className="w-4 h-4" />
-                {current.days_remaining} day{current.days_remaining !== 1 ? 's' : ''} remaining
+                {t('subscription.days_remaining', { count: current.days_remaining })}
               </div>
             )}
           </div>
         )}
         {!current?.ends_at && (
-          <p className="text-sm text-gray-400 dark:text-gray-500">Free plan — no expiry date.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">{t('subscription.free_plan_no_expiry', 'Free plan — no expiry date.')}</p>
         )}
 
         {/* Product usage */}
@@ -284,7 +287,8 @@ const SellerSubscription = () => {
             <UsageBar
               used={current.products_used ?? 0}
               limit={current.plan?.product_limit ?? 20}
-              label="Products used"
+              label={t('subscription.products_used', 'Products used')}
+              t={t}
             />
           </div>
         )}
@@ -292,12 +296,12 @@ const SellerSubscription = () => {
         {/* Current plan features summary */}
         {current?.plan && (
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            {featureRow('Commission rate', current.plan.commission_percent)}
-            {featureRow('Product limit', current.plan.product_limit_label)}
-            {featureRow('Analytics', null, current.plan.analytics_enabled)}
-            {featureRow('Bulk import', null, current.plan.bulk_import_enabled)}
-            {featureRow('Priority support', null, current.plan.priority_support)}
-            {featureRow('Custom storefront', null, current.plan.custom_storefront)}
+            {featureRow(t('subscription.commission_rate', 'Commission rate'), current.plan.commission_percent)}
+            {featureRow(t('subscription.product_limit', 'Product limit'), current.plan.product_limit_label)}
+            {featureRow(t('subscription.analytics', 'Analytics'), null, current.plan.analytics_enabled)}
+            {featureRow(t('subscription.bulk_import', 'Bulk import'), null, current.plan.bulk_import_enabled)}
+            {featureRow(t('subscription.priority_support', 'Priority support'), null, current.plan.priority_support)}
+            {featureRow(t('subscription.custom_storefront', 'Custom storefront'), null, current.plan.custom_storefront)}
           </div>
         )}
       </div>
@@ -306,7 +310,7 @@ const SellerSubscription = () => {
       <div>
         <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <SparklesIcon className="w-5 h-5 text-green-500" />
-          Available Plans
+          {t('subscription.available_plans', 'Available Plans')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -314,7 +318,6 @@ const SellerSubscription = () => {
             const isCurrent = plan.is_current;
             const c = PLAN_COLORS[plan.slug] ?? PLAN_COLORS.basic;
             const isPaid = plan.price_mmk > 0;
-            const isUpgrade = !isCurrent;
 
             return (
               <div
@@ -326,7 +329,7 @@ const SellerSubscription = () => {
                 {isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className={`text-xs font-bold px-3 py-1 rounded-full shadow-sm ${c.badge}`}>
-                      Current Plan
+                      {t('subscription.current_plan', 'Current Plan')}
                     </span>
                   </div>
                 )}
@@ -334,7 +337,7 @@ const SellerSubscription = () => {
                 {plan.slug === 'professional' && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="text-xs font-bold px-3 py-1 rounded-full shadow-sm bg-green-500 text-white">
-                      Most Popular
+                      {t('subscription.most_popular', 'Most Popular')}
                     </span>
                   </div>
                 )}
@@ -354,12 +357,12 @@ const SellerSubscription = () => {
 
                 {/* Features */}
                 <div className="space-y-2.5 flex-1">
-                  {featureRow(`${plan.product_limit_label} products`, null, true)}
-                  {featureRow(`${plan.commission_percent} commission`, null, true)}
-                  {featureRow('Analytics dashboard', null, plan.analytics_enabled)}
-                  {featureRow('Bulk product import', null, plan.bulk_import_enabled)}
-                  {featureRow('Priority support', null, plan.priority_support)}
-                  {featureRow('Custom storefront', null, plan.custom_storefront)}
+                  {featureRow(`${plan.product_limit_label} ${t('subscription.plan_names.products', 'products')}`, null, true)}
+                  {featureRow(`${plan.commission_percent} ${t('subscription.plan_names.commission', 'commission')}`, null, true)}
+                  {featureRow(t('subscription.analytics', 'Analytics'), null, plan.analytics_enabled)}
+                  {featureRow(t('subscription.bulk_import', 'Bulk import'), null, plan.bulk_import_enabled)}
+                  {featureRow(t('subscription.priority_support', 'Priority support'), null, plan.priority_support)}
+                  {featureRow(t('subscription.custom_storefront', 'Custom storefront'), null, plan.custom_storefront)}
                 </div>
 
                 {/* CTA */}
@@ -374,14 +377,14 @@ const SellerSubscription = () => {
                 >
                   {isCurrent ? (
                     <>
-                      <CheckCircleIcon className="w-4 h-4" /> Your Current Plan
+                      <CheckCircleIcon className="w-4 h-4" /> {t('subscription.your_current_plan', 'Your Current Plan')}
                     </>
                   ) : plan.price_mmk < (current?.plan?.price_mmk ?? 0) ? (
-                    'Downgrade'
+                      t('subscription.downgrade', 'Downgrade')
                   ) : (
                     <>
                       <ArrowUpCircleIcon className="w-4 h-4" />
-                      {upgrading ? 'Processing…' : `Upgrade to ${plan.name}`}
+                          {upgrading ? t('subscription.alerts.processing', 'Processing…') : t('subscription.upgrade_label', `Upgrade to ${plan.name}`)}
                     </>
                   )}
                 </button>
@@ -395,14 +398,14 @@ const SellerSubscription = () => {
       <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-5 space-y-3 border border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
           <InformationCircleIcon className="w-4 h-4 text-blue-500" />
-          How billing works
+          {t('subscription.how_billing_works', 'How billing works')}
         </h4>
         <ul className="space-y-1.5 text-sm text-gray-500 dark:text-gray-400">
-          <li>• Paid plans are billed <strong className="text-gray-700 dark:text-gray-300">monthly</strong>. Transfer the amount and paste your payment reference to activate.</li>
-          <li>• Upgrades take effect <strong className="text-gray-700 dark:text-gray-300">immediately</strong> after confirmation.</li>
-          <li>• Downgrades take effect immediately — make sure your product count fits within the new limit first.</li>
-          <li>• Accepted payment: KBZPay, Wave Money, CB Bank transfer.</li>
-          <li>• Contact support at <a href="mailto:billing@pyonea.com" className="underline text-green-600 dark:text-green-400">billing@pyonea.com</a> for invoice or receipt.</li>
+          <li>• {t('subscription.faq_billed_monthly')}</li>
+          <li>• {t('subscription.faq_upgrades_immediate')}</li>
+          <li>• {t('subscription.faq_downgrades_immediate')}</li>
+          <li>• {t('subscription.faq_accepted_payment')}</li>
+          <li>• {t('subscription.faq_contact_support_text', 'Contact support at')} <a href="mailto:billing@pyonea.com" className="underline text-green-600 dark:text-green-400">{t('subscription.billing_email', 'billing@pyonea.com')}</a> {t('subscription.for_invoice_receipt', 'for invoice or receipt.')}</li>
         </ul>
       </div>
 
