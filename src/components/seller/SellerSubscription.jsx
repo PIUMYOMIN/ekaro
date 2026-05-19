@@ -25,9 +25,9 @@ const fmtMMK = (n) =>
   Number(n) === 0 ? 'Free' : `${Number(n).toLocaleString()} MMK`;
 
 const PLAN_COLORS = {
-  basic:        { ring: 'ring-gray-300 dark:ring-gray-600',  badge: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',  btn: 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100',  accent: 'text-gray-600 dark:text-gray-400' },
-  professional: { ring: 'ring-green-500',                    badge: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', btn: 'bg-green-600 hover:bg-green-700 text-white',                                                                  accent: 'text-green-600 dark:text-green-400' },
-  enterprise:   { ring: 'ring-purple-500',                   badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300', btn: 'bg-purple-600 hover:bg-purple-700 text-white',                                                            accent: 'text-purple-600 dark:text-purple-400' },
+  basic: { ring: 'ring-gray-300 dark:ring-gray-600', badge: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300', btn: 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100', accent: 'text-gray-600 dark:text-gray-400' },
+  professional: { ring: 'ring-green-500', badge: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', btn: 'bg-green-600 hover:bg-green-700 text-white', accent: 'text-green-600 dark:text-green-400' },
+  enterprise: { ring: 'ring-purple-500', badge: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300', btn: 'bg-purple-600 hover:bg-purple-700 text-white', accent: 'text-purple-600 dark:text-purple-400' },
 };
 
 const PLAN_ICONS = { basic: '🏪', professional: '🚀', enterprise: '🏢' };
@@ -36,7 +36,7 @@ const featureRow = (label, value, ok = true) => (
   <div className="flex items-center gap-2 text-sm">
     {ok
       ? <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
-      : <XCircleIcon     className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />}
+      : <XCircleIcon className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />}
     <span className={ok ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>{label}</span>
     {value && <span className="ml-auto font-semibold text-gray-900 dark:text-gray-100">{value}</span>}
   </div>
@@ -45,9 +45,9 @@ const featureRow = (label, value, ok = true) => (
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const UsageBar = ({ used, limit, label }) => {
-  const pct    = limit === -1 ? 0 : Math.min(100, Math.round((used / limit) * 100));
+  const pct = limit === -1 ? 0 : Math.min(100, Math.round((used / limit) * 100));
   const danger = pct >= 90;
-  const warn   = pct >= 70 && !danger;
+  const warn = pct >= 70 && !danger;
 
   return (
     <div className="space-y-1">
@@ -60,9 +60,8 @@ const UsageBar = ({ used, limit, label }) => {
       {limit !== -1 && (
         <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              danger ? 'bg-red-500' : warn ? 'bg-yellow-400' : 'bg-green-500'
-            }`}
+            className={`h-full rounded-full transition-all duration-500 ${danger ? 'bg-red-500' : warn ? 'bg-yellow-400' : 'bg-green-500'
+              }`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -135,13 +134,13 @@ const UpgradeModal = ({ plan, onConfirm, onCancel, loading }) => {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const SellerSubscription = () => {
-  const [current, setCurrent]       = useState(null);   // current subscription object
-  const [plans,   setPlans]         = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [upgrading, setUpgrading]   = useState(false);
-  const [error, setError]           = useState('');
-  const [success, setSuccess]       = useState('');
-  const [modal, setModal]           = useState(null);   // plan object being confirmed
+  const [current, setCurrent] = useState(null);   // current subscription object
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [upgrading, setUpgrading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [modal, setModal] = useState(null);   // plan object being confirmed
 
   // ── Data fetch ────────────────────────────────────────────────────────
   const { refetch: refetchSubscription } = useSubscription();
@@ -207,7 +206,7 @@ const SellerSubscription = () => {
       <div className="space-y-4 animate-pulse">
         <div className="h-40 bg-gray-100 dark:bg-gray-800 rounded-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[0,1,2].map(i => <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl" />)}
+          {[0, 1, 2].map(i => <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 rounded-2xl" />)}
         </div>
       </div>
     );
@@ -222,7 +221,7 @@ const SellerSubscription = () => {
     <div className="space-y-6">
 
       {/* Alerts */}
-      {error   && (
+      {error && (
         <div className="flex items-start gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 text-sm">
           <ExclamationTriangleIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
@@ -294,11 +293,11 @@ const SellerSubscription = () => {
         {current?.plan && (
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
             {featureRow('Commission rate', current.plan.commission_percent)}
-            {featureRow('Product limit',   current.plan.product_limit_label)}
-            {featureRow('Analytics',        null, current.plan.analytics_enabled)}
-            {featureRow('Bulk import',      null, current.plan.bulk_import_enabled)}
+            {featureRow('Product limit', current.plan.product_limit_label)}
+            {featureRow('Analytics', null, current.plan.analytics_enabled)}
+            {featureRow('Bulk import', null, current.plan.bulk_import_enabled)}
             {featureRow('Priority support', null, current.plan.priority_support)}
-            {featureRow('Custom storefront',null, current.plan.custom_storefront)}
+            {featureRow('Custom storefront', null, current.plan.custom_storefront)}
           </div>
         )}
       </div>
@@ -313,8 +312,8 @@ const SellerSubscription = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {plans.map((plan) => {
             const isCurrent = plan.is_current;
-            const c         = PLAN_COLORS[plan.slug] ?? PLAN_COLORS.basic;
-            const isPaid    = plan.price_mmk > 0;
+            const c = PLAN_COLORS[plan.slug] ?? PLAN_COLORS.basic;
+            const isPaid = plan.price_mmk > 0;
             const isUpgrade = !isCurrent;
 
             return (
@@ -355,12 +354,12 @@ const SellerSubscription = () => {
 
                 {/* Features */}
                 <div className="space-y-2.5 flex-1">
-                  {featureRow(`${plan.product_limit_label} products`,       null, true)}
-                  {featureRow(`${plan.commission_percent} commission`,      null, true)}
-                  {featureRow('Analytics dashboard',    null, plan.analytics_enabled)}
-                  {featureRow('Bulk product import',    null, plan.bulk_import_enabled)}
-                  {featureRow('Priority support',       null, plan.priority_support)}
-                  {featureRow('Custom storefront',      null, plan.custom_storefront)}
+                  {featureRow(`${plan.product_limit_label} products`, null, true)}
+                  {featureRow(`${plan.commission_percent} commission`, null, true)}
+                  {featureRow('Analytics dashboard', null, plan.analytics_enabled)}
+                  {featureRow('Bulk product import', null, plan.bulk_import_enabled)}
+                  {featureRow('Priority support', null, plan.priority_support)}
+                  {featureRow('Custom storefront', null, plan.custom_storefront)}
                 </div>
 
                 {/* CTA */}
