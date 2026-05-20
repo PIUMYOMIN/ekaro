@@ -5,13 +5,9 @@ import { useNavigate, useLocation } from "react-router-dom";
 import api from "../utils/api";
 import { resolveSellerOnboardingStep } from "../utils/sellerOnboarding";
 
+// 3-step flow: only 1 actual onboarding page between Register and Dashboard
 const STEP_ORDER = [
   "store-basic",
-  "business-details",
-  "address",
-  "delivery-zones",
-  "documents",
-  "review-submit",
 ];
 
 const SellerOnboardingRoute = ({ children }) => {

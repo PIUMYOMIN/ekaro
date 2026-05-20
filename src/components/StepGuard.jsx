@@ -72,13 +72,9 @@ const StepGuard = ({ children, step }) => {
                     return;
                 }
 
+                // 3-step flow: only store-basic is an onboarding page
                 const stepOrder = [
                     'store-basic',
-                    'business-details',
-                    'address',
-                    'delivery-zones',
-                    'documents',
-                    'review-submit',
                 ];
 
                 const resolvedStep = await resolveSellerOnboardingStep(statusData);

@@ -289,45 +289,18 @@ function App() {
                           </ProtectedRoute>
                         } />
 
-                        <Route path="/seller/onboarding/business-details" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <StepGuard step="business-details">
-                              <BusinessDetails />
-                            </StepGuard>
-                          </ProtectedRoute>
-                        } />
-
-                        <Route path="/seller/onboarding/address" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <StepGuard step="address">
-                              <AddressInfo />
-                            </StepGuard>
-                          </ProtectedRoute>
-                        } />
-
-                        <Route path="/seller/onboarding/delivery-zones" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <StepGuard step="delivery-zones">
-                              <DeliveryZonesOnboarding />
-                            </StepGuard>
-                          </ProtectedRoute>
-                        } />
-
-                        <Route path="/seller/onboarding/documents" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <StepGuard step="documents">
-                              <DocumentUpload />
-                            </StepGuard>
-                          </ProtectedRoute>
-                        } />
-
-                        <Route path="/seller/onboarding/review-submit" element={
-                          <ProtectedRoute roles={["seller"]}>
-                            <StepGuard step="review-submit">
-                              <ReviewSubmit />
-                            </StepGuard>
-                          </ProtectedRoute>
-                        } />
+                                    {/* 3-step onboarding: Register → Business Setup → Dashboard
+                             Old deep-link URLs redirect back to store-basic or dashboard */}
+                                    <Route path="/seller/onboarding/business-details"
+                                      element={<Navigate to="/seller/onboarding/store-basic" replace />} />
+                                    <Route path="/seller/onboarding/address"
+                                      element={<Navigate to="/seller/onboarding/store-basic" replace />} />
+                                    <Route path="/seller/onboarding/delivery-zones"
+                                      element={<Navigate to="/seller/onboarding/store-basic" replace />} />
+                                    <Route path="/seller/onboarding/documents"
+                                      element={<Navigate to="/seller/dashboard" replace />} />
+                                    <Route path="/seller/onboarding/review-submit"
+                                      element={<Navigate to="/seller/dashboard" replace />} />
 
                         <Route path="/seller/my-store" element={
                           <ProtectedRoute roles={["seller"]}>
