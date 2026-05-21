@@ -1,4 +1,4 @@
-// SellerDashboard.jsx (updated)
+// SellerDashboard.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -159,7 +159,8 @@ const SellerDashboard = () => {
   // ---------- Handle setup click (only for navigation) ----------
   const handleSetupClick = useCallback((step) => {
     if (step === 'my-store') {
-      navigate('/seller/dashboard?tab=my-store&setup=true');
+      // Checklist item buttons → open the store update form directly
+      navigate('/seller/dashboard?tab=my-store&view=edit');
     } else if (step === 'delivery_zones') {
       navigate('/seller/dashboard?tab=delivery_zones');
     } else if (step === 'settings') {
@@ -385,9 +386,10 @@ const SellerDashboard = () => {
   // ---------- Start setup ----------
   const handleStartSetup = () => {
     if (setupNotificationData.nextStep === "my-store") {
+      // "Review Setup" / "Complete Setup" → open the store update form directly
       const myStoreIndex = navigation.findIndex(item => item.key === "my_store");
       if (myStoreIndex !== -1) setSelectedTab(myStoreIndex);
-      navigate('/seller/dashboard?tab=my-store&setup=true', { replace: true });
+      navigate('/seller/dashboard?tab=my-store&view=edit', { replace: true });
     } else if (onboardingStatus?.needs_onboarding || !onboardingStatus?.onboarding_complete) {
       navigate(`/seller/onboarding/${setupNotificationData.nextStep || 'store-basic'}`);
     } else if (setupNotificationData.nextStep === "verification") {
