@@ -536,7 +536,7 @@ const Register = () => {
 
             <div className="flex justify-center">
               <div className="w-full max-w-sm space-y-3">
-                <FacebookLogin
+              {/* <FacebookLogin
                   appId={import.meta.env.VITE_FACEBOOK_APP_ID || ""}
                   onSuccess={handleFacebookSuccess}
                   onFail={() => setSocialError("Facebook sign-in failed. Please try again.")}
@@ -561,7 +561,7 @@ const Register = () => {
                     <path d="M22 12.06C22 6.504 17.523 2 12 2S2 6.504 2 12.06C2 17.083 5.657 21.245 10.438 22v-7.03H7.898v-2.91h2.54V9.845c0-2.522 1.492-3.915 3.777-3.915 1.094 0 2.238.197 2.238.197v2.476h-1.26c-1.243 0-1.63.777-1.63 1.574v1.889h2.773l-.443 2.91h-2.33V22C18.343 21.245 22 17.083 22 12.06Z" />
                   </svg>
                   <span>Facebook</span>
-                </FacebookLogin>
+                </FacebookLogin> */}
 
                 <button
                   type="button"
